@@ -100,6 +100,22 @@ struct foo
 };
 
 
+template <unsigned long PAGE, unsigned long CLUSTER, unsigned long SCALE>
+inline void* Obj2Meta(void* obj)
+{
+    typedef unsigned long sptr_t;
+    register sptr_t o(reinterpret_cast<sptr_t>(obj));
+    enum 
+        {
+            pat = (1 << PAGE + CLUSTER) - 1
+        };
+    
+    register sptr_t b(o & ~static_cast<sptr_t>(pat));
+    register sptr_t d(o & static_cast<sptr_t>(pat));
+    return reinterpret_cast<void*>(b + (d >> SCALE));
+}
+
+
 
 #include "alloc.cpp"
 
@@ -268,7 +284,7 @@ int main(void)
     collect(true);
 
     int hdl(shm_open("/blubber",
-                     O_RDWR | O_CREAT /*| O_EXCL*/,
+                     O_RDWR | O_CREAT,
                      S_IRUSR | S_IWUSR | S_IRGRP | S_IWGRP));
 
     perror("shm_open");
@@ -289,6 +305,19 @@ int main(void)
         perror("mmap");
     else
     {
+
+        for (int i(0); i < 100; ++i)
+        {
+            char* p((char*)area + i);
+            printf("i: %d, o: %p, m: %p\n", i, p, Obj2Meta<12, 4, 3>(p));
+        }
+        
+        for (int i(10000); i < 10100; ++i)
+        {
+            char* p((char*)area + i);
+            printf("i: %d, o: %p, m: %p\n", i, p, Obj2Meta<12, 4, 3>(p));
+        }
+        
         sleep(3);
         int um(munmap(area, lenn));
         if (um == -1)
