@@ -33,8 +33,18 @@ namespace aL4nin
     template <typename T>
     struct meta;
 
+    template <>
+    struct meta<void>
+    {
+        void mark(void*);
+        bool trymark(void*);
+    };
+
     template <typename T>
     meta<T>& get_meta(std::size_t);
+
+    template <typename T>
+    meta<T>& object_meta(T*);
 
     template <typename T>
     struct alloc : std::allocator<T>

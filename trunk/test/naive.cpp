@@ -87,6 +87,8 @@ namespace aL4nin
 
         cons* objects;
         bool bitmap[bits];
+        bool marks[bits];
+
         meta(void)
             {
                 memset(this, 0, sizeof *this);
@@ -110,6 +112,24 @@ namespace aL4nin
 
                 return objects + (freebit - bitmap);
             }
+
+        void mark(const cons* p)
+            {
+                // simple minded!
+                int i(bits - 1);
+                for (const cons* my(objects + i);
+                     i >= 0;
+                     --my, --i)
+                {
+                    if (bitmap[i] && p == my)
+                    {
+                        marks[i] = true;
+                        return;
+                    }
+                }
+
+                abort();
+            }        
     };
 
 
@@ -124,6 +144,14 @@ namespace aL4nin
         abort();
     }
 
+    template <>
+    meta<void>& object_meta<void>(void*)
+    {
+        static meta<void> me;
+        return me;
+    }
+
+    void* rooty(0);
 
     void collect(bool verbose)
     {
@@ -131,9 +159,26 @@ namespace aL4nin
             cerr << "starting" << endl;
 
 
+        // do we need meta<void>
+        // or can we safely assume
+        // to know the exact meta type?
+        // probably not: if a slot is just declared
+        // <object> we never know the metadata
+        meta<void>& m(object_meta(rooty));
+        m.mark(rooty);
+        /// if (m.trymark(rooty.first)) ...;
+        
 
         if (verbose)
             cerr << "done" << endl;
+    }
+
+    void meta<void>::mark(void* p)
+    {
+        // look whether it is a cons
+        // hack!
+        meta<cons>& m(get_meta<cons>(1));
+        m.mark(static_cast<cons*>(p));
     }
 }
 
@@ -144,7 +189,11 @@ int main(void)
     map<int, int, less<int>, alloc<int> > m;
     m.insert(make_pair(1, 42));
 
-    alloc<cons>().allocate(1);
+    cons* c(alloc<cons>().allocate(1));
+    c->first = c;
+    c->second = 0;
+    rooty = c;
+    
 
     collect(true);
 }
