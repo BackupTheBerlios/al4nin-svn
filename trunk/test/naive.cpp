@@ -9,12 +9,6 @@
 
 #include "alloc.hpp"
 #include "safemacros.h"
-//#include "safemacros.h"
-
-
-#define VERBOSE(WHAT) if (verbose) (::std::cerr << WHAT << ::std::endl)
-#define VERBOSE_ABORT(WHAT) VERBOSE(WHAT); abort()
-#define PASS_VERBOSE , verbose
 
 namespace aL4nin
 {

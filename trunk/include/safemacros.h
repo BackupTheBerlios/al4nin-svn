@@ -36,6 +36,12 @@
 #ifndef _SAFEMACROS_A4L_
 #define _SAFEMACROS_A4L_
 
+#define VERBOSE(WHAT) if (verbose) (::std::cerr << WHAT << ::std::endl)
+#define VERBOSE_ABORT(WHAT) VERBOSE(WHAT); abort()
+#define PASS_VERBOSE , verbose
 #else
+#undef PASS_VERBOSE
+#undef VERBOSE_ABORT
+#undef VERBOSE
 
 #endif
