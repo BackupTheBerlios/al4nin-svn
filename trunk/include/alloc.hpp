@@ -24,11 +24,13 @@ OR OTHER DEALINGS IN THE SOFTWARE.
 #ifndef _ALLOC_A4L_
 #define _ALLOC_A4L_
 
+#include <memory>
+
 namespace aL4nin
 {
 
     template <typename T>
-    struct alloc
+    struct alloc : std::allocator<T>
     {
         template <typename U>
         struct rebind
@@ -38,6 +40,16 @@ namespace aL4nin
 
         T* allocate(std::size_t);
         void deallocate(T*, size_t);
+
+        alloc(void) throw() { }
+
+        alloc(const alloc& a) throw()
+            : std::allocator<T>(a) { }
+
+        template<typename U>
+        alloc(const alloc<U>&) throw() { }
+
+        ~alloc(void) throw() { }
     };
 }
 
