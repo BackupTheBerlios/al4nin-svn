@@ -53,10 +53,31 @@ struct foo
 using namespace std;
 using namespace aL4nin;
 
+namespace aL4nin
+{
+    template <>
+    struct meta<std::_Rb_tree_node<std::pair<const int, int> > >
+    {
+        typedef std::_Rb_tree_node<std::pair<const int, int> > payload;
+        
+        payload* allocate(std::size_t elems)
+        {
+            return new payload[elems];
+        }
+    };
+
+    template <>
+    meta<std::_Rb_tree_node<std::pair<const int, int> > > get_meta<std::_Rb_tree_node<std::pair<const int, int> > >(std::size_t)
+    {
+        return meta<std::_Rb_tree_node<std::pair<const int, int> > >();
+    }
+
+}
+
 
 int main(void)
 {
     vector<int, alloc<int> > v(3);
     map<int, int, less<int>, alloc<int> > m;
-////    m.insert(make_pair(1, 42));
+    m.insert(make_pair(1, 42));
 }
