@@ -27,7 +27,7 @@
   immediately before the #else
   below and an #undef in the
   line immediately following
-  the else. This way including
+  the #else. This way including
   safemacros.h twice will clean
   up behind itself.
 */
