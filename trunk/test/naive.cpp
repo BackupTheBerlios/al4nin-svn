@@ -47,19 +47,40 @@ namespace aL4nin
 // - references to builtin basic types are not followed
 // - non<T> is a pointer that will not be followed
 // - const non<T> is a non-assignable pointer that will not be followed
+// - thresholded<T, N> is like nullable but does not follow <= N
 
 #define WRAP(TYPE, MODIFIER) \
-    MODIFIER(TYPE)
+    MODIFIER ## _WRAPPER(TYPE)
 
-#define BARE(TYPE) TYPE
-#define NON(TYPE) non<TYPE>
+#define BARE_WRAPPER(TYPE) TYPE
+#define _WRAPPER(TYPE) BARE_WRAPPER(TYPE)
+#define NULLABLE_WRAPPER(TYPE) nullable<TYPE>
+#define NON_WRAPPER(TYPE) non<TYPE>
+#define NULLABLE_WRAPPER(TYPE) nullable<TYPE>
 
 template <typename T>
-struct non;
+struct nullable
+{
+    T* real;
+    nullable(T* real)
+        : real(real)
+        {}
+};
 
 
-///WRAP(int, NON) hh;
-WRAP(int, BARE) hh1;
+template <typename T>
+struct non
+{
+    T real;
+    non(const T& real)
+        : real(real)
+        {}
+};
+
+
+WRAP(int, NON) hh(42);
+WRAP(int, /*BARE*/) hh1;
+WRAP(int, NULLABLE) hh2(0);
 
 struct foo
 {
