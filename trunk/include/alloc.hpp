@@ -25,10 +25,11 @@
 #define _ALLOC_A4L_
 
 #include <memory>
+#include "safemacros.h"
 
 namespace aL4nin
 {
-    void collect(bool verbose = false);
+    void collect(VERBOSITY_ARG(= false));
 
     template <typename T>
     struct meta;
@@ -72,5 +73,6 @@ namespace aL4nin
     };
 }
 
+#include "safemacros.h" // undo them
 
 #endif // _ALLOC_A4L_

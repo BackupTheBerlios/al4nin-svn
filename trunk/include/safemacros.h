@@ -39,9 +39,12 @@
 #define VERBOSE(WHAT) if (verbose) (::std::cerr << WHAT << ::std::endl)
 #define VERBOSE_ABORT(WHAT) VERBOSE(WHAT); abort()
 #define PASS_VERBOSE , verbose
+#define VERBOSITY_ARG(DEFAULTING) bool verbose DEFAULTING
 #else
+#undef VERBOSITY_ARG
 #undef PASS_VERBOSE
 #undef VERBOSE_ABORT
 #undef VERBOSE
 
+#undef _SAFEMACROS_A4L_
 #endif

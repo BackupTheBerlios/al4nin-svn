@@ -147,7 +147,7 @@ namespace aL4nin
                 return objects + (freebit - bitmap);
             }
 
-        void mark(const cons* p, bool verbose)
+        void mark(const cons* p, VERBOSITY_ARG())
             {
                 // simple minded!
                 int i(bits - 1);
