@@ -10,6 +10,10 @@
 #include "alloc.hpp"
 #include "safemacros.h"
 
+#include <sys/mman.h>
+#include <fcntl.h>
+#include <errno.h>
+
 namespace aL4nin
 {
     template <>
@@ -20,6 +24,7 @@ namespace aL4nin
             return new int[elems];
         }
     };
+
 
 
     template <>
@@ -261,4 +266,38 @@ int main(void)
 
 
     collect(true);
+
+    int hdl(shm_open("/blubber",
+                     O_RDWR | O_CREAT /*| O_EXCL*/,
+                     S_IRUSR | S_IWUSR | S_IRGRP | S_IWGRP));
+
+    perror("shm_open");
+    
+    const int lenn(100000000);
+    
+    int tr(ftruncate(hdl, lenn));
+    if (tr == -1)
+        perror("ftruncate");
+
+    void* area(mmap(reinterpret_cast<void*>(0xF0000000UL),
+                    lenn,
+                    PROT_READ | PROT_WRITE,
+                    MAP_SHARED,
+                    hdl,
+                    0));
+    if (MAP_FAILED == area)
+        perror("mmap");
+    else
+    {
+        sleep(3);
+        int um(munmap(area, lenn));
+        if (um == -1)
+            perror("munmap");
+    }
+    
+    int ul(shm_unlink("/blubber"));
+    if (ul == -1)
+        perror("shm_unlink");
+
+    
 }
