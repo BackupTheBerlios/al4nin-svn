@@ -21,39 +21,18 @@
  * OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-#ifndef _ALLOC_A4L_
-#define _ALLOC_A4L_
-
-#include <memory>
+#include "alloc.hpp"
 
 namespace aL4nin
 {
 
     template <typename T>
-    struct alloc : std::allocator<T>
+    typename alloc<T>::pointer alloc<T>::allocate(std::size_t)
     {
-        typedef typename std::allocator<T>::pointer pointer;
+    }
 
-        template <typename U>
-        struct rebind
-        {
-            typedef alloc<U> other;
-        };
-
-        pointer allocate(std::size_t);
-        void deallocate(pointer, size_t);
-
-        alloc(void) throw() { }
-
-        alloc(const alloc& a) throw()
-            : std::allocator<T>(a) { }
-
-        template<typename U>
-        alloc(const alloc<U>&) throw() { }
-
-        ~alloc(void) throw() { }
-    };
+    template <typename T>
+    void alloc<T>::deallocate(typename alloc<T>::pointer, size_t)
+    {
+    }
 }
-
-
-#endif // _ALLOC_A4L_

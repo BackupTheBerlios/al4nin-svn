@@ -1,3 +1,3 @@
 naive:
-	g++ -I ../include naive.cpp
+	g++ -I ../include -I ../src -o naive naive.cpp
 

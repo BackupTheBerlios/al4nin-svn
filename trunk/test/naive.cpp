@@ -1,6 +1,7 @@
 #include <vector>
 #include <map>
 #include "alloc.hpp"
+#include "alloc.cpp"
 
 
 using namespace std;
