@@ -147,7 +147,7 @@ namespace aL4nin
                 return objects + (freebit - bitmap);
             }
 
-        void mark(const cons* p, VERBOSITY_ARG())
+        void mark(const cons* p PLUS_VERBOSITY_ARG())
             {
                 // simple minded!
                 int i(bits - 1);
@@ -199,7 +199,7 @@ namespace aL4nin
 
     void* rooty(0);
 
-    void collect(bool verbose)
+    void collect(VERBOSITY_ARG())
     {
         VERBOSE("starting");
 
@@ -216,7 +216,7 @@ namespace aL4nin
         VERBOSE("done");
     }
 
-    void meta<void>::mark(void* p, bool verbose)
+    void meta<void>::mark(void* p PLUS_VERBOSITY_ARG())
     {
         // look whether it is a cons
         VERBOSE("trying to mark: " << p);
