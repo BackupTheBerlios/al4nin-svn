@@ -28,6 +28,11 @@
 
 namespace aL4nin
 {
+    template <typename T>
+    struct meta;
+
+    template <typename T>
+    meta<T> get_meta(std::size_t);
 
     template <typename T>
     struct alloc : std::allocator<T>
