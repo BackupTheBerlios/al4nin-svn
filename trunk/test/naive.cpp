@@ -1,5 +1,7 @@
 #include <vector>
 #include <map>
+#include <cstring>
+#include <algorithm>
 
 
 
@@ -43,7 +45,7 @@ struct foo
         {
 ///            int i(&foo::f);
         }
-    
+
 };
 
 
@@ -60,7 +62,7 @@ namespace aL4nin
     struct meta<std::_Rb_tree_node<std::pair<const int, int> > >
     {
         typedef std::_Rb_tree_node<std::pair<const int, int> > payload;
-        
+
         payload* allocate(std::size_t elems)
         {
             return new payload[elems];
@@ -74,6 +76,53 @@ namespace aL4nin
         return m;
     }
 
+    struct cons : pair<cons*, cons*>
+    {};
+
+    template <>
+    struct meta<cons>
+    {
+        enum { bits = 32 };
+
+        cons* objects;
+        bool bitmap[bits];
+        meta(void)
+            {
+                memset(this, 0, sizeof *this);
+            }
+
+        cons* allocate(std::size_t)
+            {
+                if (!objects)
+                {
+                    objects = new cons[bits];
+                    *bitmap = true;
+                    return objects;
+                }
+
+                bool* end(bitmap + meta<cons>::bits);
+                bool* freebit(find(bitmap, end, 0));
+                if (freebit == end)
+                    return 0;
+
+                *freebit = true;
+
+                return objects + (freebit - bitmap);
+            }
+    };
+
+
+    template <>
+    meta<cons>& get_meta<cons>(std::size_t)
+    {
+        static meta<cons> m;
+
+        if (find(m.bitmap, m.bitmap + meta<cons>::bits, 0))
+            return m;
+
+        abort();
+    }
+
 }
 
 
@@ -82,4 +131,6 @@ int main(void)
     vector<int, alloc<int> > v(3);
     map<int, int, less<int>, alloc<int> > m;
     m.insert(make_pair(1, 42));
+
+    alloc<cons>().allocate(1);
 }
