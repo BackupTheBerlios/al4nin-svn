@@ -11,6 +11,7 @@
 
 
 #define VERBOSE(WHAT) if (verbose) (::std::cerr << WHAT << ::std::endl)
+#define VERBOSE_ABORT(WHAT) VERBOSE(WHAT); abort()
 #define PASS_VERBOSE , verbose
 
 namespace aL4nin
@@ -64,6 +65,16 @@ using namespace aL4nin;
 namespace aL4nin
 {
     template <>
+    meta<void>* object_meta<void>(void* p)
+    {
+        if (!p)
+            return 0;
+
+        static meta<void> me;
+        return &me;
+    }
+
+    template <>
     struct meta<std::_Rb_tree_node<std::pair<const int, int> > >
     {
         typedef std::_Rb_tree_node<std::pair<const int, int> > payload;
@@ -81,7 +92,7 @@ namespace aL4nin
         return m;
     }
 
-    struct cons : pair<cons*, cons*>
+    struct cons : pair<void*, void*>
     {};
 
     template <>
@@ -128,13 +139,30 @@ namespace aL4nin
                     if (bitmap[i] && p == my)
                     {
                         VERBOSE("identified as cons");
+                        if (marks[i])
+                        {
+                            VERBOSE("already marked");
+                            return /*true*/;
+                        }
+
+
                         marks[i] = true;
-                        return;
+                        if (object_meta(p->first))
+                        {
+                            object_meta(p->first)->mark(p->first PASS_VERBOSE);
+                        }
+
+                        if (object_meta(p->second))
+                        {
+                            object_meta(p->second)->mark(p->second PASS_VERBOSE);
+                        }
+
+
+                        return /*true*/;
                     }
                 }
 
-                VERBOSE("not a cons");
-                abort();
+                VERBOSE_ABORT("not a cons");
             }
     };
 
@@ -150,23 +178,11 @@ namespace aL4nin
         abort();
     }
 
-    template <>
-    meta<void>* object_meta<void>(void* p)
-    {
-        if (!p)
-            return 0;
-
-        static meta<void> me;
-        return &me;
-    }
-
     void* rooty(0);
 
     void collect(bool verbose)
     {
-        if (verbose)
-            cerr << "starting" << endl;
-
+        VERBOSE("starting");
 
         // do we need meta<void>
         // or can we safely assume
@@ -178,9 +194,7 @@ namespace aL4nin
             m->mark(rooty PASS_VERBOSE);
         /// if (m.trymark(rooty.first)) ...;
 
-
-        if (verbose)
-            cerr << "done" << endl;
+        VERBOSE("done");
     }
 
     void meta<void>::mark(void* p, bool verbose)
