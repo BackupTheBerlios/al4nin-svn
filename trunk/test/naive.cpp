@@ -19,9 +19,10 @@ namespace aL4nin
 
 
     template <>
-    meta<int> get_meta<int>(std::size_t)
+    meta<int>& get_meta<int>(std::size_t)
     {
-        return meta<int>();
+        static meta<int> m;
+        return m;
     }
 }
 
@@ -67,9 +68,10 @@ namespace aL4nin
     };
 
     template <>
-    meta<std::_Rb_tree_node<std::pair<const int, int> > > get_meta<std::_Rb_tree_node<std::pair<const int, int> > >(std::size_t)
+    meta<std::_Rb_tree_node<std::pair<const int, int> > >& get_meta<std::_Rb_tree_node<std::pair<const int, int> > >(std::size_t)
     {
-        return meta<std::_Rb_tree_node<std::pair<const int, int> > >();
+        static meta<std::_Rb_tree_node<std::pair<const int, int> > > m;
+        return m;
     }
 
 }

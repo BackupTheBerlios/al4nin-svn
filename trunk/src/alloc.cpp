@@ -29,7 +29,7 @@ namespace aL4nin
     template <typename T>
     typename alloc<T>::pointer alloc<T>::allocate(std::size_t elems)
     {
-        meta<T> m(get_meta<T>(elems));
+        meta<T>& m(get_meta<T>(elems));
         return m.allocate(elems);
     }
 

@@ -32,7 +32,7 @@ namespace aL4nin
     struct meta;
 
     template <typename T>
-    meta<T> get_meta(std::size_t);
+    meta<T>& get_meta(std::size_t);
 
     template <typename T>
     struct alloc : std::allocator<T>
