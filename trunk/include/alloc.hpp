@@ -28,6 +28,8 @@
 
 namespace aL4nin
 {
+    void collect(bool verbose = false);
+
     template <typename T>
     struct meta;
 

@@ -2,6 +2,7 @@
 #include <map>
 #include <cstring>
 #include <algorithm>
+#include <iostream>
 
 
 
@@ -123,6 +124,17 @@ namespace aL4nin
         abort();
     }
 
+
+    void collect(bool verbose)
+    {
+        if (verbose)
+            cerr << "starting" << endl;
+
+
+
+        if (verbose)
+            cerr << "done" << endl;
+    }
 }
 
 
@@ -133,4 +145,6 @@ int main(void)
     m.insert(make_pair(1, 42));
 
     alloc<cons>().allocate(1);
+
+    collect(true);
 }

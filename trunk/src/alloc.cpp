@@ -25,7 +25,6 @@
 
 namespace aL4nin
 {
-
     template <typename T>
     typename alloc<T>::pointer alloc<T>::allocate(std::size_t elems)
     {
