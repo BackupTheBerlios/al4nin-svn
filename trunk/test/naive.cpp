@@ -8,6 +8,8 @@
 
 
 #include "alloc.hpp"
+#include "safemacros.h"
+//#include "safemacros.h"
 
 
 #define VERBOSE(WHAT) if (verbose) (::std::cerr << WHAT << ::std::endl)
@@ -41,6 +43,29 @@ namespace aL4nin
 //     - uncommitted arrays must zero out object data before setting marker
 //     - concurrency in data <--> metadata access???
 
+
+// let's fix some hard conventions
+// - T* is non-null collectable pointer that is to be followed
+// - nullable<T> is a possibly NULL pointer that should be followed
+// - T& is a non-assignable, non-null reference that is to be followed
+// - const T is a non-assignable non-null reference that is to be followed
+// - const nullable<T> is a non-assignable, possibly NULL pointer that should be followed
+// - references to builtin basic types are not followed
+// - non<T> is a pointer that will not be followed
+// - const non<T> is a non-assignable pointer that will not be followed
+
+#define WRAP(TYPE, MODIFIER) \
+    MODIFIER(TYPE)
+
+#define BARE(TYPE) TYPE
+#define NON(TYPE) non<TYPE>
+
+template <typename T>
+struct non;
+
+
+///WRAP(int, NON) hh;
+WRAP(int, BARE) hh1;
 
 struct foo
 {
