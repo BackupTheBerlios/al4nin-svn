@@ -9,6 +9,10 @@
 
 #include "alloc.hpp"
 
+
+#define VERBOSE(WHAT) if (verbose) (::std::cerr << WHAT << ::std::endl)
+#define PASS_VERBOSE , verbose
+
 namespace aL4nin
 {
     template <>
@@ -113,7 +117,7 @@ namespace aL4nin
                 return objects + (freebit - bitmap);
             }
 
-        void mark(const cons* p)
+        void mark(const cons* p, bool verbose)
             {
                 // simple minded!
                 int i(bits - 1);
@@ -123,13 +127,15 @@ namespace aL4nin
                 {
                     if (bitmap[i] && p == my)
                     {
+                        VERBOSE("identified as cons");
                         marks[i] = true;
                         return;
                     }
                 }
 
+                VERBOSE("not a cons");
                 abort();
-            }        
+            }
     };
 
 
@@ -145,10 +151,13 @@ namespace aL4nin
     }
 
     template <>
-    meta<void>& object_meta<void>(void*)
+    meta<void>* object_meta<void>(void* p)
     {
+        if (!p)
+            return 0;
+
         static meta<void> me;
-        return me;
+        return &me;
     }
 
     void* rooty(0);
@@ -164,21 +173,23 @@ namespace aL4nin
         // to know the exact meta type?
         // probably not: if a slot is just declared
         // <object> we never know the metadata
-        meta<void>& m(object_meta(rooty));
-        m.mark(rooty);
+        meta<void>* m(object_meta(rooty));
+        if (m)
+            m->mark(rooty PASS_VERBOSE);
         /// if (m.trymark(rooty.first)) ...;
-        
+
 
         if (verbose)
             cerr << "done" << endl;
     }
 
-    void meta<void>::mark(void* p)
+    void meta<void>::mark(void* p, bool verbose)
     {
         // look whether it is a cons
+        VERBOSE("trying to mark: " << p);
         // hack!
         meta<cons>& m(get_meta<cons>(1));
-        m.mark(static_cast<cons*>(p));
+        m.mark(static_cast<cons*>(p) PASS_VERBOSE);
     }
 }
 
@@ -193,7 +204,7 @@ int main(void)
     c->first = c;
     c->second = 0;
     rooty = c;
-    
+
 
     collect(true);
 }
