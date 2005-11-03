@@ -107,6 +107,9 @@ struct foo
 // The first cluster of the world is special.
 // Every other cluster is subdivided into 2^p pages. The size
 // of a page must match a (supported) VM page size.
+// The number of pages a cluster consists of (2^p) is dependent
+// on the cluster, so the world must store the ps in the special
+// cluster in order to be able to find the cluster boundaries.
 // At the start of each cluster we find the metaobjects.
 // The metaobject at displacement 0 (into the cluster) is
 // special, describing the metaobjects themselves, i.e. it is
@@ -117,6 +120,37 @@ struct foo
 
 // Note: later I may introduce a multiworld, which may be
 // a linked list of worlds.
+
+
+
+// World: define the layout of a world in the memory
+// and subdivide in pages. Provide info about the
+// location and 
+// NUMPAGES
+template <unsigned NUMPAGES, unsigned BASE, unsigned PAGE>
+struct World
+{
+    struct Page
+    {
+        char raw[1 << PAGE];
+    };
+
+    Page pages[NUMPAGES];
+};
+
+
+
+// MISC ideas
+// allocation: tell a cluster to allocate an obj of a certain
+// metadata "class". returns a cluster address, which may be the
+// same as the current cluster or pointer to a new cluster with
+// the object being in there. In this case the pointer must be
+// stored away for the next allocation request.
+
+// GC: use a posix message queue to tell which thread stack ranges
+// must be mprotected. This way the threads can be starved out
+// systematically.
+
 
 
 // RawObj2Meta is intended to return a pointer for an object
