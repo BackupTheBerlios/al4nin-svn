@@ -101,7 +101,7 @@ struct foo
 
 
 template <unsigned long PAGE, unsigned long CLUSTER, unsigned long SCALE>
-inline void* Obj2Meta(void* obj)
+void* RawObj2Meta(void* obj)
 {
     typedef unsigned long sptr_t;
     register sptr_t o(reinterpret_cast<sptr_t>(obj));
@@ -306,16 +306,16 @@ int main(void)
     else
     {
 
-        for (int i(0); i < 100; ++i)
+        for (int i(0); i < 100; i += 4)
         {
             char* p((char*)area + i);
-            printf("i: %d, o: %p, m: %p\n", i, p, Obj2Meta<12, 4, 3>(p));
+            printf("i: %d, o: %p, m: %p\n", i, p, RawObj2Meta<12, 4, 3>(p));
         }
         
-        for (int i(10000); i < 10100; ++i)
+        for (int i(10000); i < 10100; i += 4)
         {
             char* p((char*)area + i);
-            printf("i: %d, o: %p, m: %p\n", i, p, Obj2Meta<12, 4, 3>(p));
+            printf("i: %d, o: %p, m: %p\n", i, p, RawObj2Meta<12, 4, 3>(p));
         }
         
         sleep(3);
