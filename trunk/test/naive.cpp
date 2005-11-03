@@ -100,8 +100,42 @@ struct foo
 };
 
 
+// Anatomy of the WORLD.
+//
+// The world is the part of the process memory that the GC
+// is interested in. It is completely subdivided in clusters.
+// The first cluster of the world is special.
+// Every other cluster is subdivided into 2^p pages. The size
+// of a page must match a (supported) VM page size.
+// At the start of each cluster we find the metaobjects.
+// The metaobject at displacement 0 (into the cluster) is
+// special, describing the metaobjects themselves, i.e. it is
+// a meta-metaobject.
+// Metaobjects are just additional information that is factored
+// out of the objects or can add information about the validity
+// and GC-properties of a group of objects.
+
+// Note: later I may introduce a multiworld, which may be
+// a linked list of worlds.
+
+
+// RawObj2Meta is intended to return a pointer for an object
+// living in the world, that describes its allocation and collection
+// behaviour.
+// PAGE: number of bits needed to address a byte in a VM-page
+// CLUSTER: how many bits are needed to address a page in a VM cluster of pages
+// SCALE: how many bytes together have the same metadata info (2^SCALE bytes)
+//   ##!! not true: SCALE simply tells us how much "denser" metaobjects are
+//        compared to objects. I.e. 32*8byte (cons cells) together share the same
+//        metaobject, and the metaobject is 8bytes then SCALE is 5 because
+//        2^5==32.
+//
+// Theory of operation:
+//   Find the lowest address in the cluster and scale down the displacement
+//   of the object to the appropriate metaobject.
+
 template <unsigned long PAGE, unsigned long CLUSTER, unsigned long SCALE>
-void* RawObj2Meta(void* obj)
+inline void* RawObj2Meta(void* obj)
 {
     typedef unsigned long sptr_t;
     register sptr_t o(reinterpret_cast<sptr_t>(obj));
