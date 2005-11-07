@@ -123,20 +123,53 @@ struct foo
 // a linked list of worlds.
 
 
+// Checker templates
+//
+template <unsigned>
+struct IsZero;
+
+template <>
+struct IsZero<0>
+{};
+
+
+template <unsigned long DIVISOR, unsigned long DIVIDEND>
+struct Divides : IsZero<DIVIDEND % DIVISOR>
+{};
+
+
+
 
 // World: define the layout of a world in the memory
 // and subdivide in pages. Provide info about the
-// location and 
-// NUMPAGES
+// location and size.
+// NUMPAGES: how many pages should this world hold
+// BASE: where should this world be located in the memory
+// PAGE: bits needed to address a byte in a page. i.e.
+//       pagesize == 2^PAGE bytes
+//
 template <unsigned NUMPAGES, unsigned BASE, unsigned PAGE>
 struct World
 {
+    enum { PageSize = 1 << PAGE };
+
     struct Page
     {
-        char raw[1 << PAGE];
+        char raw[PageSize];
     };
 
     Page pages[NUMPAGES];
+
+    void* start(void)
+        {
+            Divides<PageSize, BASE> c1;
+            return reinterpret_cast<void*>(BASE);
+        }
+
+    size_t size(void)
+        {
+            return PageSize * NUMPAGES;
+        }
 };
 
 
@@ -358,14 +391,19 @@ int main(void)
 
     perror("shm_open");
     
-    const int lenn(100000000);
+///    World<100, 0xF0000000UL, 12> world;
+    World<100, 0xFF090000UL, 12> world;
+///    const int lenn(100000000);
     
-    int tr(ftruncate(hdl, lenn));
+    int tr(ftruncate(hdl, world.size()));
     if (tr == -1)
         perror("ftruncate");
 
-    void* area(mmap(reinterpret_cast<void*>(0xF0000000UL),
-                    lenn,
+
+///    void* area(mmap(reinterpret_cast<void*>(/*0xF0000000UL*/world.start()),
+    void* area(mmap(world.start(),
+///                    lenn,
+                    world.size(),
                     PROT_READ | PROT_WRITE,
                     MAP_SHARED,
                     hdl,
@@ -388,7 +426,7 @@ int main(void)
         }
         
         sleep(3);
-        int um(munmap(area, lenn));
+        int um(munmap(area, world.size()));
         if (um == -1)
             perror("munmap");
     }
