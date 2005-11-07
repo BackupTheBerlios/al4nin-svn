@@ -391,18 +391,14 @@ int main(void)
 
     perror("shm_open");
     
-///    World<100, 0xF0000000UL, 12> world;
     World<100, 0xFF090000UL, 12> world;
-///    const int lenn(100000000);
     
     int tr(ftruncate(hdl, world.size()));
     if (tr == -1)
         perror("ftruncate");
 
 
-///    void* area(mmap(reinterpret_cast<void*>(/*0xF0000000UL*/world.start()),
     void* area(mmap(world.start(),
-///                    lenn,
                     world.size(),
                     PROT_READ | PROT_WRITE,
                     MAP_SHARED,
@@ -412,7 +408,6 @@ int main(void)
         perror("mmap");
     else
     {
-
         for (int i(0); i < 100; i += 4)
         {
             char* p((char*)area + i);
