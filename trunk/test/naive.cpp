@@ -192,9 +192,9 @@ struct World
                             0));
             if (MAP_FAILED == here)
                 perror("mmap");
+
+            assert(s == size());
             assert(here == start());
-            printf("%lu\n", sysconf(_SC_PAGESIZE));
-            
             assert(sysconf(_SC_PAGESIZE) == PageSize);
     
             return here;
@@ -246,6 +246,19 @@ inline void* RawObj2Meta(void* obj)
     return reinterpret_cast<void*>(b + (d >> SCALE));
 }
 
+
+template <unsigned NUMPAGES, unsigned BASE, unsigned PAGE>
+struct ClusteredWorld : World<NUMPAGES, BASE, PAGE>
+{
+    template <unsigned long CLUSTER, unsigned long SCALE>
+    struct Cluster
+    {
+        static inline void* Raw2Meta(void* obj)
+        {
+            return RawObj2Meta<PAGE, CLUSTER, SCALE>(obj);
+        }
+    };
+};
 
 
 #include "alloc.cpp"
@@ -421,9 +434,9 @@ int main(void)
     perror("shm_open");
 
 #   ifdef __APPLE__
-    typedef World<100, 0xFF000000UL, 12> world;
+    typedef ClusteredWorld<100, 0xFF000000UL, 12> world;
 #   else
-    typedef World<100, 0xFF000000UL, 13> world;
+    typedef ClusteredWorld<100, 0xFF000000UL, 13> world;
 #   endif
     
     int tr(ftruncate(hdl, world::size()));
@@ -443,14 +456,14 @@ int main(void)
         for (int i(0); i < 100; i += 4)
         {
             char* p((char*)area + i);
-            printf("i: %d, o: %p, m: %p\n", i, p, RawObj2Meta<13, 4, 3>(p));
+            printf("i: %d, o: %p, m: %p\n", i, p, world::Cluster<4, 3>::Raw2Meta(p));
             /// *p = 0;
         }
         
         for (int i(10000); i < 10100; i += 4)
         {
             char* p((char*)area + i);
-            printf("i: %d, o: %p, m: %p\n", i, p, RawObj2Meta<13, 4, 3>(p));
+            printf("i: %d, o: %p, m: %p\n", i, p, world::Cluster<4, 3>::Raw2Meta(p));
             *p = 0;
         }
         
