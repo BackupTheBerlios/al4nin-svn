@@ -173,7 +173,6 @@ struct World
 
     void protectPageRW(unsigned pagenum)
         {
-///            mprotect(pages + pagenum, PageSize, PROT_NONE);
             protectClusterRW(pagenum, 1);
         }
 
@@ -421,26 +420,18 @@ int main(void)
 
     perror("shm_open");
     
-    typedef World<100, 0xFF090000UL, 12> world;
+    typedef World<100, 0xFF000000UL, 13> world;
     
     int tr(ftruncate(hdl, world::size()));
     if (tr == -1)
         perror("ftruncate");
 
     world* w(new(hdl) world);
-    void* area(w->start());
+    void* area(w);
     
 
-/*    void* area(mmap(world.start(),
-                    world.size(),
-                    PROT_READ | PROT_WRITE,
-                    MAP_SHARED,
-                    hdl,
-                    0));
     if (MAP_FAILED == area)
         perror("mmap");
-    else*/
-
 
     w->protectPageRW(0);
     
@@ -448,14 +439,14 @@ int main(void)
         for (int i(0); i < 100; i += 4)
         {
             char* p((char*)area + i);
-            printf("i: %d, o: %p, m: %p\n", i, p, RawObj2Meta<12, 4, 3>(p));
+            printf("i: %d, o: %p, m: %p\n", i, p, RawObj2Meta<13, 4, 3>(p));
             /// *p = 0;
         }
         
         for (int i(10000); i < 10100; i += 4)
         {
             char* p((char*)area + i);
-            printf("i: %d, o: %p, m: %p\n", i, p, RawObj2Meta<12, 4, 3>(p));
+            printf("i: %d, o: %p, m: %p\n", i, p, RawObj2Meta<13, 4, 3>(p));
             *p = 0;
         }
         
