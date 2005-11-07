@@ -419,8 +419,12 @@ int main(void)
                      S_IRUSR | S_IWUSR | S_IRGRP | S_IWGRP));
 
     perror("shm_open");
-    
+
+#   ifdef __APPLE__
+    typedef World<100, 0xFF000000UL, 12> world;
+#   else
     typedef World<100, 0xFF000000UL, 13> world;
+#   endif
     
     int tr(ftruncate(hdl, world::size()));
     if (tr == -1)
