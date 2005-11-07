@@ -160,15 +160,45 @@ struct World
 
     Page pages[NUMPAGES];
 
-    void* start(void)
+    static void* start(void)
         {
             Divides<PageSize, BASE> c1;
             return reinterpret_cast<void*>(BASE);
         }
 
-    size_t size(void)
+    static size_t size(void)
         {
             return PageSize * NUMPAGES;
+        }
+
+    void protectPageRW(unsigned pagenum)
+        {
+///            mprotect(pages + pagenum, PageSize, PROT_NONE);
+            protectClusterRW(pagenum, 1);
+        }
+
+    void protectClusterRW(unsigned from_pagenum, unsigned ps)
+        {
+            if (0 != mprotect(pages + from_pagenum, PageSize * ps, PROT_NONE))
+                perror("mprotect");
+        }
+
+    void* operator new(size_t s, int hdl)
+        {
+            void* here(mmap(start(),
+                            s,
+                            PROT_READ | PROT_WRITE,
+                            MAP_SHARED,
+                            hdl,
+                            0));
+            if (MAP_FAILED == here)
+                perror("mmap");
+            assert(here == start());
+            printf("%lu\n", sysconf(_SC_PAGESIZE));
+            
+            assert(sysconf(_SC_PAGESIZE) == PageSize);
+    
+            return here;
         }
 };
 
@@ -391,14 +421,17 @@ int main(void)
 
     perror("shm_open");
     
-    World<100, 0xFF090000UL, 12> world;
+    typedef World<100, 0xFF090000UL, 12> world;
     
-    int tr(ftruncate(hdl, world.size()));
+    int tr(ftruncate(hdl, world::size()));
     if (tr == -1)
         perror("ftruncate");
 
+    world* w(new(hdl) world);
+    void* area(w->start());
+    
 
-    void* area(mmap(world.start(),
+/*    void* area(mmap(world.start(),
                     world.size(),
                     PROT_READ | PROT_WRITE,
                     MAP_SHARED,
@@ -406,22 +439,28 @@ int main(void)
                     0));
     if (MAP_FAILED == area)
         perror("mmap");
-    else
+    else*/
+
+
+    w->protectPageRW(0);
+    
     {
         for (int i(0); i < 100; i += 4)
         {
             char* p((char*)area + i);
             printf("i: %d, o: %p, m: %p\n", i, p, RawObj2Meta<12, 4, 3>(p));
+            /// *p = 0;
         }
         
         for (int i(10000); i < 10100; i += 4)
         {
             char* p((char*)area + i);
             printf("i: %d, o: %p, m: %p\n", i, p, RawObj2Meta<12, 4, 3>(p));
+            *p = 0;
         }
         
         sleep(3);
-        int um(munmap(area, world.size()));
+        int um(munmap(area, world::size()));
         if (um == -1)
             perror("munmap");
     }
