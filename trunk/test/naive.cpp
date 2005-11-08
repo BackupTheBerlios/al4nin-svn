@@ -414,16 +414,13 @@ namespace aL4nin
 
 // http://www.opengroup.org/onlinepubs/007908799/xsh/sigaction.html
 // http://www.gnu.org/software/libc/manual/html_node/Sigaction-Function-Example.html
-    void wummy(int)
-    {
-       printf("hhhh\n");
-    }
-    
-    void yummy(int, siginfo_t *, void *)
-    {
-       printf("gggg\n");
-       abort();
-    }
+// http://www.opengroup.org/onlinepubs/000095399/basedefs/signal.h.html
+void yummy(int, siginfo_t *, void *);
+void yummy(int, siginfo_t* indo, void *)
+{
+    printf("gggg\n");
+    abort();
+}
 
 
 
@@ -468,12 +465,9 @@ int main(void)
     
     struct sigaction act, oact;
     memset(&act, 0, sizeof act);
-    extern void wummy(int);
-    act.sa_handler = wummy;
     act.sa_mask = 0;
     sigemptyset(&act.sa_mask);
-    act.sa_flags = 0;
-    extern void yummy(int, siginfo_t *, void *);
+    act.sa_flags = SA_SIGINFO;
     act.sa_sigaction = yummy;
     
     if (sigaction(SIGBUS/*SEGV*/, &act, &oact))
