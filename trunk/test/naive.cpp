@@ -177,9 +177,20 @@ struct World
             protectClusterRW(pagenum, 1);
         }
 
+    void unprotectPage(unsigned pagenum)
+        {
+            unprotectCluster(pagenum, 1);
+        }
+
     void protectClusterRW(unsigned from_pagenum, unsigned ps)
         {
             if (0 != mprotect(pages + from_pagenum, PageSize * ps, PROT_NONE))
+                perror("mprotect");
+        }
+
+    void unprotectCluster(unsigned from_pagenum, unsigned ps)
+        {
+            if (0 != mprotect(pages + from_pagenum, PageSize * ps, PROT_READ | PROT_WRITE))
                 perror("mprotect");
         }
 
@@ -426,7 +437,7 @@ void yummy(int, siginfo_t* indo, void *)
 void wummy(int, siginfo_t *, void *);
 void wummy(int what, siginfo_t* info, void *)
 {
-    printf("Solaris: handling\n");
+    printf("Solaris: handling (%p)\n", info);
 
     if (!info)
     {  
