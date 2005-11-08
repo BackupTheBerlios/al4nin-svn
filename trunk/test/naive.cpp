@@ -424,9 +424,34 @@ void yummy(int, siginfo_t* indo, void *)
 }
 
 void wummy(int, siginfo_t *, void *);
-void wummy(int, siginfo_t* indo, void *)
+void wummy(int what, siginfo_t* info, void *)
 {
-    printf("Solaris:gggg\n");
+    printf("Solaris: handling\n");
+
+    if (!info)
+    {  
+        printf("info == 0!\n");
+        abort();
+    }
+    
+    switch  (what)
+    {
+        case SIGSEGV:
+        {
+            printf("SIGSEGV\n");
+            switch  (info->si_code)
+            {
+                case SEGV_MAPERR:
+                    printf("MAPERR\n");
+                    break;
+                case SEGV_ACCERR:
+                    printf("MAPERR\n");
+                    break;
+            }
+            printf("info->si_addr = %p\n", info->si_addr);
+        }
+    }
+    
     abort();
 }
 
