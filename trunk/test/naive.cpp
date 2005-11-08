@@ -423,6 +423,12 @@ void yummy(int, siginfo_t* indo, void *)
     abort();
 }
 
+void wummy(int, siginfo_t *, void *);
+void wummy(int, siginfo_t* indo, void *)
+{
+    printf("Solaris:gggg\n");
+    abort();
+}
 
 
 int main(void)
@@ -468,9 +474,14 @@ int main(void)
     memset(&act, 0, sizeof act);
     sigemptyset(&act.sa_mask);
     act.sa_flags = SA_SIGINFO;
-    act.sa_sigaction = yummy;
     
-    if (sigaction(SIGBUS/*SEGV*/, &act, &oact))
+#   ifdef __APPLE__
+    act.sa_sigaction = yummy;
+    if (sigaction(SIGBUS, &act, &oact))
+#   else
+    act.sa_sigaction = wummy;
+    if (sigaction(SIGSEGV, &act, &oact))
+#   endif
         perror("sigaction");
     
     {
