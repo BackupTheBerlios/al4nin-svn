@@ -427,10 +427,44 @@ namespace aL4nin
 // http://www.opengroup.org/onlinepubs/007908799/xsh/sigaction.html
 // http://www.gnu.org/software/libc/manual/html_node/Sigaction-Function-Example.html
 // http://www.opengroup.org/onlinepubs/000095399/basedefs/signal.h.html
-void yummy(int, siginfo_t *, void *);
-void yummy(int, siginfo_t* indo, void *)
+// http://www.ravenbrook.com/project/mps/master/code/protxcpp.c
+#include <sys/ucontext.h>
+
+void yummy(int, siginfo_t*, void*);
+void yummy(int what, siginfo_t* info, void* context)
 {
-    printf("gggg\n");
+    printf("Mac OS X: handling (%p)\n", info);
+
+    if (!info)
+    {  
+        printf("info == 0!\n");
+        abort();
+    }
+    
+    switch (what)
+    {
+        case SIGBUS:
+        {
+            printf("SIGBUS\n");
+            switch  (info->si_code)
+            {
+                case BUS_ADRALN:
+                    printf("ADRALN\n");
+                    break;
+/*                case BUS_ADRERR:
+                    printf("ADRERR\n");
+                    break;
+                case BUS_OBJERR:
+                    printf("OBJERR\n");
+                    break;*/
+            }
+            
+            ucontext_t* ucontext(static_cast<ucontext_t*>(context));
+            info->si_addr = (void*)ucontext->uc_mcontext->es.dar;
+            printf("info->si_addr = %p\n", info->si_addr);
+        }
+    }
+    
     abort();
 }
 
@@ -445,7 +479,7 @@ void wummy(int what, siginfo_t* info, void *)
         abort();
     }
     
-    switch  (what)
+    switch (what)
     {
         case SIGSEGV:
         {
