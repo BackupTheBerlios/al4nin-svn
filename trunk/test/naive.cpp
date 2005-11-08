@@ -172,6 +172,11 @@ struct World
             return PageSize * NUMPAGES;
         }
 
+    static World& self(void)
+        {
+            return *static_cast<World*>(start());
+        }
+
     void protectPageRW(unsigned pagenum)
         {
             protectClusterRW(pagenum, 1);
@@ -424,6 +429,15 @@ namespace aL4nin
     }
 }
 
+
+#   ifdef __APPLE__
+    typedef ClusteredWorld<100, 0xFF000000UL, 12> world;
+#   else
+    typedef ClusteredWorld<100, 0xFF000000UL, 13> world;
+#   endif
+    
+
+
 // http://www.opengroup.org/onlinepubs/007908799/xsh/sigaction.html
 // http://www.gnu.org/software/libc/manual/html_node/Sigaction-Function-Example.html
 // http://www.opengroup.org/onlinepubs/000095399/basedefs/signal.h.html
@@ -438,6 +452,12 @@ void yummy(int what, siginfo_t* info, void* context)
     if (!info)
     {  
         printf("info == 0!\n");
+        abort();
+    }
+    
+    if (!context)
+    {  
+        printf("context == 0!\n");
         abort();
     }
     
@@ -462,10 +482,21 @@ void yummy(int what, siginfo_t* info, void* context)
             ucontext_t* ucontext(static_cast<ucontext_t*>(context));
             info->si_addr = (void*)ucontext->uc_mcontext->es.dar;
             printf("info->si_addr = %p\n", info->si_addr);
+
+
+            break;
         }
+        
+        default:
+            printf("bogus signal (%d)\n", what);
+            abort();
     }
     
-    abort();
+    
+    world::self().unprotectPage(0);
+    printf("*info->si_addr = %x\n", *(unsigned long*)info->si_addr);
+    
+    // abort();
 }
 
 void wummy(int, siginfo_t *, void *);
@@ -521,12 +552,6 @@ int main(void)
 
     perror("shm_open");
 
-#   ifdef __APPLE__
-    typedef ClusteredWorld<100, 0xFF000000UL, 12> world;
-#   else
-    typedef ClusteredWorld<100, 0xFF000000UL, 13> world;
-#   endif
-    
     int tr(ftruncate(hdl, world::size()));
     if (tr == -1)
         perror("ftruncate");
@@ -535,8 +560,8 @@ int main(void)
     void* area(w);
     
 
-    if (MAP_FAILED == area)
-        perror("mmap");
+    unsigned long* p((unsigned long*)area);
+    *p = 0xbeeffece;
 
     w->protectPageRW(0);
     
@@ -560,6 +585,7 @@ int main(void)
             char* p((char*)area + i);
             printf("i: %d, o: %p, m: %p\n", i, p, world::Cluster<4, 3>::Raw2Meta(p));
             *p = 0;
+            printf("*p = %x\n", *(unsigned long*)p);
         }
         
         for (int i(10000); i < 10100; i += 4)
