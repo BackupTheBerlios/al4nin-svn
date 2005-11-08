@@ -14,6 +14,7 @@
 #include <sys/stat.h>
 #include <fcntl.h>
 #include <errno.h>
+#include <signal.h>
 
 namespace aL4nin
 {
@@ -465,7 +466,6 @@ int main(void)
     
     struct sigaction act, oact;
     memset(&act, 0, sizeof act);
-    act.sa_mask = 0;
     sigemptyset(&act.sa_mask);
     act.sa_flags = SA_SIGINFO;
     act.sa_sigaction = yummy;
