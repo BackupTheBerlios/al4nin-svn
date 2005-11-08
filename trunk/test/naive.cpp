@@ -412,6 +412,20 @@ namespace aL4nin
     }
 }
 
+// http://www.opengroup.org/onlinepubs/007908799/xsh/sigaction.html
+// http://www.gnu.org/software/libc/manual/html_node/Sigaction-Function-Example.html
+    void wummy(int)
+    {
+       printf("hhhh\n");
+    }
+    
+    void yummy(int, siginfo_t *, void *)
+    {
+       printf("gggg\n");
+       abort();
+    }
+
+
 
 int main(void)
 {
@@ -452,12 +466,25 @@ int main(void)
 
     w->protectPageRW(0);
     
+    struct sigaction act, oact;
+    memset(&act, 0, sizeof act);
+    extern void wummy(int);
+    act.sa_handler = wummy;
+    act.sa_mask = 0;
+    sigemptyset(&act.sa_mask);
+    act.sa_flags = 0;
+    extern void yummy(int, siginfo_t *, void *);
+    act.sa_sigaction = yummy;
+    
+    if (sigaction(SIGBUS/*SEGV*/, &act, &oact))
+        perror("sigaction");
+    
     {
         for (int i(0); i < 100; i += 4)
         {
             char* p((char*)area + i);
             printf("i: %d, o: %p, m: %p\n", i, p, world::Cluster<4, 3>::Raw2Meta(p));
-            /// *p = 0;
+            *p = 0;
         }
         
         for (int i(10000); i < 10100; i += 4)
