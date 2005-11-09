@@ -502,6 +502,8 @@ namespace aL4nin
 // http://www.ravenbrook.com/project/mps/master/code/protxcpp.c
 #include <sys/ucontext.h>
 
+
+#   ifdef __APPLE__
 void yummy(int, siginfo_t*, void*);
 void yummy(int what, siginfo_t* info, void* context)
 {
@@ -550,12 +552,10 @@ void yummy(int what, siginfo_t* info, void* context)
             abort();
     }
     
-    
     world::self().unprotectPage(0);
     printf("*info->si_addr = %x\n", *(unsigned long*)info->si_addr);
-    
-    // abort();
 }
+#   endif
 
 void wummy(int, siginfo_t *, void *);
 void wummy(int what, siginfo_t* info, void *)
