@@ -433,45 +433,41 @@ namespace aL4nin
     {
         typedef vcons selftype;
         
-        #define IMPL_METH(NAME, RES, CONSTNESS, ...) static RES _ ## NAME(CONSTNESS selftype& self, ##__VA_ARGS__)
-        static void _sayhello(const vcons& self)
-///        IMPL_METH(sayhello, void, const)
+#       define IMPL_METH(CONSTNESS, NAME, RES, ...) static RES _ ## NAME(CONSTNESS selftype& self, ##__VA_ARGS__)
+
+        IMPL_METH(const, sayhello, void)
         {
             printf("Hello from %p\n", &self);
         }
 
-///        static void* car(const vcons& self)
-        IMPL_METH(car, void*, const)
+        IMPL_METH(const, car, void*)
         {
             return self.first;
         };
 
-///        static void* cdr(const vcons& self)
-        IMPL_METH(cdr, void*, const)
+        IMPL_METH(const, cdr, void*)
         {
             return self.second;
         };
 
-///        static void set_car(vcons& self, void* new_car)
-        IMPL_METH(set_car, void,, void* new_car)
+        IMPL_METH(,set_car, void, void* new_car)
         {
             self.first = new_car;
         };
 
-///        static void set_cdr(vcons& self, void* new_cdr)
-        IMPL_METH(set_cdr, void,, void* new_cdr)
+        IMPL_METH(,set_cdr, void, void* new_cdr)
         {
             self.second = new_cdr;
         };
         
         struct vtbl
         {
-            __typeof__(&selftype::_sayhello) sayhello;
-///            void (*sayhello)(const vcons&);
-            void* (*car)(const vcons&);
-            void* (*cdr)(const vcons&);
-            void (*set_car)(const vcons&, void* new_car);
-            void (*set_cdr)(const vcons&, void* new_cdr);
+#           define VTBL_ENTRY(NAME) __typeof__(&selftype::_ ## NAME) NAME
+            VTBL_ENTRY(sayhello);
+            VTBL_ENTRY(car);
+            VTBL_ENTRY(cdr);
+            VTBL_ENTRY(set_car);
+            VTBL_ENTRY(set_cdr);
         };
 
         const vtbl& getvtbl(void) const;
@@ -481,7 +477,6 @@ namespace aL4nin
         {
             getvtbl().sayhello(*this);
         }
-
     };
 
 
