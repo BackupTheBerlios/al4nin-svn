@@ -592,6 +592,48 @@ void wummy(int what, siginfo_t* info, void *)
 }
 
 
+void mark(vcons* o) throw ()
+{
+    printf("marking (%p) in process %d\n", o, getpid());
+}
+
+
+void fork_and_exception(vcons& it)
+try
+{
+    mark(&it);
+
+
+    const pid_t father(getpid());
+    const pid_t child(fork());
+    
+    if (0 > child)
+    {
+        perror("fork");
+        abort();
+    }
+    else if (0 == child)
+    {
+        printf("new process (%d)\n", getpid());
+        throw &it;
+///        printf("exiting... (%d)\n", getpid());
+///        _exit(0);
+    }
+    else
+    {
+        int stat(0);
+        waitpid(child, &stat, 0);
+        printf("child (%d) exited with status: %d\n", child, stat);
+    }
+}
+catch (vcons*)
+{
+    mark(&it);
+    throw;
+}
+
+
+
 int main(void)
 {
     vector<int, alloc<int> > v(3);
@@ -606,6 +648,21 @@ int main(void)
 
     collect(true);
 
+    // forked exceptions experiment
+    //
+    vcons ev;
+    try
+    {
+        fork_and_exception(ev);
+    }
+    catch (vcons*)
+    {
+        printf("exiting... (%d)\n", getpid());
+        _exit(0);
+    }
+
+    // vcons experiment
+    //
     vcons vc;
     vc.sayhello();
 
