@@ -493,24 +493,17 @@ namespace aL4nin
 
         static vtbl v;
         
-        vcons(void* car = 0, void* cdr = 0)
-        {
-            first = car;
-            second = cdr;
-            // ###get_meta(*this).vtbl = v;
-        }
+        vcons(void* car = 0, void* cdr = 0);
     };
 
     vcons::vtbl vcons::v = { _sayhello, _car, _cdr, _set_car, _set_cdr };
 
-
     template <>
     struct meta<vcons>
     {
-        vcons::vtbl* vtbl;
+        const vcons::vtbl* vtbl;
         long used;
     };
-
 
     template <typename T, size_t COUNT>
     struct Scale
@@ -527,18 +520,33 @@ namespace aL4nin
     //
     struct Cluster_vcons : world::Cluster<4/*=16 pages*/, Log2<Scale<vcons, 32>::is>::is>
     {
-        meta<vcons> metas[64];
-        vcons objs[1024];
+        meta<vcons> metas[32];
+        vcons objs[1024 - 32];
         
         static Cluster_vcons& allocate(void)
         {
-            return *new(world::/*selfAs<world>::*/allocate<Magnitude>(3/*pages*/)) Cluster_vcons;
+            return *new(world::/*selfAs<world>::*/allocate<Magnitude>(2/*pages*/)) Cluster_vcons;
         }
     } c1;
 
+    template <>
+    inline meta<vcons>* object_meta(vcons* o)
+    {
+        return const_cast<meta<vcons>*>(static_cast<const meta<vcons>*>(Cluster_vcons::Raw2Meta(o)));
+    }
+
+    inline vcons::vcons(void* car, void* cdr)
+    {
+        first = car;
+        second = cdr;
+        object_meta(this)->vtbl = &v;
+    }
+
+
     const vcons::vtbl& vcons::getvtbl(void) const
     {
-        return *static_cast<const vcons::vtbl*>(Cluster_vcons::Raw2Meta(this));
+///        return *static_cast<const vcons::vtbl*>(Cluster_vcons::Raw2Meta(this));
+        return *object_meta(const_cast<vcons*>(this))->vtbl;
     }
 
 
@@ -759,11 +767,13 @@ int main(void)
 
     // Clusters experiment
     //
+    Cluster_vcons& clu(Cluster_vcons::allocate());
+    vcons& babe(clu.objs[0]);
     
 
     // forked exceptions experiment
     //
-    vcons ev;
+    vcons& ev(clu.objs[0]);
     try
     {
         fork_and_exception(ev);
@@ -776,7 +786,7 @@ int main(void)
 
     // vcons experiment
     //
-    vcons vc;
+    vcons& vc(babe);
     vc.sayhello();
 
     // get the world set up
