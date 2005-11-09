@@ -489,11 +489,6 @@ namespace aL4nin
 
     vcons::vtbl vcons::v;
 
-    const vcons::vtbl& vcons::getvtbl(void) const
-    {
-        return *static_cast<const vcons::vtbl*>(world::Cluster<4, 3>::Raw2Meta(this));
-    }
-
 
     template <>
     struct meta<vcons>
@@ -502,19 +497,49 @@ namespace aL4nin
         long used;
     };
 
-    struct Cluster_vcons : world::Cluster<4, 3>
+
+    template <typename T, size_t COUNT>
+    struct Scale
+    {
+        enum
+        {
+            is = sizeof(T (&)[COUNT]) / sizeof(meta<T>),
+            rest = sizeof(T (&)[COUNT]) - is * sizeof(meta<T>)
+        };
+    };
+    
+
+    struct Cluster_vcons : world::Cluster<4, 5>
     {
         meta<vcons> metas[64];
         vcons objs[1024];
     } c1;
     
+    const vcons::vtbl& vcons::getvtbl(void) const
+    {
+        return *static_cast<const vcons::vtbl*>(Cluster_vcons::Raw2Meta(this));
+    }
+
+    template <unsigned long U>
+    struct Log2 { static const int is = 1 + Log2<(U >> 1)>::is; };
+    
+    template <> struct Log2<0> { static const int is = 1; };
+    template <> struct Log2<1> { static const int is = 1; };
+    
+/*    IsZero<Scale<vcons, 32>::is> t0;
+
     IsZero<sizeof(Cluster_vcons)> t1;
     IsZero<sizeof(*c1.metas)> t2;
     IsZero<sizeof(*c1.objs)> t3;
     IsZero<sizeof(c1.metas)> t4;
     IsZero<sizeof(c1.objs)> t5;
-    
-        
+*/
+
+
+    IsZero<Log2<32-1>::is != 5> t6;
+    IsZero<Scale<vcons, 32>::rest> t7;
+    //IsZero<sizeof(c1.objs)> t8;
+
 }
 
 
