@@ -509,25 +509,36 @@ namespace aL4nin
     };
     
 
-    struct Cluster_vcons : world::Cluster<4, 5>
+    // Log2: is: compute the binary logarithm of U
+    //       bits: how many bits are needed to represent
+    //       all integers form 0 .. U.
+    //
+    template <unsigned long U>
+    struct Log2
+    {
+        static const int bits = 1 + Log2<(U >> 1)>::bits;
+        static const int is = Log2<(U - 1)>::bits;
+    };
+
+    template <> struct Log2<0> { static const int bits = 1;  };
+    template <> struct Log2<1> { static const int bits = 1; static const int is = 0; };
+
+    // Cluster_vcons: a cluster for aggregating vcons'
+    //
+    struct Cluster_vcons : world::Cluster<4/*=16 pages*/, Log2<Scale<vcons, 32>::is>::is>
     {
         meta<vcons> metas[64];
         vcons objs[1024];
     } c1;
-    
+
     const vcons::vtbl& vcons::getvtbl(void) const
     {
         return *static_cast<const vcons::vtbl*>(Cluster_vcons::Raw2Meta(this));
     }
 
-    template <unsigned long U>
-    struct Log2 { static const int is = 1 + Log2<(U >> 1)>::is; };
-    
-    template <> struct Log2<0> { static const int is = 1; };
-    template <> struct Log2<1> { static const int is = 1; };
-    
-/*    IsZero<Scale<vcons, 32>::is> t0;
 
+/*
+    IsZero<Scale<vcons, 32>::is> t0;
     IsZero<sizeof(Cluster_vcons)> t1;
     IsZero<sizeof(*c1.metas)> t2;
     IsZero<sizeof(*c1.objs)> t3;
@@ -536,9 +547,39 @@ namespace aL4nin
 */
 
 
-    IsZero<Log2<32-1>::is != 5> t6;
-    IsZero<Scale<vcons, 32>::rest> t7;
-    //IsZero<sizeof(c1.objs)> t8;
+    // IsZero<Log2<0>::is != 0> l0;
+    IsZero<Log2<1>::is != 0> l1;
+    IsZero<Log2<2>::is != 1> l2;
+    IsZero<Log2<3>::is != 2> l3;
+    IsZero<Log2<4>::is != 2> l4;
+    IsZero<Log2<5>::is != 3> l5;
+    IsZero<Log2<6>::is != 3> l6;
+    IsZero<Log2<7>::is != 3> l7;
+    IsZero<Log2<8>::is != 3> l8;
+    IsZero<Log2<9>::is != 4> l9;
+    IsZero<Log2<15>::is != 4> l15;
+    IsZero<Log2<16>::is != 4> l16;
+    IsZero<Log2<17>::is != 5> l17;
+
+
+    IsZero<Log2<0>::bits != 1> b0;
+    IsZero<Log2<1>::bits != 1> b1;
+    IsZero<Log2<2>::bits != 2> b2;
+    IsZero<Log2<3>::bits != 2> b3;
+    IsZero<Log2<4>::bits != 3> b4;
+    IsZero<Log2<5>::bits != 3> b5;
+    IsZero<Log2<6>::bits != 3> b6;
+    IsZero<Log2<7>::bits != 3> b7;
+    IsZero<Log2<8>::bits != 4> b8;
+    IsZero<Log2<9>::bits != 4> b9;
+    IsZero<Log2<15>::bits != 4> b15;
+    IsZero<Log2<16>::bits != 5> b16;
+
+
+    IsZero<Log2<Scale<vcons, 32>::is>::is != 5> t6;
+
+    IsZero<Log2<32>::is != 5> t7;
+    IsZero<Scale<vcons, 32>::rest> t8;
 
 }
 
