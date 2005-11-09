@@ -249,7 +249,7 @@ struct World
 //   of the object to the appropriate metaobject.
 
 template <unsigned long PAGE, unsigned long CLUSTER, unsigned long SCALE>
-inline void* RawObj2Meta(void* obj)
+inline const void* RawObj2Meta(const void* obj)
 {
     typedef unsigned long sptr_t;
     register sptr_t o(reinterpret_cast<sptr_t>(obj));
@@ -260,7 +260,7 @@ inline void* RawObj2Meta(void* obj)
     
     register sptr_t b(o & ~static_cast<sptr_t>(pat));
     register sptr_t d(o & static_cast<sptr_t>(pat));
-    return reinterpret_cast<void*>(b + (d >> SCALE));
+    return reinterpret_cast<const void*>(b + (d >> SCALE));
 }
 
 
@@ -270,13 +270,19 @@ struct ClusteredWorld : World<NUMPAGES, BASE, PAGE>
     template <unsigned long CLUSTER, unsigned long SCALE>
     struct Cluster
     {
-        static inline void* Raw2Meta(void* obj)
+        static inline const void* Raw2Meta(const void* obj)
         {
             return RawObj2Meta<PAGE, CLUSTER, SCALE>(obj);
         }
     };
 };
 
+#   ifdef __APPLE__
+    typedef ClusteredWorld<100, 0xFF000000UL, 12> world;
+#   else
+    typedef ClusteredWorld<100, 0xFF000000UL, 13> world;
+#   endif
+    
 
 #include "alloc.cpp"
 
@@ -462,7 +468,7 @@ namespace aL4nin
         
         struct vtbl
         {
-#           define VTBL_ENTRY(NAME) __typeof__(&selftype::_ ## NAME) NAME
+#           define VTBL_ENTRY(NAME) __typeof__(&selftype::_ ## NAME) /*const*/ NAME
             VTBL_ENTRY(sayhello);
             VTBL_ENTRY(car);
             VTBL_ENTRY(cdr);
@@ -477,18 +483,19 @@ namespace aL4nin
         {
             getvtbl().sayhello(*this);
         }
+
+        static vtbl v;
     };
 
+    vcons::vtbl vcons::v;
 
+    const vcons::vtbl& vcons::getvtbl(void) const
+    {
+        return *static_cast<const vcons::vtbl*>(world::Cluster<4, 3>::Raw2Meta(this));
+    }
 }
 
 
-#   ifdef __APPLE__
-    typedef ClusteredWorld<100, 0xFF000000UL, 12> world;
-#   else
-    typedef ClusteredWorld<100, 0xFF000000UL, 13> world;
-#   endif
-    
 
 
 // http://www.opengroup.org/onlinepubs/007908799/xsh/sigaction.html
@@ -598,6 +605,12 @@ int main(void)
 
 
     collect(true);
+
+    vcons vc;
+    vc.sayhello();
+
+    // get the world set up
+    //
 
     int hdl(shm_open("/blubber",
                      O_RDWR | O_CREAT,
