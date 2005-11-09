@@ -493,6 +493,28 @@ namespace aL4nin
     {
         return *static_cast<const vcons::vtbl*>(world::Cluster<4, 3>::Raw2Meta(this));
     }
+
+
+    template <>
+    struct meta<vcons>
+    {
+        vcons::vtbl* vtbl;
+        long used;
+    };
+
+    struct Cluster_vcons : world::Cluster<4, 3>
+    {
+        meta<vcons> metas[64];
+        vcons objs[1024];
+    } c1;
+    
+    IsZero<sizeof(Cluster_vcons)> t1;
+    IsZero<sizeof(*c1.metas)> t2;
+    IsZero<sizeof(*c1.objs)> t3;
+    IsZero<sizeof(c1.metas)> t4;
+    IsZero<sizeof(c1.objs)> t5;
+    
+        
 }
 
 
