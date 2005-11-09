@@ -71,6 +71,48 @@ namespace aL4nin
 
         ~alloc(void) throw() { }
     };
+
+
+    // Log2: is: compute the binary logarithm of U
+    //       bits: how many bits are needed to represent
+    //             all integers form 0 .. U.
+    //       exact: iff U is a power of 2
+    //
+    template <unsigned long U>
+    struct Log2
+    {
+        static const int bits = 1 + Log2<(U >> 1)>::bits;
+        static const int is = Log2<(U - 1)>::bits;
+        static const bool exact = (1U << is) == U;
+    };
+
+    template <> struct Log2<0> { static const int bits = 1;  };
+    template <> struct Log2<1>
+    {
+        static const int bits = 1;
+        static const int is = 0;
+        static const bool exact = true;
+    };
+
+    // Checker templates
+    //
+    template <unsigned>
+    struct IsZero;
+
+    template <>
+    struct IsZero<0>
+    {};
+
+
+    template <unsigned long DIVISOR, unsigned long DIVIDEND>
+    struct Divides : IsZero<DIVIDEND % DIVISOR>
+    {};
+
+    template <unsigned long LHS, unsigned long RHS>
+    struct Same : IsZero<LHS != RHS>
+    {};
+
+
 }
 
 #include "safemacros.h" // undo them

@@ -102,6 +102,8 @@ struct foo
 
 };
 
+namespace aL4nin
+{
 
 // Anatomy of the WORLD.
 //
@@ -123,21 +125,6 @@ struct foo
 
 // Note: later I may introduce a multiworld, which may be
 // a linked list of worlds.
-
-
-// Checker templates
-//
-template <unsigned>
-struct IsZero;
-
-template <>
-struct IsZero<0>
-{};
-
-
-template <unsigned long DIVISOR, unsigned long DIVIDEND>
-struct Divides : IsZero<DIVIDEND % DIVISOR>
-{};
 
 
 
@@ -220,7 +207,6 @@ struct World
 };
 
 
-
 // MISC ideas
 // allocation: tell a cluster to allocate an obj of a certain
 // metadata "class". returns a cluster address, which may be the
@@ -277,6 +263,9 @@ struct ClusteredWorld : World<NUMPAGES, BASE, PAGE>
         }
     };
 };
+}
+
+using namespace aL4nin;
 
 #   ifdef __APPLE__
     typedef ClusteredWorld<100, 0xFF000000UL, 12> world;
@@ -287,9 +276,7 @@ struct ClusteredWorld : World<NUMPAGES, BASE, PAGE>
 
 #include "alloc.cpp"
 
-
 using namespace std;
-using namespace aL4nin;
 
 namespace aL4nin
 {
@@ -510,27 +497,6 @@ namespace aL4nin
     };
     
 
-    // Log2: is: compute the binary logarithm of U
-    //       bits: how many bits are needed to represent
-    //             all integers form 0 .. U.
-    //       exact: iff U is a power of 2
-    //
-    template <unsigned long U>
-    struct Log2
-    {
-        static const int bits = 1 + Log2<(U >> 1)>::bits;
-        static const int is = Log2<(U - 1)>::bits;
-        static const bool exact = (1U << is) == U;
-    };
-
-    template <> struct Log2<0> { static const int bits = 1;  };
-    template <> struct Log2<1>
-    {
-        static const int bits = 1;
-        static const int is = 0;
-        static const bool exact = true;
-    };
-
     // Cluster_vcons: a cluster for aggregating vcons'
     //
     struct Cluster_vcons : world::Cluster<4/*=16 pages*/, Log2<Scale<vcons, 32>::is>::is>
@@ -556,7 +522,7 @@ namespace aL4nin
 
 
     // IsZero<Log2<0>::is != 0> l0;
-    IsZero<Log2<1>::is != 0> l1;
+    Same<Log2<1>::is, 0> l1;
     IsZero<Log2<2>::is != 1> l2;
     IsZero<Log2<3>::is != 2> l3;
     IsZero<Log2<4>::is != 2> l4;
