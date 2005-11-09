@@ -431,34 +431,43 @@ namespace aL4nin
 
     struct vcons : cons
     {
-        static void sayhello(const vcons& self)
+        typedef vcons selftype;
+        
+        #define IMPL_METH(NAME, RES, CONSTNESS, ...) static RES _ ## NAME(CONSTNESS selftype& self, ##__VA_ARGS__)
+        static void _sayhello(const vcons& self)
+///        IMPL_METH(sayhello, void, const)
         {
             printf("Hello from %p\n", &self);
         }
 
-        static void* car(const vcons& self)
+///        static void* car(const vcons& self)
+        IMPL_METH(car, void*, const)
         {
             return self.first;
         };
 
-        static void* cdr(const vcons& self)
+///        static void* cdr(const vcons& self)
+        IMPL_METH(cdr, void*, const)
         {
             return self.second;
         };
 
-        static void set_car(vcons& self, void* new_car)
+///        static void set_car(vcons& self, void* new_car)
+        IMPL_METH(set_car, void,, void* new_car)
         {
             self.first = new_car;
         };
 
-        static void set_cdr(vcons& self, void* new_cdr)
+///        static void set_cdr(vcons& self, void* new_cdr)
+        IMPL_METH(set_cdr, void,, void* new_cdr)
         {
             self.second = new_cdr;
         };
         
         struct vtbl
         {
-            void (*sayhello)(const vcons&);
+            __typeof__(&selftype::_sayhello) sayhello;
+///            void (*sayhello)(const vcons&);
             void* (*car)(const vcons&);
             void* (*cdr)(const vcons&);
             void (*set_car)(const vcons&, void* new_car);
