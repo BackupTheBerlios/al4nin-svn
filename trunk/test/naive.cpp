@@ -427,6 +427,55 @@ namespace aL4nin
         meta<cons>& m(get_meta<cons>(1));
         m.mark(static_cast<cons*>(p) PASS_VERBOSE);
     }
+
+
+    struct vcons : cons
+    {
+        static void sayhello(const vcons& self)
+        {
+            printf("Hello from %p\n", &self);
+        }
+
+        static void* car(const vcons& self)
+        {
+            return self.first;
+        };
+
+        static void* cdr(const vcons& self)
+        {
+            return self.second;
+        };
+
+        static void set_car(vcons& self, void* new_car)
+        {
+            self.first = new_car;
+        };
+
+        static void set_cdr(vcons& self, void* new_cdr)
+        {
+            self.second = new_cdr;
+        };
+        
+        struct vtbl
+        {
+            void (*sayhello)(const vcons&);
+            void* (*car)(const vcons&);
+            void* (*cdr)(const vcons&);
+            void (*set_car)(const vcons&, void* new_car);
+            void (*set_cdr)(const vcons&, void* new_cdr);
+        };
+
+        const vtbl& getvtbl(void) const;
+        
+        
+        void sayhello(void) const
+        {
+            getvtbl().sayhello(*this);
+        }
+
+    };
+
+
 }
 
 
