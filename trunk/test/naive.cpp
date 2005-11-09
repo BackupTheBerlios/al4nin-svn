@@ -122,6 +122,10 @@ namespace aL4nin
 // Metaobjects are just additional information that is factored
 // out of the objects or can add information about the validity
 // and GC-properties of a group of objects.
+//
+// Clusters comprised of one page are possible (p=0),
+// in this case the metaobjects and objects are both
+// located in the same VM page.
 
 // Note: later I may introduce a multiworld, which may be
 // a linked list of worlds.
@@ -163,6 +167,12 @@ struct World
     static World& self(void)
         {
             return *static_cast<World*>(start());
+        }
+
+    template <typename WORLD>
+    static WORLD& selfAs(void)
+        {
+            return static_cast<WORLD&>(self());
         }
 
     void protectPageRW(unsigned pagenum)
@@ -257,11 +267,20 @@ struct ClusteredWorld : World<NUMPAGES, BASE, PAGE>
     template <unsigned long CLUSTER, unsigned long SCALE>
     struct Cluster
     {
+        enum { Magnitude = CLUSTER };
         static inline const void* Raw2Meta(const void* obj)
         {
             return RawObj2Meta<PAGE, CLUSTER, SCALE>(obj);
         }
     };
+
+    template <unsigned long CLUSTER>
+    static void* allocate(size_t ps)
+    {
+        // dummy
+        return start();
+    }
+    
 };
 }
 
@@ -456,7 +475,7 @@ namespace aL4nin
         
         struct vtbl
         {
-#           define VTBL_ENTRY(NAME) __typeof__(&selftype::_ ## NAME) /*const*/ NAME
+#           define VTBL_ENTRY(NAME) __typeof__(&selftype::_ ## NAME) const NAME
             VTBL_ENTRY(sayhello);
             VTBL_ENTRY(car);
             VTBL_ENTRY(cdr);
@@ -473,9 +492,16 @@ namespace aL4nin
         }
 
         static vtbl v;
+        
+        vcons(void* car = 0, void* cdr = 0)
+        {
+            first = car;
+            second = cdr;
+            // ###get_meta(*this).vtbl = v;
+        }
     };
 
-    vcons::vtbl vcons::v;
+    vcons::vtbl vcons::v = { _sayhello, _car, _cdr, _set_car, _set_cdr };
 
 
     template <>
@@ -503,6 +529,11 @@ namespace aL4nin
     {
         meta<vcons> metas[64];
         vcons objs[1024];
+        
+        static Cluster_vcons& allocate(void)
+        {
+            return *new(world::/*selfAs<world>::*/allocate<Magnitude>(3/*pages*/)) Cluster_vcons;
+        }
     } c1;
 
     const vcons::vtbl& vcons::getvtbl(void) const
@@ -521,54 +552,54 @@ namespace aL4nin
 */
 
 
-    // IsZero<Log2<0>::is != 0> l0;
+    // Same<Log2<0>::is, 0> l0;
     Same<Log2<1>::is, 0> l1;
-    IsZero<Log2<2>::is != 1> l2;
-    IsZero<Log2<3>::is != 2> l3;
-    IsZero<Log2<4>::is != 2> l4;
-    IsZero<Log2<5>::is != 3> l5;
-    IsZero<Log2<6>::is != 3> l6;
-    IsZero<Log2<7>::is != 3> l7;
-    IsZero<Log2<8>::is != 3> l8;
-    IsZero<Log2<9>::is != 4> l9;
-    IsZero<Log2<15>::is != 4> l15;
-    IsZero<Log2<16>::is != 4> l16;
-    IsZero<Log2<17>::is != 5> l17;
+    Same<Log2<2>::is, 1> l2;
+    Same<Log2<3>::is, 2> l3;
+    Same<Log2<4>::is, 2> l4;
+    Same<Log2<5>::is, 3> l5;
+    Same<Log2<6>::is, 3> l6;
+    Same<Log2<7>::is, 3> l7;
+    Same<Log2<8>::is, 3> l8;
+    Same<Log2<9>::is, 4> l9;
+    Same<Log2<15>::is, 4> l15;
+    Same<Log2<16>::is, 4> l16;
+    Same<Log2<17>::is, 5> l17;
 
 
-    // IsZero<Log2<0>::exact> e0;
-    IsZero<Log2<1>::exact != true> e1;
-    IsZero<Log2<2>::exact != true> e2;
-    IsZero<Log2<3>::exact != false> e3;
-    IsZero<Log2<4>::exact != true> e4;
-    IsZero<Log2<5>::exact != false> e5;
-    IsZero<Log2<6>::exact != false> e6;
-    IsZero<Log2<7>::exact != false> e7;
-    IsZero<Log2<8>::exact != true> e8;
-    IsZero<Log2<9>::exact != false> e9;
-    IsZero<Log2<15>::exact != false> e15;
-    IsZero<Log2<16>::exact != true> e16;
-    IsZero<Log2<17>::exact != false> e17;
+    // Same<Log2<0>::exact> e0;
+    Same<Log2<1>::exact, true> e1;
+    Same<Log2<2>::exact, true> e2;
+    Same<Log2<3>::exact, false> e3;
+    Same<Log2<4>::exact, true> e4;
+    Same<Log2<5>::exact, false> e5;
+    Same<Log2<6>::exact, false> e6;
+    Same<Log2<7>::exact, false> e7;
+    Same<Log2<8>::exact, true> e8;
+    Same<Log2<9>::exact, false> e9;
+    Same<Log2<15>::exact, false> e15;
+    Same<Log2<16>::exact, true> e16;
+    Same<Log2<17>::exact, false> e17;
 
 
-    IsZero<Log2<0>::bits != 1> b0;
-    IsZero<Log2<1>::bits != 1> b1;
-    IsZero<Log2<2>::bits != 2> b2;
-    IsZero<Log2<3>::bits != 2> b3;
-    IsZero<Log2<4>::bits != 3> b4;
-    IsZero<Log2<5>::bits != 3> b5;
-    IsZero<Log2<6>::bits != 3> b6;
-    IsZero<Log2<7>::bits != 3> b7;
-    IsZero<Log2<8>::bits != 4> b8;
-    IsZero<Log2<9>::bits != 4> b9;
-    IsZero<Log2<15>::bits != 4> b15;
-    IsZero<Log2<16>::bits != 5> b16;
+    Same<Log2<0>::bits, 1> b0;
+    Same<Log2<1>::bits, 1> b1;
+    Same<Log2<2>::bits, 2> b2;
+    Same<Log2<3>::bits, 2> b3;
+    Same<Log2<4>::bits, 3> b4;
+    Same<Log2<5>::bits, 3> b5;
+    Same<Log2<6>::bits, 3> b6;
+    Same<Log2<7>::bits, 3> b7;
+    Same<Log2<8>::bits, 4> b8;
+    Same<Log2<9>::bits, 4> b9;
+    Same<Log2<15>::bits, 4> b15;
+    Same<Log2<16>::bits, 5> b16;
 
 
     IsZero<Log2<Scale<vcons, 32>::is>::is != 5> t6;
     IsZero<Log2<Scale<vcons, 32>::is>::exact != true> t7;
 
-    IsZero<Log2<32>::is != 5> t8;
+    Same<Log2<32>::is, 5> t8;
     IsZero<Scale<vcons, 32>::rest> t9;
 
 }
@@ -712,6 +743,8 @@ catch (vcons*)
 
 int main(void)
 {
+    // STL allocators experiment
+    //
     vector<int, alloc<int> > v(3);
     map<int, int, less<int>, alloc<int> > m;
     m.insert(make_pair(1, 42));
@@ -723,6 +756,10 @@ int main(void)
 
 
     collect(true);
+
+    // Clusters experiment
+    //
+    
 
     // forked exceptions experiment
     //
