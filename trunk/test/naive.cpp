@@ -511,17 +511,24 @@ namespace aL4nin
 
     // Log2: is: compute the binary logarithm of U
     //       bits: how many bits are needed to represent
-    //       all integers form 0 .. U.
+    //             all integers form 0 .. U.
+    //       exact: iff U is a power of 2
     //
     template <unsigned long U>
     struct Log2
     {
         static const int bits = 1 + Log2<(U >> 1)>::bits;
         static const int is = Log2<(U - 1)>::bits;
+        static const bool exact = (1U << is) == U;
     };
 
     template <> struct Log2<0> { static const int bits = 1;  };
-    template <> struct Log2<1> { static const int bits = 1; static const int is = 0; };
+    template <> struct Log2<1>
+    {
+        static const int bits = 1;
+        static const int is = 0;
+        static const bool exact = true;
+    };
 
     // Cluster_vcons: a cluster for aggregating vcons'
     //
@@ -562,6 +569,21 @@ namespace aL4nin
     IsZero<Log2<17>::is != 5> l17;
 
 
+    // IsZero<Log2<0>::exact> e0;
+    IsZero<Log2<1>::exact != true> e1;
+    IsZero<Log2<2>::exact != true> e2;
+    IsZero<Log2<3>::exact != false> e3;
+    IsZero<Log2<4>::exact != true> e4;
+    IsZero<Log2<5>::exact != false> e5;
+    IsZero<Log2<6>::exact != false> e6;
+    IsZero<Log2<7>::exact != false> e7;
+    IsZero<Log2<8>::exact != true> e8;
+    IsZero<Log2<9>::exact != false> e9;
+    IsZero<Log2<15>::exact != false> e15;
+    IsZero<Log2<16>::exact != true> e16;
+    IsZero<Log2<17>::exact != false> e17;
+
+
     IsZero<Log2<0>::bits != 1> b0;
     IsZero<Log2<1>::bits != 1> b1;
     IsZero<Log2<2>::bits != 2> b2;
@@ -577,9 +599,10 @@ namespace aL4nin
 
 
     IsZero<Log2<Scale<vcons, 32>::is>::is != 5> t6;
+    IsZero<Log2<Scale<vcons, 32>::is>::exact != true> t7;
 
-    IsZero<Log2<32>::is != 5> t7;
-    IsZero<Scale<vcons, 32>::rest> t8;
+    IsZero<Log2<32>::is != 5> t8;
+    IsZero<Scale<vcons, 32>::rest> t9;
 
 }
 
