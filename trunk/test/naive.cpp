@@ -616,8 +616,6 @@ try
     {
         printf("new process (%d)\n", getpid());
         throw &it;
-///        printf("exiting... (%d)\n", getpid());
-///        _exit(0);
     }
     else
     {
@@ -668,12 +666,11 @@ int main(void)
 
     // get the world set up
     //
-
     int hdl(shm_open("/blubber",
                      O_RDWR | O_CREAT,
                      S_IRUSR | S_IWUSR | S_IRGRP | S_IWGRP));
-
-    perror("shm_open");
+    if (hdl == -1)
+        perror("shm_open");
 
     int tr(ftruncate(hdl, world::size()));
     if (tr == -1)
