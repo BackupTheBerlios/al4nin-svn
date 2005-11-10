@@ -621,48 +621,6 @@ namespace aL4nin
 */
 
 
-    // Same<Log2<0>::is, 0> l0;
-    Same<Log2<1>::is, 0> l1;
-    Same<Log2<2>::is, 1> l2;
-    Same<Log2<3>::is, 2> l3;
-    Same<Log2<4>::is, 2> l4;
-    Same<Log2<5>::is, 3> l5;
-    Same<Log2<6>::is, 3> l6;
-    Same<Log2<7>::is, 3> l7;
-    Same<Log2<8>::is, 3> l8;
-    Same<Log2<9>::is, 4> l9;
-    Same<Log2<15>::is, 4> l15;
-    Same<Log2<16>::is, 4> l16;
-    Same<Log2<17>::is, 5> l17;
-
-
-    // Same<Log2<0>::exact> e0;
-    Same<Log2<1>::exact, true> e1;
-    Same<Log2<2>::exact, true> e2;
-    Same<Log2<3>::exact, false> e3;
-    Same<Log2<4>::exact, true> e4;
-    Same<Log2<5>::exact, false> e5;
-    Same<Log2<6>::exact, false> e6;
-    Same<Log2<7>::exact, false> e7;
-    Same<Log2<8>::exact, true> e8;
-    Same<Log2<9>::exact, false> e9;
-    Same<Log2<15>::exact, false> e15;
-    Same<Log2<16>::exact, true> e16;
-    Same<Log2<17>::exact, false> e17;
-
-
-    Same<Log2<0>::bits, 1> b0;
-    Same<Log2<1>::bits, 1> b1;
-    Same<Log2<2>::bits, 2> b2;
-    Same<Log2<3>::bits, 2> b3;
-    Same<Log2<4>::bits, 3> b4;
-    Same<Log2<5>::bits, 3> b5;
-    Same<Log2<6>::bits, 3> b6;
-    Same<Log2<7>::bits, 3> b7;
-    Same<Log2<8>::bits, 4> b8;
-    Same<Log2<9>::bits, 4> b9;
-    Same<Log2<15>::bits, 4> b15;
-    Same<Log2<16>::bits, 5> b16;
 
 
     IsZero<Log2<Scale<vcons, 32>::is>::is != 5> t6;
