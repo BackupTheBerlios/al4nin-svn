@@ -13,3 +13,7 @@ ct-regression-test: ct-regressions.o
 
 ct-regressions.o: ../include/alloc.hpp
 	$(G++) -c -I ../include ct-regressions.cpp
+
+mac: ../include/alloc.hpp ../src/alloc.cpp naive.cpp
+	g++ -g -I ../include -I ../src -o naive naive.cpp
+
