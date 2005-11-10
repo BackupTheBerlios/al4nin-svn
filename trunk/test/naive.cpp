@@ -351,13 +351,41 @@ template <>
 struct FastestAccess<4>
 {
     typedef unsigned long is;
-    enum { increment = 1 << 4 };
+    enum { increment = 1 << 4, advance = sizeof(is), bits = advance - 1, mask = ~bits };
+    
+    static bool isZeroRange(const unsigned char* first, size_t pages)
+    {
+        const unsigned char* const end(first + pages - advance);
+        for (; first < end; first += advance)
+        {
+            if (*reinterpret_cast<const is*>(first))
+                return false;
+        }
+        
+        switch (pages & bits)
+        {
+            case 3:
+                if (end[advance - 3])
+                    return false;
+            case 2:
+                if (end[advance - 2])
+                    return false;
+            case 1:
+                if (end[advance - 1])
+                    return false;
+        }
+
+        return true;
+    }
+    
 };
 
 
 template <>
 unsigned char* GapFinder<4>(unsigned char* first, size_t pages, size_t maxpages)
 {
+    assert(pages <= FastestAccess<4>::increment);
+
     register unsigned char* end(first + maxpages);
     register bool shortcluster(pages < 4);
 
@@ -390,7 +418,8 @@ unsigned char* GapFinder<4>(unsigned char* first, size_t pages, size_t maxpages)
         }
         else
         {
-            ///FastestAccess<4>::range(
+            if (FastestAccess<4>::isZeroRange(first, pages))
+                return first;
         }
     }
 
