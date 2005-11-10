@@ -286,6 +286,9 @@ inline const void* RawObj2Meta(const void* obj)
 }
 
 
+template <unsigned long CLUSTER, unsigned NUMPAGES>
+unsigned char* GapFinder(unsigned char*);
+
 template <unsigned NUMPAGES, unsigned BASE, unsigned PAGE>
 struct ClusteredWorld : World<NUMPAGES, BASE, PAGE>
 {
@@ -300,14 +303,46 @@ struct ClusteredWorld : World<NUMPAGES, BASE, PAGE>
         }
     };
 
+    static unsigned char& clusterPage(unsigned i)
+    {
+        return *static_cast<unsigned char*>(start());
+    }
+
+/*    static unsigned long& cluster4Page(unsigned i)
+    {
+        return *static_cast<unsigned long*>(start());
+    }*/
+
     template <unsigned long CLUSTER>
     static void* allocate(size_t ps)
     {
-        // dummy
-        return start();
+        unsigned char* first(&clusterPage(0));
+///        unsigned char* last(first + NUMPAGES);
+        unsigned char* gap(GapFinder<CLUSTER, NUMPAGES>(first));
+        
+        return &self().pages[gap - first];
     }
     
 };
+
+
+template <>
+unsigned char* GapFinder<4 , 100>(unsigned char* first)
+{
+    /// ###hack!
+    return first;
+};
+
+
+/*
+    template <>
+    template <unsigned NUMPAGES, unsigned BASE, unsigned PAGE>
+    void* ClusteredWorld<NUMPAGES, BASE, PAGE>::allocate<0>(size_t ps)
+    {
+        return start();
+    }
+    */
+
 }
 
 using namespace aL4nin;
