@@ -240,12 +240,13 @@ struct World
 //        compared to objects. I.e. 32*8byte (cons cells) together share the same
 //        metaobject, and the metaobject is 8bytes then SCALE is 5 because
 //        2^5==32.
+// GRAN: 2^g is the metaobject size
 //
 // Theory of operation:
 //   Find the lowest address in the cluster and scale down the displacement
 //   of the object to the appropriate metaobject.
 
-template <unsigned long PAGE, unsigned long CLUSTER, unsigned long SCALE>
+template <unsigned long PAGE, unsigned long CLUSTER, unsigned long SCALE, unsigned long GRAN>
 inline const void* RawObj2Meta(const void* obj)
 {
     typedef unsigned long sptr_t;
@@ -253,12 +254,15 @@ inline const void* RawObj2Meta(const void* obj)
     enum 
         {
             pat = (1 << PAGE + CLUSTER) - 1,
-            irrel = (1 << 3+SCALE) - 1
+///            irrel = (1 << GRAN+SCALE) - 1
+            mask = ~((1 << GRAN) - 1)
         };
     
     register sptr_t b(o & ~static_cast<sptr_t>(pat));
-    register sptr_t d(o & static_cast<sptr_t>(pat) & ~irrel);
-    return reinterpret_cast<const void*>(b + (d >> SCALE));
+    register sptr_t d(o & static_cast<sptr_t>(pat));
+    return reinterpret_cast<const void*>(b + ((d >> SCALE) & mask));
+///    register sptr_t d(o & static_cast<sptr_t>(pat) & ~irrel);
+///    return reinterpret_cast<const void*>(b + (d >> SCALE));
 }
 
 
@@ -269,9 +273,10 @@ struct ClusteredWorld : World<NUMPAGES, BASE, PAGE>
     struct Cluster
     {
         enum { Magnitude = CLUSTER };
+        template <unsigned long GRAN>
         static inline const void* Raw2Meta(const void* obj)
         {
-            return RawObj2Meta<PAGE, CLUSTER, SCALE>(obj);
+            return RawObj2Meta<PAGE, CLUSTER, SCALE, GRAN>(obj);
         }
     };
 
@@ -504,8 +509,6 @@ namespace aL4nin
     {
         const vcons::vtbl* vtbl;
         long used;
-        
-        meta() { printf("meta: %p, %lu\n", vtbl, used); }
     };
 
     template <typename T, size_t COUNT>
@@ -521,48 +524,35 @@ namespace aL4nin
 
     // Cluster_vcons: a cluster for aggregating vcons'
     //
-    struct Cluster_vcons : world::Cluster<4/*=16 pages*/, Log2<Scale<vcons, 32>::is>::is>
+    struct Cluster_vcons : world::Cluster<4/*=16 pages max*/, Log2<Scale<vcons, 32>::is>::is>
     {
         meta<vcons> metas[32];
         vcons objs[1024 - 32];
-        Cluster_vcons(void)
-        {
-        { printf("Cluster_vcons::Cluster_vcons(%p), meta1: %p, %lu\n", this, metas[1].vtbl, metas[1].used); }
-        
-        }
         
         static Cluster_vcons& allocate(void)
         {
-
-    void* loc(world::/*selfAs<world>::*/allocate<Magnitude>(2/*pages*/));
-             Cluster_vcons& clu = *new(loc) Cluster_vcons;
-        { printf("Cluster_vcons& allocate, meta1(%p): %p, %lu\n", &clu.metas[1], clu.metas[1].vtbl, clu.metas[1].used); }
-             
-return clu;
-///            return *new(world::/*selfAs<world>::*/allocate<Magnitude>(2/*pages*/)) Cluster_vcons;
+            return *new(world::allocate<Magnitude>(2/*pages*/)) Cluster_vcons;
         }
-    } /*c1*/;
+    };
 
     template <>
     inline meta<vcons>* object_meta(vcons* o)
     {
-        return const_cast<meta<vcons>*>(static_cast<const meta<vcons>*>(Cluster_vcons::Raw2Meta(o)));
+        return const_cast<meta<vcons>*>(static_cast<const meta<vcons>*>(Cluster_vcons::Raw2Meta<Log2<sizeof(meta<vcons>)>::is>(o)));
     }
 
     inline vcons::vcons(void* car, void* cdr)
     {
         first = car;
         second = cdr;
+        /*if every 32th!!##*/
         object_meta(this)->vtbl = &v;
-        { printf("vcons::vcons, meta(%p): %p, %lu\n", object_meta(this), object_meta(this)->vtbl, object_meta(this)->used); }
     }
 
 
     const vcons::vtbl& vcons::getvtbl(void) const
     {
-///        return *static_cast<const vcons::vtbl*>(Cluster_vcons::Raw2Meta(this));
-meta<vcons>* met(object_meta(const_cast<vcons*>(this)));
-        return *met->vtbl;
+        return *object_meta(const_cast<vcons*>(this))->vtbl;
     }
 
 
@@ -846,7 +836,7 @@ int main(void)
         for (int i(0); i < 100; i += 4)
         {
             char* p((char*)area + i);
-            printf("i: %d, o: %p, m: %p\n", i, p, world::Cluster<4, 3>::Raw2Meta(p));
+            printf("i: %d, o: %p, m: %p\n", i, p, world::Cluster<4, 3>::Raw2Meta<3>(p));
             *p = 0;
             printf("*p = %x\n", *(unsigned long*)p);
         }
@@ -854,7 +844,7 @@ int main(void)
         for (int i(10000); i < 10100; i += 4)
         {
             char* p((char*)area + i);
-            printf("i: %d, o: %p, m: %p\n", i, p, world::Cluster<4, 3>::Raw2Meta(p));
+            printf("i: %d, o: %p, m: %p\n", i, p, world::Cluster<4, 3>::Raw2Meta<3>(p));
             *p = 0;
         }
         
