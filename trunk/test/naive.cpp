@@ -336,6 +336,7 @@ struct ClusteredWorld : World<NUMPAGES, BASE, PAGE>
         unsigned char* first(&clusterPage(0));
         unsigned char* gap(GapFinder<CLUSTER>(first, ps, NUMPAGES));
         assert(gap); // for now ###
+        assert(gap - first < NUMPAGES);
         GapFiller(gap, ps);
         return &ClusteredWorld::self().pages[gap - first];
     }
@@ -426,15 +427,6 @@ unsigned char* GapFinder<4>(unsigned char* first, size_t pages, size_t maxpages)
     return NULL;
 };
 
-
-/*
-    template <>
-    template <unsigned NUMPAGES, unsigned BASE, unsigned PAGE>
-    void* ClusteredWorld<NUMPAGES, BASE, PAGE>::allocate<0>(size_t ps)
-    {
-        return start();
-    }
-    */
 
 }
 
@@ -881,7 +873,8 @@ int main(void)
 
     // get the world set up
     //
-    int hdl(shm_open("/blubber",
+    static const char worldPath[] = "/aL4nin";
+    int hdl(shm_open(worldPath,
                      O_RDWR | O_CREAT,
                      S_IRUSR | S_IWUSR | S_IRGRP | S_IWGRP));
     if (hdl == -1)
@@ -956,15 +949,12 @@ int main(void)
             *p = 0;
         }
         
-        sleep(3);
         int um(munmap(area, world::size()));
         if (um == -1)
             perror("munmap");
     }
     
-    int ul(shm_unlink("/blubber"));
+    int ul(shm_unlink(worldPath));
     if (ul == -1)
         perror("shm_unlink");
-
-    
 }
