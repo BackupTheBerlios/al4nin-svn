@@ -252,11 +252,12 @@ inline const void* RawObj2Meta(const void* obj)
     register sptr_t o(reinterpret_cast<sptr_t>(obj));
     enum 
         {
-            pat = (1 << PAGE + CLUSTER) - 1
+            pat = (1 << PAGE + CLUSTER) - 1,
+            irrel = (1 << 3+SCALE) - 1
         };
     
     register sptr_t b(o & ~static_cast<sptr_t>(pat));
-    register sptr_t d(o & static_cast<sptr_t>(pat));
+    register sptr_t d(o & static_cast<sptr_t>(pat) & ~irrel);
     return reinterpret_cast<const void*>(b + (d >> SCALE));
 }
 
@@ -503,6 +504,8 @@ namespace aL4nin
     {
         const vcons::vtbl* vtbl;
         long used;
+        
+        meta() { printf("meta: %p, %lu\n", vtbl, used); }
     };
 
     template <typename T, size_t COUNT>
@@ -522,12 +525,23 @@ namespace aL4nin
     {
         meta<vcons> metas[32];
         vcons objs[1024 - 32];
+        Cluster_vcons(void)
+        {
+        { printf("Cluster_vcons::Cluster_vcons(%p), meta1: %p, %lu\n", this, metas[1].vtbl, metas[1].used); }
+        
+        }
         
         static Cluster_vcons& allocate(void)
         {
-            return *new(world::/*selfAs<world>::*/allocate<Magnitude>(2/*pages*/)) Cluster_vcons;
+
+    void* loc(world::/*selfAs<world>::*/allocate<Magnitude>(2/*pages*/));
+             Cluster_vcons& clu = *new(loc) Cluster_vcons;
+        { printf("Cluster_vcons& allocate, meta1(%p): %p, %lu\n", &clu.metas[1], clu.metas[1].vtbl, clu.metas[1].used); }
+             
+return clu;
+///            return *new(world::/*selfAs<world>::*/allocate<Magnitude>(2/*pages*/)) Cluster_vcons;
         }
-    } c1;
+    } /*c1*/;
 
     template <>
     inline meta<vcons>* object_meta(vcons* o)
@@ -540,13 +554,15 @@ namespace aL4nin
         first = car;
         second = cdr;
         object_meta(this)->vtbl = &v;
+        { printf("vcons::vcons, meta(%p): %p, %lu\n", object_meta(this), object_meta(this)->vtbl, object_meta(this)->used); }
     }
 
 
     const vcons::vtbl& vcons::getvtbl(void) const
     {
 ///        return *static_cast<const vcons::vtbl*>(Cluster_vcons::Raw2Meta(this));
-        return *object_meta(const_cast<vcons*>(this))->vtbl;
+meta<vcons>* met(object_meta(const_cast<vcons*>(this)));
+        return *met->vtbl;
     }
 
 
@@ -765,30 +781,6 @@ int main(void)
 
     collect(true);
 
-    // Clusters experiment
-    //
-    Cluster_vcons& clu(Cluster_vcons::allocate());
-    vcons& babe(clu.objs[0]);
-    
-
-    // forked exceptions experiment
-    //
-    vcons& ev(clu.objs[0]);
-    try
-    {
-        fork_and_exception(ev);
-    }
-    catch (vcons*)
-    {
-        printf("exiting... (%d)\n", getpid());
-        _exit(0);
-    }
-
-    // vcons experiment
-    //
-    vcons& vc(babe);
-    vc.sayhello();
-
     // get the world set up
     //
     int hdl(shm_open("/blubber",
@@ -804,6 +796,32 @@ int main(void)
     world* w(new(hdl) world);
     void* area(w);
     
+
+    // Clusters experiment
+    //
+    Cluster_vcons& clu(Cluster_vcons::allocate());
+    vcons& babe(clu.objs[0]);
+    
+
+    // vcons experiment
+    //
+    vcons& vc(babe);
+    vc.sayhello();
+
+
+    // forked exceptions experiment
+    //
+    vcons& ev(babe);
+    try
+    {
+        fork_and_exception(ev);
+    }
+    catch (vcons*)
+    {
+        printf("exiting... (%d)\n", getpid());
+        _exit(0);
+    }
+
 
     unsigned long* p((unsigned long*)area);
     *p = 0xbeeffece;
