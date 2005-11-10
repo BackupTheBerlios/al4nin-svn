@@ -286,6 +286,27 @@ inline const void* RawObj2Meta(const void* obj)
 }
 
 
+template <unsigned long PAGE, unsigned long CLUSTER, unsigned long SCALE, unsigned long GRAN>
+/*inline */unsigned RawObj2Index(const void* obj)
+{
+    typedef unsigned long sptr_t;
+    register sptr_t o(reinterpret_cast<sptr_t>(obj));
+    enum 
+        {
+            pat = (1 << PAGE + CLUSTER) - 1,
+///            mask = ~((1 << GRAN) - 1)
+        };
+    
+//    register sptr_t b(o & ~static_cast<sptr_t>(pat));
+    register sptr_t d(o & static_cast<sptr_t>(pat));
+    printf("d: %d, d >> (SCALE - GRAN + 3): %d, d >> 3: %d\n", d, d >> (SCALE - GRAN + 3), d >> 3);
+    return d >> 3;
+
+//    return (d >> SCALE) & mask;
+//    return d >> (SCALE - GRAN + 3);
+}
+
+
 template <unsigned long CLUSTER>
 unsigned char* GapFinder(unsigned char*, size_t pages, size_t maxpages);
 
@@ -310,10 +331,17 @@ struct ClusteredWorld : World<NUMPAGES, BASE, PAGE>
     struct Cluster
     {
         enum { Magnitude = CLUSTER };
+
         template <unsigned long GRAN>
         static inline const void* Raw2Meta(const void* obj)
         {
             return RawObj2Meta<PAGE, CLUSTER, SCALE, GRAN>(obj);
+        }
+
+        template <unsigned long GRAN>
+        static inline unsigned Raw2Index(const void* obj)
+        {
+            return RawObj2Index<PAGE, CLUSTER, SCALE, GRAN>(obj);
         }
     };
 
@@ -648,7 +676,9 @@ namespace aL4nin
     struct meta<vcons>
     {
         const vcons::vtbl* vtbl;
-        long used;
+        unsigned long used;
+        
+        void mark(const vcons* o);
     };
 
     template <typename T, size_t COUNT>
@@ -674,6 +704,17 @@ namespace aL4nin
             return *new(world::allocate<Magnitude>(2/*pages*/)) Cluster_vcons;
         }
     };
+
+
+    void meta<vcons>::mark(const vcons* o)
+    {
+        register const unsigned i = Cluster_vcons::Raw2Index<Log2<sizeof(meta<vcons>)>::is>(o);
+        register const unsigned long bit(1 << i);
+        if (used & bit)
+            return;
+        
+        used |= bit;
+    }
 
     template <>
     inline meta<vcons>* object_meta(vcons* o)
@@ -817,16 +858,14 @@ void wummy(int what, siginfo_t* info, void *)
 void mark(vcons* o) throw ()
 {
     printf("marking (%p) in process %d\n", o, getpid());
-    object_meta(o)->used = 0xbeeffece;
+///    object_meta(o)->used = 0xbeeffece;
+    object_meta(o)->mark(o);
 }
 
 
 void fork_and_exception(vcons& it)
 try
 {
-///    mark(&it);
-
-
     const pid_t father(getpid());
     const pid_t child(fork());
     
