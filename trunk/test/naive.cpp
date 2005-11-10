@@ -267,8 +267,9 @@ struct World
 //
 // Theory of operation:
 //   Find the lowest address in the cluster and scale down the displacement
-//   of the object to the appropriate metaobject.
-
+//   of the object to the appropriate metaobject, masking away the bits so that
+//   we always point to the start of the metaobject.
+//
 template <unsigned long PAGE, unsigned long CLUSTER, unsigned long SCALE, unsigned long GRAN>
 inline const void* RawObj2Meta(const void* obj)
 {
@@ -286,6 +287,18 @@ inline const void* RawObj2Meta(const void* obj)
 }
 
 
+// RawObj2Index is intended to return the index of the object
+// into the object's meta's group.
+// PAGE_CLUSTER: how many bits are needed to address a byte in a cluster
+// OBJBYTES: size of an object, in bytes
+// SCALE: see RawObj2Meta
+// GRAN: see RawObj2Meta.
+//
+// Theory of operation:
+//   Find the the displacement to the metaobject,
+//   then scale this up to get the start of this
+//   object's group. Then divide to obtain the index.
+//
 template <unsigned long PAGE_CLUSTER, unsigned long OBJBYTES, unsigned long SCALE, unsigned long GRAN>
 /*inline */unsigned RawObj2Index(const void* obj)
 {
@@ -297,44 +310,12 @@ template <unsigned long PAGE_CLUSTER, unsigned long OBJBYTES, unsigned long SCAL
             mask = ~((1 << GRAN) - 1)
         };
     
-////    register sptr_t b(o & ~static_cast<sptr_t>(pat)); // base
     register sptr_t d(o & static_cast<sptr_t>(pat));  // displacement
     register sptr_t md((d >> SCALE) & mask);          // meta displacement
     register sptr_t gd(d - (md << SCALE));            // displacement into meta's group of objs
     
-    printf("d: %d,    md: %d,    gd: %d,    ret: %d\n", d,md,gd, gd / OBJBYTES);
+///    printf("d: %d,    md: %d,    gd: %d,    ret: %d\n", d,md,gd, gd / OBJBYTES);
     return gd / OBJBYTES;
-
-/**
-    typedef unsigned long sptr_t;
-    register sptr_t o(reinterpret_cast<sptr_t>(obj));
-    enum 
-        {
-            pat = (1 << PAGE + CLUSTER) - 1,
-            mask = ~((1 << GRAN) - 1)
-        };
-    
-    register sptr_t d(o & static_cast<sptr_t>(pat));  // displacement
-    register sptr_t md((d >> SCALE) & mask);          // displacement of the meta
-    register sptr_t nmd(md + (1 << GRAN));          // displacement of the next meta
-*/
-
-/*
-    typedef unsigned long sptr_t;
-    register sptr_t o(reinterpret_cast<sptr_t>(obj));
-    enum 
-        {
-            pat = (1 << PAGE + CLUSTER) - 1,
-        };
-    
-//    register sptr_t b(o & ~static_cast<sptr_t>(pat));
-    register sptr_t d(o & static_cast<sptr_t>(pat));
-    printf("d: %d, d >> (SCALE - GRAN + 3): %d, d >> 3: %d\n", d, d >> (SCALE - GRAN + 3), d >> 3);
-    return d >> 3;
-
-//    return (d >> SCALE) & mask;
-//    return d >> (SCALE - GRAN + 3);
-*/
 }
 
 
@@ -678,6 +659,8 @@ namespace aL4nin
             self.second = new_cdr;
         };
         
+        IMPL_METH(const, sayindex, void);
+
         struct vtbl
         {
 #           define VTBL_ENTRY(NAME) __typeof__(&selftype::_ ## NAME) const NAME
@@ -686,6 +669,7 @@ namespace aL4nin
             VTBL_ENTRY(cdr);
             VTBL_ENTRY(set_car);
             VTBL_ENTRY(set_cdr);
+            VTBL_ENTRY(sayindex);
         };
 
         const vtbl& getvtbl(void) const;
@@ -696,12 +680,17 @@ namespace aL4nin
             getvtbl().sayhello(*this);
         }
 
+        void sayindex(void) const
+        {
+            getvtbl().sayindex(*this);
+        }
+
         static vtbl v;
         
         vcons(void* car = 0, void* cdr = 0);
     };
 
-    vcons::vtbl vcons::v = { _sayhello, _car, _cdr, _set_car, _set_cdr };
+    vcons::vtbl vcons::v = { _sayhello, _car, _cdr, _set_car, _set_cdr, _sayindex };
 
     template <>
     struct meta<vcons>
@@ -767,6 +756,10 @@ namespace aL4nin
         return *object_meta(const_cast<vcons*>(this))->vtbl;
     }
 
+    IMPL_METH(const, sayindex, void vcons::)
+    {
+        printf("Index in group is %d\n", Cluster_vcons::Raw2Index<sizeof(vcons), Log2<sizeof(meta<vcons>)>::is>(&self));
+    }
 
 /*
     IsZero<Scale<vcons, 32>::is> t0;
@@ -889,7 +882,6 @@ void wummy(int what, siginfo_t* info, void *)
 void mark(vcons* o) throw ()
 {
     printf("marking (%p) in process %d\n", o, getpid());
-///    object_meta(o)->used = 0xbeeffece;
     object_meta(o)->mark(o);
 }
 
@@ -968,7 +960,8 @@ int main(void)
     //
     vcons& vc(babe);
     vc.sayhello();
-
+    for (vcons* s = clu.objs + 640, *e = clu.objs + 690; s != e; ++s)
+        s->sayindex();
 
     // forked exceptions experiment
     //
