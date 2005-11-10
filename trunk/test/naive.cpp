@@ -570,7 +570,7 @@ namespace aL4nin
     }
 
 
-    const vcons::vtbl& vcons::getvtbl(void) const
+    inline const vcons::vtbl& vcons::getvtbl(void) const
     {
         return *object_meta(const_cast<vcons*>(this))->vtbl;
     }
