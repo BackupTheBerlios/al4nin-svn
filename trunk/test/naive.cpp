@@ -796,13 +796,14 @@ void wummy(int what, siginfo_t* info, void *)
 void mark(vcons* o) throw ()
 {
     printf("marking (%p) in process %d\n", o, getpid());
+    object_meta(o)->used = 0xbeeffece;
 }
 
 
 void fork_and_exception(vcons& it)
 try
 {
-    mark(&it);
+///    mark(&it);
 
 
     const pid_t father(getpid());
@@ -892,7 +893,7 @@ int main(void)
 
 
     unsigned long* p((unsigned long*)area);
-    *p = 0xbeeffece;
+///    *p = 0xbeeffece;
 
     w->protectPageRW(0);
     
