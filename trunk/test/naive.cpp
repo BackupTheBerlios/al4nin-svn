@@ -300,21 +300,26 @@ inline const void* RawObj2Meta(const void* obj)
 //   object's group. Then divide to obtain the index.
 //
 template <unsigned long PAGE_CLUSTER, unsigned long OBJBYTES, unsigned long SCALE, unsigned long GRAN>
-/*inline */unsigned RawObj2Index(const void* obj)
+inline unsigned RawObj2Index(const void* obj)
 {
     typedef unsigned long sptr_t;
     register sptr_t o(reinterpret_cast<sptr_t>(obj));
     enum 
         {
             pat = (1 << PAGE_CLUSTER) - 1,
+            mid = (1 << PAGE_CLUSTER) - (1 << SCALE),
             mask = ~((1 << GRAN) - 1)
         };
     
-    register sptr_t d(o & static_cast<sptr_t>(pat));  // displacement
-    register sptr_t md((d >> SCALE) & mask);          // meta displacement
-    register sptr_t gd(d - (md << SCALE));            // displacement into meta's group of objs
+    // original:                                         // DO NOT DELETE!
+    // register sptr_t d(o & static_cast<sptr_t>(pat));  // displacement
+    // register sptr_t md((d >> SCALE) & mask);          // meta displacement
+    // register sptr_t gd(d - (md << SCALE));            // displacement into meta's group of objs
+    //
+    // streamlined:
+    register sptr_t d(o & pat);
+    register sptr_t gd = d - (d & (mask << SCALE) & mid);
     
-///    printf("d: %d,    md: %d,    gd: %d,    ret: %d\n", d,md,gd, gd / OBJBYTES);
     return gd / OBJBYTES;
 }
 
