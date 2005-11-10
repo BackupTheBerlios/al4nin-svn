@@ -313,6 +313,11 @@ struct ClusteredWorld : World<NUMPAGES, BASE, PAGE>
         return *static_cast<unsigned long*>(start());
     }*/
 
+    ClusteredWorld(void)
+        {
+            memset(&clusterPage(0), 0, NUMPAGES);
+        }
+
     template <unsigned long CLUSTER>
     static void* allocate(size_t ps)
     {
