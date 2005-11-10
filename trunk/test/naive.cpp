@@ -286,8 +286,8 @@ inline const void* RawObj2Meta(const void* obj)
 }
 
 
-template <unsigned long CLUSTER, unsigned NUMPAGES>
-unsigned char* GapFinder(unsigned char*);
+template <unsigned long CLUSTER>
+unsigned char* GapFinder(unsigned char*, size_t pages, size_t maxpages);
 
 template <unsigned NUMPAGES, unsigned BASE, unsigned PAGE>
 struct ClusteredWorld : World<NUMPAGES, BASE, PAGE>
@@ -316,21 +316,68 @@ struct ClusteredWorld : World<NUMPAGES, BASE, PAGE>
     template <unsigned long CLUSTER>
     static void* allocate(size_t ps)
     {
-        unsigned char* first(&clusterPage(0));
-///        unsigned char* last(first + NUMPAGES);
-        unsigned char* gap(GapFinder<CLUSTER, NUMPAGES>(first));
+        // ### grab semaphore
+        unsigned char* first(&clusterPage(0));/* ###/// */*first = 1;
+        unsigned char* gap(GapFinder<CLUSTER>(first, ps, NUMPAGES));
         
         return &ClusteredWorld::self().pages[gap - first];
     }
     
 };
 
+/// template FastestAccess
+template <unsigned long CLUSTER>
+struct FastestAccess;
+
 
 template <>
-unsigned char* GapFinder<4 , 100>(unsigned char* first)
+struct FastestAccess<4>
 {
-    /// ###hack!
-    return first;
+    typedef unsigned long is;
+    enum { increment = 1 << 4 };
+};
+
+
+template <>
+unsigned char* GapFinder<4>(unsigned char* first, size_t pages, size_t maxpages)
+{
+    register unsigned char* end(first + maxpages);
+    register bool shortcluster(pages < 4);
+
+    for (; first < end; first += FastestAccess<4>::increment)
+    {
+        if (shortcluster)
+        {
+            switch (pages)
+            {
+                case 1:
+                {
+                    if (!*first)
+                        return first;
+                    continue;
+                }
+                case 2:
+                {
+                    if (!*reinterpret_cast<unsigned short*>(first))
+                        return first;
+                    continue;
+                }
+                case 3:
+                {
+                    if (*reinterpret_cast<unsigned short*>(first)
+                        || first[2])
+                        continue;
+                    return first;
+                }
+            }
+        }
+        else
+        {
+            ///FastestAccess<4>::range(
+        }
+    }
+
+    return NULL;
 };
 
 
