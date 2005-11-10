@@ -289,6 +289,20 @@ inline const void* RawObj2Meta(const void* obj)
 template <unsigned long CLUSTER>
 unsigned char* GapFinder(unsigned char*, size_t pages, size_t maxpages);
 
+void GapFiller(unsigned char* gap, size_t ps)
+{
+    static const unsigned char pattern[] = 
+        {
+              1, 2, 3, 4, 5, 6, 7, 8 , 9, 10
+            , 11, 12, 13, 14, 15, 16, 17, 18 , 19
+            , 21, 22, 23, 24, 25, 26, 27, 28 , 29
+        };
+
+    assert(ps < 30); // for now ###
+    memcpy(gap, pattern, ps);
+};
+    
+
 template <unsigned NUMPAGES, unsigned BASE, unsigned PAGE>
 struct ClusteredWorld : World<NUMPAGES, BASE, PAGE>
 {
@@ -308,23 +322,21 @@ struct ClusteredWorld : World<NUMPAGES, BASE, PAGE>
         return *static_cast<unsigned char*>(ClusteredWorld::start());
     }
 
-/*    static unsigned long& cluster4Page(unsigned i)
-    {
-        return *static_cast<unsigned long*>(start());
-    }*/
-
     ClusteredWorld(void)
         {
-            memset(&clusterPage(0), 0, NUMPAGES);
+            unsigned char& first(clusterPage(0));
+            memset(&first, 0, NUMPAGES);
+            first = 1; // mark the clusterPage as used
         }
 
     template <unsigned long CLUSTER>
     static void* allocate(size_t ps)
     {
-        // ### grab semaphore
-        unsigned char* first(&clusterPage(0));/* ###/// */*first = 1;
+        // TODO ### grab semaphore
+        unsigned char* first(&clusterPage(0));
         unsigned char* gap(GapFinder<CLUSTER>(first, ps, NUMPAGES));
-        
+        assert(gap); // for now ###
+        GapFiller(gap, ps);
         return &ClusteredWorld::self().pages[gap - first];
     }
     
