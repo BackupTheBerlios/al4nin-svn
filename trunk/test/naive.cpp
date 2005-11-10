@@ -280,21 +280,51 @@ inline const void* RawObj2Meta(const void* obj)
             mask = ~((1 << GRAN) - 1)
         };
     
-    register sptr_t b(o & ~static_cast<sptr_t>(pat));
-    register sptr_t d(o & static_cast<sptr_t>(pat));
+    register sptr_t b(o & ~static_cast<sptr_t>(pat)); // base
+    register sptr_t d(o & static_cast<sptr_t>(pat));  // displacement
     return reinterpret_cast<const void*>(b + ((d >> SCALE) & mask));
 }
 
 
-template <unsigned long PAGE, unsigned long CLUSTER, unsigned long SCALE, unsigned long GRAN>
+template <unsigned long PAGE_CLUSTER, unsigned long OBJBYTES, unsigned long SCALE, unsigned long GRAN>
 /*inline */unsigned RawObj2Index(const void* obj)
 {
     typedef unsigned long sptr_t;
     register sptr_t o(reinterpret_cast<sptr_t>(obj));
     enum 
         {
+            pat = (1 << PAGE_CLUSTER) - 1,
+            mask = ~((1 << GRAN) - 1)
+        };
+    
+////    register sptr_t b(o & ~static_cast<sptr_t>(pat)); // base
+    register sptr_t d(o & static_cast<sptr_t>(pat));  // displacement
+    register sptr_t md((d >> SCALE) & mask);          // meta displacement
+    register sptr_t gd(d - (md << SCALE));            // displacement into meta's group of objs
+    
+    printf("d: %d,    md: %d,    gd: %d,    ret: %d\n", d,md,gd, gd / OBJBYTES);
+    return gd / OBJBYTES;
+
+/**
+    typedef unsigned long sptr_t;
+    register sptr_t o(reinterpret_cast<sptr_t>(obj));
+    enum 
+        {
             pat = (1 << PAGE + CLUSTER) - 1,
-///            mask = ~((1 << GRAN) - 1)
+            mask = ~((1 << GRAN) - 1)
+        };
+    
+    register sptr_t d(o & static_cast<sptr_t>(pat));  // displacement
+    register sptr_t md((d >> SCALE) & mask);          // displacement of the meta
+    register sptr_t nmd(md + (1 << GRAN));          // displacement of the next meta
+*/
+
+/*
+    typedef unsigned long sptr_t;
+    register sptr_t o(reinterpret_cast<sptr_t>(obj));
+    enum 
+        {
+            pat = (1 << PAGE + CLUSTER) - 1,
         };
     
 //    register sptr_t b(o & ~static_cast<sptr_t>(pat));
@@ -304,6 +334,7 @@ template <unsigned long PAGE, unsigned long CLUSTER, unsigned long SCALE, unsign
 
 //    return (d >> SCALE) & mask;
 //    return d >> (SCALE - GRAN + 3);
+*/
 }
 
 
@@ -338,10 +369,10 @@ struct ClusteredWorld : World<NUMPAGES, BASE, PAGE>
             return RawObj2Meta<PAGE, CLUSTER, SCALE, GRAN>(obj);
         }
 
-        template <unsigned long GRAN>
+        template <unsigned long OBJBYTES, unsigned long GRAN>
         static inline unsigned Raw2Index(const void* obj)
         {
-            return RawObj2Index<PAGE, CLUSTER, SCALE, GRAN>(obj);
+            return RawObj2Index<PAGE + CLUSTER, OBJBYTES, SCALE, GRAN>(obj);
         }
     };
 
@@ -708,7 +739,7 @@ namespace aL4nin
 
     void meta<vcons>::mark(const vcons* o)
     {
-        register const unsigned i = Cluster_vcons::Raw2Index<Log2<sizeof(meta<vcons>)>::is>(o);
+        register const unsigned i = Cluster_vcons::Raw2Index<sizeof(vcons), Log2<sizeof(meta<vcons>)>::is>(o);
         register const unsigned long bit(1 << i);
         if (used & bit)
             return;
@@ -930,7 +961,7 @@ int main(void)
     // Clusters experiment
     //
     Cluster_vcons& clu(Cluster_vcons::allocate());
-    vcons& babe(clu.objs[0]);
+    vcons& babe(clu.objs[10]);
     
 
     // vcons experiment
