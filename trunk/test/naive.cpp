@@ -305,7 +305,7 @@ struct ClusteredWorld : World<NUMPAGES, BASE, PAGE>
 
     static unsigned char& clusterPage(unsigned i)
     {
-        return *static_cast<unsigned char*>(start());
+        return *static_cast<unsigned char*>(ClusteredWorld::start());
     }
 
 /*    static unsigned long& cluster4Page(unsigned i)
@@ -320,7 +320,7 @@ struct ClusteredWorld : World<NUMPAGES, BASE, PAGE>
 ///        unsigned char* last(first + NUMPAGES);
         unsigned char* gap(GapFinder<CLUSTER, NUMPAGES>(first));
         
-        return &self().pages[gap - first];
+        return &ClusteredWorld::self().pages[gap - first];
     }
     
 };
@@ -350,7 +350,7 @@ using namespace aL4nin;
 #   ifdef __APPLE__
     typedef ClusteredWorld<100, 0xFF000000UL, 12> world;
 #   else
-    typedef ClusteredWorld<100, 0xFF000000UL, 13> world;
+    typedef ClusteredWorld<100, 0xFEF80000UL, 13> world;
 #   endif
     
 
@@ -766,7 +766,8 @@ void wummy(int what, siginfo_t* info, void *)
         }
     }
     
-    abort();
+    world::self().unprotectPage(0);
+    printf("*info->si_addr = %x\n", *(unsigned long*)info->si_addr);
 }
 
 
