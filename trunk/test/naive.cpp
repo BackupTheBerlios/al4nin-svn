@@ -752,7 +752,6 @@ namespace aL4nin
         
         void mark(const vcons* o);
         vcons* allocate(std::size_t);
-///            { return (vcons*)this+100; /*#####*/}
     };
 
     template <typename T, size_t COUNT>
@@ -761,6 +760,8 @@ namespace aL4nin
         enum
         {
             is = sizeof(T (&)[COUNT]) / sizeof(meta<T>),
+            log2 = Log2<is>::is,
+            pof2 = Log2<is>::exact,
             rest = sizeof(T (&)[COUNT]) - is * sizeof(meta<T>)
         };
     };
@@ -768,7 +769,7 @@ namespace aL4nin
 
     // Cluster_vcons: a cluster for aggregating vcons'
     //
-    struct Cluster_vcons : world::Cluster<4/*=16 pages max*/, Log2<Scale<vcons, 32>::is>::is>
+    struct Cluster_vcons : world::Cluster<4/*=16 pages max*/, Scale<vcons, 32>::log2>
     {
         char filler[sizeof(meta<vcons>)];
         meta<vcons> metas[31];
@@ -839,8 +840,8 @@ namespace aL4nin
 
 
 
-    IsZero<Log2<Scale<vcons, 32>::is>::is != 5> t6;
-    IsZero<Log2<Scale<vcons, 32>::is>::exact != true> t7;
+    IsZero<Scale<vcons, 32>::log2 != 5> t6;
+    IsZero<Scale<vcons, 32>::pof2 != true> t7;
 
     Same<Log2<32>::is, 5> t8;
     IsZero<Scale<vcons, 32>::rest> t9;
@@ -1032,6 +1033,7 @@ int main(void)
     // allocation experiment
     //
     vcons* aa(new vcons);
+    printf("alloced at: (%p)\n", aa);
 
     // forked exceptions experiment
     //
