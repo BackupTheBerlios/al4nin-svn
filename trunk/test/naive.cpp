@@ -632,12 +632,36 @@ namespace aL4nin
     }
 
 
-    struct vcons : cons
+    template <typename ELEM>
+    struct Clustered
+    {
+        void* operator new(size_t s)
+            {
+                return get_meta<ELEM>(1).allocate(s);
+            }
+///        friend /*template <>*/ meta<ELEM>& get_meta<ELEM>(size_t)
+///        template <> friend meta<ELEM>& get_meta<ELEM>(size_t)
+///            {}
+    };
+
+
+//    template <typename T>
+///    struct vcons;
+    template <>
+    meta</*T*/struct vcons>& get_meta<vcons>(size_t)
+    {}
+
+/*    template <typename T>
+    meta<Clustered<T> >& get_meta<Clustered<T> >(size_t)
+    {}
+*/
+
+    struct vcons : cons, Clustered<vcons>
     {
         typedef vcons selftype;
         
 #       define IMPL_METH(CONSTNESS, NAME, RES, ...) static RES _ ## NAME(CONSTNESS selftype& self, ##__VA_ARGS__)
-#       define IMPL_OUTLINE_METH(CONSTNESS, NAME, RES, ...) RES _ ## NAME(CONSTNESS selftype& self, ##__VA_ARGS__)
+#       define IMPL_OUTLINE_METH(CONSTNESS, CLASS, NAME, RES, ...) RES CLASS:: _ ## NAME(CONSTNESS selftype& self, ##__VA_ARGS__)
 
         IMPL_METH(const, sayhello, void)
         {
@@ -704,6 +728,8 @@ namespace aL4nin
         unsigned long used;
         
         void mark(const vcons* o);
+        vcons* allocate(std::size_t)
+            {}
     };
 
     template <typename T, size_t COUNT>
@@ -761,7 +787,7 @@ namespace aL4nin
         return *object_meta(const_cast<vcons*>(this))->vtbl;
     }
 
-    IMPL_OUTLINE_METH(const, sayindex, void vcons::)
+    IMPL_OUTLINE_METH(const, vcons, sayindex, void)
     {
         printf("Index in group is %d\n", Cluster_vcons::Raw2Index<sizeof(vcons), Log2<sizeof(meta<vcons>)>::is>(&self));
     }
@@ -967,6 +993,10 @@ int main(void)
     vc.sayhello();
     for (vcons* s = clu.objs + 640, *e = clu.objs + 690; s != e; ++s)
         s->sayindex();
+
+    // allocation experiment
+    //
+    vcons* aa(new vcons);
 
     // forked exceptions experiment
     //

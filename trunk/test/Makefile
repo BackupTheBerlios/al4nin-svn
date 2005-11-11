@@ -7,6 +7,9 @@ G++ = /opt/exp/gnu/sparc-sun-solaris2.8/bin/g++
 naive: ../include/alloc.hpp ../src/alloc.cpp naive.cpp
 	$(G++) -g -lrt -lpthread -I ../include -I ../src -o naive naive.cpp
 
+warnings: ../include/alloc.hpp ../src/alloc.cpp naive.cpp
+	$(G++) -c -Wall -I ../include -I ../src -o warnings naive.cpp
+
 all: ct-regression-test naive
 
 ct-regression-test: ct-regressions.o
