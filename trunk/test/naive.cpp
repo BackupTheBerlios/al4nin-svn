@@ -637,6 +637,7 @@ namespace aL4nin
         typedef vcons selftype;
         
 #       define IMPL_METH(CONSTNESS, NAME, RES, ...) static RES _ ## NAME(CONSTNESS selftype& self, ##__VA_ARGS__)
+#       define IMPL_OUTLINE_METH(CONSTNESS, NAME, RES, ...) RES _ ## NAME(CONSTNESS selftype& self, ##__VA_ARGS__)
 
         IMPL_METH(const, sayhello, void)
         {
@@ -760,7 +761,7 @@ namespace aL4nin
         return *object_meta(const_cast<vcons*>(this))->vtbl;
     }
 
-    IMPL_METH(const, sayindex, void vcons::)
+    IMPL_OUTLINE_METH(const, sayindex, void vcons::)
     {
         printf("Index in group is %d\n", Cluster_vcons::Raw2Index<sizeof(vcons), Log2<sizeof(meta<vcons>)>::is>(&self));
     }
