@@ -317,8 +317,7 @@ inline unsigned RawObj2Index(const void* obj)
     // register sptr_t gd(d - (md << SCALE));            // displacement into meta's group of objs
     //
     // streamlined:
-    register sptr_t d(o & pat);
-    register sptr_t gd = d - (d & (mask << SCALE) & mid);
+    register sptr_t gd = (o & pat) - (o & pat & (mask << SCALE) & mid);
     
     return gd / OBJBYTES;
 }
