@@ -295,9 +295,9 @@ inline const void* RawObj2Meta(const void* obj)
 // GRAN: see RawObj2Meta.
 //
 // Theory of operation:
-//   Find the the displacement to the metaobject,
+//   Find the base-displacement to the metaobject,
 //   then scale this up to get the start of this
-//   object's group. Then divide to obtain the index.
+//   object's group. Finally divide to obtain the index.
 //
 template <unsigned long PAGE_CLUSTER, unsigned long OBJBYTES, unsigned long SCALE, unsigned long GRAN>
 inline unsigned RawObj2Index(const void* obj)
