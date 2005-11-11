@@ -645,17 +645,6 @@ namespace aL4nin
     };
 
 
-//    template <typename T>
-///    struct vcons;
-    template <>
-    meta</*T*/struct vcons>& get_meta<vcons>(size_t)
-    {}
-
-/*    template <typename T>
-    meta<Clustered<T> >& get_meta<Clustered<T> >(size_t)
-    {}
-*/
-
     struct vcons : cons, Clustered<vcons>
     {
         typedef vcons selftype;
@@ -729,8 +718,17 @@ namespace aL4nin
         
         void mark(const vcons* o);
         vcons* allocate(std::size_t)
-            {}
+            { return (vcons*)this+100; /*#####*/}
+        static meta* seed;
     };
+    
+    meta<vcons>* meta<vcons>::seed = 0;
+
+    template <>
+    meta<vcons>& get_meta<vcons>(size_t)
+    {
+        return *meta<vcons>::seed;
+    }
 
     template <typename T, size_t COUNT>
     struct Scale
@@ -747,8 +745,14 @@ namespace aL4nin
     //
     struct Cluster_vcons : world::Cluster<4/*=16 pages max*/, Log2<Scale<vcons, 32>::is>::is>
     {
-        meta<vcons> metas[32];
+        char filler[sizeof(meta<vcons>)];
+        meta<vcons> metas[31];
         vcons objs[1024 - 32];
+        
+        Cluster_vcons()
+        {
+            meta<vcons>::seed = metas; // #### if not null
+        }
         
         static Cluster_vcons& allocate(void)
         {
