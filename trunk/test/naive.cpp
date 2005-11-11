@@ -125,6 +125,52 @@ struct foo
 
 };
 
+
+namespace aL4nin
+{
+
+// Helpers (these should go into a header).
+//
+namespace {
+
+template <unsigned NEED, typename DATA, unsigned FROM>
+struct UnsetBitsAt
+{
+    static inline unsigned find(DATA d)
+    {
+        enum
+        {
+            at = sizeof(DATA) * 8 - FROM,
+            mask = ((1 << NEED) - 1) << at
+        };
+
+        if (d & mask)
+            return UnsetBitsAt<NEED, DATA, FROM - 1>::find(d);
+        else
+            return at;
+    }
+};
+
+// here go specializations
+template <unsigned NEED, typename DATA>
+struct UnsetBitsAt<NEED, DATA, 0>
+{
+    static inline unsigned find(DATA d)
+    {
+        return sizeof(DATA) * 8;
+    }
+};
+}
+
+
+template <unsigned NEED, typename DATA>
+unsigned FindUnsetBits(DATA d)
+{
+    return UnsetBitsAt<NEED, DATA, sizeof(DATA) * 8 - NEED + 1>::find(d);
+}
+
+
+}
 namespace aL4nin
 {
 
@@ -805,7 +851,14 @@ namespace aL4nin
 
     vcons* meta<vcons>::allocate(std::size_t)
     {
-        return static_cast<vcons*>(Cluster_vcons::Meta2Object<sizeof(vcons)>(this + 30/*###*/, 31/*###*/));
+        unsigned i(FindUnsetBits<1>(used));
+        if (i < sizeof used * 8)
+        {
+            used |= (1 << i);
+            return static_cast<vcons*>(Cluster_vcons::Meta2Object<sizeof(vcons)>(this, i));
+        }
+        else
+            return 0; //##### call strategy
     }
 
 
@@ -1034,6 +1087,20 @@ int main(void)
     //
     vcons* aa(new vcons);
     printf("alloced at: (%p)\n", aa);
+    vcons* bb(new vcons);
+    printf("blloced at: (%p)\n", bb);
+    vcons* yy(
+        (new vcons, new vcons, new vcons, new vcons,
+        new vcons, new vcons, new vcons, new vcons,
+        new vcons, new vcons, new vcons, new vcons,
+        new vcons, new vcons, new vcons, new vcons,
+            new vcons, new vcons, new vcons, new vcons,
+            new vcons, new vcons, new vcons, new vcons,
+            new vcons, new vcons, new vcons, new vcons,
+            new vcons, new vcons));
+    printf("ylloced at: (%p)\n", yy);
+    vcons* zz(new vcons);
+    printf("blloced at: (%p)\n", zz);
 
     // forked exceptions experiment
     //
