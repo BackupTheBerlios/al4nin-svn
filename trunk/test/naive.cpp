@@ -323,6 +323,23 @@ inline unsigned RawObj2Index(const void* obj)
 }
 
 
+template <unsigned long PAGE_CLUSTER, unsigned long OBJBYTES, unsigned long SCALE, unsigned long GRAN>
+/*inline */void* RawMeta2Obj(void* meta, unsigned index)
+{
+    typedef unsigned long sptr_t;
+    register sptr_t m(reinterpret_cast<sptr_t>(meta));
+    enum 
+        {
+            pat = (1 << PAGE_CLUSTER) - 1,
+        };
+    
+    register sptr_t b(m & ~pat); // base
+    register sptr_t md(m - b);          // meta displacement
+    register sptr_t gb(b + (md << SCALE));            // base of meta's group of objs
+    return reinterpret_cast<void*>(gb + OBJBYTES * index);
+}
+
+
 template <unsigned long CLUSTER>
 unsigned char* GapFinder(unsigned char*, size_t pages, size_t maxpages);
 
@@ -358,6 +375,12 @@ struct ClusteredWorld : World<NUMPAGES, BASE, PAGE>
         static inline unsigned Raw2Index(const void* obj)
         {
             return RawObj2Index<PAGE + CLUSTER, OBJBYTES, SCALE, GRAN>(obj);
+        }
+
+        template <unsigned long OBJBYTES, unsigned long GRAN>
+        static inline void* Meta2Object(void* meta, unsigned index)
+        {
+            return RawMeta2Obj<PAGE + CLUSTER, OBJBYTES, SCALE, GRAN>(meta, index);
         }
     };
 
@@ -637,13 +660,13 @@ namespace aL4nin
     {
         void* operator new(size_t s)
             {
-                return get_meta<ELEM>(1).allocate(s);
+                return seed->allocate(s);
             }
-///        friend /*template <>*/ meta<ELEM>& get_meta<ELEM>(size_t)
-///        template <> friend meta<ELEM>& get_meta<ELEM>(size_t)
-///            {}
+        static meta<ELEM>* seed;
     };
 
+    template <typename ELEM>
+    meta<ELEM>* Clustered<ELEM>::seed = 0;
 
     struct vcons : cons, Clustered<vcons>
     {
@@ -717,18 +740,9 @@ namespace aL4nin
         unsigned long used;
         
         void mark(const vcons* o);
-        vcons* allocate(std::size_t)
-            { return (vcons*)this+100; /*#####*/}
-        static meta* seed;
+        vcons* allocate(std::size_t);
+///            { return (vcons*)this+100; /*#####*/}
     };
-    
-    meta<vcons>* meta<vcons>::seed = 0;
-
-    template <>
-    meta<vcons>& get_meta<vcons>(size_t)
-    {
-        return *meta<vcons>::seed;
-    }
 
     template <typename T, size_t COUNT>
     struct Scale
@@ -751,7 +765,7 @@ namespace aL4nin
         
         Cluster_vcons()
         {
-            meta<vcons>::seed = metas; // #### if not null
+            vcons::seed = metas; // #### if not null
         }
         
         static Cluster_vcons& allocate(void)
@@ -776,6 +790,12 @@ namespace aL4nin
     {
         return const_cast<meta<vcons>*>(static_cast<const meta<vcons>*>(Cluster_vcons::Raw2Meta<Log2<sizeof(meta<vcons>)>::is>(o)));
     }
+
+    vcons* meta<vcons>::allocate(std::size_t)
+    {
+        return static_cast<vcons*>(Cluster_vcons::Meta2Object<sizeof(vcons), Log2<sizeof(meta<vcons>)>::is>(this, 0/*###*/));
+    }
+
 
     inline vcons::vcons(void* car, void* cdr)
     {
