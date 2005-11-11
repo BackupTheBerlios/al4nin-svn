@@ -323,8 +323,19 @@ inline unsigned RawObj2Index(const void* obj)
 }
 
 
-template <unsigned long PAGE_CLUSTER, unsigned long OBJBYTES, unsigned long SCALE, unsigned long GRAN>
-/*inline */void* RawMeta2Obj(void* meta, unsigned index)
+// RawMeta2Obj is intended to return the object of the object's meta's group
+// given an index of the object in the group and the address of the metaobject
+// PAGE_CLUSTER: see RawObj2Index
+// OBJBYTES: see RawObj2Index
+// SCALE: see RawObj2Index
+//
+// Theory of operation:
+//   Find the base-displacement of the metaobject,
+//   then scale this up to get the start of this
+//   object's group. Finally advance to the indexed object.
+//
+template <unsigned long PAGE_CLUSTER, unsigned long OBJBYTES, unsigned long SCALE>
+inline void* RawMeta2Obj(void* meta, unsigned index)
 {
     typedef unsigned long sptr_t;
     register sptr_t m(reinterpret_cast<sptr_t>(meta));
@@ -333,9 +344,9 @@ template <unsigned long PAGE_CLUSTER, unsigned long OBJBYTES, unsigned long SCAL
             pat = (1 << PAGE_CLUSTER) - 1,
         };
     
-    register sptr_t b(m & ~pat); // base
-    register sptr_t md(m - b);          // meta displacement
-    register sptr_t gb(b + (md << SCALE));            // base of meta's group of objs
+    register sptr_t b(m & ~pat);                        // base
+    register sptr_t md(m & pat);                        // meta displacement
+    register sptr_t gb(b + (md << SCALE));              // base of meta's group of objs
     return reinterpret_cast<void*>(gb + OBJBYTES * index);
 }
 
@@ -377,10 +388,10 @@ struct ClusteredWorld : World<NUMPAGES, BASE, PAGE>
             return RawObj2Index<PAGE + CLUSTER, OBJBYTES, SCALE, GRAN>(obj);
         }
 
-        template <unsigned long OBJBYTES, unsigned long GRAN>
+        template <unsigned long OBJBYTES>
         static inline void* Meta2Object(void* meta, unsigned index)
         {
-            return RawMeta2Obj<PAGE + CLUSTER, OBJBYTES, SCALE, GRAN>(meta, index);
+            return RawMeta2Obj<PAGE + CLUSTER, OBJBYTES, SCALE>(meta, index);
         }
     };
 
@@ -793,7 +804,7 @@ namespace aL4nin
 
     vcons* meta<vcons>::allocate(std::size_t)
     {
-        return static_cast<vcons*>(Cluster_vcons::Meta2Object<sizeof(vcons), Log2<sizeof(meta<vcons>)>::is>(this, 0/*###*/));
+        return static_cast<vcons*>(Cluster_vcons::Meta2Object<sizeof(vcons)>(this + 30/*###*/, 31/*###*/));
     }
 
 
