@@ -833,6 +833,9 @@ namespace aL4nin
     {
         const vcons::vtbl* vtbl;
         unsigned long used;
+        meta(void)
+        : vtbl(NULL), used(0)
+        {}
         
         void mark(const vcons* o);
         vcons* allocate(std::size_t);
