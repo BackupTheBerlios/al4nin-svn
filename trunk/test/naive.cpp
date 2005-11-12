@@ -20,6 +20,15 @@
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE
  * OR OTHER DEALINGS IN THE SOFTWARE.
  */
+ 
+ 
+/* QUOTE OF THE DAY
+
+ From #gcc channel:
+
+    bje: nickc told me once that compilers are buggers, which is why we need debuggers.
+
+*/
 
 #include <vector>
 #include <map>
@@ -397,6 +406,28 @@ inline void* RawMeta2Obj(void* meta, unsigned index)
 }
 
 
+// RawMeta2Cluster is intended to return the start of the metaobject's cluster
+// given the address of the metaobject
+// PAGE_CLUSTER: see RawObj2Index
+//
+// Theory of operation:
+//   Find the base-displacement of the metaobject,
+//   by masking away the LSB PAGE_CLUSTER bits.
+//
+template <unsigned long PAGE_CLUSTER>
+inline void* RawMeta2Cluster(void* meta)
+{
+    typedef unsigned long sptr_t;
+    register sptr_t m(reinterpret_cast<sptr_t>(meta));
+    enum 
+        {
+            pat = (1 << PAGE_CLUSTER) - 1,
+        };
+    
+    return reinterpret_cast<void*>(m & ~pat);
+}
+
+
 template <unsigned long CLUSTER>
 unsigned char* GapFinder(unsigned char*, size_t pages, size_t maxpages);
 
@@ -439,6 +470,13 @@ struct ClusteredWorld : World<NUMPAGES, BASE, PAGE>
         {
             return RawMeta2Obj<PAGE + CLUSTER, OBJBYTES, SCALE>(meta, index);
         }
+
+        template <typename TYPE>
+        static inline TYPE* Meta2Cluster(void* meta)
+        {
+            return static_cast<TYPE*>(static_cast<Cluster*>(RawMeta2Cluster<PAGE + CLUSTER>(meta)));
+        }
+
     };
 
     static unsigned char& clusterPage(unsigned i)
@@ -821,10 +859,13 @@ namespace aL4nin
         meta<vcons> metas[31];
         vcons objs[1024 - 32];
         
-        Cluster_vcons()
+        Cluster_vcons(void)
         {
             vcons::seed = metas; // #### if not null
         }
+        
+        meta<vcons>* meta_begin(void) { return metas; }
+        meta<vcons>* meta_end(void) { return metas + sizeof metas / sizeof *metas; }
         
         static Cluster_vcons& allocate(void)
         {
@@ -849,7 +890,7 @@ namespace aL4nin
         return const_cast<meta<vcons>*>(static_cast<const meta<vcons>*>(Cluster_vcons::Raw2Meta<Log2<sizeof(meta<vcons>)>::is>(o)));
     }
 
-    vcons* meta<vcons>::allocate(std::size_t)
+    vcons* meta<vcons>::allocate(std::size_t s)
     {
         unsigned i(FindUnsetBits<1>(used));
         if (i < sizeof used * 8)
@@ -857,8 +898,16 @@ namespace aL4nin
             used |= (1 << i);
             return static_cast<vcons*>(Cluster_vcons::Meta2Object<sizeof(vcons)>(this, i));
         }
-        else
+        else for (meta* next(this + 1), *e(Cluster_vcons::Meta2Cluster<Cluster_vcons>(this)->meta_end()); next != e; ++next)
+        {
+            if (~next->used) // there are empty ones // ####### TODO compare vtbl-ptr too
+            {
+                vcons::seed = next;
+                return next->allocate(s);
+            }
+            
             return 0; //##### call strategy
+        }
     }
 
 
@@ -1100,7 +1149,7 @@ int main(void)
             new vcons, new vcons));
     printf("ylloced at: (%p)\n", yy);
     vcons* zz(new vcons);
-    printf("blloced at: (%p)\n", zz);
+    printf("zlloced at: (%p)\n", zz);
 
     // forked exceptions experiment
     //
