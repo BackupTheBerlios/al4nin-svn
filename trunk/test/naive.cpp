@@ -758,10 +758,21 @@ namespace aL4nin
                 return seed->allocate(s);
             }
         static meta<ELEM>* seed;
+//        static ELEM* (*strategy)(meta<ELEM>*);
+//        typedef ELEM* (*strategy_t)(meta<ELEM>*);//##
+       typedef ELEM* (*strategy_t2)(meta<ELEM>*);//##
+typedef void* strategy_t;
+    static strategy_t strategy;
+        
+        static ELEM* searchOtherCluster(meta<ELEM>*);
     };
 
     template <typename ELEM>
     meta<ELEM>* Clustered<ELEM>::seed = 0;
+
+    template <typename ELEM>
+///    ELEM* (*Clustered<ELEM>::strategy)(meta<ELEM>*) = 0;
+    typename Clustered<ELEM>::strategy_t Clustered<ELEM>::strategy = &Clustered<ELEM>::searchOtherCluster;
 
     struct vcons : cons, Clustered<vcons>
     {
@@ -875,6 +886,11 @@ namespace aL4nin
             return *new(world::allocate<Magnitude>(2/*pages*/)) Cluster_vcons;
         }
     };
+    
+    vcons* Clustered<vcons>::searchOtherCluster(meta<vcons>*)
+    {
+        
+    }
 
 
     void meta<vcons>::mark(const vcons* o)
@@ -909,7 +925,7 @@ namespace aL4nin
                 return next->allocate(s);
             }
             
-            return 0; //##### call strategy
+            return ((vcons::strategy_t2)vcons::strategy)(this);
         }
     }
 
