@@ -758,11 +758,7 @@ namespace aL4nin
                 return seed->allocate(s);
             }
         static meta<ELEM>* seed;
-//        static ELEM* (*strategy)(meta<ELEM>*);
-//        typedef ELEM* (*strategy_t)(meta<ELEM>*);//##
-       typedef ELEM* (*strategy_t2)(meta<ELEM>*);//##
-typedef void* strategy_t;
-    static strategy_t strategy;
+        static ELEM* (*strategy)(meta<ELEM>*);
         
         static ELEM* searchOtherCluster(meta<ELEM>*);
     };
@@ -771,8 +767,7 @@ typedef void* strategy_t;
     meta<ELEM>* Clustered<ELEM>::seed = 0;
 
     template <typename ELEM>
-///    ELEM* (*Clustered<ELEM>::strategy)(meta<ELEM>*) = 0;
-    typename Clustered<ELEM>::strategy_t Clustered<ELEM>::strategy = &Clustered<ELEM>::searchOtherCluster;
+    ELEM* (*Clustered<ELEM>::strategy)(meta<ELEM>*) = &Clustered<ELEM>::searchOtherCluster;
 
     struct vcons : cons, Clustered<vcons>
     {
@@ -889,7 +884,7 @@ typedef void* strategy_t;
     
     vcons* Clustered<vcons>::searchOtherCluster(meta<vcons>*)
     {
-        
+        world::FindCluster(signature);
     }
 
 
@@ -925,7 +920,8 @@ typedef void* strategy_t;
                 return next->allocate(s);
             }
             
-            return ((vcons::strategy_t2)vcons::strategy)(this);
+            return (vcons::strategy)(this);
+            // return vcons::strategy(this); // linker error without parens on Panther
         }
     }
 
