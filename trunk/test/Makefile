@@ -22,3 +22,6 @@ mac: ../include/alloc.hpp ../src/alloc.cpp naive.cpp
 
 bench: ../include/alloc.hpp GCBench.cpp
 	$(G++) -Wall -I ../include -o bench GCBench.cpp
+
+gc-bench: ../include/alloc.hpp GCBench.cpp
+	$(G++) -Wall -I ../include -I $(HOME)/include -L$(HOME)/lib -lgc -DGC -o gc-bench GCBench.cpp
