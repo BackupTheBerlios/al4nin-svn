@@ -501,7 +501,7 @@ struct ClusteredWorld : World<NUMPAGES, BASE, PAGE>
         }
 
     template <unsigned long CLUSTER>
-    static void* allocate(size_t ps)
+    static void* allocate(size_t ps = 1 << CLUSTER)
     {
         // TODO ### grab semaphore
         unsigned char* first(&clusterPage(0));
@@ -520,10 +520,38 @@ struct FastestAccess;
 
 
 template <>
-struct FastestAccess<4>
+struct FastestAccess<2>
 {
     typedef unsigned long is;
-    enum { increment = 1 << 4, advance = sizeof(is), bits = advance - 1, mask = ~bits };
+    enum { increment = 1 << 2/*, advance = sizeof(is), bits = advance - 1, mask = ~bits*/ };
+    
+    static bool isZeroRange(const unsigned char* first, size_t pages)
+    {
+        static const unsigned char zeroes[] = { 0, 0, 0, 0 };
+        return 0 == memcmp(first, zeroes, pages);
+    }
+    
+};
+
+template <>
+struct FastestAccess<3>
+{
+    typedef unsigned long is;
+    enum { increment = 1 << 3/*, advance = sizeof(is), bits = advance - 1, mask = ~bits*/ };
+    
+    static bool isZeroRange(const unsigned char* first, size_t pages)
+    {
+        static const unsigned char zeroes[] = { 0, 0, 0, 0, 0, 0, 0, 0 };
+        return 0 == memcmp(first, zeroes, pages);
+    }
+    
+};
+
+template <unsigned long CLUSTER>
+struct FastestAccess
+{
+    typedef unsigned long is;
+    enum { increment = 1 << CLUSTER, advance = sizeof(is), bits = advance - 1, mask = ~bits };
     
     static bool isZeroRange(const unsigned char* first, size_t pages)
     {
@@ -1018,7 +1046,7 @@ namespace aL4nin
         
         static HomogenousCluster& allocate(void)
         {
-            return *new(world::allocate<Magnitude>(2/*pages*/)) HomogenousCluster;
+            return *new(world::allocate<Magnitude>()) HomogenousCluster;
         }
     };
     
