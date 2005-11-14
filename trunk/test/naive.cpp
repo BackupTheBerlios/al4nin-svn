@@ -476,6 +476,15 @@ struct ClusteredWorld : World<NUMPAGES, BASE, PAGE>
         {
             return static_cast<TYPE*>(static_cast<Cluster*>(RawMeta2Cluster<PAGE + CLUSTER>(meta)));
         }
+        
+        void printCharacteristics(void)
+        {
+            cerr << "NUMPAGES: " << NUMPAGES
+                 << "BASE: " << BASE
+                 << "PAGE: " << PAGE
+                 << "CLUSTER: " << SCALE;
+//                 << ": " << 
+        };
 
     };
 
@@ -544,15 +553,15 @@ struct FastestAccess<4>
 };
 
 
-template <>
-unsigned char* GapFinder<4>(unsigned char* first, size_t pages, size_t maxpages)
+template <unsigned long CLUSTER>
+unsigned char* GapFinder(unsigned char* first, size_t pages, size_t maxpages)
 {
-    assert(pages <= FastestAccess<4>::increment);
+    assert(pages <= FastestAccess<CLUSTER>::increment);
 
     register unsigned char* end(first + maxpages);
     register bool shortcluster(pages < 4);
 
-    for (; first < end; first += FastestAccess<4>::increment)
+    for (; first < end; first += FastestAccess<CLUSTER>::increment)
     {
         if (shortcluster)
         {
@@ -581,7 +590,7 @@ unsigned char* GapFinder<4>(unsigned char* first, size_t pages, size_t maxpages)
         }
         else
         {
-            if (FastestAccess<4>::isZeroRange(first, pages))
+            if (FastestAccess<CLUSTER>::isZeroRange(first, pages))
                 return first;
         }
     }
@@ -967,12 +976,24 @@ namespace aL4nin
     // FROM GCBench.cpp // TEMPORARY.
     typedef struct Node0 *Node;
 
-    struct Node0 {
+    struct Node0 : Clustered<Node0> {
         Node left;
         Node right;
         int i, j;
         Node0(Node l = 0, Node r = 0) : left(l), right(r) { }
         ~Node0(void) { delete left; delete right; }
+    };
+    
+    template <>
+    struct meta<Node0>
+    {
+        unsigned long used;
+        meta(void)
+        : used(0)
+        {}
+        
+        void mark(const vcons* o);
+        vcons* allocate(std::size_t);
     };
 
 
@@ -981,7 +1002,7 @@ namespace aL4nin
     // all sharing the same metaobject
     //
     template <typename T, unsigned OBJECTS>
-    struct HomogenousCluster : world::Cluster<sizeof(T (&)[OBJECTS]) / world::PageSize , Scale<T, OBJECTS>::log2>
+    struct HomogenousCluster : world::Cluster<Log2<sizeof(T (&)[OBJECTS]) / world::PageSize>::is, Scale<T, OBJECTS>::log2>
     {
         char filler[sizeof(meta<T>)];
         meta<T> metas[1];
@@ -1003,7 +1024,6 @@ namespace aL4nin
     
     
     typedef HomogenousCluster<Node0, 100000> nodeCluster;
-    nodeCluster& nc(nodeCluster::allocate());
 }
 
 
@@ -1206,6 +1226,13 @@ int main(void)
     printf("ylloced at: (%p)\n", yy);
     vcons* zz(new vcons);
     printf("zlloced at: (%p)\n", zz);
+
+
+    // HomogenousCluster experiment
+    //
+    nodeCluster& nc(nodeCluster::allocate());
+    nc.printCharacteristics();
+
 
     // forked exceptions experiment
     //
