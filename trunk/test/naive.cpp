@@ -884,7 +884,8 @@ namespace aL4nin
     
     vcons* Clustered<vcons>::searchOtherCluster(meta<vcons>*)
     {
-        world::FindCluster(signature);
+        abort();
+        /// ### world::FindCluster(signature);
     }
 
 
@@ -963,6 +964,46 @@ namespace aL4nin
     Same<Log2<32>::is, 5> t8;
     IsZero<Scale<vcons, 32>::rest> t9;
 
+    // FROM GCBench.cpp // TEMPORARY.
+    typedef struct Node0 *Node;
+
+    struct Node0 {
+        Node left;
+        Node right;
+        int i, j;
+        Node0(Node l = 0, Node r = 0) : left(l), right(r) { }
+        ~Node0(void) { delete left; delete right; }
+    };
+
+
+    // a cluster for 100000 objects:
+    // HomogenousCluster: a cluster for aggregating objects of the same size,
+    // all sharing the same metaobject
+    //
+    template <typename T, unsigned OBJECTS>
+    struct HomogenousCluster : world::Cluster<sizeof(T (&)[OBJECTS]) / world::PageSize , Scale<T, OBJECTS>::log2>
+    {
+        char filler[sizeof(meta<T>)];
+        meta<T> metas[1];
+        T objs[OBJECTS];
+        
+        HomogenousCluster(void)
+        {
+            if (!T::seed) T::seed = metas;
+        }
+        
+        meta<T>* meta_begin(void) { return metas; }
+        meta<T>* meta_end(void) { return metas + sizeof metas / sizeof *metas; }
+        
+        static HomogenousCluster& allocate(void)
+        {
+            return *new(world::allocate<Magnitude>(2/*pages*/)) HomogenousCluster;
+        }
+    };
+    
+    
+    typedef HomogenousCluster<Node0, 100000> nodeCluster;
+    nodeCluster& nc(nodeCluster::allocate());
 }
 
 
