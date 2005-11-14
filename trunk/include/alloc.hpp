@@ -72,6 +72,17 @@ namespace aL4nin
         ~alloc(void) throw() { }
     };
 
+    namespace 
+    {
+        template <unsigned long U>
+        struct Log2Helper
+        {
+            static const int bits = 1 + Log2Helper<(U >> 1)>::bits;
+        };
+
+        template <> struct Log2Helper<0> { static const int bits = 1; };
+        template <> struct Log2Helper<1> { static const int bits = 1; };
+    }
 
     // Log2: is: compute the binary logarithm of U
     //       bits: how many bits are needed to represent
@@ -81,8 +92,8 @@ namespace aL4nin
     template <unsigned long U>
     struct Log2
     {
-        static const int bits = 1 + Log2<(U >> 1)>::bits;
-        static const int is = Log2<(U - 1)>::bits;
+        static const int bits = 1 + Log2Helper<(U >> 1)>::bits;
+        static const int is = Log2Helper<(U - 1)>::bits;
         static const bool exact = (1U << is) == U;
     };
 
