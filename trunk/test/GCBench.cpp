@@ -37,8 +37,8 @@
 //      commercial Java implementations seriously attempt to minimize GC pause
 //      times.
 
-#include <new.h>
-#include <iostream.h>
+#include <new>
+#include <iostream>
 #include <sys/time.h>
 
 #ifdef GC
@@ -148,6 +148,7 @@ struct GCBench {
                 long    tStart, tFinish;
                 int     iNumIters = NumIters(depth);
                 Node    tempTree;
+                using namespace std;
 
                 cout << "Creating " << iNumIters
                      << " trees of depth " << depth << endl;
@@ -184,11 +185,11 @@ struct GCBench {
         }
 
         void main() {
-                Node    root;
                 Node    longLivedTree;
                 Node    tempTree;
                 long    tStart, tFinish;
                 long    tElapsed;
+                using namespace std;
 
 #ifdef GC
 // GC_full_freq = 30;
@@ -258,7 +259,7 @@ GC_enable_incremental();
         }
 };
 
-main () {
+int main () {
     GCBench x;
     x.main();
 }

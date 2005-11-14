@@ -20,3 +20,5 @@ ct-regressions.o: ../include/alloc.hpp
 mac: ../include/alloc.hpp ../src/alloc.cpp naive.cpp
 	g++ -g -I ../include -I ../src -o naive naive.cpp
 
+bench: ../include/alloc.hpp GCBench.cpp
+	$(G++) -Wall -I ../include -o bench GCBench.cpp
