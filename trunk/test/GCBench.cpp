@@ -78,11 +78,10 @@ struct Node0 {
         Node left;
         Node right;
         int i, j;
-        Node0(Node l, Node r) { left = l; right = r; }
-        Node0() { left = 0; right = 0; }
+        Node0(Node l = 0, Node r = 0) : left(l), right(r) { }
 #       ifndef GC
-          ~Node0() { if (left) delete left; if (right) delete right; }
-#	endif
+          ~Node0() { delete left; delete right; }
+#       endif
 };
 
 struct GCBench {
@@ -103,13 +102,13 @@ struct GCBench {
                         return;
                 } else {
                         iDepth--;
-#			ifndef GC
+#                     ifndef GC
                           thisNode->left  = new Node0();
                           thisNode->right = new Node0();
-#			else
+#                     else
                           thisNode->left  = new (GC_NEW(Node0)) Node0();
                           thisNode->right = new (GC_NEW(Node0)) Node0();
-#			endif
+#                     endif
                         Populate (iDepth, thisNode->left);
                         Populate (iDepth, thisNode->right);
                 }
@@ -118,19 +117,19 @@ struct GCBench {
         // Build tree bottom-up
         static Node MakeTree(int iDepth) {
                 if (iDepth<=0) {
-#		     ifndef GC
+#                   ifndef GC
                         return new Node0();
-#		     else
+#                   else
                         return new (GC_NEW(Node0)) Node0();
-#		     endif
+#                   endif
                 } else {
-#		     ifndef GC
+#                   ifndef GC
                         return new Node0(MakeTree(iDepth-1),
                                          MakeTree(iDepth-1));
-#		     else
+#                   else
                         return new (GC_NEW(Node0)) Node0(MakeTree(iDepth-1),
-                                         		 MakeTree(iDepth-1));
-#		     endif
+                                                        MakeTree(iDepth-1));
+#                   endif
                 }
         }
 
@@ -155,15 +154,15 @@ struct GCBench {
                 
                 tStart = currentTime();
                 for (int i = 0; i < iNumIters; ++i) {
-#			ifndef GC
+#                     ifndef GC
                           tempTree = new Node0();
-#			else
+#                     else
                           tempTree = new (GC_NEW(Node0)) Node0();
-#			endif
+#                     endif
                         Populate(depth, tempTree);
-#		        ifndef GC
+#                      ifndef GC
                           delete tempTree;
-#			endif
+#                     endif
                         tempTree = 0;
                 }
                 tFinish = currentTime();
@@ -173,9 +172,9 @@ struct GCBench {
                 tStart = currentTime();
                 for (int i = 0; i < iNumIters; ++i) {
                         tempTree = MakeTree(depth);
-#			ifndef GC
+#                     ifndef GC
                           delete tempTree;
-#			endif
+#                     endif
                         tempTree = 0;
                 }
                 tFinish = currentTime();
@@ -208,30 +207,30 @@ GC_enable_incremental();
                 
                 // Stretch the memory space quickly
                 tempTree = MakeTree(kStretchTreeDepth);
-#		ifndef GC
+#              ifndef GC
                   delete tempTree;
-#		endif
+#              endif
                 tempTree = 0;
 
                 // Create a long lived object
                 cout << " Creating a long-lived binary tree of depth "
                      << kLongLivedTreeDepth << endl;
-#		ifndef GC
+#              ifndef GC
                   longLivedTree = new Node0();
-#		else 
+#              else 
                   longLivedTree = new (GC_NEW(Node0)) Node0();
-#		endif
+#              endif
                 Populate(kLongLivedTreeDepth, longLivedTree);
 
                 // Create long-lived array, filling half of it
                 cout << " Creating a long-lived array of "
                      << kArraySize << " doubles" << endl;
-#		ifndef GC
+#              ifndef GC
                   double *array = new double[kArraySize];
-#		else
+#              else
                   double *array = (double *)
-				GC_MALLOC_ATOMIC(sizeof(double) * kArraySize);
-#		endif
+                            GC_MALLOC_ATOMIC(sizeof(double) * kArraySize);
+#              endif
                 for (int i = 0; i < kArraySize/2; ++i) {
                         array[i] = 1.0/i;
                 }
@@ -252,10 +251,10 @@ GC_enable_incremental();
                 tElapsed = elapsedTime(tFinish-tStart);
                 PrintDiagnostics();
                 cout << "Completed in " << tElapsed << " msec" << endl;
-#		ifdef GC
-		  cout << "Completed " << GC_gc_no << " collections" <<endl;
-		  cout << "Heap size is " << GC_get_heap_size() << endl;
-#		endif
+#              ifdef GC
+                cout << "Completed " << GC_gc_no << " collections" <<endl;
+                cout << "Heap size is " << GC_get_heap_size() << endl;
+#              endif
         }
 };
 
