@@ -69,4 +69,7 @@ namespace
     Same<Log2<9>::bits, 4> b9;
     Same<Log2<15>::bits, 4> b15;
     Same<Log2<16>::bits, 5> b16;
+
+    // I did not design this to appear here, but this is life...
+    Same<Log2Helper<16>::bits, 5> h16;
 }
