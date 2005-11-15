@@ -1021,10 +1021,19 @@ namespace aL4nin
     Same<Log2<32>::is, 5> t8;
     IsZero<Scale<vcons, 32>::rest> t9;
 
+
+
+    template <typename ELEM>
+    struct ClusteredDeletable : Clustered<ELEM>
+    {
+        void operator delete(void*);
+    };
+
+
     // FROM GCBench.cpp // TEMPORARY.
     typedef struct Node0 *Node;
 
-    struct Node0 : Clustered<Node0> {
+    struct Node0 : ClusteredDeletable<Node0> {
         Node left;
         Node right;
         int i, j;
@@ -1041,6 +1050,7 @@ namespace aL4nin
         {}
         
         void mark(const vcons* o);
+        void unmark(const vcons* o);
         vcons* allocate(std::size_t);
     };
 
@@ -1280,6 +1290,8 @@ int main(void)
     //
     nodeCluster& nc(nodeCluster::allocate());
     nc.printCharacteristics();
+    Node n(new Node0);
+    delete n;
 
 
     // forked exceptions experiment
