@@ -501,8 +501,9 @@ struct ClusteredWorld : World<NUMPAGES, BASE, PAGE>
         }
 
     template <unsigned long CLUSTER>
-    static void* allocate(size_t ps = 1 << CLUSTER)
+    static void* allocate(size_t ps = min(1 << CLUSTER, 255))
     {
+        assert(ps < 256);
         // TODO ### grab semaphore
         unsigned char* first(&clusterPage(0));
         unsigned char* gap(GapFinder<CLUSTER>(first, ps, NUMPAGES));
@@ -1025,7 +1026,7 @@ namespace aL4nin
     };
 
 
-    // a cluster for 100000 objects:
+    // a cluster for 100000 (50000 on MacOS) objects:
     // HomogenousCluster: a cluster for aggregating objects of the same size,
     // all sharing the same metaobject
     //
@@ -1051,7 +1052,7 @@ namespace aL4nin
     };
     
     
-    typedef HomogenousCluster<Node0, 100000> nodeCluster;
+    typedef HomogenousCluster<Node0, 50000> nodeCluster;
 }
 
 
