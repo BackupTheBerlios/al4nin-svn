@@ -436,12 +436,33 @@ void GapFiller(unsigned char* gap, size_t ps)
     static const unsigned char pattern[] = 
         {
               1, 2, 3, 4, 5, 6, 7, 8 , 9, 10
-            , 11, 12, 13, 14, 15, 16, 17, 18 , 19
-            , 21, 22, 23, 24, 25, 26, 27, 28 , 29
+            , 11, 12, 13, 14, 15, 16, 17, 18 , 19, 20
+            , 21, 22, 23, 24, 25, 26, 27, 28 , 29, 30
+            , 31, 32
         };
 
-    assert(ps < 30); // for now ###
-    memcpy(gap, pattern, ps);
+    if (ps < sizeof pattern)
+    {
+        memcpy(gap, pattern, ps);
+    }
+    else
+    {
+        assert(!(reinterpret_cast<unsigned long>(gap) & 0x11));
+        unsigned long pat(*reinterpret_cast<const unsigned long*>(pattern));
+        Same<sizeof pat, 4> c1;
+        Same<sizeof pattern, 32> c2;
+
+        unsigned char* begin(gap);
+        for (const unsigned char* end(gap + ps - sizeof pat); begin <= end; begin += sizeof pat, pat += 0x04040404)
+        {
+            *reinterpret_cast<unsigned long*>(begin) = pat;
+        }
+
+        for (size_t remains(ps & (sizeof pat - 1)); remains > 0; --remains, ++begin)
+        {
+            *begin = begin[-1] + 1;
+        }
+    }
 };
     
 
@@ -479,10 +500,10 @@ struct ClusteredWorld : World<NUMPAGES, BASE, PAGE>
         
         void printCharacteristics(void)
         {
-            std::cerr << "NUMPAGES: " << NUMPAGES
-                      << "BASE: " << BASE
-                      << "PAGE: " << PAGE
-                      << "CLUSTER: " << SCALE;
+            std::cerr << "NUMPAGES: " << NUMPAGES << std::endl
+                      << "BASE: " << BASE << std::endl
+                      << "PAGE: " << PAGE << std::endl
+                      << "CLUSTER: " << SCALE << std::endl;
         };
     };
 
@@ -633,7 +654,7 @@ using namespace aL4nin;
 #   ifdef __APPLE__
     typedef ClusteredWorld<100, 0xFF000000UL, 12> world;
 #   else
-    typedef ClusteredWorld<100, 0xFEF80000UL, 13> world;
+    typedef ClusteredWorld<1000, 0xFE800000UL, 13> world;
 #   endif
     
 
