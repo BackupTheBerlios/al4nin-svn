@@ -280,7 +280,7 @@ struct World
             void* here(mmap(start(),
                             s,
                             PROT_READ | PROT_WRITE,
-                            MAP_SHARED,
+                            MAP_SHARED | MAP_FIXED,
                             hdl,
                             0));
             if (MAP_FAILED == here)
@@ -652,7 +652,7 @@ unsigned char* GapFinder(unsigned char* first, size_t pages, size_t maxpages)
 using namespace aL4nin;
 
 #   ifdef __APPLE__
-    typedef ClusteredWorld<100, 0xFF000000UL, 12> world;
+    typedef ClusteredWorld<2000, 0xF0000000UL, 12> world;
 #   else
     typedef ClusteredWorld<1000, 0xFE800000UL, 13> world;
 #   endif
@@ -814,6 +814,8 @@ namespace aL4nin
             {
                 return seed->allocate(s);
             }
+        void operator delete(void*) { }
+
         static meta<ELEM>* seed;
         static ELEM* (*strategy)(meta<ELEM>*);
         
@@ -1026,7 +1028,10 @@ namespace aL4nin
     template <typename ELEM>
     struct ClusteredDeletable : Clustered<ELEM>
     {
-        void operator delete(void*);
+        void operator delete(void*)
+        {
+            /// TODO ####
+        }
     };
 
 
@@ -1044,14 +1049,14 @@ namespace aL4nin
     template <>
     struct meta<Node0>
     {
-        unsigned long used;
+        unsigned long* used;
         meta(void)
         : used(0)
         {}
         
-        void mark(const vcons* o);
-        void unmark(const vcons* o);
-        vcons* allocate(std::size_t);
+        void mark(const Node0* o);
+        void unmark(const Node0* o);
+        Node0* allocate(std::size_t);
     };
 
 
@@ -1069,6 +1074,8 @@ namespace aL4nin
         HomogenousCluster(void)
         {
             if (!T::seed) T::seed = metas;
+            metas->used = new unsigned long[(OBJECTS + 31) / 32]; // round up
+            memset(metas->used, 0, ((OBJECTS + 31) / 32) * sizeof *metas->used);
         }
         
         meta<T>* meta_begin(void) { return metas; }
@@ -1081,6 +1088,30 @@ namespace aL4nin
     };
     
     
+    inline void meta<Node0>::mark(const Node0* o)
+    {
+        register size_t i(o - reinterpret_cast<const Node0*>(this + 1)); // trick
+        unsigned bit(i & ((1 << 5) - 1));
+        unsigned word(i >> 5);
+        
+    }
+//###    void meta<Node0>::unmark(const Node0* o);
+    Node0* meta<Node0>::allocate(std::size_t)
+    {
+        // simple-minded
+        unsigned i(FindUnsetBits<1>(*used));
+        if (i < sizeof *used * 8)
+        {
+            *used |= (1 << i);
+            return reinterpret_cast<Node0*>(this + 1) + i;
+        }
+/*        for ()
+        {
+            
+        }*/
+    }
+
+
     typedef HomogenousCluster<Node0, 50000> nodeCluster;
 }
 
@@ -1239,6 +1270,10 @@ int main(void)
     // get the world set up
     //
     static const char worldPath[] = "/aL4nin";
+    int ul0(shm_unlink(worldPath));
+    if (ul0 == -1)
+        perror("(preventive) shm_unlink");
+
     int hdl(shm_open(worldPath,
                      O_RDWR | O_CREAT,
                      S_IRUSR | S_IWUSR | S_IRGRP | S_IWGRP));
