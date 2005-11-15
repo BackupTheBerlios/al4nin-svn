@@ -479,13 +479,11 @@ struct ClusteredWorld : World<NUMPAGES, BASE, PAGE>
         
         void printCharacteristics(void)
         {
-            cerr << "NUMPAGES: " << NUMPAGES
-                 << "BASE: " << BASE
-                 << "PAGE: " << PAGE
-                 << "CLUSTER: " << SCALE;
-//                 << ": " << 
+            std::cerr << "NUMPAGES: " << NUMPAGES
+                      << "BASE: " << BASE
+                      << "PAGE: " << PAGE
+                      << "CLUSTER: " << SCALE;
         };
-
     };
 
     static unsigned char& clusterPage(unsigned i)
@@ -501,7 +499,7 @@ struct ClusteredWorld : World<NUMPAGES, BASE, PAGE>
         }
 
     template <unsigned long CLUSTER>
-    static void* allocate(size_t ps = min(1 << CLUSTER, 255))
+    static void* allocate(size_t ps = std::min(1 << CLUSTER, 255))
     {
         assert(ps < 256);
         // TODO ### grab semaphore
@@ -1047,7 +1045,7 @@ namespace aL4nin
         
         static HomogenousCluster& allocate(void)
         {
-            return *new(world::allocate<Magnitude>()) HomogenousCluster;
+            return *new(world::allocate<HomogenousCluster::Magnitude>()) HomogenousCluster;
         }
     };
     
