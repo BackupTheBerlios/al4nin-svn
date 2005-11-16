@@ -1091,7 +1091,6 @@ namespace aL4nin
         meta<T>* meta_begin(void) { return metas; }
         meta<T>* meta_end(void) { return metas + sizeof metas / sizeof *metas; }
         
-///        template <unsigned long /*GRAN*/>
         static inline const void* Raw2Meta(const void* obj)
         {
             enum { mask = ~((1 << Magnitude) - 1) };
@@ -1106,11 +1105,10 @@ namespace aL4nin
     
     
     template <typename ELEM>
-    void ClusteredDeletable<ELEM>::operator delete(void* raw)
+    inline void ClusteredDeletable<ELEM>::operator delete(void* raw)
     {
         ELEM* o(static_cast<ELEM*>(raw));
         object_meta(o)->unmark(o);
-//        static_cast<meta<ELEM>*>(Raw2MetaLog2<sizeof(meta<ELEM>)>::is>(o))->unmark(o);
     }
 
     typedef HomogenousCluster<Node0, 50000> nodeCluster;
@@ -1147,6 +1145,34 @@ namespace aL4nin
             
         }*/
     }
+    
+    // Pyramid fast hierarchical bitmap
+    //
+    template <unsigned DEPTH, unsigned short FACTOR>
+    struct Pyramid : IsZero<FACTOR % 32>
+    {
+        unsigned long mado[FACTOR / (8 * sizeof(unsigned long))]; // fantasy name :-)
+        Pyramid<DEPTH - 1, FACTOR> pado[FACTOR];
+        enum { bits = FACTOR * Pyramid<DEPTH - 1, FACTOR>::bits };
+        
+        template <unsigned (*scanner)(long), void (*marker)(long&)>
+        unsigned find(void);
+        
+        void* operator new (size_t bits_needed)
+        {
+            /// enum { 
+        }
+    };
+    
+    template <unsigned short FACTOR>
+    struct Pyramid<0, FACTOR>
+    {
+        unsigned long pado[FACTOR];
+        enum { bits = FACTOR * sizeof(unsigned long) * 8 };
+    };
+    
+    Pyramid<1, 32> p1;
+    
 
 
 }
