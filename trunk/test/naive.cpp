@@ -654,7 +654,7 @@ using namespace aL4nin;
 #   ifdef __APPLE__
     typedef ClusteredWorld<2000, 0xF0000000UL, 12> world;
 #   else
-    typedef ClusteredWorld<1000, 0xFE800000UL, 13> world;
+    typedef ClusteredWorld<1000, 0xF0000000UL, 13> world;
 #   endif
     
 
@@ -1093,7 +1093,7 @@ namespace aL4nin
         
         static inline const void* Raw2Meta(const void* obj)
         {
-            enum { mask = ~((1 << Magnitude) - 1) };
+            enum { mask = ~((1 << HomogenousCluster::Magnitude) - 1) };
             return reinterpret_cast<HomogenousCluster*>(mask & reinterpret_cast<unsigned long>(obj))->meta_begin();
         }
         
