@@ -1081,7 +1081,7 @@ namespace aL4nin
             Same<chunk, 4> c2;
             Same<chunk_bits, 32> c3;
             Same<rounder, 31> c4;
-            // Same<chunks, 50000 / 32> c5; // commectable
+            // Same<chunks, 50000 / 32> c5; // commentable
 
             metas->used = new unsigned long[chunks]; // round up
             memset(metas->used, 0, chunks * chunk);
@@ -1152,15 +1152,24 @@ namespace aL4nin
     struct Pyramid : IsZero<FACTOR % 32>
     {
         unsigned long mado[FACTOR / (8 * sizeof(unsigned long))]; // fantasy name :-)
-        Pyramid<DEPTH - 1, FACTOR> pado[FACTOR];
-        enum { bits = FACTOR * Pyramid<DEPTH - 1, FACTOR>::bits };
+        typedef Pyramid<DEPTH - 1, FACTOR> Pado;
+        Pado pado[FACTOR];
+        enum { bits = FACTOR * Pado::bits };
         
+        Pyramid(void)
+        {
+            memset(mado, 0, sizeof mado);
+            memset(pado, 0, sizeof pado);
+        }
+
         template <unsigned (*scanner)(long), void (*marker)(long&)>
         unsigned find(void);
         
         void* operator new (size_t bits_needed)
         {
-            /// enum { 
+            unsigned pados_needed((bits_needed + Pado::bits - 1) / Pado::bits);
+            assert(pados_needed < FACTOR);
+            return ::operator new(sizeof(Pyramid) - sizeof(Pado (&)[FACTOR]) + sizeof(Pado) * pados_needed);
         }
     };
     
@@ -1168,7 +1177,11 @@ namespace aL4nin
     struct Pyramid<0, FACTOR>
     {
         unsigned long pado[FACTOR];
-        enum { bits = FACTOR * sizeof(unsigned long) * 8 };
+        enum { bits = sizeof(unsigned long (&)[FACTOR]) * 8 };
+        Pyramid(void)
+        {
+            memset(pado, 0, sizeof pado);
+        }
     };
     
     Pyramid<1, 32> p1;
