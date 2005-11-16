@@ -1028,10 +1028,7 @@ namespace aL4nin
     template <typename ELEM>
     struct ClusteredDeletable : Clustered<ELEM>
     {
-        void operator delete(void*)
-        {
-            /// TODO ####
-        }
+        void operator delete(void*);
     };
 
 
@@ -1073,13 +1070,33 @@ namespace aL4nin
         
         HomogenousCluster(void)
         {
+            IsZero<(sizeof(T (&)[OBJECTS]) / world::PageSize > 255)> c1;
             if (!T::seed) T::seed = metas;
-            metas->used = new unsigned long[(OBJECTS + 31) / 32]; // round up
-            memset(metas->used, 0, ((OBJECTS + 31) / 32) * sizeof *metas->used);
+            enum { chunk = sizeof *metas->used
+                 , chunk_bits = 8 * chunk
+                 , rounder = chunk_bits - 1
+                 , chunks = (OBJECTS + rounder) / chunk_bits
+                 };
+
+            Same<chunk, 4> c2;
+            Same<chunk_bits, 32> c3;
+            Same<rounder, 31> c4;
+            // Same<chunks, 50000 / 32> c5; // commectable
+
+            metas->used = new unsigned long[chunks]; // round up
+            memset(metas->used, 0, chunks * chunk);
+            assert(objs == static_cast<void*>(metas + 1));
         }
         
         meta<T>* meta_begin(void) { return metas; }
         meta<T>* meta_end(void) { return metas + sizeof metas / sizeof *metas; }
+        
+///        template <unsigned long /*GRAN*/>
+        static inline const void* Raw2Meta(const void* obj)
+        {
+            enum { mask = ~((1 << Magnitude) - 1) };
+            return reinterpret_cast<HomogenousCluster*>(mask & reinterpret_cast<unsigned long>(obj))->meta_begin();
+        }
         
         static HomogenousCluster& allocate(void)
         {
@@ -1088,14 +1105,34 @@ namespace aL4nin
     };
     
     
+    template <typename ELEM>
+    void ClusteredDeletable<ELEM>::operator delete(void* raw)
+    {
+        ELEM* o(static_cast<ELEM*>(raw));
+        object_meta(o)->unmark(o);
+//        static_cast<meta<ELEM>*>(Raw2MetaLog2<sizeof(meta<ELEM>)>::is>(o))->unmark(o);
+    }
+
+    typedef HomogenousCluster<Node0, 50000> nodeCluster;
+
+    template <>
+    inline meta<Node0>* object_meta(Node0* o)
+    {
+        return const_cast<meta<Node0>*>(static_cast<const meta<Node0>*>(nodeCluster::Raw2Meta(o)));
+    }
+
     inline void meta<Node0>::mark(const Node0* o)
     {
         register size_t i(o - reinterpret_cast<const Node0*>(this + 1)); // trick
         unsigned bit(i & ((1 << 5) - 1));
         unsigned word(i >> 5);
-        
     }
-//###    void meta<Node0>::unmark(const Node0* o);
+
+    void meta<Node0>::unmark(const Node0* o)
+    {
+        // TODO ###
+    }
+
     Node0* meta<Node0>::allocate(std::size_t)
     {
         // simple-minded
@@ -1112,7 +1149,6 @@ namespace aL4nin
     }
 
 
-    typedef HomogenousCluster<Node0, 50000> nodeCluster;
 }
 
 
