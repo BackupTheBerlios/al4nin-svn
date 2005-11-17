@@ -1146,7 +1146,7 @@ namespace aL4nin
         }*/
     }
     
-    // Pyramid fast hierarchical bitmap
+    // Pyramid: fast hierarchical bitmap
     //
     template <unsigned DEPTH, unsigned short FACTOR>
     struct Pyramid : IsZero<FACTOR % 32>
@@ -1173,9 +1173,19 @@ namespace aL4nin
                     unsigned p0(b - mado);
                     marker(*b, i);
                     unsigned p1(p0 * madobits + i);
-                    return p1 * Pado::bits + pado[p1].find<scanner, marker>;
+                    return p1 * Pado::bits + pado[p1].find<scanner, marker>();
                 }
             }
+        }
+        
+        template <void (*unmarker)(unsigned long&, long bit)>
+        unsigned clean(unsigned n)
+        {
+            unsigned p(n / Pado::bits);
+            unsigned r(n % Pado::bits);
+            unsigned m(n / Pado::bits);
+            pado[p].clean<unmarker>(r);
+            unmarker(mado[p / madobits], p % madobits);
         }
         
         void* operator new (size_t bits_needed)
@@ -1189,16 +1199,47 @@ namespace aL4nin
     template <unsigned short FACTOR>
     struct Pyramid<0, FACTOR>
     {
-        unsigned long pado[FACTOR];
-        enum { bits = sizeof(unsigned long (&)[FACTOR]) * 8 };
+        unsigned long mado[FACTOR];
+        enum { bits = sizeof(unsigned long (&)[FACTOR]) * 8
+             , madobits = 8 * sizeof(unsigned long)
+             };
         Pyramid(void)
         {
-            memset(pado, 0, sizeof pado);
+            memset(mado, 0, sizeof mado);
+        }
+
+        template <unsigned (*scanner)(unsigned long), void (*marker)(unsigned long&, long bit)>
+        unsigned find(void)
+        {
+            for (unsigned long* b(mado), *e(mado + FACTOR); b < e; ++b)
+            {
+                unsigned i(scanner(*b));
+                if (i <= madobits)
+                {
+                    unsigned p0(b - mado);
+                    marker(*b, i);
+                    return i;
+                }
+            }
         }
     };
     
     Pyramid<1, 32> p1;
+    Same<Pyramid<1, 32>::bits, 32*1024> cp1;
+
+    inline unsigned simple_minded_scanner(unsigned long u)
+    {
+        unsigned i(FindUnsetBits<1>(u));
+        return i;
+    }
     
+    inline void simple_minded_marker(unsigned long& u, long bit)
+    {
+        u |= (1 << bit);
+    }
+    
+    
+    unsigned cp2(p1.find<simple_minded_scanner, simple_minded_marker>());
 
 
 }
