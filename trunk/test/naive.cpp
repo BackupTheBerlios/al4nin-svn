@@ -1151,10 +1151,10 @@ namespace aL4nin
     template <unsigned DEPTH, unsigned short FACTOR>
     struct Pyramid : IsZero<FACTOR % 32>
     {
-        unsigned long mado[FACTOR / (8 * sizeof(unsigned long))]; // fantasy name :-)
         typedef Pyramid<DEPTH - 1, FACTOR> Pado;
-        Pado pado[FACTOR];
-        enum { bits = FACTOR * Pado::bits };
+        enum { bits = FACTOR * Pado::bits, madobits = 8 * sizeof(unsigned long) };
+        unsigned long mado[FACTOR / madobits]; // fantasy name :-)
+        Pado pado[FACTOR];                     // fantasy name :-)
         
         Pyramid(void)
         {
@@ -1162,8 +1162,21 @@ namespace aL4nin
             memset(pado, 0, sizeof pado);
         }
 
-        template <unsigned (*scanner)(long), void (*marker)(long&)>
-        unsigned find(void);
+        template <unsigned (*scanner)(unsigned long), void (*marker)(unsigned long&, long bit)>
+        unsigned find(void)
+        {
+            for (unsigned long* b(mado), *e(mado + FACTOR); b < e; ++b)
+            {
+                unsigned i(scanner(*b));
+                if (i <= madobits)
+                {
+                    unsigned p0(b - mado);
+                    marker(*b, i);
+                    unsigned p1(p0 * madobits + i);
+                    return p1 * Pado::bits + pado[p1].find<scanner, marker>;
+                }
+            }
+        }
         
         void* operator new (size_t bits_needed)
         {
