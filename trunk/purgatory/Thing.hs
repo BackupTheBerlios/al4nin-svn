@@ -27,12 +27,18 @@
 
 -- Introduce Things "Tg"
 --
-data Tg = AnyTg (Tg -> Tg) | It's Int
+data Tg = AnyTg (Tg -> Tg) | It's Int | Arr (Int, Int) | Tup [Int]
 
 -- universal quantification
 --
 ny :: Tg
 ny = AnyTg (\x->x)
+
+int, fa, tr :: Int
+int = 2
+fa = 3
+tr = 5
+plus1 = (2,2)
 
 
 -- unification function
@@ -41,6 +47,10 @@ unify :: Tg -> Tg -> Maybe Tg
 
 unify (It's x) (It's y)
  | x == y = Just (It's x)
+ | True = Nothing
+
+unify (Arr (a, b)) (Arr (c, d))
+ | a == c && b == d = Just (Arr (a, b))
  | True = Nothing
 
 unify (AnyTg f) s = Just (f s)
@@ -52,12 +62,12 @@ unify s t = unify t s
 -- Documentation
 {-
 
-we model types with numbers
+we model types with numbers (or things built up from numbers)
 i.e. the haskell Int would be our 2 (always primes)
 a tagged union type (Bool) would be a product, say 3 * 5
 a type of a haskell function would be a pair (11, 2)
 a type of a haskell tuple (Int, Int, Bool) would be a list [2, 2, 15]
-
+haskell type constructor is then a function here? 
 
 
 
