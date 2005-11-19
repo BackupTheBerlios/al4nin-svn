@@ -27,18 +27,21 @@
 
 -- Introduce Things "Tg"
 --
-data Tg = AnyTg (Tg -> Tg) | It's Int | Arr (Int, Int) | Tup [Int]
+data Tg = AnyTg (Tg -> Tg) | It's Int | Arr (Tg, Tg) | Tup [Tg] | Spec (String, [Tg])
 
 -- universal quantification
 --
 ny :: Tg
 ny = AnyTg (\x->x)
 
-int, fa, tr :: Int
-int = 2
-fa = 3
-tr = 5
-plus1 = (2,2)
+int, fa, tr, bo, plus1, iib, ibi :: Tg
+int = It's 2
+fa = It's (3 * 5)
+tr = It's (5 * 3)
+bo = tr
+plus1 = Arr (int, int)
+iib = Tup [int, int, bo]
+ibi = Tup [int, bo, int]
 
 
 -- unification function
@@ -50,13 +53,28 @@ unify (It's x) (It's y)
  | True = Nothing
 
 unify (Arr (a, b)) (Arr (c, d))
- | a == c && b == d = Just (Arr (a, b))
+ | (unifiable a c) && (unifiable b d) = Just (Arr (a, b))
  | True = Nothing
 
-unify (AnyTg f) s = Just (f s)
+unify (Tup xs) (Tup ys)
+ | length xs == length ys {- foldl unif -} = Just (Tup xs)
+ | True = Nothing
 
-unify s t = unify t s
+unify s (AnyTg f) = Just (f s)
 
+unify (It's _) _ = Nothing
+unify (Arr _) _ = Nothing
+unify (Tup _) _ = Nothing
+
+
+unify s t = unify t s -- try again reversed!
+
+
+-- another unification function
+--
+unifiable :: Tg -> Tg -> Bool
+unifiable x y = case unify x y of { Nothing -> False; _ -> True }
+ 
 
 
 -- Documentation
@@ -64,10 +82,10 @@ unify s t = unify t s
 
 we model types with numbers (or things built up from numbers)
 i.e. the haskell Int would be our 2 (always primes)
-a tagged union type (Bool) would be a product, say 3 * 5
+a tagged union type (Bool) would be a product, say 3 * 5 (union of nullaries)
 a type of a haskell function would be a pair (11, 2)
 a type of a haskell tuple (Int, Int, Bool) would be a list [2, 2, 15]
-haskell type constructor is then a function here? 
+haskell type constructor is then a function here? no, ("Maybe", [15]) is it
 
 
 
