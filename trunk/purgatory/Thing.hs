@@ -57,14 +57,16 @@ unify (Arr (a, b)) (Arr (c, d))
  | True = Nothing
 
 unify (Tup xs) (Tup ys)
- | length xs == length ys {- foldl unif -} = Just (Tup xs)
+ | length xs == length ys && foldl unif True (zip xs ys) = Just (Tup xs)
  | True = Nothing
+  where unif sofar (a, b) = sofar && unifiable a b
 
 unify s (AnyTg f) = Just (f s)
 
 unify (It's _) _ = Nothing
 unify (Arr _) _ = Nothing
 unify (Tup _) _ = Nothing
+unify (Spec _) _ = Nothing
 
 
 unify s t = unify t s -- try again reversed!
