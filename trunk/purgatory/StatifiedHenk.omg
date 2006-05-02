@@ -55,12 +55,21 @@ exp0 :: Term
 exp0 = Var "b:Bool"
 
 exp1 :: Type
-exp1 = Lam (Var "s") Star (Var "s") -- lam s:*0 . s
+exp1 = Lam (Var "s") Star (Var "s")  -- lam s:*0 . s
 
 exp2 :: Kind
-exp2 = Pi (Var "_") Star Star -- *0 ~> *0
+exp2' :: Kind
+exp2 = Pi (Var "_") Star Star        -- *0 ~> *0
+exp2' = Lam (Var "_") Rectangle Star -- LAM _:*1 . *0
 
 -- todo:
 --  - Item notation
 --  - reduction rules
 --  - type inference of lambda terms
+
+-- type inference of lambda terms
+
+tau :: Henk n -> Henk (S n)
+tau Star = Rectangle
+tau Rectangle = Lozenge
+tau (Lam v codomain result) = Pi (Var "_") codomain (tau result)
