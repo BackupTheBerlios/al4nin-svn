@@ -27,12 +27,12 @@
 
 -- Introduce Things "Tg"
 --
-data Tg = AnyTg (Tg -> Tg) | It's Int | Arr (Tg, Tg) | Tup [Tg] | Spec (String, [Tg])
+data Tg = AnyTg Int (Tg -> Tg) | It's Int | Arr (Tg, Tg) | Tup [Tg] | Spec (Int, [Tg])
 
 -- universal quantification
 --
 ny :: Tg
-ny = AnyTg (\x->x)
+ny = AnyTg 1 (\x->x)
 
 int, fa, tr, bo, plus1, iib, ibi :: Tg
 int = It's 2
@@ -88,7 +88,7 @@ a tagged union type (Bool) would be a product, say 3 * 5 (union of nullaries)
 a type of a haskell function would be a pair (11, 2)
 a type of a haskell tuple (Int, Int, Bool) would be a list [2, 2, 15]
 haskell type constructor is then a function here? no, ("Maybe", [15]) is it
-
+better Spec 22, [It's 15] where 22 means, 2 data constructors (2 and 11)
 
 
 -}

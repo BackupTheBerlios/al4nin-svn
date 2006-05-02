@@ -47,11 +47,11 @@ data Henk stratum
  | exists s . Lam (Henk s) (Henk (S s)) (Henk s) where stratum = s
  | exists s . Pi (Henk s) (Henk (S s)) (Henk (S s)) where stratum = (S s)
 
-type Term = Henk #0
+type Value = Henk #0
 type Type = Henk #1
 type Kind = Henk #2
 
-exp0 :: Term
+exp0 :: Value
 exp0 = Var "b:Bool"
 
 exp1 :: Type
