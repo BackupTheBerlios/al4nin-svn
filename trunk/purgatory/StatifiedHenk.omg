@@ -42,3 +42,25 @@ data Henk stratum
  = Star where stratum = #2
  | Rectangle where stratum = #3
  | Lozenge where stratum = #4
+ | Var String
+ | exists s . App (Henk s) (Henk s) where stratum = s
+ | exists s . Lam (Henk s) (Henk (S s)) (Henk s) where stratum = s
+ | exists s . Pi (Henk s) (Henk (S s)) (Henk (S s)) where stratum = (S s)
+
+type Term = Henk #0
+type Type = Henk #1
+type Kind = Henk #2
+
+exp0 :: Term
+exp0 = Var "b:Bool"
+
+exp1 :: Type
+exp1 = Lam (Var "s") Star (Var "s") -- lam s:*0 . s
+
+exp2 :: Kind
+exp2 = Pi (Var "_") Star Star -- *0 ~> *0
+
+-- todo:
+--  - Item notation
+--  - reduction rules
+--  - type inference of lambda terms
