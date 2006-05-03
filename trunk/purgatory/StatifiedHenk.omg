@@ -41,7 +41,7 @@ Henk :: Nat ~> *
 data Henk stratum
  = Star where stratum = #2
  | Rectangle where stratum = #3
- | Lozenge where stratum = #4
+ | Lozenge where stratum = #4 -- NO! (#3)
  | Var String
  | exists s . App (Henk s) (Henk s) where stratum = s
  | exists s . Lam (Henk s) (Henk (S s)) (Henk s) where stratum = s
@@ -56,6 +56,7 @@ exp0 = Var "b:Bool"
 
 exp1 :: Type
 exp1 = Lam (Var "s") Star (Var "s")  -- lam s:*0 . s
+exp1' = App exp2' Star
 
 exp2 :: Kind
 exp2' :: Kind
@@ -73,3 +74,5 @@ tau :: Henk n -> Henk (S n)
 tau Star = Rectangle
 tau Rectangle = Lozenge
 tau (Lam v codomain result) = Pi (Var "_") codomain (tau result)
+tau (App (Lam _ _ exansion) _) = tau exansion
+--tau (App (Pi _ _ exansion) _) = exansion
