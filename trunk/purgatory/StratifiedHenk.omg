@@ -37,42 +37,51 @@
 import "/home/ggreif/%NoBackup%/Omega1.2/LangPrelude.prg" 
   (head,tail,lookup,member,fst,snd,map,Monad,maybeM,id,ioM,Row,HasType,RCons,RNil)
 
-Henk :: Nat ~> *
-data Henk stratum
- = Star where stratum = #2
- | Rectangle where stratum = #3
- | Lozenge where stratum = #4 -- NO! (#3)
- | Var String
- | exists s . App (Henk s) (Henk s) where stratum = s
- | exists s . Lam (Henk s) (Henk (S s)) (Henk s) where stratum = s
- | exists s . Pi (Henk s) (Henk (S s)) (Henk (S s)) where stratum = (S s)
+Henk :: Nat ~> Nat ~> *
+data Henk stratum binding
+ = Star where stratum = #2, binding = Z
+ | Rectangle where stratum = #3, binding = Z
+ | Lozenge where stratum = #3, binding = Z -- NO! (#3)
+ | Var String where binding = Z
+ | App (Henk stratum #(2+binding)) (Henk stratum Z)
+ | exists s . Lam (Henk s Z) (Henk (S s) Z) (Henk s Z) where stratum = s, binding = #2
+ | exists s . Pi (Henk s Z) (Henk (S s) Z) (Henk (S s) Z) where stratum = (S s), binding = #1
+--- | exists s . Pi (Henk s) (Henk (S s)) (Henk #(s+binding)) where stratum = #(s+binding)
 
-type Value = Henk #0
-type Type = Henk #1
-type Kind = Henk #2
+type Value = Henk #0 #0
+type Type = Henk #1 #0
+type TypeLam = Henk #1 #2
+type Kind = Henk #2 #0
+type KindPi = Henk #2 #1
+type KindLam = Henk #2 #2
 
 exp0 :: Value
 exp0 = Var "b:Bool"
 
-exp1 :: Type
+exp1 :: TypeLam
 exp1 = Lam (Var "s") Star (Var "s")  -- lam s:*0 . s
+exp1' :: Kind
 exp1' = App exp2' Star
 
-exp2 :: Kind
-exp2' :: Kind
+exp2 :: KindPi
 exp2 = Pi (Var "_") Star Star        -- *0 ~> *0
+exp2' :: KindLam
 exp2' = Lam (Var "_") Rectangle Star -- LAM _:*1 . *0
 
 -- todo:
 --  - Item notation
 --  - reduction rules
 --  - type inference of lambda terms
+--  - ANF conversion
 
 -- type inference of lambda terms
+down :: Nat ~> Nat
+{down Z} = Z
+{down (S b)} = b
 
-tau :: Henk n -> Henk (S n)
+tau :: Henk n b -> Henk (S n) {down b}
 tau Star = Rectangle
-tau Rectangle = Lozenge
-tau (Lam v codomain result) = Pi (Var "_") codomain (tau result)
-tau (App (Lam _ _ exansion) _) = tau exansion
---tau (App (Pi _ _ exansion) _) = exansion
+--tau Rectangle = Lozenge
+tau (Lam v domain result) = Pi (Var "_") domain (tau result)
+tau (App (Lam _ _ expansion) _) = tau expansion
+--tau (App (Pi _ _ expansion) _) = expansion
