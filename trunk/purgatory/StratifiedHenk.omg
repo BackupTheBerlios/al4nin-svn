@@ -43,8 +43,8 @@ data Henk stratum binding
  | Rectangle where stratum = #3, binding = Z
  | Lozenge where stratum = #3, binding = Z -- NO! (#3)
  | Var String where binding = Z
- | App (Henk stratum #(2+binding)) (Henk stratum Z)
- | exists s . Lam (Henk s Z) (Henk (S s) Z) (Henk s Z) where stratum = s, binding = #2
+ | exists b . App (Henk stratum (S b)) (Henk stratum Z) where binding = Z
+ | Lam (Henk stratum Z) (Henk (S stratum) Z) (Henk stratum Z) where binding = #2
  | exists s . Pi (Henk s Z) (Henk (S s) Z) (Henk (S s) Z) where stratum = (S s), binding = #1
 --- | exists s . Pi (Henk s) (Henk (S s)) (Henk #(s+binding)) where stratum = #(s+binding)
 
