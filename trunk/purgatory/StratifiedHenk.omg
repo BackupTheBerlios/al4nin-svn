@@ -46,7 +46,6 @@ data Henk stratum binding
  | exists s b . App (Henk stratum b) (Henk s binding) where Applicable stratum b s, binding = Z
  | Lam (Henk stratum Z) (Henk (S stratum) Z) (Henk stratum Z) where binding = #2
  | exists s . Pi (Henk s Z) (Henk (S s) Z) (Henk (S s) Z) where stratum = (S s), binding = #1
---- | exists s . Pi (Henk s) (Henk (S s)) (Henk #(s+binding)) where stratum = #(s+binding)
 
 prop Applicable stratum binder stratum'
  = PiAppl where binder = #1, stratum = S stratum'
@@ -54,6 +53,7 @@ prop Applicable stratum binder stratum'
 
 
 type Value = Henk #0 #0
+type ValueLam = Henk #0 #2
 type Type = Henk #1 #0
 type TypeLam = Henk #1 #2
 type Kind = Henk #2 #0
