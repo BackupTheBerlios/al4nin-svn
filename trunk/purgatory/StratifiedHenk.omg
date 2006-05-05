@@ -43,10 +43,15 @@ data Henk stratum binding
  | Rectangle where stratum = #3, binding = Z
  | Lozenge where stratum = #3, binding = Z
  | Var String where binding = Z
- | exists s b . App (Henk stratum (S b)) (Henk s Z)
+ | exists s b . App (Henk stratum b) (Henk s binding) where Applicable stratum b s, binding = Z
  | Lam (Henk stratum Z) (Henk (S stratum) Z) (Henk stratum Z) where binding = #2
  | exists s . Pi (Henk s Z) (Henk (S s) Z) (Henk (S s) Z) where stratum = (S s), binding = #1
 --- | exists s . Pi (Henk s) (Henk (S s)) (Henk #(s+binding)) where stratum = #(s+binding)
+
+prop Applicable stratum binder stratum'
+ = PiAppl where binder = #1, stratum = S stratum'
+ | LamAppl where binder = #2, stratum = stratum'
+
 
 type Value = Henk #0 #0
 type Type = Henk #1 #0
@@ -84,4 +89,4 @@ tau Star = Rectangle
 --tau Rectangle = Lozenge
 tau (Lam v domain result) = Pi (Var "_") domain (tau result)
 tau (App (Lam _ _ expansion) _) = tau expansion
---tau (App (Pi _ _ expansion) _) = expansion
+tau (App (Pi _ _ expansion) _) = tau expansion
