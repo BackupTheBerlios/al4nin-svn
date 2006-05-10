@@ -37,28 +37,33 @@
 import "/home/ggreif/%NoBackup%/Omega1.2.1/LangPrelude.prg" 
   (head,tail,lookup,member,fst,snd,map,Monad,maybeM,id,ioM,Row,HasType,RCons,RNil)
 
-Henk :: Nat ~> Nat ~> *
-data Henk stratum binding
+Henk' :: (Nat ~> Nat ~> Nat ~> *) ~> Nat ~> Nat ~> *
+data Henk' appl stratum binding
  = Star where stratum = #2, binding = Z
  | Rectangle where stratum = #3, binding = Z
  | Lozenge where stratum = #3, binding = Z
  | Var String where binding = Z
- | exists s b . App (Henk stratum b) (Henk s binding) where Applicable stratum b s, binding = Z
- | Lam (Henk stratum Z) (Henk (S stratum) Z) (Henk stratum Z) where binding = #2
- | exists s . Pi (Henk s Z) (Henk (S s) Z) (Henk (S s) Z) where stratum = (S s), binding = #1
+ | exists s b . App (Henk' appl stratum b) (Henk' appl s binding) where appl stratum b s, binding = Z
+ | Lam (Henk' appl stratum Z) (Henk' appl (S stratum) Z) (Henk' appl stratum Z) where binding = #2
+ | exists s . Pi (Henk' appl s Z) (Henk' appl (S s) Z) (Henk' appl (S s) Z) where stratum = (S s), binding = #1
 
 prop Applicable stratum binder stratum'
  = PiAppl where binder = #1, stratum = S stratum'
  | LamAppl where binder = #2, stratum = stratum'
 
+--Henk :: Nat ~> Nat ~> *
+type Henk = Henk' Applicable
 
-type Value = Henk #0 #0
-type ValueLam = Henk #0 #2
-type Type = Henk #1 #0
-type TypeLam = Henk #1 #2
-type Kind = Henk #2 #0
-type KindPi = Henk #2 #1
-type KindLam = Henk #2 #2
+--- Bug?
+--- type Value = Henk #0 #0
+
+type Value = Henk' Applicable #0 #0
+type ValueLam = Henk' Applicable #0 #2
+type Type = Henk' Applicable #1 #0
+type TypeLam = Henk' Applicable #1 #2
+type Kind = Henk' Applicable #2 #0
+type KindPi = Henk' Applicable #2 #1
+type KindLam = Henk' Applicable #2 #2
 
 exp0 :: Value
 exp0 = Var "b:Bool"
@@ -67,6 +72,8 @@ exp1 :: TypeLam
 exp1 = Lam (Var "s") Star (Var "s")  -- lam s:*0 . s
 exp1' :: Kind
 exp1' = App exp2' Star
+-- this should not typecheck:
+-- exp1'' = App exp2' Rectangle
 
 exp2 :: KindPi
 exp2 = Pi (Var "_") Star Star        -- *0 ~> *0
@@ -84,9 +91,13 @@ down :: Nat ~> Nat
 {down Z} = Z
 {down (S b)} = b
 
-tau :: Henk n b -> Henk (S n) {down b}
+tau :: Henk' appl n b -> Henk' appl (S n) {down b}
 tau Star = Rectangle
 --tau Rectangle = Lozenge
 tau (Lam v domain result) = Pi (Var "_") domain (tau result)
 tau (App (Lam _ _ expansion) _) = tau expansion
 tau (App (Pi _ _ expansion) _) = tau expansion
+
+--tt1 = tau exp1
+--tt2 = tau (App exp2 exp1)
+tt3 = tau (App exp2' Star)
