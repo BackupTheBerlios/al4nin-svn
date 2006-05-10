@@ -27,14 +27,14 @@
 --
 --  Set up the environment
 --     setenv LD_LIBRARY_PATH /opt/exp/gnu/lib:$LD_LIBRARY_PATH
---     setenv PATH /home/ggreif/%NoBackup%/Omega1.2:$PATH
+--     setenv PATH /home/ggreif/%NoBackup%/Omega1.2.1:$PATH
 --
 --  Start the omega interpreter by typing
 --     omega StatifiedHenk.omg
 --  and run your commands on the prompt
 --
 
-import "/home/ggreif/%NoBackup%/Omega1.2/LangPrelude.prg" 
+import "/home/ggreif/%NoBackup%/Omega1.2.1/LangPrelude.prg" 
   (head,tail,lookup,member,fst,snd,map,Monad,maybeM,id,ioM,Row,HasType,RCons,RNil)
 
 Henk :: Nat ~> Nat ~> *
