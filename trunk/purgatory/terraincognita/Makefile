@@ -1,4 +1,4 @@
-terra-incognita: terra-incognita.lid terra-incognita.dylan terra-incognita-exports.dylan
+terra-incognita: terra-incognita.lid terra-incognita.dylan terra-incognita-exports.dylan um-spec.dylan
 	d2c terra-incognita.lid
 
 clean:

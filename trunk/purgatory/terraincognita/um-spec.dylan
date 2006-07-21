@@ -96,6 +96,8 @@ end;
 
 define function spin-cycle(um :: <universal-machine>)
   let platter = um.scroll[um.execution-finger];
+  
+  block (halt)
 
 /*
   Once initialized, the machine begins its Spin Cycle. In each cycle
@@ -311,6 +313,16 @@ define function spin-cycle(um :: <universal-machine>)
     otherwise => error("unknown operator %s", operator);
   end select;
   
+  // again
+  um.spin-cycle;
+  
+  exception (e :: <error>)
+    format-out("Machine state:\n execution-finger: %d\n regs: %=\n", um.execution-finger, um.regs);
+    format-out("\nAn EXCEPTION occured:\n");
+    report-condition(e, *standard-output*);
+    condition-force-output(*standard-output*);
+    format-out("\n");
+  end block;
 end function spin-cycle;
 
 
