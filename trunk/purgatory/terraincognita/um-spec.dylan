@@ -11,6 +11,8 @@ define constant <scroll> = limited(<vector>, of: <integer>);
 // DUMMY FUNCTION
 define function read-scroll(name :: <string>)
  => read :: <scroll>;
+ 
+ load-codex(name);
 
   let scroll = make(<scroll>, size: 50, fill: 0);
 //  scroll[0] := ash(13, 28) + 65; // immediate #65 --> A=0
@@ -320,7 +322,7 @@ define function spin-cycle(um :: <universal-machine>)
                 // naive variant: duplicate
                 // later we can do this cleverly, by doing copy-on-write lazily
                 um.execution-finger = platter.C;
-                um.scroll = copy(get-array(platter.B));
+                um.scroll = shallow-copy(get-array(platter.B));
               end;
 
 /*
