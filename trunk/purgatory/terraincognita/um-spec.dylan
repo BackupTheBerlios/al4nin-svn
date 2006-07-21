@@ -316,7 +316,12 @@ define function spin-cycle(um :: <universal-machine>)
                   velocity.
 
 */
-//    -4, 12 => 
+    -4, 12 => begin
+                // naive variant: duplicate
+                // later we can do this cleverly, by doing copy-on-write lazily
+                um.execution-finger = platter.C;
+                um.scroll = copy(get-array(platter.B));
+              end;
 
 /*
   Special Operators.
