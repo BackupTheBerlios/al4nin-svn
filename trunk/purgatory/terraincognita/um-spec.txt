@@ -1,4 +1,18 @@
+module: terra-incognita
+synopsis: ICFP 2006 contest submission
+author: heisenbug
+copyright: © 2006 terraincognita team
+usage: this is a literate-like file
 
+
+define constant <register-bank> = limited(<vector>, of: <integer>)
+
+define class <universal-machine>(<object>)
+  constant slot regs :: <register-bank> = make(<register-bank>, size: 8, fill: 0);
+  slot execution-finger :: <integer> = 0;
+end;
+
+/*
   Order for Construction          Standard Sand of Pennsylvania Co.
 
   Client: Cult of the Bound Variable
@@ -43,6 +57,10 @@
       input and output of "unsigned 8-bit characters" (see patent
       #255).
   
+*/
+
+
+/*
 
   Behavior.
   ---------
@@ -51,19 +69,36 @@
   shall be read from a "program" scroll. All registers shall be
   initialized with platters of value '0'. The execution finger shall
   point to the first platter of the '0' array, which has offset zero.
+  
+*/
 
+define method initialize(um :: <universal-machine>, #rest ignored)
+    // regs are already initialized ny the slot decl.
+    um.scroll := read-scroll("codex.umz");
+end;
+
+/*
   When reading programs from legacy "unsigned 8-bit character"
   scrolls, a series of four bytes A,B,C,D should be interpreted with
   'A' as the most magnificent byte, and 'D' as the most shoddy, with
   'B' and 'C' considered lovely and mediocre respectively.
+*/
 
+define function spin-cycle(um :: <universal-machine>)
+  let platter = um.scroll[um.execution-finger];
+
+/*
   Once initialized, the machine begins its Spin Cycle. In each cycle
   of the Universal Machine, an Operator shall be retrieved from the
   platter that is indicated by the execution finger. The sections
   below describe the operators that may obtain. Before this operator
   is discharged, the execution finger shall be advanced to the next
   platter, if any.
+*/
 
+  um.execution-finger := um.execution-finger + 1;
+
+/*
   Operators.
   ----------
 
@@ -80,7 +115,13 @@
 
               Figure 1. Operator Description
 
+*/
 
+  let operator = asr(platter, 32 - 4);
+
+  select (operator)
+
+/*
   Standard Operators.
   -------------------
 
@@ -110,41 +151,63 @@
 
                   The register A receives the value in register B,
                   unless the register C contains 0.
+*/
 
+    0 => unless (platter.C = 0) platter.A := platter.B end unless;
+
+/*
            #1. Array Index.
 
                   The register A receives the value stored at offset
                   in register C in the array identified by B.
+*/
+    1 => platter.A := get-array(platter.B)[platter.C];
 
+/*
            #2. Array Amendment.
 
                   The array identified by A is amended at the offset
                   in register B to store the value in register C.
+*/
+    2 => get-array(platter.A)[platter.B] := platter.C
 
+/*
            #3. Addition.
 
                   The register A receives the value in register B plus 
                   the value in register C, modulo 2^32.
+*/
+    3 => platter.A := platter.B + platter.C;
 
+/*
            #4. Multiplication.
 
                   The register A receives the value in register B times
                   the value in register C, modulo 2^32.
+*/
+    4 => platter.A := platter.B * platter.C;
 
+/*
            #5. Division.
 
                   The register A receives the value in register B
-                  divided by the value in regisetr C, if any, where
+                  divided by the value in register C, if any, where
                   each quantity is treated treated as an unsigned 32
                   bit number.
+*/
+    5 => platter.A := floor/(platter.B, platter.C);
 
+/*
            #6. Not-And.
 
                   Each bit in the register A receives the 1 bit if
                   either register B or register C has a 0 bit in that
                   position.  Otherwise the bit in register A receives
                   the 0 bit.
+*/
+    6 => platter.A := bit-not(bit-and(platter.B, platter.C);
 
+/*
   Other Operators.
   ----------------
 
@@ -226,6 +289,14 @@
                   The value indicated is loaded into the register A
                   forthwith.
 
+*/
+
+  end select;
+  
+end function spin-cycle;
+
+
+/*
   Cost-Cutting Measures.
   ----------------------
 
@@ -258,3 +329,4 @@
 
   If at the beginning of a machine cycle the execution finger aims
   outside the capacity of the 0 array, the machine may Fail.
+*/
