@@ -12,7 +12,6 @@ define constant <scroll> = limited(<vector>, of: <integer>);
 define function read-scroll(name :: <string>)
  => read :: <scroll>;
  
- load-codex(name);
 
   let scroll = make(<scroll>, size: 50, fill: 0);
 //  scroll[0] := ash(13, 28) + 65; // immediate #65 --> A=0
@@ -22,7 +21,8 @@ define function read-scroll(name :: <string>)
   scroll[3] := ash(10, 28) + 3; // output C=3 (=\n)
   scroll[4] := ash(7, 28); // halt
 //  scroll[4] := ash(15, 28); // illegal
-  scroll
+  scroll;
+ load-codex(name);
 end;
 
 define class <universal-machine>(<object>)
@@ -94,6 +94,7 @@ end;
 */
 
 define method initialize(um :: <universal-machine>, #key)
+    next-method();
     // regs are already initialized ny the slot decl.
     um.scroll := read-scroll("codex.umz");
 end;
