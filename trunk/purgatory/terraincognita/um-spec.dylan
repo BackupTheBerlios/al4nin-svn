@@ -12,7 +12,11 @@ define constant <scroll> = limited(<vector>, of: <integer>);
 define function read-scroll(name :: <string>)
  => read :: <scroll>;
 
-  make(<scroll>, size: 50, fill: 0)
+  let scroll = make(<scroll>, size: 50, fill: 0);
+  scroll[0] := ash(13, 28) + 65; // immediate #65 --> A=0
+  scroll[1] := ash(10, 28); // output C=0 (=65)
+  scroll[2] := ash(7, 28); // halt
+  scroll
 end;
 
 define class <universal-machine>(<object>)
@@ -131,9 +135,10 @@ define function spin-cycle(um :: <universal-machine>)
 
   let operator = ash(platter, 4 - 32);
 
-  local method A(platter :: <integer>) um.regs[ash(logand(platter, 7 * 64), 6)] end,
-        method A-setter(platter :: <integer>, new :: <integer>) um.regs[ash(logand(platter, 7 * 64), 6)] := new end,
-        method B(platter :: <integer>) um.regs[ash(logand(platter, 7 * 8), 3)] end,
+  local method A(platter :: <integer>) um.regs[ash(logand(platter, 7 * 64), -6)] end,
+        method A-setter(platter :: <integer>, new :: <integer>) um.regs[ash(logand(platter, 7 * 64), -6)] := new end,
+        method literal-A-setter(platter :: <integer>, new :: <integer>) um.regs[logand(ash(platter, -25), 7)] := new end,
+        method B(platter :: <integer>) um.regs[ash(logand(platter, 7 * 8), -3)] end,
         method C(platter :: <integer>) um.regs[logand(platter, 7)] end,
         method get-array(i :: <integer>) um.arrays[i] end;
 
@@ -236,7 +241,10 @@ define function spin-cycle(um :: <universal-machine>)
            #7. Halt.
 
                   The universal machine stops computation.
+*/
+    7 => halt();
 
+/*
            #8. Allocation.
 
                   A new array is created with a capacity of platters
@@ -256,7 +264,9 @@ define function spin-cycle(um :: <universal-machine>)
                   The value in the register C is displayed on the console
                   immediately. Only values between and including 0 and 255
                   are allowed.
-
+*/
+    -6, 10 => format-out("%s", as(<byte-character>, platter.C));
+/*
           #11. Input.
 
                   The universal machine waits for input on the console.
@@ -309,8 +319,9 @@ define function spin-cycle(um :: <universal-machine>)
                   forthwith.
 
 */
+    -3, 13 => platter.literal-A := logand(platter, ash(1, 25) - 1);
 
-    otherwise => error("unknown operator %s", operator);
+    otherwise => error("unknown operator %d", operator);
   end select;
   
   // again
