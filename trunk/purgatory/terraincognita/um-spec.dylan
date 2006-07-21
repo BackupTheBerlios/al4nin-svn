@@ -26,8 +26,9 @@ end;
 define class <universal-machine>(<object>)
   constant slot regs :: <register-bank> = make(<register-bank>, size: 8, fill: 0);
   slot execution-finger :: <integer> = 0;
-  slot scroll :: <scroll>;
+  slot scroll :: <scroll>; // array 0
   slot arrays :: <table> = make(<table>);
+  slot next-array :: <integer> = 1;
 end;
 
 /*
@@ -145,9 +146,10 @@ define function spin-cycle(um :: <universal-machine>)
         method A-setter(new :: <integer>, platter :: <integer>) um.regs[ash(logand(platter, 7 * 64), -6)] := new end,
         method literal-A-setter(new :: <integer>, platter :: <integer>) um.regs[logand(ash(platter, -25), 7)] := new end,
         method B(platter :: <integer>) um.regs[ash(logand(platter, 7 * 8), -3)] end,
+        method B-setter(new :: <integer>, platter :: <integer>) um.regs[ash(logand(platter, 7 * 8), -3)] := new end,
         method C(platter :: <integer>) um.regs[logand(platter, 7)] end,
         method C-setter(new :: <integer>, platter :: <integer>) um.regs[logand(platter, 7)] := new end,
-        method get-array(i :: <integer>) um.arrays[i] end;
+        method get-array(i :: <integer>) if (i = 0) um.scroll else um.arrays[i] end if end;
 
 
   select (operator)
@@ -260,11 +262,24 @@ define function spin-cycle(um :: <universal-machine>)
                   holding the value 0. A bit pattern not consisting of
                   exclusively the 0 bit, and that identifies no other
                   active allocated array, is placed in the B register.
+*/
 
+    -8, 8 => begin
+                let id = um.next-array;
+                um.next-array := id + 1;
+                um.arrays[id] = make(<scroll>, size: platter.C, fill: 0);
+                platter.B := id;
+             end;
+/*
            #9. Abandonment.
 
                   The array identified by the register C is abandoned.
                   Future allocations may then reuse that identifier.
+
+*/
+    -7, 9 => remove-key!(um.arrays, platter.C);
+
+/*
 
           #10. Output.
 
@@ -300,6 +315,10 @@ define function spin-cycle(um :: <universal-machine>)
                   loading, and shall be handled with the utmost
                   velocity.
 
+*/
+//    -4, 12 => 
+
+/*
   Special Operators.
   ------------------
 
