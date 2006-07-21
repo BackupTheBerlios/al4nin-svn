@@ -5,11 +5,21 @@ copyright: © 2006 terraincognita team
 usage: this is a literate-like file
 
 
-define constant <register-bank> = limited(<vector>, of: <integer>)
+define constant <register-bank> = limited(<vector>, of: <integer>, size: 8);
+define constant <scroll> = limited(<vector>, of: <integer>);
+
+// DUMMY FUNCTION
+define function read-scroll(name :: <string>)
+ => read :: <scroll>;
+
+  make(<scroll>, size: 50, fill: 0)
+end;
 
 define class <universal-machine>(<object>)
   constant slot regs :: <register-bank> = make(<register-bank>, size: 8, fill: 0);
   slot execution-finger :: <integer> = 0;
+  slot scroll :: <scroll>;
+  slot arrays :: <table> = make(<table>);
 end;
 
 /*
@@ -72,7 +82,7 @@ end;
   
 */
 
-define method initialize(um :: <universal-machine>, #rest ignored)
+define method initialize(um :: <universal-machine>, #key)
     // regs are already initialized ny the slot decl.
     um.scroll := read-scroll("codex.umz");
 end;
@@ -117,7 +127,14 @@ define function spin-cycle(um :: <universal-machine>)
 
 */
 
-  let operator = asr(platter, 32 - 4);
+  let operator = ash(platter, 4 - 32);
+
+  local method A(platter :: <integer>) um.regs[ash(logand(platter, 7 * 64), 6)] end,
+        method A-setter(platter :: <integer>, new :: <integer>) um.regs[ash(logand(platter, 7 * 64), 6)] := new end,
+        method B(platter :: <integer>) um.regs[ash(logand(platter, 7 * 8), 3)] end,
+        method C(platter :: <integer>) um.regs[logand(platter, 7)] end,
+        method get-array(i :: <integer>) um.arrays[i] end;
+
 
   select (operator)
 
@@ -169,7 +186,7 @@ define function spin-cycle(um :: <universal-machine>)
                   The array identified by A is amended at the offset
                   in register B to store the value in register C.
 */
-    2 => get-array(platter.A)[platter.B] := platter.C
+    2 => get-array(platter.A)[platter.B] := platter.C;
 
 /*
            #3. Addition.
@@ -205,7 +222,7 @@ define function spin-cycle(um :: <universal-machine>)
                   position.  Otherwise the bit in register A receives
                   the 0 bit.
 */
-    6 => platter.A := bit-not(bit-and(platter.B, platter.C);
+    6 => platter.A := lognot(logand(platter.B, platter.C));
 
 /*
   Other Operators.
@@ -291,6 +308,7 @@ define function spin-cycle(um :: <universal-machine>)
 
 */
 
+    otherwise => error("unknown operator %s", operator);
   end select;
   
 end function spin-cycle;
