@@ -14,5 +14,6 @@ define module terra-incognita
   use common-dylan;
   use format-out;
   use standard-io;
+  use streams;
   use Extensions, exclude: {main};
 end module;

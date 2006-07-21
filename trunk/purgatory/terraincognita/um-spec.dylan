@@ -13,12 +13,13 @@ define function read-scroll(name :: <string>)
  => read :: <scroll>;
 
   let scroll = make(<scroll>, size: 50, fill: 0);
-  scroll[0] := ash(13, 28) + 65; // immediate #65 --> A=0
-  scroll[1] := ash(10, 28); // output C=0 (=65)
+//  scroll[0] := ash(13, 28) + 65; // immediate #65 --> A=0
+  scroll[0] := ash(11, 28) + 0; // getchar --> C=0
+  scroll[1] := ash(10, 28) + 0; // output C=0 (=65)
   scroll[2] := ash(13, 28) + ash(3, 25) + 10; // immediate #10 --> immediate-A=3
   scroll[3] := ash(10, 28) + 3; // output C=3 (=\n)
   scroll[4] := ash(7, 28); // halt
-  scroll[4] := ash(15, 28); // illegal
+//  scroll[4] := ash(15, 28); // illegal
   scroll
 end;
 
@@ -102,6 +103,8 @@ end;
 */
 
 define function spin-cycle(um :: <universal-machine>)
+ => ()
+
   let platter = um.scroll[um.execution-finger];
   
   block (halt)
@@ -143,6 +146,7 @@ define function spin-cycle(um :: <universal-machine>)
         method literal-A-setter(new :: <integer>, platter :: <integer>) um.regs[logand(ash(platter, -25), 7)] := new end,
         method B(platter :: <integer>) um.regs[ash(logand(platter, 7 * 8), -3)] end,
         method C(platter :: <integer>) um.regs[logand(platter, 7)] end,
+        method C-setter(new :: <integer>, platter :: <integer>) um.regs[logand(platter, 7)] := new end,
         method get-array(i :: <integer>) um.arrays[i] end;
 
 
@@ -278,7 +282,10 @@ define function spin-cycle(um :: <universal-machine>)
                   If the end of input has been signaled, then the 
                   register C is endowed with a uniform value pattern
                   where every place is pregnant with the 1 bit.
+*/
+    -5, 11 => platter.C := as(<integer>, read-element(*standard-input*, on-end-of-stream: -1));
 
+/*
           #12. Load Program.
 
                   The array identified by the B register is duplicated
