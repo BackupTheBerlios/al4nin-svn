@@ -8,7 +8,6 @@ usage: this is a literate-like file
 define constant <register-bank> = limited(<vector>, of: <integer>, size: 8);
 define constant <scroll> = limited(<vector>, of: <integer>);
 
-// DUMMY FUNCTION
 define function read-scroll(name :: <string>)
  => read :: <scroll>;
  
@@ -22,7 +21,8 @@ define function read-scroll(name :: <string>)
   scroll[4] := ash(7, 28); // halt
 //  scroll[4] := ash(15, 28); // illegal
   scroll;
- load-codex(name);
+
+ name.load-codex;
 end;
 
 define class <universal-machine>(<object>)
@@ -109,8 +109,6 @@ end;
 define function spin-cycle(um :: <universal-machine>)
  => ()
 
-  let platter = um.scroll[um.execution-finger];
-  
   block (halt)
 
 /*
@@ -122,6 +120,9 @@ define function spin-cycle(um :: <universal-machine>)
   platter, if any.
 */
 
+  local method spin() => ();
+  let platter = um.scroll[um.execution-finger];
+  
   um.execution-finger := um.execution-finger + 1;
 
 /*
@@ -153,7 +154,6 @@ define function spin-cycle(um :: <universal-machine>)
         method C(platter :: <integer>) um.regs[logand(platter, 7)] end,
         method C-setter(new :: <integer>, platter :: <integer>) um.regs[logand(platter, 7)] := new end,
         method get-array(i :: <integer>) if (i = 0) um.scroll else um.arrays[i] end if end;
-
 
   select (operator)
 
@@ -362,7 +362,12 @@ define function spin-cycle(um :: <universal-machine>)
   end select;
   
   // again
-  um.spin-cycle;
+  spin();
+  
+  end method spin;
+  
+  // start
+  spin();
   
   exception (e :: <error>)
     format-out("Machine state:\n execution-finger: %d\n regs: %=\n", um.execution-finger, um.regs);
