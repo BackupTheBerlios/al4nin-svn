@@ -296,7 +296,12 @@ define function spin-cycle(um :: <universal-machine>)
                   immediately. Only values between and including 0 and 255
                   are allowed.
 */
-    -6, 10 => format-out("%s", as(<byte-character>, platter.C));
+    -6, 10 => begin
+                  format-out("%s", as(<byte-character>, platter.C));
+                  if (platter.C = 10)
+                    force-output(*standard-output*);
+                  end;
+              end;
 /*
           #11. Input.
 
