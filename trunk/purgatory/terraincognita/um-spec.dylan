@@ -219,7 +219,7 @@ define function spin-cycle(um :: <universal-machine>)
                   The register A receives the value in register B plus 
                   the value in register C, modulo 2^32.
 */
-    3 => platter.A := platter.B + platter.C;
+    3 => platter.A := modulo(platter.B + platter.C, 2^32);
 
 /*
            #4. Multiplication.
@@ -227,7 +227,7 @@ define function spin-cycle(um :: <universal-machine>)
                   The register A receives the value in register B times
                   the value in register C, modulo 2^32.
 */
-    4 => platter.A := platter.B * platter.C;
+    4 => platter.A := modulo(platter.B * platter.C, 2^32);
 
 /*
            #5. Division.
