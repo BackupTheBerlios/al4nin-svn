@@ -214,14 +214,14 @@ define function spin-cycle(um :: <universal-machine>)
                   in register C in the array identified by B.
 */
     1 => begin
-            let from = platter.B;
+            // let from = platter.B;
 
-            unless (from = um.last-accessed-id)
-              um.last-accessed-id := from;
-              um.last-accessed-array := get-array(from);
-            end unless;
+            // unless (from = um.last-accessed-id)
+              // um.last-accessed-id := from;
+              //um.last-accessed-array := get-array(from);
+            //end unless;
             
-            platter.A := um.last-accessed-array[platter.C];
+            platter.A := get-array(platter.B)[platter.C];
           end;
 
 /*
