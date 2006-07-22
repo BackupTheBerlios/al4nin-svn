@@ -45,6 +45,8 @@ define class <universal-machine>(<object>)
   slot next-array :: <integer> = 1;
   slot cow :: <boolean> = #f;
   slot free-arrays :: <table> = make(<table>);
+  slot last-accessed-id :: <integer> = -1;
+  slot last-accessed-array :: <scroll> = make(<scroll>, size: 0);
 end;
 
 /*
@@ -211,7 +213,16 @@ define function spin-cycle(um :: <universal-machine>)
                   The register A receives the value stored at offset
                   in register C in the array identified by B.
 */
-    1 => platter.A := get-array(platter.B)[platter.C];
+    1 => begin
+            let from = platter.B;
+
+            unless (from = um.last-accessed-id)
+              um.last-accessed-id := from;
+              um.last-accessed-array := get-array(from);
+            end unless;
+            
+            platter.A := um.last-accessed-array[platter.C];
+          end;
 
 /*
            #2. Array Amendment.
@@ -299,13 +310,13 @@ define function spin-cycle(um :: <universal-machine>)
                 if (reuse & ~reuse.empty?)
                   let it :: <scroll> = reuse.head;
                   um.free-arrays[need] := reuse.tail;
-                  format-out("reusing for size: %d\n", need);
-                  force-output(*standard-output*);
+///                  format-out("reusing for size: %d\n", need);
+///                  force-output(*standard-output*);
                   map-into(it, always(0), it);
                   um.arrays[id] := it;
                 else
-                  format-out("alloc for size: %d\n", need);
-                  force-output(*standard-output*);
+///                  format-out("alloc for size: %d\n", need);
+///                  force-output(*standard-output*);
                     
                     um.arrays[id] := make(<scroll>, size: need, fill: 0);
                 end;
