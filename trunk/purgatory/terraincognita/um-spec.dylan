@@ -43,6 +43,7 @@ define class <universal-machine>(<object>)
   slot scroll :: <scroll>; // array 0
   slot arrays :: <table> = make(<table>);
   slot next-array :: <integer> = 1;
+  slot cow :: <boolean> = #f;
 end;
 
 /*
@@ -132,8 +133,6 @@ define function spin-cycle(um :: <universal-machine>)
   platter, if any.
 */
 
-  let fourBill = as(<extended-integer>, 2^31) * 2;
-
   local method spin() => ();
   let platter = um.scroll[um.execution-finger];
   
@@ -219,7 +218,18 @@ define function spin-cycle(um :: <universal-machine>)
                   The array identified by A is amended at the offset
                   in register B to store the value in register C.
 */
-    2 => get-array(platter.A)[platter.B] := platter.C;
+    2 => begin
+            let array = get-array(platter.A);
+            if (um.cow
+                & array == um.scroll)
+                format-out("c-o-w\n");
+                um.scroll := shallow-copy(um.scroll);
+                um.cow := #f;
+                get-array(platter.A)[platter.B] := platter.C; // evaluate array again
+            else
+                array[platter.B] := platter.C;
+            end if;
+         end begin;
 
 /*
            #3. Addition.
@@ -341,7 +351,9 @@ define function spin-cycle(um :: <universal-machine>)
                 // naive variant: duplicate
                 // later we can do this cleverly, by doing copy-on-write lazily
                 um.execution-finger := platter.C;
-                um.scroll := shallow-copy(get-array(platter.B));
+///                um.scroll := shallow-copy(get-array(platter.B));
+                um.scroll := get-array(platter.B);
+                um.cow := #t;
               end;
 
 /*
