@@ -16,5 +16,7 @@ define module terra-incognita
   use standard-io;
   use file-system;
   use streams;
+  use machine-words;
+  use system, import: {call-out, c-local-decl, c-expr};
   use Extensions, exclude: {main};
 end module;

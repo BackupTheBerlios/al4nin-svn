@@ -14,6 +14,24 @@ define method shallow-copy(s :: <scroll>) => fresh :: <scroll>;
   map-into(fresh, identity, s);
 end;
 
+define function unsigned-*(a :: <integer>, b  :: <integer>)
+=> res  :: <integer>;
+ c-local-decl("unsigned long a1;");
+ c-local-decl("unsigned long b1;");
+ call-out("a1 = ", void:, int: a);
+ call-out("b1 = ", void:, int: b);
+ c-expr(int:, "(a1 * b1)");
+end;
+
+define function unsigned-/(a :: <integer>, b  :: <integer>)
+=> res  :: <integer>;
+ c-local-decl("unsigned long a1;");
+ c-local-decl("unsigned long b1;");
+ call-out("a1 = ", void:, int: a);
+ call-out("b1 = ", void:, int: b);
+ c-expr(int:, "(a1 / b1)");
+end;
+
 define function read-scroll(name :: <string>)
  => read :: <scroll>;
  
@@ -126,6 +144,8 @@ define function spin-cycle(um :: <universal-machine>)
   platter, if any.
 */
 
+  let fourBill = as(<extended-integer>, 2^31) * 2;
+
   local method spin() => ();
   let platter = um.scroll[um.execution-finger];
   
@@ -159,7 +179,9 @@ define function spin-cycle(um :: <universal-machine>)
         method B-setter(new :: <integer>, platter :: <integer>) um.regs[ash(logand(platter, 7 * 8), -3)] := new end,
         method C(platter :: <integer>) um.regs[logand(platter, 7)] end,
         method C-setter(new :: <integer>, platter :: <integer>) um.regs[logand(platter, 7)] := new end,
-        method get-array(i :: <integer>) if (i = 0) um.scroll else um.arrays[i] end if end;
+        method get-array(i :: <integer>) if (i = 0) um.scroll else um.arrays[i] end if end,
+        method big(i :: <integer>) => big :: <extended-integer>; if (i < 0) fourBill + i else as(<extended-integer>, i) end if end,
+        method normalize(i :: <extended-integer>) => big :: <extended-integer>; if (i < 0) normalize(fourBill + i) else i end if end;
 
   select (operator)
 
@@ -219,7 +241,7 @@ define function spin-cycle(um :: <universal-machine>)
                   The register A receives the value in register B plus 
                   the value in register C, modulo 2^32.
 */
-    3 => platter.A := modulo(platter.B + platter.C, 2^32);
+    3 => platter.A := platter.B + platter.C;
 
 /*
            #4. Multiplication.
@@ -227,7 +249,9 @@ define function spin-cycle(um :: <universal-machine>)
                   The register A receives the value in register B times
                   the value in register C, modulo 2^32.
 */
-    4 => platter.A := modulo(platter.B * platter.C, 2^32);
+ ///   4 => begin format-out("result = %d * %d\n", platter.B, platter.C); force-output(*standard-output*); platter.A := as(<integer>, normalize(modulo(platter.B.big * platter.C.big, fourBill))); format-out("= %d\n", platter.A);  end;
+    4 => begin format-out("result = %d * %d\n", platter.B, platter.C); force-output(*standard-output*); platter.A := unsigned-*(platter.B, platter.C); format-out("= %d\n", platter.A);  end;
+///    4 => begin format-out("result = %d * %d\n", platter.B, platter.C); force-output(*standard-output*); platter.A := as(<integer>, as(<machine-word>, platter.B) * as(<machine-word>, platter.C)); format-out("= %d\n", platter.A);  end;
 
 /*
            #5. Division.
@@ -237,8 +261,9 @@ define function spin-cycle(um :: <universal-machine>)
                   each quantity is treated treated as an unsigned 32
                   bit number.
 */
-    5 => platter.A := floor/(platter.B, platter.C);
-
+///    5 => begin format-out("result = %d / %d\n", platter.B, platter.C); force-output(*standard-output*); platter.A := as(<integer>, floor/(platter.B.big, platter.C.big)); format-out("= %d\n", platter.A);  end;
+    5 => begin format-out("result = %d / %d\n", platter.B, platter.C); force-output(*standard-output*); platter.A := unsigned-/(platter.B, platter.C); format-out("= %d\n", platter.A);  end;
+// begin format-out("result = %d / %d\n", platter.B, platter.C); force-output(*standard-output*); platter.A := 0 /* if (platter.C = 0) 0 else floor/(platter.B, platter.C); end */ end;
 /*
            #6. Not-And.
 
