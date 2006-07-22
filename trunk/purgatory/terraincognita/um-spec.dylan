@@ -44,6 +44,7 @@ define class <universal-machine>(<object>)
   slot arrays :: <table> = make(<table>);
   slot next-array :: <integer> = 1;
   slot cow :: <boolean> = #f;
+  slot free-arrays :: <table> = make(<table>);
 end;
 
 /*
@@ -293,7 +294,19 @@ define function spin-cycle(um :: <universal-machine>)
     -8, 8 => begin
                 let id = um.next-array;
                 um.next-array := id + 1;
-                um.arrays[id] := make(<scroll>, size: platter.C, fill: 0);
+
+                let need = platter.C;
+                let reuse = element(um.free-arrays, need, default: #f);
+                if (reuse & ~reuse.empty?)
+                  let it :: <scroll> = reuse.head;
+                  um.free-arrays[need] := reuse.tail;
+                  format-out("reusing for size: %d\n", need);
+                  force-output(*standard-output*);
+                  map-into(it, always(0), it);
+                  um.arrays[id] := it;
+                else
+                    um.arrays[id] := make(<scroll>, size: need, fill: 0);
+                end;
                 platter.B := id;
              end;
 /*
@@ -303,7 +316,13 @@ define function spin-cycle(um :: <universal-machine>)
                   Future allocations may then reuse that identifier.
 
 */
-    -7, 9 => remove-key!(um.arrays, platter.C);
+    -7, 9 => begin
+                 let abandon = platter.C;
+                 let it :: <scroll> = um.arrays[abandon];
+                 remove-key!(um.arrays, abandon);
+                 let free-list = element(um.free-arrays, it.size, default: #());
+                 um.free-arrays[it.size] := pair(it, free-list);
+             end;
 
 /*
 
