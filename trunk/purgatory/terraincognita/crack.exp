@@ -1,20 +1,22 @@
 foreach login {ftd guest gardener ohmega yang howie hmonk bbarker} {
 
-foreach pass {airplane alphabet aviator bidirectional changeme creosote cyclone december dolphin elephant ersatz} {
-
-# puts "$login $pass"
-spawn "./terra-incognita"
-expect {
-  -timeout 300 "login: " {
-	send "$login\r"
-        expect { "password:" {
+    foreach pass {airplane alphabet aviator bidirectional changeme creosote cyclone december dolphin elephant ersatz} {
+	
+	# puts "$login $pass"
+	spawn "./terra-incognita"
+	expect {
+	    -timeout 300 "login: " {
+		send "$login\r"
+		expect {
+		    -timeout 10 "password: " {
+#			puts "WOW"
 			send "$pass\r" 
-			expect { "logged in as" { puts "YEP: $login $pass" }
+			expect {
+			    -timeout 20 "logged in as" { puts "YEP: $login $pass" }
 			}
 		    }
 		}
+	    }
 	}
-}
-
-}
+    }
 }
