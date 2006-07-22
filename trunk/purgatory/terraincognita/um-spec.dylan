@@ -8,6 +8,12 @@ usage: this is a literate-like file
 define constant <register-bank> = limited(<vector>, of: <integer>, size: 8);
 define constant <scroll> = limited(<vector>, of: <integer>);
 
+define method shallow-copy(s :: <scroll>) => fresh :: <scroll>;
+  let fresh = make(<scroll>, size: s.size);
+//  format-out("copying: %d\n", s.size);
+  map-into(fresh, identity, s);
+end;
+
 define function read-scroll(name :: <string>)
  => read :: <scroll>;
  
