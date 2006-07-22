@@ -18,5 +18,6 @@ foreach login {ftd guest gardener ohmega yang howie hmonk bbarker} {
 		}
 	    }
 	}
+	exp_close $spawn_id
     }
 }
