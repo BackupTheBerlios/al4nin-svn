@@ -270,7 +270,7 @@ define function spin-cycle(um :: <universal-machine>)
     -8, 8 => begin
                 let id = um.next-array;
                 um.next-array := id + 1;
-                um.arrays[id] = make(<scroll>, size: platter.C, fill: 0);
+                um.arrays[id] := make(<scroll>, size: platter.C, fill: 0);
                 platter.B := id;
              end;
 /*
@@ -322,8 +322,8 @@ define function spin-cycle(um :: <universal-machine>)
     -4, 12 => begin
                 // naive variant: duplicate
                 // later we can do this cleverly, by doing copy-on-write lazily
-                um.execution-finger = platter.C;
-                um.scroll = shallow-copy(get-array(platter.B));
+                um.execution-finger := platter.C;
+                um.scroll := shallow-copy(get-array(platter.B));
               end;
 
 /*
