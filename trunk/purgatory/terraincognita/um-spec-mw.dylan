@@ -201,7 +201,7 @@ define function spin-cycle(um :: <universal-machine>)
                   The register A receives the value stored at offset
                   in register C in the array identified by B.
 */
-    1 => platter.A := get-array(platter.B)[platter.C];
+    1 => platter.A := as(<machine-word>, get-array(as(<integer>, platter.B))[as(<integer>, platter.C)]);
 
 /*
            #2. Array Amendment.
@@ -284,7 +284,7 @@ define function spin-cycle(um :: <universal-machine>)
                   Future allocations may then reuse that identifier.
 
 */
-    -7, 9 => remove-key!(um.arrays, platter.C);
+    -7, 9 => remove-key!(um.arrays, as(<integer>, platter.C));
 
 /*
 
@@ -295,8 +295,8 @@ define function spin-cycle(um :: <universal-machine>)
                   are allowed.
 */
     -6, 10 => begin
-                  format-out("%s", as(<byte-character>, platter.C));
-                  if (platter.C = 10)
+                  format-out("%s", as(<byte-character>, as(<integer>, platter.C)));
+                  if (as(<integer>, platter.C) = 10)
                     force-output(*standard-output*);
                   end;
               end;
@@ -310,7 +310,7 @@ define function spin-cycle(um :: <universal-machine>)
                   register C is endowed with a uniform value pattern
                   where every place is pregnant with the 1 bit.
 */
-    -5, 11 => platter.C := as(<machine-word>, read-element(*standard-input*, on-end-of-stream: -1));
+    -5, 11 => platter.C := as(<machine-word>, as(<integer>, read-element(*standard-input*, on-end-of-stream: -1)));
 
 /*
           #12. Load Program.
@@ -370,7 +370,7 @@ define function spin-cycle(um :: <universal-machine>)
     otherwise => error("unknown operator %d", operator);
   end select;
   
-    format-out("Machine state:\n execution-finger: %d\n regs: %=\n", um.execution-finger, um.regs);
+  //  format-out("Machine state:\n execution-finger: %d\n regs: %=\n", um.execution-finger, um.regs);
 
   // again
   spin();
