@@ -112,7 +112,7 @@ end;
 define method initialize(um :: <universal-machine>, #key)
     next-method();
     // regs are already initialized ny the slot decl.
-    um.scroll := read-scroll("codex.umz");
+    um.scroll := read-scroll("volume7.umz");
 end;
 
 /*
@@ -347,7 +347,7 @@ define function spin-cycle(um :: <universal-machine>)
 */
     -6, 10 => begin
                   format-out("%s", as(<byte-character>, platter.C));
-                  if (platter.C = 10)
+                  if (#t | platter.C = 10)
                     force-output(*standard-output*);
                   end;
               end;
