@@ -28,6 +28,7 @@ define function load-codex(fn :: <string>) => (scroll :: <scroll>)
         let value :: <integer> = ash(value, 8) + as(<integer>, obj);
 //        add!(codex, value);
         codex[at] := value;
+        at := at + 1;
 //        format-out("added: %d\n", value);
       end while;
     end with-open-file;
