@@ -223,7 +223,8 @@ define function spin-cycle(um :: <universal-machine>)
             let array = get-array(platter.A);
             if (um.cow
                 & array == um.scroll)
-                format-out("c-o-w\n");
+                format-out("c-o-w into: %d, value: %d, offset %d\n", platter.A, platter.C, platter.B);
+		force-output(*standard-output*);
                 um.scroll := shallow-copy(um.scroll);
                 um.cow := #f;
                 get-array(platter.A)[platter.B] := platter.C; // evaluate array again
@@ -370,9 +371,13 @@ define function spin-cycle(um :: <universal-machine>)
                 // naive variant: duplicate
                 // later we can do this cleverly, by doing copy-on-write lazily
                 um.execution-finger := platter.C;
+		unless (platter.B == 0)
 ///                um.scroll := shallow-copy(get-array(platter.B));
                 um.scroll := get-array(platter.B);
                 um.cow := #t;
+                format-out("copied array: %d, pc: %d\n", platter.B, platter.C);
+                force-output(*standard-output*);
+		end unless;
               end;
 
 /*
