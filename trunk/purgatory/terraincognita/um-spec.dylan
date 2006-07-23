@@ -38,15 +38,16 @@ define function read-scroll(name :: <string>)
 end;
 
 define class <universal-machine>(<object>)
-  constant slot regs :: <register-bank> = make(<register-bank>, size: 8, fill: 0);
-  slot execution-finger :: <integer> = 0;
-  slot scroll :: <scroll>; // array 0
-  slot arrays :: <table> = make(<table>);
-  slot next-array :: <integer> = 1;
-  slot cow :: <boolean> = #f;
-  slot free-arrays :: <table> = make(<table>);
-  slot last-accessed-id :: <integer> = -1;
-  slot last-accessed-array :: <scroll> = make(<scroll>, size: 0);
+  sealed constant slot regs :: <register-bank> = make(<register-bank>, size: 8, fill: 0);
+  sealed slot execution-finger :: <integer> = 0;
+  sealed slot scroll :: <scroll> = make(<scroll>, size: 0); // array 0
+  sealed slot arrays :: <table> = make(<table>);
+//  sealed slot arrays :: <self-organizing-list> = make(<self-organizing-list>);
+  sealed slot next-array :: <integer> = 1;
+  sealed slot cow :: <boolean> = #f;
+  sealed slot free-arrays :: <table> = make(<table>);
+//  slot last-accessed-id :: <integer> = -1;
+//  slot last-accessed-array :: <scroll> = make(<scroll>, size: 0);
 end;
 
 /*
@@ -169,7 +170,7 @@ define function spin-cycle(um :: <universal-machine>)
         method B-setter(new :: <integer>, platter :: <integer>) um.regs[ash(logand(platter, 7 * 8), -3)] := new end,
         method C(platter :: <integer>) um.regs[logand(platter, 7)] end,
         method C-setter(new :: <integer>, platter :: <integer>) um.regs[logand(platter, 7)] := new end,
-        method get-array(i :: <integer>) if (i = 0) um.scroll else um.arrays[i] end if end;
+        method get-array(i :: <integer>) => arr :: <scroll>; if (i = 0) um.scroll else um.arrays[i] end if end;
 
   select (operator)
 
@@ -217,10 +218,11 @@ define function spin-cycle(um :: <universal-machine>)
             // let from = platter.B;
 
             // unless (from = um.last-accessed-id)
-              // um.last-accessed-id := from;
-              //um.last-accessed-array := get-array(from);
-            //end unless;
+            //   um.last-accessed-id := from;
+            //   um.last-accessed-array := get-array(from);
+            // end unless;
             
+            // platter.A := um.last-accessed-array[platter.C];
             platter.A := get-array(platter.B)[platter.C];
           end;
 
@@ -385,6 +387,7 @@ define function spin-cycle(um :: <universal-machine>)
                 unless (platter.B == 0) // when used linearly, no copy necessary
                   um.scroll := get-array(platter.B);
                   um.cow := #t;
+                  // um.last-accessed-id = -1; // invalidate
                 end unless;
               end;
 
@@ -438,6 +441,8 @@ define function spin-cycle(um :: <universal-machine>)
     condition-force-output(*standard-output*);
     format-out("\n");
   end block;
+  
+  force-output(*standard-output*);
 end function spin-cycle;
 
 
@@ -475,3 +480,7 @@ end function spin-cycle;
   If at the beginning of a machine cycle the execution finger aims
   outside the capacity of the 0 array, the machine may Fail.
 */
+
+
+define sealed domain make (singleton(<universal-machine>));
+define sealed domain initialize (<universal-machine>);
