@@ -1,7 +1,31 @@
 Tag q (Tag q x) => Tag q x;
 
 
+Seq (Seq a b) c => Seq a (Seq b c);
+
 SNF x => x;
 
 .
 
+{
+Initial Term:    SNF (Tag Maj (Tag Bold (Seq A B)))
+Applying advice...
+Final Term:      ((Tag Maj) ((Tag Bold) ((Seq A) B)))
+Total Steps:     1
+
+INCORRECT!
+Final term is not in short normal form.
+
+
+
+Initial Term:    SNF (Seq (Seq A B) A)
+Applying advice...
+Final Term:      ((Seq ((Seq A) B)) A)
+Total Steps:     1
+
+INCORRECT!
+Final term is not in short normal form.
+
+
+
+}
