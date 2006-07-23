@@ -13,7 +13,7 @@ Add (S x) y => S (Add x y);
 Add (Mult (S x) y) z => Add (Mult x y) (Add y z);
 Add (Mult Z y) z => z;
 Add (Add (S x) y) z => S (Add (Add x y) z);
-Add (Add Z y) z => z;
+{ Add (Add Z y) z => z; buggy }
 
 { define multiplication (Mult) here }
 
