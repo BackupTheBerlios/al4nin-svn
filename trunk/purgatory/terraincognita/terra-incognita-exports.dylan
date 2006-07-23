@@ -17,6 +17,7 @@ define module terra-incognita
   use file-system;
   use streams;
   use machine-words;
-  use system, import: {call-out, c-local-decl, c-expr};
+  use system, import: {<raw-pointer>, call-out, c-local-decl, c-expr};
   use Extensions, exclude: {main};
+  use Introspection;
 end module;
