@@ -108,6 +108,7 @@ DXL      k = k + I
 DXLV     j = XXX
 DL       IF k < XL THEN GOTO DXX
 DLV      i = i + I
+DLVI     PRINT "."
 DLX      k = XXX
 DLXV     IF i > pwdcount THEN GOTO DXC
 DLXX     GOTO DXX
