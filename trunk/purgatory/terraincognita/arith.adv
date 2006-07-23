@@ -20,6 +20,7 @@ Add (Add Z y) z => z;
 Mult Z y => Z;
 Mult (S x) y => Add y (Mult x y);
 Mult (Add (S x) y) z => Mult (S (Add x y)) z;
+Mult (Mult (S x) y) z => Add (Mult y z) (Mult (Mult x y) z);
 
 { when all other computation is done } 
 
