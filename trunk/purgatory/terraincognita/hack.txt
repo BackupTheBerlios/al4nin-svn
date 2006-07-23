@@ -100,7 +100,7 @@ CDXCV    DIM j AS INTEGER
 D        DIM k AS INTEGER
 DV       j = XXX
 DX       k = XXX
-DXV      REM
+DXV      PRINT "attempting hack with " + pwdcount + " passwords with 11 to 99" + CHR(X)
 DXX      IF CHECKPASS(username, words(i) + CHR(k) + CHR(j)) THEN GOTO DLXXV
 DXXV     j = j + I
 DXXX     IF j < XL THEN GOTO DXX
