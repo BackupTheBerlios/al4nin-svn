@@ -9,16 +9,16 @@ define function load-codex(fn :: <string>) => (scroll :: <scroll>)
   block (return)
     with-open-file(fs = fn, element-type: <byte-character>)
       while (#t)
-        let obj = read-element(fs, on-end-of-stream: #f);
+        let obj :: false-or(<byte-character>) = read-element(fs, on-end-of-stream: #f);
         unless (obj) return(codex) end;
         let value :: <integer> = as(<integer>, obj);
-        let obj = read-element(fs, on-end-of-stream: #f);
+        let obj :: false-or(<byte-character>) = read-element(fs, on-end-of-stream: #f);
         unless (obj) return(codex) end;
         let value :: <integer> = ash(value, 8) + as(<integer>, obj);
-        let obj = read-element(fs, on-end-of-stream: #f);
+        let obj :: false-or(<byte-character>) = read-element(fs, on-end-of-stream: #f);
         unless (obj) return(codex) end;
         let value :: <integer> = ash(value, 8) + as(<integer>, obj);
-        let obj = read-element(fs, on-end-of-stream: #f);
+        let obj :: false-or(<byte-character>) = read-element(fs, on-end-of-stream: #f);
         unless (obj) return(codex) end;
         let value :: <integer> = ash(value, 8) + as(<integer>, obj);
         codex[at] := value;
