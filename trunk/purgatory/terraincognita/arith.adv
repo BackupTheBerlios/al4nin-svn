@@ -9,15 +9,25 @@
 }
 Add Z y => y;
 Add (S x) y => S (Add x y);
-Add (Add Z x2) y => Add x2 y;
-Add (Add (S x1) x2) y => S (Add (Add x1 x2) y);
+Add (Add Z y1) (Add Z y2) => Add y1 y2;
+Add (Add (S x1) y1) (Add (S x2) y2) => S (S (Add (Add x1 y1) (Add x2 y2)));
+Add (Mult Z y1) (Mult Z y2) => Z;
+Add (Mult (S x1) y1) (Mult (S x2) y2) => Add (Add y1 (Mult x1 y1)) (Add y2 (Mult x2 y2));
+
+ {ÊAdd (Add Z x2) y => Add x2 y;
+   Add (Add (S x1) x2) y => S (Add (Add x1 x2) y); }
 
 { define multiplication (Mult) here }
 
 Mult Z y => Z;
 Mult (S x) y => Add y (Mult x y);
+Mult (Mult Z y1) (Mult Z y2) => Z;
+Mult (Mult (S x1) y1) (Mult (S x2) y2) => Mult (Add y1 (Mult x1 y1)) (Add y2 (Mult x2 y2));
+Mult (Add Z y1) (Add Z y2) => Mult y1 y2;
+{ Mult (Add (S x1) y1) (Add (S x2) y2) => ; }
 
 { when all other computation is done } 
+
 Compute x => x;
 
 . { end of rules }
@@ -25,3 +35,8 @@ Compute x => x;
 { DOWNLOAD: /bin/umodem arith.adv STO }
 { USAGE: advise run arith.adv arith.tests }
 { TESTING: advise step arith.adv arith.tests }
+
+{ tests for testing }
+
+{ Compute (Add (Add (S (S Z)) (S Z)) Z) -> (S (S (S Z))); . }
+{ Compute (Add (Add (S (S Z)) (S Z)) (Add Z Z)) -> (S (S (S Z))); . }
