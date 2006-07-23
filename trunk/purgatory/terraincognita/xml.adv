@@ -1,1 +1,7 @@
-Tag q (Tag q x) => Tag q x;SNF x => x;.
+Tag q (Tag q x) => Tag q x;
+
+
+SNF x => x;
+
+.
+
