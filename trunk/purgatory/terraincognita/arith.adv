@@ -9,6 +9,8 @@
 }
 Add Z y => y;
 Add (S x) y => S (Add x y);
+Add (Add Z x2) y => Add x2 y;
+Add (Add (S x1) x2) y => S (Add (Add x1 x2) y);
 
 { define multiplication (Mult) here }
 
