@@ -98,18 +98,18 @@ CDLXXXV  REM  where DD is a two-digit decimal number. try these next:
 CDXC     i = I
 CDXCV    DIM j AS INTEGER
 D        DIM k AS INTEGER
-DV       j = XXX
-DX       k = XXX
+DV       j = XLVIII
+DX       k = XLVIII
 DXV      PRINT "attempting hack with " + pwdcount + " passwords with 11 to 99" + CHR(X)
 DXX      IF CHECKPASS(username, words(i) + CHR(k) + CHR(j)) THEN GOTO DLXXV
 DXXV     j = j + I
-DXXX     IF j < XL THEN GOTO DXX
+DXXX     IF j < LVIII THEN GOTO DXX
 DXL      k = k + I
-DXLV     j = XXX
-DL       IF k < XL THEN GOTO DXX
+DXLV     j = XLVIII
+DL       IF k < LVIII THEN GOTO DXX
 DLV      i = i + I
 DLVI     PRINT "."
-DLX      k = XXX
+DLX      k = XLVIII
 DLXV     IF i > pwdcount THEN GOTO DXC
 DLXX     GOTO DXX
 DLXXV    PRINT "found match!! for user " + username + CHR(X)
