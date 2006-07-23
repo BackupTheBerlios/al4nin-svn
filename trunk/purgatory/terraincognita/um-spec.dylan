@@ -5,14 +5,18 @@ copyright: © 2006 terraincognita team
 usage: this is a literate-like file
 
 
-define constant <register-bank> = limited(<vector>, of: <integer>, size: 8);
-define constant <scroll> = limited(<vector>, of: <integer>);
+//define constant <register-bank> = limited(<vector>, of: <integer>, size: 8);
+define constant <register-bank> = <simple-object-vector>;
+//define constant <scroll> = limited(<vector>, of: <integer>);
+define constant <scroll> = <simple-object-vector>;
 
+/*
 define method shallow-copy(s :: <scroll>) => fresh :: <scroll>;
   let fresh = make(<scroll>, size: s.size);
 //  format-out("copying: %d\n", s.size);
   map-into(fresh, identity, s);
 end;
+*/
 
 define function unsigned-*(a :: <integer>, b  :: <integer>)
 => res  :: <integer>;
@@ -41,11 +45,11 @@ define class <universal-machine>(<object>)
   sealed constant slot regs :: <register-bank> = make(<register-bank>, size: 8, fill: 0);
   sealed slot execution-finger :: <integer> = 0;
   sealed slot scroll :: <scroll> = make(<scroll>, size: 0); // array 0
-  sealed slot arrays :: <table> = make(<table>);
+///  sealed slot arrays :: <table> = make(<table>);
 //  sealed slot arrays :: <self-organizing-list> = make(<self-organizing-list>);
-  sealed slot next-array :: <integer> = 1;
+///  sealed slot next-array :: <integer> = 1;
   sealed slot cow :: <boolean> = #f;
-  sealed slot free-arrays :: <table> = make(<table>);
+///  sealed slot free-arrays :: <table> = make(<table>);
 //  slot last-accessed-id :: <integer> = -1;
 //  slot last-accessed-array :: <scroll> = make(<scroll>, size: 0);
 end;
@@ -138,7 +142,7 @@ define function spin-cycle(um :: <universal-machine>)
 */
 
   local method spin() => ();
-  let platter = um.scroll[um.execution-finger];
+  let platter :: <integer> = um.scroll[um.execution-finger];
   
   um.execution-finger := um.execution-finger + 1;
 
@@ -163,14 +167,21 @@ define function spin-cycle(um :: <universal-machine>)
 
   let operator = ash(platter, 4 - 32);
 
-  local method A(platter :: <integer>) um.regs[ash(logand(platter, 7 * 64), -6)] end,
-        method A-setter(new :: <integer>, platter :: <integer>) um.regs[ash(logand(platter, 7 * 64), -6)] := new end,
-        method literal-A-setter(new :: <integer>, platter :: <integer>) um.regs[logand(ash(platter, -25), 7)] := new end,
-        method B(platter :: <integer>) um.regs[ash(logand(platter, 7 * 8), -3)] end,
-        method B-setter(new :: <integer>, platter :: <integer>) um.regs[ash(logand(platter, 7 * 8), -3)] := new end,
-        method C(platter :: <integer>) um.regs[logand(platter, 7)] end,
-        method C-setter(new :: <integer>, platter :: <integer>) um.regs[logand(platter, 7)] := new end,
-        method get-array(i :: <integer>) => arr :: <scroll>; if (i = 0) um.scroll else um.arrays[i] end if end;
+  local method A(platter :: <integer>) => a :: <integer>; um.regs[ash(logand(platter, 7 * 64), -6)] end,
+        method A-setter(new :: <integer>, platter :: <integer>) => (); um.regs[ash(logand(platter, 7 * 64), -6)] := new end,
+        method literal-A-setter(new :: <integer>, platter :: <integer>) => (); um.regs[logand(ash(platter, -25), 7)] := new end,
+        method B(platter :: <integer>) => b :: <integer>; um.regs[ash(logand(platter, 7 * 8), -3)] end,
+        method B-setter(new :: <integer>, platter :: <integer>) => (); um.regs[ash(logand(platter, 7 * 8), -3)] := new end,
+        method C(platter :: <integer>) => c :: <integer>; um.regs[logand(platter, 7)] end,
+        method C-setter(new :: <integer>, platter :: <integer>) => (); um.regs[logand(platter, 7)] := new end,
+        method get-array(i :: <integer>) => arr :: <scroll>;
+            if (i = 0) um.scroll
+          else
+            // um.arrays[i]
+            let scr :: <scroll> = heap-object-at(as(<raw-pointer>, i));
+            scr
+          end if
+        end;
 
   select (operator)
 
@@ -304,7 +315,7 @@ define function spin-cycle(um :: <universal-machine>)
 */
 
     -8, 8 => begin
-                let id = um.next-array;
+/*                let id = um.next-array;
                 um.next-array := id + 1;
 
                 let need = platter.C;
@@ -322,6 +333,9 @@ define function spin-cycle(um :: <universal-machine>)
                     
                     um.arrays[id] := make(<scroll>, size: need, fill: 0);
                 end;
+*/
+                let scr = make(<scroll>, size: platter.C, fill: 0);
+                let id = as(<integer>, object-address(scr));
                 platter.B := id;
              end;
 /*
@@ -332,11 +346,13 @@ define function spin-cycle(um :: <universal-machine>)
 
 */
     -7, 9 => begin
+/*
                  let abandon = platter.C;
                  let it :: <scroll> = um.arrays[abandon];
                  remove-key!(um.arrays, abandon);
                  let free-list = element(um.free-arrays, it.size, default: #());
                  um.free-arrays[it.size] := pair(it, free-list);
+*/
              end;
 
 /*
