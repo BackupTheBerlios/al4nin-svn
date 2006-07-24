@@ -10,10 +10,11 @@ MIX (Tag Maj (Tag Bold d)) done => MIX (Tag Bold (Tag Maj d)) done;
 MIX (Tag Emph (Tag Bold d)) done => MIX (Tag Bold (Tag Emph d)) done;
 
 { Argument evaluation }
+MIX (Seq a b) done => MIX a (Push done b);
 
 { Result popping }
-MIX (Tag q (Seq a b)) done => MIX (Seq a b) (Gat q done);
-MIX (Tag q (Tag p (Seq a b))) done => MIX (Seq a b) (Gat p (Gat q done));
+MIX (Tag q (Seq a b)) done => MIX (Seq a b) (Gat q done); {NEEDED??}
+MIX (Tag q (Tag p (Seq a b))) done => MIX (Seq a b) (Gat p (Gat q done)); {NEEDED??}
 
 MIX (Seq a b) done => MIX b (Qes a done); {+++}
 MIX (Tag q d) done => MIX d (Gat q done);
@@ -25,11 +26,13 @@ MIX A (Gat a b) => XIM (Tag a A) b; {+++}
 MIX B (Gat a b) => XIM (Tag a B) b;
 
 { Reconstruction }
+XIM d (Push done b) => MIX b (Qes d done);
 XIM d (Qes a b) => XIM (Seq a d) b; {+++}
 XIM d (Gat q b) => XIM (Tag q d) b;
 XIM d ROOT => d;
 
-{ evaluation context }
+{ Evaluation context }
 SNF x => MIX x ROOT;
 
+{ No more rules }
 .
