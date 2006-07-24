@@ -25,10 +25,17 @@ MIX (Seq a b) done => MIX b (Qes a done); {+++}
 
 MIX (Tag q d) (Gat q done) => MIX d (Gat q done);
 
-{ If something smaller on results, swap, maybe we have to undo too # }
+{ If something smaller on results, swap,
+maybe we have to undo too #
 MIX (Tag Emph d) (Gat Maj done) => MIX (Tag Maj d) (Gat Emph done);
 MIX (Tag Bold d) (Gat Emph done) => MIX (Tag Emph d) (Gat Bold done);
 MIX (Tag Bold d) (Gat Maj done) => MIX (Tag Maj d) (Gat Bold done);
+ }
+
+MIX (Tag Emph d) (Gat Maj done) => MIX (Tag Emph (Tag Maj d)) done;
+MIX (Tag Bold d) (Gat Emph done) => MIX (Tag Bold (Tag Emph d)) done;
+MIX (Tag Bold d) (Gat Maj done) => MIX (Tag Bold (Tag Maj d)) done;
+
 
 MIX (Tag q d) done => MIX d (Gat q done);
 
@@ -43,7 +50,7 @@ MIX B (Gat a b) => XIM (Tag a B) b;
 
 { Reconstruction }
 
-XIM (Tag q a) (Push done (Tag q b)) => MIX (Tag q (Seq a b)) done;
+{ TOO EARLY: XIM (Tag q a) (Push done (Tag q b)) => MIX (Tag q (Seq a b)) done; }
 XIM (Seq a b) (Push done c) => MIX (Seq a (Seq b c)) done;
 XIM d (Push done b) => MIX b (Qes d done);
 
