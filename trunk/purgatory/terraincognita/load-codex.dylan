@@ -4,7 +4,7 @@ author: Seth Taylor, heisenbug
 copyright: © 2006 terraincognita team
 
 define function load-codex(fn :: <string>) => (scroll :: <scroll>)
-  let codex = make(<scroll>, size: /* 586740 */ 3975481);
+  let codex = make(<scroll>, size: 15923865);
   let at = 0;
   block (return)
     with-open-file(fs = fn, element-type: <byte-character>)

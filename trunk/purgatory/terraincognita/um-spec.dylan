@@ -117,7 +117,7 @@ end;
 define method initialize(um :: <universal-machine>, #key)
     next-method();
     // regs are already initialized ny the slot decl.
-    um.scroll := read-scroll("volume7.umz");
+    um.scroll := read-scroll("volume8.umz");
 end;
 
 /*
