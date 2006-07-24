@@ -18,48 +18,26 @@ MIX (Tag Emph (Tag Bold d)) done => MIX (Tag Bold (Tag Emph d)) done;
 MIX (Seq a b) done => MIX a (Push done b);
 
 { Result popping }
- {MIX (Tag q (Seq a b)) done => MIX (Seq a b) (Tag q done);NEEDED??}
- {MIX (Tag q (Tag p (Seq a b))) done => MIX (Seq a b) (Tag p (Tag q done));NEEDED??}
-
-MIX (Seq a b) done => MIX b (Seq a done); {+++}
-
 MIX (Tag q d) (Tag q done) => MIX d (Tag q done);
-
-{ If something smaller on results, swap,
-maybe we have to undo too #
-MIX (Tag Emph d) (Tag Maj done) => MIX (Tag Maj d) (Tag Emph done);
-MIX (Tag Bold d) (Tag Emph done) => MIX (Tag Emph d) (Tag Bold done);
-MIX (Tag Bold d) (Tag Maj done) => MIX (Tag Maj d) (Tag Bold done);
- }
 
 MIX (Tag Emph d) (Tag Maj done) => MIX (Tag Emph (Tag Maj d)) done;
 MIX (Tag Bold d) (Tag Emph done) => MIX (Tag Bold (Tag Emph d)) done;
 MIX (Tag Bold d) (Tag Maj done) => MIX (Tag Bold (Tag Maj d)) done;
 
 
-MIX (Tag q d) done => MIX d (Tag q done);
+MIX (head a b) done => MIX b (head a done); {
+MIX (Tag q d) done => MIX d (Tag q done);+++}
 
 { Reversal }
-MIX embryo (Push done b) => MIX b (Seq embryo done); {
-MIX B (Push done b) => MIX b (Seq B done);+++}
-
-MIX embryo (head a b) => XIM (head a embryo) b; {+++}
- {MIX B (Seq a b) => XIM (Seq a B) b;
-MIX A (Tag a b) => XIM (Tag a A) b;
-MIX B (Tag a b) => XIM (Tag a B) b;+++}
-
+MIX embryo (Push done b) => MIX b (Seq embryo done);
+MIX embryo (head a b) => XIM (head a embryo) b;
 
 { Reconstruction }
-
-{ TOO EARLY: XIM (Tag q a) (Push done (Tag q b)) => MIX (Tag q (Seq a b)) done; }
 XIM (Seq a b) (Push done c) => MIX (Seq a (Seq b c)) done;
 XIM d (Push done b) => MIX b (Seq d done);
-
-{BUGFIX}
 XIM (Tag q d) (Seq (Tag q a) b) => MIX (Tag q (Seq a d)) b;
 
-XIM d (head a b) => XIM (head a d) b; {
-XIM d (Tag q b) => XIM (Tag q d) b;+++}
+XIM d (head a b) => XIM (head a d) b;
 XIM d ROOT => d;
 
 { Evaluation context }
