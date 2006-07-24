@@ -13,10 +13,14 @@ MIX (Tag Emph (Tag Bold d)) done => MIX (Tag Bold (Tag Emph d)) done;
 MIX (Seq a b) done => MIX a (Push done b);
 
 { Result popping }
-MIX (Tag q (Seq a b)) done => MIX (Seq a b) (Gat q done); {NEEDED??}
-MIX (Tag q (Tag p (Seq a b))) done => MIX (Seq a b) (Gat p (Gat q done)); {NEEDED??}
+ {MIX (Tag q (Seq a b)) done => MIX (Seq a b) (Gat q done);NEEDED??}
+ {MIX (Tag q (Tag p (Seq a b))) done => MIX (Seq a b) (Gat p (Gat q done));NEEDED??}
 
 MIX (Seq a b) done => MIX b (Qes a done); {+++}
+
+MIX (Tag q d) (Gat q done) => MIX d (Gat q done);
+{ MIX (Tag q d) (Gat r done) => MIX (Tag r d) (Gat q done); TODO }
+
 MIX (Tag q d) done => MIX d (Gat q done);
 
 { Reversal }
@@ -39,3 +43,8 @@ SNF x => MIX x ROOT;
 
 { No more rules }
 .
+
+
+{ SNF (Seq (Tag Bold (Tag Bold (Seq (Seq A A) (Seq A A)))) (Tag Emph (Tag Maj (Tag Maj (Tag Bold B))))) }
+
+{ Incorrect : ((Seq ((Tag Bold) ((Seq A) ((Seq A) ((Seq A) A))))) ((Tag Emph) ((Tag Bold) ((Tag Maj) B)))) }
