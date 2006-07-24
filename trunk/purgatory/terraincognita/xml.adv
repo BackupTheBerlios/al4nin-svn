@@ -1,13 +1,18 @@
 { Sequence transforms }
+{ do on popping
 MIX (Seq (Tag q a) (Tag q b)) done => MIX (Tag q (Seq a b)) done;
 MIX (Seq (Seq a b) c) done => MIX (Seq a (Seq b c)) done;
+}
 
 { Tag transforms }
+{ do on pushing
 MIX (Tag q (Tag q x)) done => MIX (Tag q x) done;
+
 
 MIX (Tag Maj (Tag Emph d)) done => MIX (Tag Emph (Tag Maj d)) done;
 MIX (Tag Maj (Tag Bold d)) done => MIX (Tag Bold (Tag Maj d)) done;
 MIX (Tag Emph (Tag Bold d)) done => MIX (Tag Bold (Tag Emph d)) done;
+}
 
 { Argument evaluation }
 MIX (Seq a b) done => MIX a (Push done b);
@@ -37,7 +42,13 @@ MIX B (Gat a b) => XIM (Tag a B) b;
 
 
 { Reconstruction }
+
+{####XIM d (Qes (Tag q a) (Tag q b)) => XIM (Tag q d) (Qes a b);}
+XIM (Tag q a) (Push done (Tag q b)) => MIX (Tag q (Seq a b)) done;
+
+XIM (Seq a b) (Push done c) => MIX (Seq a (Seq b c)) done;
 XIM d (Push done b) => MIX b (Qes d done);
+
 XIM d (Qes a b) => XIM (Seq a d) b; {+++}
 XIM d (Gat q b) => XIM (Tag q d) b;
 XIM d ROOT => d;
