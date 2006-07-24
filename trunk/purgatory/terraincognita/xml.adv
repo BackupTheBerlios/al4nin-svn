@@ -3,6 +3,15 @@ Tag q (Tag q x) => Tag q x;
 
 Seq (Seq a b) c => Seq a (Seq b c);
 
+
+{
+  (2) For all nested Tag expressions (Tag q1 (Tag q2 d)) in the document,
+      q1 is less than q2, where Bold is less than Emph is less than Maj.
+}
+Tag Maj (Tag Emph d) => Tag Emph (Tag Maj d);
+Tag Maj (Tag Bold d) => Tag Bold (Tag Maj d);
+Tag Emph (Tag Bold d) => Tag Bold (Tag Emph d);
+
 SNF x => x;
 
 .
