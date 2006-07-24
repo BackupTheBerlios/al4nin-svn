@@ -1,7 +1,8 @@
 { Sequence transforms }
 { do on popping too, below }
-MIX (Seq (Tag q a) (Tag q b)) done => MIX (Tag q (Seq a b)) done;
-MIX (Seq (Seq a b) c) done => MIX (Seq a (Seq b c)) done;
+{ MIX (Seq (Tag q a) (Tag q b)) done => MIX (Tag q (Seq a b)) done; }
+
+{ MIX (Seq (Seq a b) c) done => MIX (Seq a (Seq b c)) done; }
 
 
 { Tag transforms }
@@ -25,8 +26,7 @@ MIX (Tag Bold d) (Tag Emph done) => MIX (Tag Bold (Tag Emph d)) done;
 MIX (Tag Bold d) (Tag Maj done) => MIX (Tag Bold (Tag Maj d)) done;
 
 
-MIX (head a b) done => MIX b (head a done); {
-MIX (Tag q d) done => MIX d (Tag q done);+++}
+MIX (head a b) done => MIX b (head a done);
 
 { Reversal }
 MIX embryo (Push done b) => MIX b (Seq embryo done);
