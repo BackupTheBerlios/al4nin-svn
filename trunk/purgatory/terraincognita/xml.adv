@@ -19,7 +19,11 @@ MIX (Seq a b) done => MIX a (Push done b);
 MIX (Seq a b) done => MIX b (Qes a done); {+++}
 
 MIX (Tag q d) (Gat q done) => MIX d (Gat q done);
-{ MIX (Tag q d) (Gat r done) => MIX (Tag r d) (Gat q done); TODO }
+
+{ If something smaller on results, swap, maybe we have to undo too # }
+MIX (Tag Emph d) (Gat Maj done) => MIX (Tag Maj d) (Gat Emph done);
+MIX (Tag Bold d) (Gat Emph done) => MIX (Tag Emph d) (Gat Bold done);
+MIX (Tag Bold d) (Gat Maj done) => MIX (Tag Maj d) (Gat Bold done);
 
 MIX (Tag q d) done => MIX d (Gat q done);
 
