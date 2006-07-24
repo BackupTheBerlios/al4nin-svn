@@ -4,7 +4,8 @@ author: heisenbug
 copyright: © 2006 terraincognita team
 
 define function main(name, arguments)
-  format-out("Hello, world!\n");
+  format-out("Hello, world!\n"
+             "welcome to %s...", name);
   let um = make(<universal-machine>);
   um.spin-cycle;
   exit-application(0);
