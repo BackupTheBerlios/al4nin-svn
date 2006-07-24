@@ -20,10 +20,13 @@ MIX (Seq a b) done => MIX b (Qes a done); {+++}
 MIX (Tag q d) done => MIX d (Gat q done);
 
 { Reversal }
-MIX A (Qes a b) => XIM (Seq a A) b;
+MIX A (Push done b) => MIX b (Qes A done); {+++}
+MIX B (Push done b) => MIX b (Qes B done);
+MIX A (Qes a b) => XIM (Seq a A) b; {+++}
 MIX B (Qes a b) => XIM (Seq a B) b;
 MIX A (Gat a b) => XIM (Tag a A) b; {+++}
 MIX B (Gat a b) => XIM (Tag a B) b;
+
 
 { Reconstruction }
 XIM d (Push done b) => MIX b (Qes d done);
