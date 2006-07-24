@@ -1,40 +1,25 @@
-Tag q (Tag q x) => Tag q x;
+MIX (Tag q (Tag q x)) done => MIX (Tag q x) done;
+
+MIX (Tag Maj (Tag Emph d)) done => MIX (Tag Emph (Tag Maj d)) done;
+MIX (Tag Maj (Tag Bold d)) done => MIX (Tag Bold (Tag Maj d)) done;
+MIX (Tag Emph (Tag Bold d)) done => MIX (Tag Bold (Tag Emph d)) done;
 
 
-Seq (Seq a b) c => Seq a (Seq b c);
+MIX (Tag q (Seq a b)) done => MIX (Seq a b) (Gat q done);
+MIX (Tag q (Tag p (Seq a b))) done => MIX (Seq a b) (Gat p (Gat q done));
+
+MIX (Seq (Seq a b) c) done => MIX (Seq b c) (Qes a done);
+MIX (Seq a b) done => MIX b (Qes a done);
+MIX (Tag q d) done => MIX d (Gat q done);
+
+MIX A (Qes a b) => XIM (Seq a A) b;
+MIX B (Qes a b) => XIM (Seq a B) b;
+
+XIM d (Qes a b) => XIM (Seq a d) b;
+XIM d (Gat q b) => XIM (Tag q d) b;
+XIM d ROOT => d;
 
 
-{
-  (2) For all nested Tag expressions (Tag q1 (Tag q2 d)) in the document,
-      q1 is less than q2, where Bold is less than Emph is less than Maj.
-}
-Tag Maj (Tag Emph d) => Tag Emph (Tag Maj d);
-Tag Maj (Tag Bold d) => Tag Bold (Tag Maj d);
-Tag Emph (Tag Bold d) => Tag Bold (Tag Emph d);
-
-SNF x => x;
+SNF x => MIX x ROOT;
 
 .
-
-{
-Initial Term:    SNF (Tag Maj (Tag Bold (Seq A B)))
-Applying advice...
-Final Term:      ((Tag Maj) ((Tag Bold) ((Seq A) B)))
-Total Steps:     1
-
-INCORRECT!
-Final term is not in short normal form.
-
-
-
-Initial Term:    SNF (Seq (Seq A B) A)
-Applying advice...
-Final Term:      ((Seq ((Seq A) B)) A)
-Total Steps:     1
-
-INCORRECT!
-Final term is not in short normal form.
-
-
-
-}
