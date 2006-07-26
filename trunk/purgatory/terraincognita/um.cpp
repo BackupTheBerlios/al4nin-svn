@@ -10,25 +10,6 @@ copyright: © 2006 terraincognita team
 
 // Alternative (PseudoJIT) Universal Machine
 
-struct d2cObject
-{
-    const d2cObject& d2cClass;
-    
-    private: d2cObject(void); // no impl.
-};
-
-struct d2cCell : d2cObject
-{
-    unsigned data;
-};
-
-struct DylanVector : d2cObject
-{
-    size_t size;
-    d2cCell arr[];
-};
-
-
 typedef void (*Fun)(void);
 
 
@@ -56,7 +37,9 @@ void Cond(Fun* array0, unsigned (&regs)[10])
 template <int A, int B, int C>
 void Index(Fun* array0, unsigned (&regs)[10])
 {
-    regs[A] = reinterpret_cast<unsigned*>(regs[B])[regs[C]];
+    const unsigned* arr(reinterpret_cast<unsigned*>(regs[B]));
+  
+    regs[A] = arr ? arr[regs[C]] : reinterpret_cast<unsigned*>(regs[8])[regs[C]];
 
     ++array0;
     (*reinterpret_cast<Instruct*>(array0))(array0, regs);
@@ -96,9 +79,9 @@ void Nand(Fun* array0, unsigned (&regs)[10])
 
 void Compiler(Fun* array0, unsigned (&regs)[10])
 {
-    DylanVector& v(*reinterpret_cast<DylanVector*>(regs[8]));
+    unsigned* v(reinterpret_cast<unsigned*>(regs[8]));
     ptrdiff_t offset = array0 - reinterpret_cast<Fun*>(regs[9]);
-    unsigned platter = v.arr[offset].data;
+    unsigned platter = v[offset];
     std::cerr << std::hex <<"platter: " << platter << std::dec << std::endl;
 
 	Instruct compiled;
@@ -150,6 +133,24 @@ void Compiler(Fun* array0, unsigned (&regs)[10])
     compiled(array0, regs);
 }
 
+struct d2cObject
+{
+    const d2cObject& d2cClass;
+    
+    private: d2cObject(void); // no impl.
+};
+
+struct d2cCell : d2cObject
+{
+    unsigned data;
+};
+
+struct DylanVector : d2cObject
+{
+    size_t size;
+    d2cCell arr[];
+};
+
 
 Fun fillWithCompiler(const d2cCell&)
 {
@@ -158,11 +159,20 @@ Fun fillWithCompiler(const d2cCell&)
 }
 
 
+unsigned justCopy(const d2cCell& c)
+{
+    std::cerr << "justCopy." << std::endl;
+    return c.data;
+}
+
+
 extern "C" void* enterUM(void* dylancookie, const struct DylanVector& v)
 {
+    unsigned* copy = new unsigned[v.size];
+    std::transform(v.arr, v.arr + v.size, copy, justCopy);
     Fun* jitted = new Fun[v.size];
     std::transform(v.arr, v.arr + v.size, jitted, fillWithCompiler);
-    unsigned regs[10] = { 0, 0, 0, 0, 0, 0, 0, 0, unsigned(&v), unsigned(jitted)};
+    unsigned regs[10] = { 0, 0, 0, 0, 0, 0, 0, 0, unsigned(copy), unsigned(jitted)};
     reinterpret_cast<Instruct>(*jitted)(jitted, regs);
     return dylancookie;
 }
