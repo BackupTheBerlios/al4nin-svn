@@ -5,18 +5,8 @@ copyright: © 2006 terraincognita team
 usage: this is a literate-like file
 
 
-//define constant <register-bank> = limited(<vector>, of: <integer>, size: 8);
 define constant <register-bank> = <simple-object-vector>;
-//define constant <scroll> = limited(<vector>, of: <integer>);
 define constant <scroll> = <simple-object-vector>;
-
-/*
-define method shallow-copy(s :: <scroll>) => fresh :: <scroll>;
-  let fresh = make(<scroll>, size: s.size);
-//  format-out("copying: %d\n", s.size);
-  map-into(fresh, identity, s);
-end;
-*/
 
 define function unsigned-*(a :: <integer>, b  :: <integer>)
 => res  :: <integer>;
@@ -45,13 +35,7 @@ define class <universal-machine>(<object>)
   sealed constant slot regs :: <register-bank> = make(<register-bank>, size: 8, fill: 0);
   sealed slot execution-finger :: <integer> = 0;
   sealed slot scroll :: <scroll> = make(<scroll>, size: 0); // array 0
-///  sealed slot arrays :: <table> = make(<table>);
-//  sealed slot arrays :: <self-organizing-list> = make(<self-organizing-list>);
-///  sealed slot next-array :: <integer> = 1;
   sealed slot cow :: <boolean> = #f;
-///  sealed slot free-arrays :: <table> = make(<table>);
-//  slot last-accessed-id :: <integer> = -1;
-//  slot last-accessed-array :: <scroll> = make(<scroll>, size: 0);
 end;
 
 /*
@@ -99,10 +83,6 @@ end;
       input and output of "unsigned 8-bit characters" (see patent
       #255).
   
-*/
-
-
-/*
 
   Behavior.
   ---------
@@ -116,7 +96,7 @@ end;
 
 define method initialize(um :: <universal-machine>, #key)
     next-method();
-    // regs are already initialized ny the slot decl.
+    // regs are already initialized by the slot decl.
     um.scroll := read-scroll("volume8.umz");
 end;
 
@@ -141,10 +121,10 @@ define function spin-cycle(um :: <universal-machine>)
   platter, if any.
 */
 
-  local method spin() => ();
-  let platter :: <integer> = um.scroll[um.execution-finger];
-  
-  um.execution-finger := um.execution-finger + 1;
+    local method spin() => ();
+      let platter :: <integer> = um.scroll[um.execution-finger];
+
+      um.execution-finger := um.execution-finger + 1;
 
 /*
   Operators.
@@ -165,25 +145,38 @@ define function spin-cycle(um :: <universal-machine>)
 
 */
 
-  let operator = ash(platter, 4 - 32);
+      let operator = ash(platter, 4 - 32);
 
-  local method A(platter :: <integer>) => a :: <integer>; um.regs[ash(logand(platter, 7 * 64), -6)] end,
-        method A-setter(new :: <integer>, platter :: <integer>) => (); um.regs[ash(logand(platter, 7 * 64), -6)] := new end,
-        method literal-A-setter(new :: <integer>, platter :: <integer>) => (); um.regs[logand(ash(platter, -25), 7)] := new end,
-        method B(platter :: <integer>) => b :: <integer>; um.regs[ash(logand(platter, 7 * 8), -3)] end,
-        method B-setter(new :: <integer>, platter :: <integer>) => (); um.regs[ash(logand(platter, 7 * 8), -3)] := new end,
-        method C(platter :: <integer>) => c :: <integer>; um.regs[logand(platter, 7)] end,
-        method C-setter(new :: <integer>, platter :: <integer>) => (); um.regs[logand(platter, 7)] := new end,
-        method get-array(i :: <integer>) => arr :: <scroll>;
-            if (i = 0) um.scroll
-          else
-            // um.arrays[i]
-            let scr :: <scroll> = heap-object-at(as(<raw-pointer>, i));
-            scr
-          end if
-        end;
+      local method A(platter :: <integer>) => a :: <integer>;
+              um.regs[logand(ash(platter, -6), 7)]
+            end,
+            method A-setter(new :: <integer>, platter :: <integer>) => ();
+              um.regs[logand(ash(platter, -6), 7)] := new
+            end,
+            method literal-A-setter(new :: <integer>, platter :: <integer>) => ();
+              um.regs[logand(ash(platter, -25), 7)] := new
+            end,
+            method B(platter :: <integer>) => b :: <integer>;
+              um.regs[logand(ash(platter, -3), 7)]
+            end,
+            method B-setter(new :: <integer>, platter :: <integer>) => ();
+              um.regs[logand(ash(platter, -3), 7)] := new
+            end,
+            method C(platter :: <integer>) => c :: <integer>;
+              um.regs[logand(platter, 7)]
+            end,
+            method C-setter(new :: <integer>, platter :: <integer>) => ();
+              um.regs[logand(platter, 7)] := new
+            end,
+            method get-array(i :: <integer>) => arr :: <scroll>;
+              if (i = 0)
+                um.scroll
+              else
+                heap-object-at(as(<raw-pointer>, i));
+              end if
+            end;
 
-  select (operator)
+      select (operator)
 
 /*
   Standard Operators.
@@ -217,7 +210,7 @@ define function spin-cycle(um :: <universal-machine>)
                   unless the register C contains 0.
 */
 
-    0 => unless (platter.C = 0) platter.A := platter.B end unless;
+        0 => unless (platter.C = 0) platter.A := platter.B end unless;
 
 /*
            #1. Array Index.
@@ -225,17 +218,8 @@ define function spin-cycle(um :: <universal-machine>)
                   The register A receives the value stored at offset
                   in register C in the array identified by B.
 */
-    1 => begin
-            // let from = platter.B;
 
-            // unless (from = um.last-accessed-id)
-            //   um.last-accessed-id := from;
-            //   um.last-accessed-array := get-array(from);
-            // end unless;
-            
-            // platter.A := um.last-accessed-array[platter.C];
-            platter.A := get-array(platter.B)[platter.C];
-          end;
+        1 => platter.A := get-array(platter.B)[platter.C];
 
 /*
            #2. Array Amendment.
@@ -243,17 +227,18 @@ define function spin-cycle(um :: <universal-machine>)
                   The array identified by A is amended at the offset
                   in register B to store the value in register C.
 */
-    2 => begin
-            let array = get-array(platter.A);
-            if (um.cow
-                & array == um.scroll)
-                um.scroll := shallow-copy(um.scroll);
-                um.cow := #f;
-                get-array(platter.A)[platter.B] := platter.C; // evaluate array again
-            else
-                array[platter.B] := platter.C;
-            end if;
-         end begin;
+
+        2 => begin
+               let array = get-array(platter.A);
+                 if (um.cow
+                     & array == um.scroll)
+                   um.scroll := shallow-copy(um.scroll);
+                   um.cow := #f;
+                   get-array(platter.A)[platter.B] := platter.C; // evaluate array again
+               else
+                 array[platter.B] := platter.C;
+               end if;
+             end begin;
 
 /*
            #3. Addition.
@@ -261,7 +246,8 @@ define function spin-cycle(um :: <universal-machine>)
                   The register A receives the value in register B plus 
                   the value in register C, modulo 2^32.
 */
-    3 => platter.A := platter.B + platter.C;
+
+        3 => platter.A := platter.B + platter.C;
 
 /*
            #4. Multiplication.
@@ -269,7 +255,8 @@ define function spin-cycle(um :: <universal-machine>)
                   The register A receives the value in register B times
                   the value in register C, modulo 2^32.
 */
-    4 => platter.A := unsigned-*(platter.B, platter.C);
+
+        4 => platter.A := unsigned-*(platter.B, platter.C);
 
 /*
            #5. Division.
@@ -279,7 +266,9 @@ define function spin-cycle(um :: <universal-machine>)
                   each quantity is treated treated as an unsigned 32
                   bit number.
 */
-    5 => platter.A := unsigned-/(platter.B, platter.C);
+
+        5 => platter.A := unsigned-/(platter.B, platter.C);
+
 /*
            #6. Not-And.
 
@@ -288,7 +277,8 @@ define function spin-cycle(um :: <universal-machine>)
                   position.  Otherwise the bit in register A receives
                   the 0 bit.
 */
-    6 => platter.A := lognot(logand(platter.B, platter.C));
+
+        6 => platter.A := lognot(logand(platter.B, platter.C));
 
 /*
   Other Operators.
@@ -301,7 +291,8 @@ define function spin-cycle(um :: <universal-machine>)
 
                   The universal machine stops computation.
 */
-    7 => halt();
+
+        7 => halt();
 
 /*
            #8. Allocation.
@@ -314,30 +305,11 @@ define function spin-cycle(um :: <universal-machine>)
                   active allocated array, is placed in the B register.
 */
 
-    -8, 8 => begin
-/*                let id = um.next-array;
-                um.next-array := id + 1;
+        -8, 8 => begin
+                   let scr = make(<scroll>, size: platter.C, fill: 0);
+                   platter.B := as(<integer>, object-address(scr));
+                 end;
 
-                let need = platter.C;
-                let reuse = element(um.free-arrays, need, default: #f);
-                if (reuse & ~reuse.empty?)
-                  let it :: <scroll> = reuse.head;
-                  um.free-arrays[need] := reuse.tail;
-///                  format-out("reusing for size: %d\n", need);
-///                  force-output(*standard-output*);
-                  map-into(it, always(0), it);
-                  um.arrays[id] := it;
-                else
-///                  format-out("alloc for size: %d\n", need);
-///                  force-output(*standard-output*);
-                    
-                    um.arrays[id] := make(<scroll>, size: need, fill: 0);
-                end;
-*/
-                let scr = make(<scroll>, size: platter.C, fill: 0);
-                let id = as(<integer>, object-address(scr));
-                platter.B := id;
-             end;
 /*
            #9. Abandonment.
 
@@ -345,15 +317,8 @@ define function spin-cycle(um :: <universal-machine>)
                   Future allocations may then reuse that identifier.
 
 */
-    -7, 9 => begin
-/*
-                 let abandon = platter.C;
-                 let it :: <scroll> = um.arrays[abandon];
-                 remove-key!(um.arrays, abandon);
-                 let free-list = element(um.free-arrays, it.size, default: #());
-                 um.free-arrays[it.size] := pair(it, free-list);
-*/
-             end;
+
+            -7, 9 => #f;
 
 /*
 
@@ -363,13 +328,14 @@ define function spin-cycle(um :: <universal-machine>)
                   immediately. Only values between and including 0 and 255
                   are allowed.
 */
-    -6, 10 => begin
-                  format-out("%s", as(<byte-character>, platter.C));
-                  if (#t | platter.C = 10)
+
+        -6, 10 => begin
+                    format-out("%s", as(<byte-character>, platter.C));
                     force-output(*standard-output*);
                   end;
-              end;
+
 /*
+
           #11. Input.
 
                   The universal machine waits for input on the console.
@@ -379,7 +345,8 @@ define function spin-cycle(um :: <universal-machine>)
                   register C is endowed with a uniform value pattern
                   where every place is pregnant with the 1 bit.
 */
-    -5, 11 => platter.C := as(<integer>, read-element(*standard-input*, on-end-of-stream: -1));
+
+        -5, 11 => platter.C := as(<integer>, read-element(*standard-input*, on-end-of-stream: -1));
 
 /*
           #12. Load Program.
@@ -397,15 +364,15 @@ define function spin-cycle(um :: <universal-machine>)
                   velocity.
 
 */
-    -4, 12 => begin
-                // doing copy-on-write lazily
-                um.execution-finger := platter.C;
-                unless (platter.B == 0) // when used linearly, no copy necessary
-                  um.scroll := get-array(platter.B);
-                  um.cow := #t;
-                  // um.last-accessed-id = -1; // invalidate
-                end unless;
-              end;
+
+        -4, 12 => begin
+                    // doing copy-on-write lazily
+                    um.execution-finger := platter.C;
+                    unless (platter.B == 0) // when used linearly, no copy necessary
+                      um.scroll := get-array(platter.B);
+                      um.cow := #t;
+                    end unless;
+                  end;
 
 /*
   Special Operators.
@@ -437,18 +404,19 @@ define function spin-cycle(um :: <universal-machine>)
                   forthwith.
 
 */
-    -3, 13 => platter.literal-A := logand(platter, ash(1, 25) - 1);
 
-    otherwise => error("unknown operator %d", operator);
-  end select;
+        -3, 13 => platter.literal-A := logand(platter, ash(1, 25) - 1);
+
+        otherwise => error("unknown operator %d", operator);
+      end select;
   
-  // again
-  spin();
+      // again
+      spin();
   
-  end method spin;
+    end method spin;
   
-  // start
-  spin();
+    // start
+    spin();
   
   exception (e :: <error>)
     format-out("Machine state:\n execution-finger: %d\n regs: %=\n", um.execution-finger, um.regs);
