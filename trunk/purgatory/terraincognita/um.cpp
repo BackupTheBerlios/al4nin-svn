@@ -44,9 +44,27 @@ typedef typeof(Halt) *Instruct;
 #define genA(NAME) genB(NAME, 0), genB(NAME, 1), genB(NAME, 2), genB(NAME, 3), genB(NAME, 4), genB(NAME, 5), genB(NAME, 6), genB(NAME, 7)
 
 template <int A, int B, int C>
+void Cond(Fun* array0, unsigned (&regs)[10])
+{
+    if (regs[C])
+		regs[A] = regs[B];
+
+    ++array0;
+    (*reinterpret_cast<Instruct*>(array0))(array0, regs);
+}
+
+template <int A, int B, int C>
+void Index(Fun* array0, unsigned (&regs)[10])
+{
+    regs[A] = reinterpret_cast<unsigned*>(regs[B])[regs[C]];
+
+    ++array0;
+    (*reinterpret_cast<Instruct*>(array0))(array0, regs);
+}
+
+template <int A, int B, int C>
 void Add(Fun* array0, unsigned (&regs)[10])
 {
-//    std::cerr << "Adding. [" << A << "] = [" << B << "] + [" << C << "]" << std::endl;
     regs[A] = regs[B] + regs[C];
     ++array0;
     (*reinterpret_cast<Instruct*>(array0))(array0, regs);
@@ -68,40 +86,68 @@ void Div(Fun* array0, unsigned (&regs)[10])
     (*reinterpret_cast<Instruct*>(array0))(array0, regs);
 }
 
+template <int A, int B, int C>
+void Nand(Fun* array0, unsigned (&regs)[10])
+{
+    regs[A] = ~(regs[B] & regs[C]);
+    ++array0;
+    (*reinterpret_cast<Instruct*>(array0))(array0, regs);
+}
+
 void Compiler(Fun* array0, unsigned (&regs)[10])
 {
     DylanVector& v(*reinterpret_cast<DylanVector*>(regs[8]));
     ptrdiff_t offset = array0 - reinterpret_cast<Fun*>(regs[9]);
     unsigned platter = v.arr[offset].data;
     std::cerr << std::hex <<"platter: " << platter << std::dec << std::endl;
+
+	Instruct compiled;
     
     switch (platter >> 28)
     {
-        case 0:;
+        case 0:
+        {
+            static Instruct const movers[8 * 8 * 8] = { genA(Cond) };
+            compiled = movers[platter & 0x1FF];
+            break;
+        };
+        case 1:
+        {
+            static Instruct const indexers[8 * 8 * 8] = { genA(Index) };
+            compiled = indexers[platter & 0x1FF];
+            break;
+        };
         case 3:
         {
-            Instruct const adders[8 * 8 * 8] = { genA(Add) };
-            array0[0] = reinterpret_cast<Fun>(adders[platter & 0x1FF]);
+            static Instruct const adders[8 * 8 * 8] = { genA(Add) };
+            compiled = adders[platter & 0x1FF];
             break;
         };
         case 4:
         {
-            Instruct const multipliers[8 * 8 * 8] = { genA(Mul) };
-            array0[0] = reinterpret_cast<Fun>(multipliers[platter & 0x1FF]);
+            static Instruct const multipliers[8 * 8 * 8] = { genA(Mul) };
+            compiled = multipliers[platter & 0x1FF];
             break;
         };
         case 5:
         {
-            Instruct const dividers[8 * 8 * 8] = { genA(Div) };
-            array0[0] = reinterpret_cast<Fun>(dividers[platter & 0x1FF]);
+            static Instruct const dividers[8 * 8 * 8] = { genA(Div) };
+            compiled = dividers[platter & 0x1FF];
+            break;
+        };
+        case 6:
+        {
+            static Instruct const nanders[8 * 8 * 8] = { genA(Nand) };
+            compiled = nanders[platter & 0x1FF];
             break;
         };
         case 7:
-            array0[0] = reinterpret_cast<Fun>(Halt);
+            compiled = Halt;
             break;
     };
-    
-    (*reinterpret_cast<Instruct*>(array0))(array0, regs);
+
+	array0[0] = reinterpret_cast<Fun>(compiled);
+    compiled(array0, regs);
 }
 
 
@@ -127,7 +173,7 @@ int main(void)
     std::cerr << "main." << std::endl;
     DylanVector& v(*(DylanVector*)new char[100]);
     v.size = 2;
-    v.arr[0].data = (3 << 28) + (5 << 6) + (3 << 3) + 1; // Add: A = 5, B = 3, C = 1
+    v.arr[0].data = (3 << 28) | (5 << 6) | (3 << 3) | 1; // Add: A = 5, B = 3, C = 1
     v.arr[1].data = 7 << 28;       // Halt
     
     enterUM(NULL, v);
