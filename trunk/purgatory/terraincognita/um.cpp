@@ -111,7 +111,21 @@ void Index(Fun* array0, unsigned (&regs)[10])
 {
     const unsigned* arr(reinterpret_cast<unsigned*>(regs[B]));
   
-    regs[A] = arr ? arr[regs[C]] : reinterpret_cast<unsigned*>(regs[8])[regs[C]];
+    regs[A] = arr ? arr[regs[C]] : reinterpret_cast<const unsigned*>(regs[8])[regs[C]];
+
+    ++array0;
+    (*reinterpret_cast<Instruct*>(array0))(array0, regs);
+}
+
+template <int A, int B, int C>
+void Amend(Fun* array0, unsigned (&regs)[10])
+{
+    unsigned* arr(reinterpret_cast<unsigned*>(regs[A]));
+
+    if (arr)
+        arr[regs[B]] = regs[C];
+    else
+        reinterpret_cast<unsigned*>(regs[8])[regs[B]] = regs[C];
 
     ++array0;
     (*reinterpret_cast<Instruct*>(array0))(array0, regs);
@@ -171,6 +185,12 @@ void Compiler(Fun* array0, unsigned (&regs)[10])
         {
             static Instruct const indexers[8 * 8 * 8] = { genA(Index) };
             compiled = indexers[platter & 0x1FF];
+            break;
+        };
+        case 2:
+        {
+            static Instruct const amenders[8 * 8 * 8] = { genA(Amend) };
+            compiled = amenders[platter & 0x1FF];
             break;
         };
         case 3:
