@@ -6,7 +6,6 @@ copyright: © 2006 terraincognita team
 */
 
 #include <algorithm>
-//#include <cstdio>
 #include <iostream>
 
 // Alternative (PseudoJIT) Universal Machine
@@ -30,7 +29,10 @@ struct DylanVector : d2cObject
 };
 
 
-void Halt(void** array0, unsigned (&regs)[10])
+typedef void (*Fun)(void);
+
+
+void Halt(Fun* array0, unsigned (&regs)[10])
 {
     std::cerr << "Halting.\n" << std::endl;
 }
@@ -38,7 +40,7 @@ void Halt(void** array0, unsigned (&regs)[10])
 typedef typeof(Halt) *Instruct;
 
 template <int A, int B, int C>
-void Add(void** array0, unsigned (&regs)[10])
+void Add(Fun* array0, unsigned (&regs)[10])
 {
     std::cerr << "Adding. [" << A << "] = [" << B << "] + [" << C << "]" << std::endl;
     regs[A] = regs[B] + regs[C];
@@ -46,10 +48,10 @@ void Add(void** array0, unsigned (&regs)[10])
     (*reinterpret_cast<typeof(&Halt)*>(array0))(array0, regs);
 }
 
-void Compiler(void** array0, unsigned (&regs)[10])
+void Compiler(Fun* array0, unsigned (&regs)[10])
 {
     DylanVector& v(*reinterpret_cast<DylanVector*>(regs[8]));
-    ptrdiff_t offset = array0 - reinterpret_cast<void**>(regs[9]);
+    ptrdiff_t offset = array0 - reinterpret_cast<Fun*>(regs[9]);
     unsigned platter = v.arr[offset].data;
     std::cerr << std::hex <<"platter: " << platter << std::dec << std::endl;
     
@@ -58,32 +60,32 @@ void Compiler(void** array0, unsigned (&regs)[10])
         case 0:;
         case 3:
         {
-            typeof(&Compiler) adders[8 * 8 * 8] = { Add<0, 0, 0>, Add<0, 0, 1> };
-            array0[0] = adders[platter & 0x1F];
+            typeof(&Halt) adders[8 * 8 * 8] = { Add<0, 0, 0>, Add<0, 0, 1> };
+            array0[0] = reinterpret_cast<Fun>(adders[platter & 0x1F]);
             break;
         };
         case 7:
-            array0[0] = Halt;
+            array0[0] = reinterpret_cast<Fun>(Halt);
             break;
     };
     
     (*reinterpret_cast<typeof(&Halt)*>(array0))(array0, regs);
-};
+}
 
 
-Instruct fillWithCompiler(const d2cCell&)
+Fun fillWithCompiler(const d2cCell&)
 {
     std::cerr << "fillWithCompiler." << std::endl;
-    return Compiler;
-};
+    return reinterpret_cast<Fun>(Compiler);
+}
 
 
 extern "C" void* enterUM(void* dylancookie, const struct DylanVector& v)
 {
-    Instruct* jitted = new Instruct[v.size];
+    Fun* jitted = new Fun[v.size];
     std::transform(v.arr, v.arr + v.size, jitted, fillWithCompiler);
     unsigned regs[10] = { 0, 0, 0, 0, 0, 0, 0, 0, unsigned(&v), unsigned(jitted)};
-    (*jitted)(jitted, regs);
+    reinterpret_cast<Instruct>(*jitted)(jitted, regs);
     return dylancookie;
 }
 
@@ -97,4 +99,4 @@ int main(void)
     v.arr[1].data = 7 << 28;       // Halt
     
     enterUM(NULL, v);
-};
+}
