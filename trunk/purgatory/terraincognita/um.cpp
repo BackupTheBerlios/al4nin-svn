@@ -15,7 +15,7 @@ typedef void (*Fun)(void);
 
 void Halt(Fun* array0, unsigned (&regs)[10])
 {
-    std::cerr << "Halting.\n" << std::endl;
+    std::cerr << "Halting." << std::endl;
 }
 
 typedef typeof(Halt) *Instruct;
@@ -24,11 +24,50 @@ typedef typeof(Halt) *Instruct;
 #define genB(NAME, A) genC(NAME, A, 0), genC(NAME, A, 1), genC(NAME, A, 2), genC(NAME, A, 3), genC(NAME, A, 4), genC(NAME, A, 5), genC(NAME, A, 6), genC(NAME, A, 7)
 #define genA(NAME) genB(NAME, 0), genB(NAME, 1), genB(NAME, 2), genB(NAME, 3), genB(NAME, 4), genB(NAME, 5), genB(NAME, 6), genB(NAME, 7)
 
+inline static unsigned getOrig(Fun* array0, unsigned (&regs)[10])
+{
+    unsigned* v(reinterpret_cast<unsigned*>(regs[8]));
+    ptrdiff_t offset = array0 - reinterpret_cast<Fun*>(regs[9]);
+    return v[offset];
+}
+
+template <int, int B, int C>
+void Alloc(Fun* array0, unsigned (&regs)[10])
+{
+//    const size_t need(getOrig(array0, regs));
+    enum { mask = (1 << 25) - 1 };
+    const size_t need(regs[C] & mask);
+    std::cerr << "Allocating. " << need << " [" << B << "] "  << " = alloc[" << C << "] " << std::endl;
+    regs[B] = reinterpret_cast<unsigned>(new unsigned[need]);
+
+    ++array0;
+    (*reinterpret_cast<Instruct*>(array0))(array0, regs);
+}
+
+template <int, int, int C>
+void Abandon(Fun* array0, unsigned (&regs)[10])
+{
+    std::cerr << "Abandoning. " << " [" << C << "] " << std::endl;
+    delete reinterpret_cast<unsigned*>(regs[C]);
+
+    ++array0;
+    (*reinterpret_cast<Instruct*>(array0))(array0, regs);
+}
+
 template <int A, int B, int C>
 void Cond(Fun* array0, unsigned (&regs)[10])
 {
     if (regs[C])
 		regs[A] = regs[B];
+
+    ++array0;
+    (*reinterpret_cast<Instruct*>(array0))(array0, regs);
+}
+
+template <int, int, int A>
+void Ortho(Fun* array0, unsigned (&regs)[10])
+{
+	regs[A] = getOrig(array0, regs);
 
     ++array0;
     (*reinterpret_cast<Instruct*>(array0))(array0, regs);
@@ -127,6 +166,24 @@ void Compiler(Fun* array0, unsigned (&regs)[10])
         case 7:
             compiled = Halt;
             break;
+        case 8:
+        {
+            static Instruct const allocers[8 * 8] = { genB(Alloc, 0) };
+            compiled = allocers[platter & 0x3F];
+            break;
+        }
+        case 9:
+        {
+            static Instruct const abandoners[8] = { genC(Abandon, 0, 0) };
+            compiled = abandoners[platter & 0x7];
+            break;
+        }
+        case 13:
+        {
+            static Instruct const orthographers[8] = { genC(Ortho, 0, 0) };
+            compiled = orthographers[(platter >> 25) & 0x7];
+            break;
+        }
     };
 
 	array0[0] = reinterpret_cast<Fun>(compiled);
@@ -182,9 +239,11 @@ int main(void)
 {
     std::cerr << "main." << std::endl;
     DylanVector& v(*(DylanVector*)new char[100]);
-    v.size = 2;
-    v.arr[0].data = (3 << 28) | (5 << 6) | (3 << 3) | 1; // Add: A = 5, B = 3, C = 1
-    v.arr[1].data = 7 << 28;       // Halt
+    v.size = 4;
+    v.arr[0].data = (13 << 28) | (1 << 25) | 42; // Ortho: A = 1, val 41
+    v.arr[1].data = (3 << 28) | (5 << 6) | (3 << 3) | 1; // Add: A = 5, B = 3, C = 1
+    v.arr[2].data = (8 << 28) | (7 << 3) | 1; // Alloc: B = 7, C = 1
+    v.arr[3].data = 7 << 28;       // Halt
     
     enterUM(NULL, v);
 }
