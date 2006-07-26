@@ -211,14 +211,14 @@ struct DylanVector : d2cObject
 
 Fun fillWithCompiler(const d2cCell&)
 {
-    std::cerr << "fillWithCompiler." << std::endl;
+//    std::cerr << "fillWithCompiler." << std::endl;
     return reinterpret_cast<Fun>(Compiler);
 }
 
 
 unsigned justCopy(const d2cCell& c)
 {
-    std::cerr << "justCopy." << std::endl;
+//    std::cerr << "justCopy." << std::endl;
     return c.data;
 }
 
@@ -234,7 +234,7 @@ extern "C" void* enterUM(void* dylancookie, const struct DylanVector& v)
     return dylancookie;
 }
 
-
+/*
 int main(void)
 {
     std::cerr << "main." << std::endl;
@@ -247,3 +247,4 @@ int main(void)
     
     enterUM(NULL, v);
 }
+*/

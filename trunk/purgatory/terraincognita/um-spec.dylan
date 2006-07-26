@@ -9,26 +9,33 @@ define constant <register-bank> = <simple-object-vector>;
 define constant <scroll> = <simple-object-vector>;
 
 define function unsigned-*(a :: <integer>, b  :: <integer>)
-=> res  :: <integer>;
- c-local-decl("unsigned long a1;");
- c-local-decl("unsigned long b1;");
- call-out("a1 = ", void:, int: a);
- call-out("b1 = ", void:, int: b);
- c-expr(int:, "(a1 * b1)");
+ => res  :: <integer>;
+  c-local-decl("unsigned long a1;");
+  c-local-decl("unsigned long b1;");
+  call-out("a1 = ", void:, int: a);
+  call-out("b1 = ", void:, int: b);
+  c-expr(int:, "(a1 * b1)");
 end;
 
 define function unsigned-/(a :: <integer>, b  :: <integer>)
-=> res  :: <integer>;
- c-local-decl("unsigned long a1;");
- c-local-decl("unsigned long b1;");
- call-out("a1 = ", void:, int: a);
- call-out("b1 = ", void:, int: b);
- c-expr(int:, "(a1 / b1)");
+ => res  :: <integer>;
+  c-local-decl("unsigned long a1;");
+  c-local-decl("unsigned long b1;");
+  call-out("a1 = ", void:, int: a);
+  call-out("b1 = ", void:, int: b);
+  c-expr(int:, "(a1 / b1)");
 end;
 
 define function read-scroll(name :: <string>)
  => read :: <scroll>;
- name.load-codex;
+ let c = name.load-codex;
+ runJIT(c);
+ c
+end;
+
+define function runJIT(to-run :: <scroll>)
+  c-local-decl("extern void* enterUM(void* dylancookie, void* dylanVector);");
+  call-out("enterUM", void:, ptr: c-expr(ptr: "orig_sp"), ptr: to-run.object-address);
 end;
 
 define class <universal-machine>(<object>)
@@ -318,7 +325,7 @@ define function spin-cycle(um :: <universal-machine>)
 
 */
 
-            -7, 9 => #f;
+        -7, 9 => #f;
 
 /*
 

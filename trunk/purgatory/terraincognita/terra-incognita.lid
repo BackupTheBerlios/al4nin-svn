@@ -7,4 +7,4 @@ files: terra-incognita-exports
   terra-incognita
   um-spec
   load-codex
-  
+linker-options: um.o
