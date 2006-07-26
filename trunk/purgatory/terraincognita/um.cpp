@@ -34,8 +34,7 @@ inline static unsigned getOrig(Fun* array0, unsigned (&regs)[10])
 template <int, int B, int C>
 void Alloc(Fun* array0, unsigned (&regs)[10])
 {
-    enum { mask = (1 << 25) - 1 };
-    const size_t need(regs[C] & mask);
+    const size_t need(regs[C]);
     std::cerr << "Allocating. " << need << " [" << B << "] "  << " = alloc[" << C << "] " << std::endl;
     regs[B] = reinterpret_cast<unsigned>(new unsigned[need]);
 
@@ -46,7 +45,7 @@ void Alloc(Fun* array0, unsigned (&regs)[10])
 template <int, int B, int C>
 void Load(Fun* array0, unsigned (&regs)[10])
 {
-    if (B)
+    if (regs[B])
     {
         // set c-o-w ###
         regs[9] = regs[B];
@@ -100,7 +99,8 @@ void Cond(Fun* array0, unsigned (&regs)[10])
 template <int, int, int A>
 void Ortho(Fun* array0, unsigned (&regs)[10])
 {
-	regs[A] = getOrig(array0, regs);
+    enum { mask = (1 << 25) - 1 };
+    regs[A] = mask & getOrig(array0, regs);
 
     ++array0;
     (*reinterpret_cast<Instruct*>(array0))(array0, regs);
