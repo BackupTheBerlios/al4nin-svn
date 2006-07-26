@@ -6,8 +6,8 @@ copyright: © 2006 terraincognita team
 */
 
 #include <algorithm>
-#include <cstdio>
-//#include <iostream>
+//#include <cstdio>
+#include <iostream>
 
 // Alternative (PseudoJIT) Universal Machine
 
@@ -30,30 +30,28 @@ struct DylanVector : d2cObject
 };
 
 
-void Halt(void** array0, unsigned (&regs)[10]/*, DylanVector&*/)
+void Halt(void** array0, unsigned (&regs)[10])
 {
-    std::printf("Halting.\n");
+    std::cerr << "Halting.\n" << std::endl;
 }
 
 typedef typeof(Halt) *Instruct;
 
 template <int A, int B, int C>
-void Add(void** array0, unsigned (&regs)[10]/*, DylanVector&*/)
+void Add(void** array0, unsigned (&regs)[10])
 {
-    std::printf("Adding.[%d] = [%d] + [%d]\n", A, B, C);
-//    std::stderr << "Adding. [" << A << "] = [" << B << "] + [" << C << "]" << std::endl;
+    std::cerr << "Adding. [" << A << "] = [" << B << "] + [" << C << "]" << std::endl;
     regs[A] = regs[B] + regs[C];
     ++array0;
     (*reinterpret_cast<typeof(&Halt)*>(array0))(array0, regs);
 }
 
-void Compiler(void** array0, unsigned (&regs)[10]/*, DylanVector&*/)
+void Compiler(void** array0, unsigned (&regs)[10])
 {
     DylanVector& v(*reinterpret_cast<DylanVector*>(regs[8]));
     ptrdiff_t offset = array0 - reinterpret_cast<void**>(regs[9]);
     unsigned platter = v.arr[offset].data;
-    std::printf("platter: %x\n", platter);
-///    std::stderr.format("platter: %x\n", platter);
+    std::cerr << std::hex <<"platter: " << platter << std::dec << std::endl;
     
     switch (platter >> 28)
     {
@@ -75,8 +73,7 @@ void Compiler(void** array0, unsigned (&regs)[10]/*, DylanVector&*/)
 
 Instruct fillWithCompiler(const d2cCell&)
 {
-//    std::stderr << "fillWithCompiler." << std::endl;
-    std::printf("fillWithCompiler.\n");
+    std::cerr << "fillWithCompiler." << std::endl;
     return Compiler;
 };
 
@@ -93,8 +90,7 @@ extern "C" void* enterUM(void* dylancookie, const struct DylanVector& v)
 
 int main(void)
 {
-    std::printf("main.\n");
-//    std::stderr << "main." << std::endl;
+    std::cerr << "main." << std::endl;
     DylanVector& v(*(DylanVector*)new char[100]);
     v.size = 2;
     v.arr[0].data = (3 << 28) + 1; // Add: A = 0, B = 0, C = 1
