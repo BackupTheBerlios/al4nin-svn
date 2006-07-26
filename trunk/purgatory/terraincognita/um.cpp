@@ -34,7 +34,6 @@ inline static unsigned getOrig(Fun* array0, unsigned (&regs)[10])
 template <int, int B, int C>
 void Alloc(Fun* array0, unsigned (&regs)[10])
 {
-//    const size_t need(getOrig(array0, regs));
     enum { mask = (1 << 25) - 1 };
     const size_t need(regs[C] & mask);
     std::cerr << "Allocating. " << need << " [" << B << "] "  << " = alloc[" << C << "] " << std::endl;
@@ -44,11 +43,45 @@ void Alloc(Fun* array0, unsigned (&regs)[10])
     (*reinterpret_cast<Instruct*>(array0))(array0, regs);
 }
 
+template <int, int B, int C>
+void Load(Fun* array0, unsigned (&regs)[10])
+{
+    if (B)
+    {
+        // set c-o-w ###
+        regs[9] = regs[B];
+    }
+    array0 = reinterpret_cast<Fun*>(regs[9]);
+    array0 += regs[C];
+    (*reinterpret_cast<Instruct*>(array0))(array0, regs);
+}
+
 template <int, int, int C>
 void Abandon(Fun* array0, unsigned (&regs)[10])
 {
     std::cerr << "Abandoning. " << " [" << C << "] " << std::endl;
     delete reinterpret_cast<unsigned*>(regs[C]);
+
+    ++array0;
+    (*reinterpret_cast<Instruct*>(array0))(array0, regs);
+}
+
+template <int, int, int C>
+void Output(Fun* array0, unsigned (&regs)[10])
+{
+    char ch(regs[C]);
+    std::cout << ch << std::flush;
+
+    ++array0;
+    (*reinterpret_cast<Instruct*>(array0))(array0, regs);
+}
+
+template <int, int, int C>
+void Input(Fun* array0, unsigned (&regs)[10])
+{
+    char ch;
+    std::cin >> ch;
+    regs[C] = std::cin.eof() ? ~0 : static_cast<unsigned char>(ch);
 
     ++array0;
     (*reinterpret_cast<Instruct*>(array0))(array0, regs);
@@ -118,9 +151,10 @@ void Nand(Fun* array0, unsigned (&regs)[10])
 
 void Compiler(Fun* array0, unsigned (&regs)[10])
 {
-    unsigned* v(reinterpret_cast<unsigned*>(regs[8]));
-    ptrdiff_t offset = array0 - reinterpret_cast<Fun*>(regs[9]);
-    unsigned platter = v[offset];
+    const unsigned platter(getOrig(array0, regs));
+//    unsigned* v(reinterpret_cast<unsigned*>(regs[8]));
+//    ptrdiff_t offset = array0 - reinterpret_cast<Fun*>(regs[9]);
+//    unsigned platter = v[offset];
     std::cerr << std::hex <<"platter: " << platter << std::dec << std::endl;
 
 	Instruct compiled;
@@ -178,6 +212,24 @@ void Compiler(Fun* array0, unsigned (&regs)[10])
             compiled = abandoners[platter & 0x7];
             break;
         }
+        case 10:
+        {
+            static Instruct const outputters[8] = { genC(Output, 0, 0) };
+            compiled = outputters[platter & 0x7];
+            break;
+        }
+        case 11:
+        {
+            static Instruct const inputters[8] = { genC(Input, 0, 0) };
+            compiled = inputters[platter & 0x7];
+            break;
+        }
+        case 12:
+        {
+            static Instruct const loaders[8 * 8] = { genB(Load, 0) };
+            compiled = loaders[platter & 0x3F];
+            break;
+        }
         case 13:
         {
             static Instruct const orthographers[8] = { genC(Ortho, 0, 0) };
@@ -211,14 +263,12 @@ struct DylanVector : d2cObject
 
 Fun fillWithCompiler(const d2cCell&)
 {
-//    std::cerr << "fillWithCompiler." << std::endl;
     return reinterpret_cast<Fun>(Compiler);
 }
 
 
 unsigned justCopy(const d2cCell& c)
 {
-//    std::cerr << "justCopy." << std::endl;
     return c.data;
 }
 
