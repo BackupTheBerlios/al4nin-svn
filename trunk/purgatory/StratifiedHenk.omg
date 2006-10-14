@@ -34,10 +34,55 @@
 --  and run your commands on the prompt
 --
 
-import "/home/ggreif/%NoBackup%/Omega1.2.1/LangPrelude.prg" 
+import "/Users/ggreif/Desktop/Omega1.2.1a/LangPrelude.prg" 
   (head,tail,lookup,member,fst,snd,map,Monad,maybeM,id,ioM,Row,HasType,RCons,RNil)
 
-Henk' :: (Nat ~> Nat ~> Nat ~> *) ~> Nat ~> Nat ~> *
+-- \(x:T).x : Pi (x:T) T
+
+data Henk :: Nat ~> * where
+  Star :: Henk #2
+  Lam :: Symbol -> Henk (S stratum) -> Henk stratum -> Henk stratum
+  App :: Henk stratum -> Henk stratum -> Henk stratum
+  Var :: Symbol -> Henk stratum
+  Type :: String -> Henk #1
+  Const :: Int -> Henk #0
+
+a = fresh 'a'
+l = Lam a Star (Var a)
+
+int = Type "Int"
+
+
+freshVar c = Var (fresh c)
+
+
+al = fresh 'a'
+ll = Lam al Star l
+
+b = fresh 'b'
+
+app = App l (Var b)
+
+l1 = Lam b int (Const 42)
+a1 = App l1  (Var $ fresh 'c')
+
+
+eval :: Henk stratum -> [(Symbol, Henk stratum)] -> Henk stratum
+eval Star _ = Star
+eval (var@Var name) ((s, v):svs) = if symbolEq name s then v else eval var svs
+eval (l@Lam s t e) bs = l
+eval (App (Lam s t e) h) bs = eval e ((s, h):bs)
+eval (c@Const _) _ = c
+
+{-
+data Henk' :: (Nat ~> Nat ~> Nat ~> *) ~> Nat ~> Nat ~> * where
+  Star :: Henk' appl #2 Z
+  Rectangle :: Henk' appl #3 Z
+  Var :: String -> Henk' appl stratum Z
+  App :: Henk' appl stratum b -> Henk' appl s binding -> Henk' appl stratum Z
+  Lam 
+-}
+{-
 data Henk' appl stratum binding
  = Star where stratum = #2, binding = Z
  | Rectangle where stratum = #3, binding = Z
@@ -46,7 +91,9 @@ data Henk' appl stratum binding
  | exists s b . App (Henk' appl stratum b) (Henk' appl s binding) where appl stratum b s, binding = Z
  | Lam (Henk' appl stratum Z) (Henk' appl (S stratum) Z) (Henk' appl stratum Z) where binding = #2
  | exists s . Pi (Henk' appl s Z) (Henk' appl (S s) Z) (Henk' appl (S s) Z) where stratum = (S s), binding = #1
+-}
 
+{-
 prop Applicable stratum binder stratum'
  = PiAppl where binder = #1, stratum = S stratum'
  | LamAppl where binder = #2, stratum = stratum'
@@ -101,3 +148,4 @@ tau (App (Pi _ _ expansion) _) = tau expansion
 --tt1 = tau exp1
 --tt2 = tau (App exp2 exp1)
 tt3 = tau (App exp2' Star)
+ -}
