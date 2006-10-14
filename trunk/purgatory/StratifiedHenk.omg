@@ -74,6 +74,13 @@ eval (l@Lam s t e) bs = l
 eval (App (Lam s t e) h) bs = eval e ((s, h):bs)
 eval (c@Const _) _ = c
 
+tau :: Henk stratum -> Henk (S stratum)
+tau (Type _) = Star
+tau (Const _) = int
+--tau (Lam s t e) = Lam s t t
+--tau (App f e) = App (tau f) e
+
+
 {-
 data Henk' :: (Nat ~> Nat ~> Nat ~> *) ~> Nat ~> Nat ~> * where
   Star :: Henk' appl #2 Z
