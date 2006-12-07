@@ -39,18 +39,49 @@ import "/Users/ggreif/Desktop/Omega1.2.1a/LangPrelude.prg"
 
 -- \(x:T).x : Pi (x:T) T
 
-data Henk :: Nat ~> * where
-  Star :: Henk #2
-  Lam :: Symbol -> Henk (S stratum) -> Henk stratum -> Henk stratum
-  App :: Henk stratum -> Henk stratum -> Henk stratum
-  Var :: Symbol -> Henk stratum
-  Type :: String -> Henk #1
-  Const :: Int -> Henk #0
+kind Typable = Ground *0 | Elevate Typable
+
+strat :: Typable ~> Nat
+{strat (Ground a)} = Z
+{strat (Elevate a)} = S {strat a}
+
+binder :: Nat ~> Nat ~> Nat ~> Nat
+{binder (S Z) Z Z} = #2 -- \a:T.c
+{binder (S Z) Z #2} = #2 -- \a:T.\...
+{binder Z Z Z} = #1 -- Pi
+{binder Z Z #1} = #1 -- Pi.Pi
+{binder (S a) (S b) c} = {binder a b c}
+{-
+binder :: Typable ~> Typable ~> Nat ~> Nat
+{binder (Elevate (Ground a)) (Ground b) Z} = #2 -- \a:T.c
+{binder (Elevate (Ground a)) (Ground b) #2} = #2 -- \a:T.\...
+{binder (Elevate (Elevate (Ground a))) (Elevate (Ground b)) Z} = #2 -- \a:*.c
+{binder (Elevate (Elevate (Ground a))) (Elevate (Ground b)) #2} = #2 -- \a:*.\...
+{binder (Elevate (Ground a)) (Elevate (Ground b)) Z} = #1 -- Pi
+{binder (Elevate (Ground a)) (Elevate (Ground b)) #1} = #1 -- Pi.Pi
+{binder (Elevate (Elevate (Ground a))) (Elevate (Elevate (Ground b))) Z} = #1 -- Pi:*
+{binder (Elevate (Elevate (Ground a))) (Elevate (Elevate (Ground b))) #1} = #1 -- Pi:*.Pi
+-}
+
+bound  :: Typable ~> Typable ~> Nat ~> Nat ~> Nat
+{bound (Ground a) (Ground b) #2 Z} = Z
+{bound (Elevate (Ground a)) (Ground b) #1 Z} = Z
+
+data Henk :: Typable ~> Nat ~> * where
+  Star :: Henk (Elevate (Elevate (Ground a))) Z
+  Lam :: Symbol -> Henk (Elevate stratum) Z -> Henk stratum' b -> Henk stratum {binder {strat (Elevate stratum)} {strat stratum'} b}
+  App :: Henk stratum b -> Henk stratum' b' -> Henk stratum {bound stratum stratum' b b'}
+  Var :: Symbol -> Henk stratum Z
+  Type :: String -> Henk (Elevate (Ground a)) Z
+  Const :: a -> Henk (Ground a) Z
 
 a = fresh 'a'
 l = Lam a Star (Var a)
 
 int = Type "Int"
+
+pi1 = Lam a Star Star
+pi0 = Lam a int int
 
 
 freshVar c = Var (fresh c)
@@ -58,6 +89,15 @@ freshVar c = Var (fresh c)
 
 al = fresh 'a'
 ll = Lam al Star l
+all = fresh 'a'
+lll :: Henk (Ground a) #2
+lll = Lam all int (Const 42)
+
+alll = fresh 'a'
+llll :: Henk (Ground a) #2
+--vlll :: Henk (Ground Int) #0
+vlll = Var all
+llll = Lam alll int (vlll::Henk (Ground Int) #0)
 
 b = fresh 'b'
 
@@ -67,17 +107,22 @@ l1 = Lam b int (Const 42)
 a1 = App l1  (Var $ fresh 'c')
 
 
-eval :: Henk stratum -> [(Symbol, Henk stratum)] -> Henk stratum
+eval :: Henk stratum b -> [(Symbol, Henk stratum b)] -> Henk stratum b
 eval Star _ = Star
 eval (var@Var name) ((s, v):svs) = if symbolEq name s then v else eval var svs
 eval (l@Lam s t e) bs = l
-eval (App (Lam s t e) h) bs = eval e ((s, h):bs)
+--eval (App (Lam s t e) h) bs = eval e ((s, h):bs)
 eval (c@Const _) _ = c
 
-tau :: Henk stratum -> Henk (S stratum)
+lessen :: Nat ~> Nat
+{lessen #2} = #1
+{lessen #1} = #0
+{lessen #0} = #0
+
+tau :: Henk stratum b -> Henk (Elevate stratum) {lessen b}
 tau (Type _) = Star
 tau (Const _) = int
---tau (Lam s t e) = Lam s t t
+tau (l@Lam s t e) = case l of Lam a b c -> Lam s t t
 --tau (App f e) = App (tau f) e
 
 
