@@ -34,10 +34,29 @@
 --  and run your commands on the prompt
 --
 
-import "/Users/ggreif/Desktop/Omega1.2.1a/LangPrelude.prg" 
+import "/Users/ggreif/Desktop/Omega1.3/LangPrelude.prg" 
   (head,tail,lookup,member,fst,snd,map,Monad,maybeM,id,ioM,Row,HasType,RCons,RNil)
 
 -- \(x:T).x : Pi (x:T) T
+
+-- cit: Kamareddine jfp6
+-- Higher Degrees:
+-- tau(Gam, lam[i+1]x:A.B) === lam[i]x:A.tau(Gam\x:A, B) forall i of N
+--  where lam[0]x:A.B === B
+-- lam[1] == Pi, lam[2] == lambda
+-- Specialize (i=1):
+--  tau(Gam, lambda x:A.B) === Pi x:A.tau(Gam\x:A, B)
+-- Specialize (A=int, B=42):
+--  tau(Gam, lambda x:Int.42) === Pi x:Int.tau(Gam\x:Int, 42)
+--  with tau(Gam, 42) === Int
+--  gets: tau(Gam, lambda x:Int.42) === Pi x:Int.Int  (aka. Int->Int)
+
+-- Specialize (i=0, A=Int, B=Int):
+-- tau(Gam, Pi x:Int.Int) === lam[0]x:Int.tau(Gam\x:Int, Int)
+-- with tau(Gam, Int) === *0
+-- tau(Gam, Pi x:Int.Int) === lam[0]x:Int.*0
+-- with lam[0]x:Int.*0 === *0
+-- tau(Gam, Pi x:Int.Int) === *0
 
 kind Typable = Ground *0 | Elevate Typable
 
