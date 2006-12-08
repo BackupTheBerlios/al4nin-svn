@@ -95,11 +95,23 @@ bound  :: Typable ~> Typable ~> Nat ~> Nat ~> Nat
 --  Pi a:*.a  (aka. forall a:*.a)
 --  Pi a:*. Lam n:a.[n]  (aka. forall a:*. n |-> [n])
 
+-- elev: compute the degree of the binder
 elev :: Typable ~> Typable ~> Nat
 { elev (Elevate st) (Elevate st') } = { elev st st' }
 { elev (Elevate st) Indifferent } = S { elev st Indifferent }
 { elev Indifferent Indifferent } = Z
 { elev (Ground a) st' } = Z
+
+-- examples of Appnew
+-- Appnew (Pi i:Int.Int) Five
+-- Appnew (Pi a:*.a) Int
+
+resultant :: Typable ~> Typable ~> Nat ~> Nat ~> Nat
+{resultant (Elevate st) (Elevate st') #2 #0} = {resultant st st' #2 #0}
+{resultant Indifferent Indifferent #2 #0} = #0
+
+{resultant (Elevate st) (Elevate st') #1 #0} = {resultant st st' #1 #0}
+{resultant (Elevate Indifferent) Indifferent #1 #0} = #0
 
 
 -------------|stratum---|binder-------
@@ -112,6 +124,7 @@ data Henk :: Typable ~> Nat ~> * where
 --  Pi :: Symbol -> Henk st Z -> Henk st' Z -> Henk { combstrat st st' } #1 -- { elev st st' }
   Lam :: Symbol -> Henk (Elevate stratum) Z -> Henk stratum' b -> Henk stratum {binder {strat (Elevate stratum)} {strat stratum'} b}
   App :: Henk stratum b -> Henk stratum' b' -> Henk stratum {bound stratum stratum' b b'}
+  Appnew :: Henk stratum b -> Henk stratum' b' -> Henk stratum {resultant stratum stratum' b b'}
   Var :: Symbol -> Henk stratum Z
   Type :: String -> Henk (Elevate (Ground a)) Z
   Const :: a -> Henk (Ground a) Z
