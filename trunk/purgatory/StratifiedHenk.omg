@@ -117,19 +117,35 @@ resultant :: Typable ~> Typable ~> Nat ~> Nat ~> Nat
 -------------|stratum---|binder-------
 data Henk :: Typable ~> Nat ~> * where
   Star :: Henk (Elevate (Elevate Indifferent)) Z
---old  Pi :: Symbol -> Henk (Elevate st) Z -> Henk st' bind -> Henk st' #1 -- { elev st st' }
   Pi :: Symbol -> Henk (Elevate st) Z -> Henk st' bind -> Henk st' (S { elev (Elevate st) st' })
   IInt :: Henk (Elevate Indifferent) Z -- testing only
   Five :: Henk Indifferent Z -- testing only
+  Appnew :: Henk stratum b -> Henk stratum' b' -> Henk stratum {resultant stratum stratum' b b'}
+
+{-
 --  Pi :: Symbol -> Henk st Z -> Henk st' Z -> Henk { combstrat st st' } #1 -- { elev st st' }
   Lam :: Symbol -> Henk (Elevate stratum) Z -> Henk stratum' b -> Henk stratum {binder {strat (Elevate stratum)} {strat stratum'} b}
   App :: Henk stratum b -> Henk stratum' b' -> Henk stratum {bound stratum stratum' b b'}
-  Appnew :: Henk stratum b -> Henk stratum' b' -> Henk stratum {resultant stratum stratum' b b'}
   Var :: Symbol -> Henk stratum Z
   Type :: String -> Henk (Elevate (Ground a)) Z
   Const :: a -> Henk (Ground a) Z
+-}
+
+
+
 
 a = fresh 'a'
+
+q1 = Appnew (Pi a IInt IInt) Five
+
+q2 :: Henk (Elevate Indifferent) n
+##test "No rule for resultant matched."
+  q2 = Appnew (Pi a IInt IInt) IInt
+
+q3 = Appnew (Pi a Star IInt) IInt
+
+
+{-
 l = Lam a Star (Var a)
 
 int = Type "Int"
@@ -172,6 +188,8 @@ lessen :: Nat ~> Nat
 {lessen #2} = #1
 {lessen #1} = #0
 {lessen #0} = #0
+
+-}
 
 {-
 tau :: Henk stratum b -> Henk (Elevate stratum) {lessen b}
