@@ -136,7 +136,9 @@ data Henk :: Typable ~> Binder ~> * where
   Pi :: Symbol -> Henk (Elevate st) (Binds Z Non) -> Henk st' bind -> Henk st' (Binds (S { elev (Elevate st) st' }) (Nest bind))
   IInt :: Henk (Elevate Indifferent) (Binds Z Non) -- testing only
   Five :: Henk Indifferent (Binds Z Non) -- testing only
-  Appnew :: Henk stratum (Binds b nest) -> Henk stratum' (Binds b' Non) -> Henk stratum (Binds {resultant stratum stratum' b b'} Non)
+  Appnew :: Henk stratum (Binds b (Nest binder)) -> Henk stratum' (Binds b' Non) -> Henk stratum binder
+---  Appnew :: Henk stratum (Binds b (Nest (Binds b'' nest))) -> Henk stratum' (Binds b' Non) -> Henk stratum (Binds b'' nest)
+---  Appnew :: Henk stratum (Binds b (Nest (Binds b'' nest))) -> Henk stratum' (Binds b' Non) -> Henk stratum (Binds {resultant stratum stratum' b b'} nest)
 
 {-
 --  Pi :: Symbol -> Henk st Z -> Henk st' Z -> Henk { combstrat st st' } #1 -- { elev st st' }
