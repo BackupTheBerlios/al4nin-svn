@@ -36,7 +36,7 @@
 
 --import "/Users/ggreif/Desktop/Omega1.3/LangPrelude.prg" 
 import "/home/ggreif/%NoBackup%/omega3.0/LangPrelude.prg" 
-  (head,tail,lookup,member,fst,snd,map,Monad,maybeM,id,ioM,Row,HasType,RCons,RNil)
+  (head,tail,lookup,member,fst,snd,map,Monad,maybeM,id,ioM,Row,HasType,RCons,RNil,Eq,Equal)
 
 -- \(x:T).x : Pi (x:T) T
 
@@ -122,12 +122,12 @@ elev :: Typable ~> Typable ~> Nat
 -- Appnew (Pi i:Int.Int) Five
 -- Appnew (Pi a:*.a) Int
 
-resultant :: Typable ~> Typable ~> Nat ~> Nat ~> Nat
-{resultant (Elevate st) (Elevate st') #2 #0} = {resultant st st' #2 #0}
-{resultant Indifferent Indifferent #2 #0} = #0
+resultant :: Typable ~> Typable ~> Nat ~> Typable
+{resultant (Elevate st) (Elevate st') #2} = Elevate {resultant st st' #2}
+{resultant (Elevate Indifferent) Indifferent #2} = Indifferent
 
-{resultant (Elevate st) (Elevate st') #1 #0} = {resultant st st' #1 #0}
-{resultant (Elevate Indifferent) Indifferent #1 #0} = #0
+{resultant (Elevate st) (Elevate st') #1} = Elevate {resultant st st' #1}
+{resultant (Elevate Indifferent) Indifferent #1} = Elevate Indifferent
 
 
 -------------|stratum---|binder-------
@@ -136,10 +136,8 @@ data Henk :: Typable ~> Binder ~> * where
   Pi :: Symbol -> Henk (Elevate st) (Binds Z Non) -> Henk st' bind -> Henk st' (Binds (S { elev (Elevate st) st' }) (Nest bind))
   IInt :: Henk (Elevate Indifferent) (Binds Z Non) -- testing only
   Five :: Henk Indifferent (Binds Z Non) -- testing only
-  Appnew :: Henk stratum (Binds b (Nest binder)) -> Henk stratum' (Binds b' Non) -> Henk stratum binder
----  Appnew :: Henk stratum (Binds b (Nest (Binds b'' nest))) -> Henk stratum' (Binds b' Non) -> Henk stratum (Binds b'' nest)
----  Appnew :: Henk stratum (Binds b (Nest (Binds b'' nest))) -> Henk stratum' (Binds b' Non) -> Henk stratum (Binds {resultant stratum stratum' b b'} nest)
-
+  Appnew :: {-Eq binder (Binds {resultant stratum stratum' b b'} nest) => -} Henk stratum (Binds b (Nest binder)) -> Henk stratum' (Binds b' Non) -> Henk {resultant stratum stratum' b} binder
+----------      -> Henk stratum (Binds {resultant stratum stratum' b b'} nest)
 {-
 --  Pi :: Symbol -> Henk st Z -> Henk st' Z -> Henk { combstrat st st' } #1 -- { elev st st' }
   Lam :: Symbol -> Henk (Elevate stratum) Z -> Henk stratum' b -> Henk stratum {binder {strat (Elevate stratum)} {strat stratum'} b}
@@ -156,7 +154,7 @@ a = fresh 'a'
 
 q1 = Appnew (Pi a IInt IInt) Five
 
-q2 :: Henk (Elevate Indifferent) n
+q2 :: Henk (Elevate Indifferent) (Binder #0 Non)
 ##test "No rule for resultant matched."
   q2 = Appnew (Pi a IInt IInt) IInt
 
