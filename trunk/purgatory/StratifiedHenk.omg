@@ -59,19 +59,34 @@ import "/home/ggreif/%NoBackup%/omega3.0/LangPrelude.prg"
 -- with lam[0]x:Int.*0 === *0
 -- tau(Gam, Pi x:Int.Int) === *0
 
-kind Typable = Indifferent | Ground *0 | Elevate Typable
+--kind Typable = Indifferent | Ground *0 | Elevate Typable
+kind Typable = Indifferent | Elevate Typable
 
+-- Binder:: track the structure of binding expressions
+--------------------|degree|structure
+kind Binder = Binds Nat Binder'
+--kind Binder = Binds Nat (Binder' Nat)
+kind Binder' = Non | Nest Binder
+
+{-
+kind Binder' n :: Nat ~> *1 where
+  Non :: Binder' Z
+  Nest :: Binder ~> Binder' (S n)
+-}
+
+{-
 strat :: Typable ~> Nat
 {strat (Ground a)} = Z
 {strat (Elevate a)} = S {strat a}
+-}
 
+{-
 binder :: Nat ~> Nat ~> Nat ~> Nat
 {binder (S Z) Z Z} = #2 -- \a:T.c
 {binder (S Z) Z #2} = #2 -- \a:T.\...
 {binder Z Z Z} = #1 -- Pi
 {binder Z Z #1} = #1 -- Pi.Pi
 {binder (S a) (S b) c} = {binder a b c}
-{-
 binder :: Typable ~> Typable ~> Nat ~> Nat
 {binder (Elevate (Ground a)) (Ground b) Z} = #2 -- \a:T.c
 {binder (Elevate (Ground a)) (Ground b) #2} = #2 -- \a:T.\...
@@ -83,10 +98,11 @@ binder :: Typable ~> Typable ~> Nat ~> Nat
 {binder (Elevate (Elevate (Ground a))) (Elevate (Elevate (Ground b))) #1} = #1 -- Pi:*.Pi
 -}
 
+{-
 bound  :: Typable ~> Typable ~> Nat ~> Nat ~> Nat
 {bound (Ground a) (Ground b) #2 Z} = Z
 {bound (Elevate (Ground a)) (Ground b) #1 Z} = Z
-
+-}
 
 -- some examples:
 --  Pi _:Int.Int  (aka. Int->Int)
@@ -100,7 +116,7 @@ elev :: Typable ~> Typable ~> Nat
 { elev (Elevate st) (Elevate st') } = { elev st st' }
 { elev (Elevate st) Indifferent } = S { elev st Indifferent }
 { elev Indifferent Indifferent } = Z
-{ elev (Ground a) st' } = Z
+--{ elev (Ground a) st' } = Z
 
 -- examples of Appnew
 -- Appnew (Pi i:Int.Int) Five
@@ -115,12 +131,12 @@ resultant :: Typable ~> Typable ~> Nat ~> Nat ~> Nat
 
 
 -------------|stratum---|binder-------
-data Henk :: Typable ~> Nat ~> * where
-  Star :: Henk (Elevate (Elevate Indifferent)) Z
-  Pi :: Symbol -> Henk (Elevate st) Z -> Henk st' bind -> Henk st' (S { elev (Elevate st) st' })
-  IInt :: Henk (Elevate Indifferent) Z -- testing only
-  Five :: Henk Indifferent Z -- testing only
-  Appnew :: Henk stratum b -> Henk stratum' b' -> Henk stratum {resultant stratum stratum' b b'}
+data Henk :: Typable ~> Binder ~> * where
+  Star :: Henk (Elevate (Elevate Indifferent)) (Binds Z Non)
+  Pi :: Symbol -> Henk (Elevate st) (Binds Z Non) -> Henk st' bind -> Henk st' (Binds (S { elev (Elevate st) st' }) (Nest bind))
+  IInt :: Henk (Elevate Indifferent) (Binds Z Non) -- testing only
+  Five :: Henk Indifferent (Binds Z Non) -- testing only
+  Appnew :: Henk stratum (Binds b nest) -> Henk stratum' (Binds b' Non) -> Henk stratum (Binds {resultant stratum stratum' b b'} Non)
 
 {-
 --  Pi :: Symbol -> Henk st Z -> Henk st' Z -> Henk { combstrat st st' } #1 -- { elev st st' }
