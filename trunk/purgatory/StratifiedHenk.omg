@@ -124,7 +124,7 @@ elev :: Typable ~> Typable ~> Nat
 
 resultant :: Typable ~> Typable ~> Nat ~> Typable
 {resultant (Elevate st) (Elevate st') #2} = Elevate {resultant st st' #2}
-{resultant (Elevate Indifferent) Indifferent #2} = Indifferent
+{resultant Indifferent Indifferent #2} = Indifferent
 
 {resultant (Elevate st) (Elevate st') #1} = Elevate {resultant st st' #1}
 {resultant (Elevate Indifferent) Indifferent #1} = Elevate Indifferent
@@ -154,9 +154,9 @@ a = fresh 'a'
 
 q1 = Appnew (Pi a IInt IInt) Five
 
-q2 :: Henk (Elevate Indifferent) (Binder #0 Non)
-##test "No rule for resultant matched."
-  q2 = Appnew (Pi a IInt IInt) IInt
+q2 :: Henk (Elevate Indifferent) (Binds #0 Non)
+--##test "No rule for resultant"
+--q2 = Appnew (Pi a IInt IInt) IInt
 
 q3 = Appnew (Pi a Star IInt) IInt
 
