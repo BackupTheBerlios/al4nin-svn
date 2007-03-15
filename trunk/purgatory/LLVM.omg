@@ -53,9 +53,16 @@ data BasicBlock :: Type ~> BB ~> * where
 
 t1 = Phi (Phi (NoPhi (Branch (NoPhi Unwind))))
 t2 = NoPhi (Branch (NoPhi Return))
+t3 = NoPhi (Branch t2)
+
+data Value :: Type ~> * where
+  LitI :: Int -> Value (LInt #32)
+  LitB :: Bool -> Value (LInt #1)
+  Ref :: String -> Value t
 
 data Function :: Type ~> * where
-  Function :: BasicBlock b Entry -> Function (LFunction a b)
+  Function :: Value a -> BasicBlock b Entry -> Function (LFunction a b)
 
-f1 = Function t1
-f2 = Function t2
+f1 = Function (LitB True) t1
+f2 = Function (LitB False) t2
+f3 = Function (LitI 42) t3
