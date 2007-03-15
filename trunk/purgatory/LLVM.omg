@@ -25,6 +25,18 @@
 import "/Users/ggreif/Desktop/Omega1.4/LangPrelude.prg" 
   (head,tail,lookup,member,fst,snd,map,Monad,maybeM,id,ioM,Row,HasType,RCons,RNil,Eq,Equal)
 
+
+kind Type :: *1 where
+ LInt :: Nat ~> Type
+ LFloat :: Type
+ LDouble :: Type
+ LPointer :: Type ~> Type
+ LFunction :: Type ~> Type ~> Type
+ LVector :: Nat ~> Type ~> Type
+ 
+i1 :: Type
+--i1 = LInt *1
+
 kind BB = Entry | Normal
 
 data Instr :: BB ~> * where
