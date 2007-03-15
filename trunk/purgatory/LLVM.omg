@@ -45,11 +45,9 @@ data Instr :: Type ~> BB ~> * where
   Branch :: BasicBlock t Normal -> Instr t n
   Return :: Instr LVoid n
   Switch :: Value a -> BasicBlock t Normal -> [(Value a, BasicBlock t Normal)] -> Instr t n
-----  Prod :: Instr n -> Instr n
--- deriving List(i)
 
 data BasicBlock :: Type ~> BB ~> * where
-  Phi :: BasicBlock t n -> BasicBlock t n
+  Phi :: BasicBlock t n -> BasicBlock t Normal
   NoPhi :: Instr t n -> BasicBlock t n
 
 t1 = Phi (Phi (NoPhi (Branch (NoPhi Unwind))))
@@ -61,11 +59,12 @@ data Value :: Type ~> * where
   LitI :: Int -> Value (LInt #32)
   LitB :: Bool -> Value (LInt #1)
   Ref :: String -> Value t
+  Undef :: Value t
 
 data Function :: Type ~> * where
   Function :: Value a -> BasicBlock b Entry -> Function (LFunction a b)
 
-f1 = Function (LitB True) t1
+-- f1 = Function (LitB True) t1
 f2 = Function (LitB False) t2
 f3 = Function (LitI 42) t3
 f4 = Function (LitI 42) t4
