@@ -47,10 +47,11 @@ data Instr :: Type ~> BB ~> * where
   Switch :: Value a -> BasicBlock t Normal -> [(Value a, BasicBlock t Normal)] -> Instr t n
 
 data BasicBlock :: Type ~> BB ~> * where
-  Phi :: BasicBlock t n -> BasicBlock t Normal
+  Phi :: [(Value a, BasicBlock t n)] -> BasicBlock t Normal
   NoPhi :: Instr t n -> BasicBlock t n
 
-t1 = Phi (Phi (NoPhi (Branch (NoPhi Unwind))))
+
+t1 = Phi [(lTrue, Phi [(Ref "uff", NoPhi (Branch (NoPhi Unwind)))])]
 t2 = NoPhi (Branch (NoPhi Return))
 t3 = NoPhi (Branch t2)
 t4 = NoPhi (Switch (Ref "ggg") t2 [(LitB True, t3)])
@@ -64,6 +65,7 @@ data Value :: Type ~> * where
 data Function :: Type ~> * where
   Function :: Value a -> BasicBlock b Entry -> Function (LFunction a b)
 
+lTrue = LitB True
 -- f1 = Function (LitB True) t1
 f2 = Function (LitB False) t2
 f3 = Function (LitI 42) t3
