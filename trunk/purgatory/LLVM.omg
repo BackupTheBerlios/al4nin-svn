@@ -27,29 +27,35 @@ import "/Users/ggreif/Desktop/Omega1.4/LangPrelude.prg"
 
 
 kind Type :: *1 where
+ LVoid :: Type
  LInt :: Nat ~> Type
  LFloat :: Type
  LDouble :: Type
  LPointer :: Type ~> Type
  LFunction :: Type ~> Type ~> Type
  LVector :: Nat ~> Type ~> Type
- 
+
 i1 :: Type
---i1 = LInt *1
+--{i1} = LInt *1
 
 kind BB = Entry | Normal
 
-data Instr :: BB ~> * where
-  Unwind :: Instr n
-  Branch :: BasicBlock Normal -> Instr n
-  Prod :: Instr n -> Instr n
+data Instr :: Type ~> BB ~> * where
+  Unwind :: Instr t n
+  Branch :: BasicBlock t Normal -> Instr t n
+  Return :: Instr LVoid n
+----  Prod :: Instr n -> Instr n
 -- deriving List(i)
 
-data BasicBlock :: BB ~> * where
-  Phi :: BasicBlock n -> BasicBlock n
-  NoPhi :: Instr n -> BasicBlock n
+data BasicBlock :: Type ~> BB ~> * where
+  Phi :: BasicBlock t n -> BasicBlock t n
+  NoPhi :: Instr t n -> BasicBlock t n
 
 t1 = Phi (Phi (NoPhi (Branch (NoPhi Unwind))))
+t2 = NoPhi (Branch (NoPhi Return))
 
-data Function = Function (BasicBlock Entry)
+data Function :: Type ~> * where
+  Function :: BasicBlock b Entry -> Function (LFunction a b)
 
+f1 = Function t1
+f2 = Function t2
