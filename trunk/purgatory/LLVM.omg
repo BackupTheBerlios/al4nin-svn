@@ -43,40 +43,42 @@ i1 :: Type
 
 kind BB = Entry | Normal
 
-data Instr :: Type ~> BB ~> * where
-  Unwind :: Instr t n
-  Branch :: BasicBlock t Normal -> Instr t n
-  Return :: Instr LVoid n
-  Switch :: Value a -> BasicBlock t Normal -> [(Value a, BasicBlock t Normal)] -> Instr t n
+data Instr :: Type ~> BB ~> Row HasLType ~> * where
+  -- Terminators
+  Unwind :: Instr t n RNil
+  Branch :: BasicBlock t Normal otherdefs -> Instr t n RNil
+  Return :: Value a -> Instr a n RNil
+  Switch :: Value a -> BasicBlock t Normal d1 -> [(Value a, BasicBlock t Normal d2)] -> Instr t n RNil
+  -- Value generators
+  Add :: Label l -> Value (LInt bits) -> Value (LInt bits) -> Instr t n defs -> Instr t n (RCons (HasL l (LInt bits)) defs)
 
-data BasicBlock :: Type ~> BB ~> * where
-  Phi :: [(Value a, BasicBlock t n)] -> BasicBlock t Normal
-  NoPhi :: Instr t n -> BasicBlock t n
 
-data BasicBlock' :: Type ~> BB ~> Row HasLType ~> * where
-  Phi' :: Label l -> [(Value a, BasicBlock' t n defs)] -> BasicBlock' t Normal (RCons (HasL l a) defs)
-  NoPhi' :: Instr t n -> BasicBlock' t n RNil
+--data BasicBlock :: Type ~> BB ~> * where
+--  Phi :: [(Value a, BasicBlock t n)] -> BasicBlock t Normal
+--  NoPhi :: Instr t n -> BasicBlock t n
+
+data BasicBlock :: Type ~> BB ~> Row HasLType ~> * where
+  Phi :: Label l -> [(Value a, BasicBlock t n defs)] -> BasicBlock t Normal (RCons (HasL l a) defs)
+  NoPhi :: Instr t n defs -> BasicBlock t n defs
 
 
 data Value :: Type ~> * where
   LitI :: Int -> Value (LInt #32)
   LitB :: Bool -> Value (LInt #1)
-  Ref :: String -> Value t
+  Ref :: Label l -> Value t
   Undef :: Value t
   P :: Value t -> Value (LPointer t)
 
 data Function :: Type ~> * where
-  Function :: Value a -> BasicBlock b Entry -> Function (LFunction a b)
-
---- p :: Value t -> Value (LPointer t)
+  Function :: Value a -> BasicBlock b Entry defs -> Function (LFunction a b)
 
 
 -- ###### TESTS #####
 
-t1 = Phi [(lTrue, Phi [(Ref "uff", NoPhi (Branch (NoPhi Unwind)))])]
-t2 = NoPhi (Branch (NoPhi Return))
+t1 = Phi `tl11 [(lTrue, Phi `tl12 [(Ref `uff, NoPhi (Branch (NoPhi Unwind)))])]
+t2 = NoPhi (Branch (NoPhi (Add `ret (LitI 42) (Ref `in) (Return (Ref `ret)))))
 t3 = NoPhi (Branch t2)
-t4 = NoPhi (Switch (Ref "ggg") t2 [(LitB True, t3)])
+t4 = NoPhi (Switch (Ref `ggg) t2 [(LitB True, t3)])
 
 lTrue = LitB True
 
