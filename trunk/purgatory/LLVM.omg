@@ -22,7 +22,7 @@
  -}
 
 
-import "/Users/ggreif/Desktop/Omega1.4/LangPrelude.prg" 
+import "LangPrelude.prg" 
   (head,tail,lookup,member,fst,snd,map,Monad,maybeM,id,ioM,Row,HasType,RCons,RNil,Eq,Equal)
 
 
@@ -51,11 +51,6 @@ data BasicBlock :: Type ~> BB ~> * where
   NoPhi :: Instr t n -> BasicBlock t n
 
 
-t1 = Phi [(lTrue, Phi [(Ref "uff", NoPhi (Branch (NoPhi Unwind)))])]
-t2 = NoPhi (Branch (NoPhi Return))
-t3 = NoPhi (Branch t2)
-t4 = NoPhi (Switch (Ref "ggg") t2 [(LitB True, t3)])
-
 data Value :: Type ~> * where
   LitI :: Int -> Value (LInt #32)
   LitB :: Bool -> Value (LInt #1)
@@ -65,8 +60,19 @@ data Value :: Type ~> * where
 data Function :: Type ~> * where
   Function :: Value a -> BasicBlock b Entry -> Function (LFunction a b)
 
+
+-- ###### TESTS #####
+
+t1 = Phi [(lTrue, Phi [(Ref "uff", NoPhi (Branch (NoPhi Unwind)))])]
+t2 = NoPhi (Branch (NoPhi Return))
+t3 = NoPhi (Branch t2)
+t4 = NoPhi (Switch (Ref "ggg") t2 [(LitB True, t3)])
+
 lTrue = LitB True
--- f1 = Function (LitB True) t1
+
+##test "Phi not allowed in entry node"
+  f1 = Function (LitB True) t1
+
 f2 = Function (LitB False) t2
 f3 = Function (LitI 42) t3
 f4 = Function (LitI 42) t4

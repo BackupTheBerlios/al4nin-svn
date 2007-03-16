@@ -160,6 +160,10 @@ q2 :: Henk (Elevate Indifferent) (Binds #0 Non)
 
 q3 = Appnew (Pi a Star IInt) IInt
 
+eval :: Henk st deg -> Henk st deg
+eval (Appnew (Pi _ v result) subst) = result
+
+
 
 {-
 l = Lam a Star (Var a)
