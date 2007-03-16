@@ -53,16 +53,13 @@ data Instr :: Type ~> BB ~> Row HasLType ~> * where
   Add :: Label l -> Value (LInt bits) -> Value (LInt bits) -> Instr t n defs -> Instr t n (RCons (HasL l (LInt bits)) defs)
 
 
---data BasicBlock :: Type ~> BB ~> * where
---  Phi :: [(Value a, BasicBlock t n)] -> BasicBlock t Normal
---  NoPhi :: Instr t n -> BasicBlock t n
-
 data BasicBlock :: Type ~> BB ~> Row HasLType ~> * where
   Phi :: Label l -> [(Value a, BasicBlock t n defs)] -> BasicBlock t Normal (RCons (HasL l a) defs)
   NoPhi :: Instr t n defs -> BasicBlock t n defs
 
 
 data Value :: Type ~> * where
+  Nada :: Value LVoid
   LitI :: Int -> Value (LInt #32)
   LitB :: Bool -> Value (LInt #1)
   Ref :: Label l -> Value t
@@ -82,7 +79,24 @@ t4 = NoPhi (Switch (Ref `ggg) t2 [(LitB True, t3)])
 
 lTrue = LitB True
 
-##test "Phi not allowed in entry node"
+showBB :: BasicBlock t n defs -> String
+showBB (Phi l _) = show l ++ ": phi ...\n" -- ++ showBB more
+showBB (NoPhi i) = showInstr i
+
+showInstr :: Instr t n defs -> String
+showInstr Unwind = "\tunwind"
+showInstr (Branch _) = "\tbr label <dest>"
+showInstr (Return v) = "\tret " ++ showValue v
+showInstr (Add l a b more) = "\t" ++ show l ++ " = add " ++ showValue a ++ ", " ++ showValue b ++ "\n" ++ showInstr more
+
+showValue :: Value t -> String
+showValue Nada = "void"
+showValue (LitI n) = "i32 " ++ show n
+showValue (Ref l) = "i32 " ++ show l
+
+
+
+##test "Phi not allowed in entry basic block"
   f1 = Function (LitB True) t1
 
 f2 = Function (LitB False) t2
