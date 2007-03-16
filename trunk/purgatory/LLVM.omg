@@ -35,6 +35,9 @@ kind Type :: *1 where
  LFunction :: Type ~> Type ~> Type
  LVector :: Nat ~> Type ~> Type
 
+data HasLType :: *1 where
+  HasL :: Tag ~> Type ~> HasLType
+
 i1 :: Type
 --{i1} = LInt *1
 
@@ -50,15 +53,22 @@ data BasicBlock :: Type ~> BB ~> * where
   Phi :: [(Value a, BasicBlock t n)] -> BasicBlock t Normal
   NoPhi :: Instr t n -> BasicBlock t n
 
+data BasicBlock' :: Type ~> BB ~> Row HasLType ~> * where
+  Phi' :: Label l -> [(Value a, BasicBlock' t n defs)] -> BasicBlock' t Normal (RCons (HasL l a) defs)
+  NoPhi' :: Instr t n -> BasicBlock' t n RNil
+
 
 data Value :: Type ~> * where
   LitI :: Int -> Value (LInt #32)
   LitB :: Bool -> Value (LInt #1)
   Ref :: String -> Value t
   Undef :: Value t
+  P :: Value t -> Value (LPointer t)
 
 data Function :: Type ~> * where
   Function :: Value a -> BasicBlock b Entry -> Function (LFunction a b)
+
+--- p :: Value t -> Value (LPointer t)
 
 
 -- ###### TESTS #####
