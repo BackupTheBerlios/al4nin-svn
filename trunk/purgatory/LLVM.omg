@@ -61,7 +61,6 @@ data Instr :: Type ~> BB ~> Row HasLType ~> * where
   Unreachable :: Instr t n RNil
   -- Value generators
   Add :: Label l -> Value (LInt bits) -> Value (LInt bits) -> Instr t n defs -> Instr t n (RCons (HasL l (LInt bits)) defs)
-  -- Phi :: Label l -> [(Value a, BasicBlock t n' odefs)] -> Instr t n defs -> Instr t Normal (RCons (HasL l a) defs)
   Phi :: Label l -> Departures a t deps -> Instr t n defs -> Instr t Normal (RCons (HasL l a) defs)
 
 
@@ -104,7 +103,7 @@ showRef l = '%':tail (show l)
 
 -- ###### TESTS #####
 
--- t1 = BB `t1 (Phi `tl11 [(lTrue, BB `other1 (Phi `tl12 [(Ref `uff, BB `other2 (Branch (BB `other4 Unwind)))] Unreachable))] Unreachable)
+t0 = BB `t1 (Phi `tl11 [(lTrue, BB `other1 (Phi `tl12 [(Ref `uff, BB `other2 (Branch (BB `other4 Unwind)))] Unreachable))] Unreachable)
 t1 = BB `t1 (Phi `tl11 #[(lTrue, BB `other1 (Phi `tl12 #[(Ref `uff, t1)]d Unreachable))]d Unreachable)
 t2 = BB `t1 (Branch (BB `other1 (Add `ret (LitI 42) (Ref `in) (Return (Ref `ret)))))
 t3 = BB `t3 (Branch t2)
