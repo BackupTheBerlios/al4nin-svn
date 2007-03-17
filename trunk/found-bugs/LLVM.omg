@@ -1,0 +1,121 @@
+{-
+ * Copyright (c) 2007 Gabor Greif
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to deal
+ * in the Software without restriction, including without limitation the rights
+ * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies
+ * of the Software, and to permit persons to whom the Software is furnished to do
+ * so, subject to the following conditions:
+ *
+ * The above copyright notice and this permission notice shall be
+ * included in all copies or substantial portions of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
+ * EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES
+ * OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
+ * NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT
+ * HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY,
+ * WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+ * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE
+ * OR OTHER DEALINGS IN THE SOFTWARE.
+ -}
+
+
+import "LangPrelude.prg" 
+  (head,tail,lookup,member,fst,snd,map,Monad,maybeM,id,ioM,Row,HasType,RCons,RNil,Eq,Equal)
+
+
+kind Type :: *1 where
+ LVoid :: Type
+ LInt :: Nat ~> Type
+ LFloat :: Type
+ LDouble :: Type
+ LPointer :: Type ~> Type
+ LFunction :: Type ~> Type ~> Type
+ LVector :: Nat ~> Type ~> Type
+
+kind HasLType :: *1 where
+  HasL :: Tag ~> Type ~> HasLType
+
+i1 :: Type
+--{i1} = LInt *1
+-- type i1 = LInt #1
+
+kind BB = Entry | Normal
+
+kind ComesFrom :: *1 where
+  From :: Row HasLType ~> ComesFrom
+
+data Departures :: Type ~> Type ~> Row ComesFrom ~> * where
+  Nowhere :: Departures prodV t RNil
+  Comes :: (Value prod, BasicBlock t n' def) -> Departures prod t alts -> Departures prod t (RCons (From def) alts)
+ deriving List(d)
+
+data Instr :: Type ~> BB ~> Row HasLType ~> * where
+  -- Terminators
+  Unwind :: Instr t n RNil
+  Branch :: BasicBlock t Normal otherdefs -> Instr t n RNil
+  Return :: Value a -> Instr a n RNil
+  Switch :: Value (LInt bits) -> BasicBlock t Normal d1 -> [(Value a, BasicBlock t Normal d2)] -> Instr t n RNil
+  Unreachable :: Instr t n RNil
+  -- Value generators
+  Add :: Label l -> Value (LInt bits) -> Value (LInt bits) -> Instr t n defs -> Instr t n (RCons (HasL l (LInt bits)) defs)
+  -- Phi :: Label l -> [(Value a, BasicBlock t n' odefs)] -> Instr t n defs -> Instr t Normal (RCons (HasL l a) defs)
+  Phi :: Label l -> Departures a t deps -> Instr t n defs -> Instr t Normal (RCons (HasL l a) defs)
+
+
+data BasicBlock :: Type ~> BB ~> Row HasLType ~> * where
+  BB :: Label bl -> Instr t n defs -> BasicBlock t n defs
+
+data Value :: Type ~> * where
+  Nada :: Value LVoid
+  LitI :: Int -> Value (LInt #32)
+  LitB :: Bool -> Value (LInt #1)
+  Ref :: Label l -> Value t
+  Undef :: Value t
+  P :: Value t -> Value (LPointer t)
+
+data Function :: Type ~> * where
+  Function :: Value a -> BasicBlock b Entry defs -> Function (LFunction a b)
+
+
+showBB :: BasicBlock t n defs -> String
+showBB (BB l more) = showLabel l ++ ":" ++ showInstr more
+
+showInstr :: Instr t n defs -> String
+showInstr Unwind = "\tunwind"
+showInstr (Branch (BB l _)) = "\tbr label " ++ showRef l
+showInstr (Switch v (BB l _) _) = "\tswitch " ++ showValue v ++ ", label " ++ showRef l ++ " ..."
+showInstr (Return v) = "\tret " ++ showValue v
+showInstr Unreachable = "\tunreachable"
+showInstr (Add l a b more) = "\t" ++ showRef l ++ " = add " ++ showValue a ++ ", " ++ showValue b ++ "\n" ++ showInstr more
+showInstr (Phi l alts more) = "\tphi ...\n" ++ showInstr more
+
+showValue :: Value t -> String
+showValue Nada = "void"
+showValue (LitI n) = "i32 " ++ show n
+showValue (Ref l) = "i32 " ++ showRef l
+
+showLabel l = tail (show l)
+
+showRef :: Label l -> String
+showRef l = '%':tail (show l)
+
+-- ###### TESTS #####
+
+-- t1 = BB `t1 (Phi `tl11 [(lTrue, BB `other1 (Phi `tl12 [(Ref `uff, BB `other2 (Branch (BB `other4 Unwind)))] Unreachable))] Unreachable)
+t1 = BB `t1 (Phi `tl11 #[(lTrue, BB `other1 (Phi `tl12 #[(Ref `uff, t1)]d Unreachable))]d Unreachable)
+t2 = BB `t1 (Branch (BB `other1 (Add `ret (LitI 42) (Ref `in) (Return (Ref `ret)))))
+t3 = BB `t3 (Branch t2)
+t4 = BB `t4 (Switch (Ref `ggg) t2 [(LitB True, t3)])
+
+lTrue = LitB True
+lF = LitB False
+
+##test "Phi not allowed in entry basic block"
+  f1 = Function (LitB True) t1
+
+f2 = Function (LitB False) t2
+f3 = Function (LitI 42) t3
+f4 = Function (LitI 42) t4
