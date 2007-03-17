@@ -89,10 +89,11 @@ showInstr (Switch v (BB l _) _) = "\tswitch " ++ showValue v ++ ", label " ++ sh
 showInstr (Return v) = "\tret " ++ showValue v
 showInstr Unreachable = "\tunreachable"
 showInstr (Add l a b more) = "\t" ++ showRef l ++ " = add " ++ showValue a ++ ", " ++ showValue b ++ "\n" ++ showInstr more
-showInstr (Phi l alts more) = "\tphi ...\n" ++ showInstr more
+showInstr (Phi l alts more) = "\tphi " ++ showDepartures alts ++ "\n" ++ showInstr more
 
 showValue :: Value t -> String
 showValue Nada = "void"
+showValue (LitB f) = "i1 " ++ show f
 showValue (LitI n) = "i32 " ++ show n
 showValue (Ref l) = "i32 " ++ showRef l
 
@@ -101,9 +102,15 @@ showLabel l = tail (show l)
 showRef :: Label l -> String
 showRef l = '%':tail (show l)
 
+showDepartures :: Departures it ft r -> String
+showDepartures #[]d = ""
+showDepartures #[(v, BB l _)]d = showValue v ++ ", " ++ showRef l
+--showDepartures #[(v, BB l _), deps]d = showValue v ++ ", " ++ showRef l ++ ", " ++ showDepartures deps
+--###BUG showDepartures #[(v, BB l _), deps]d = showValue v ++ ", " ++ showRef l ++ ", " ++ showDepartures deps
+
 -- ###### TESTS #####
 
-t0 = BB `t1 (Phi `tl11 [(lTrue, BB `other1 (Phi `tl12 [(Ref `uff, BB `other2 (Branch (BB `other4 Unwind)))] Unreachable))] Unreachable)
+t0 = BB `t1 (Phi `tl11 #[(lTrue, BB `other1 (Phi `tl12 #[(Ref `uff, BB `other2 (Branch (BB `other4 Unwind)))]d Unreachable))]d Unreachable)
 t1 = BB `t1 (Phi `tl11 #[(lTrue, BB `other1 (Phi `tl12 #[(Ref `uff, t1)]d Unreachable))]d Unreachable)
 t2 = BB `t1 (Branch (BB `other1 (Add `ret (LitI 42) (Ref `in) (Return (Ref `ret)))))
 t3 = BB `t3 (Branch t2)
