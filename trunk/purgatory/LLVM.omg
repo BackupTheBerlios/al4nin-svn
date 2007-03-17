@@ -22,26 +22,30 @@
  -}
 
 
-import "LangPrelude.prg" 
+import "LangPrelude.prg"
   (head,tail,lookup,member,fst,snd,map,Monad,maybeM,id,ioM,Row,HasType,RCons,RNil,Eq,Equal)
 
 kind TypeClass :: *1 where
   FstClass :: TypeClass
   SndClass :: TypeClass
 
-kind Type :: TypeClass ~> *1 where
- LVoid :: Type SndClass
- LInt :: Nat ~> Type FstClass
- LFloat :: Type FstClass
- LDouble :: Type FstClass
- LPointer :: Type a ~> Type FstClass
- LFunction :: Type a ~> Type b ~> Type SndClass
- LVector :: Nat ~> Type FstClass ~> Type FstClass
+kind Returnability :: *1 where
+  Returnable :: Returnability
+  Nonreturnable :: Returnability
+
+kind Type :: TypeClass ~> Returnability ~> *1 where
+ LVoid :: Type SndClass Returnable
+ LInt :: Nat ~> Type FstClass Returnable
+ LFloat :: Type FstClass Returnable
+ LDouble :: Type FstClass Returnable
+ LPointer :: Type a r ~> Type FstClass Returnable
+ LFunction :: Type FstClass Returnable ~> Type b Returnable ~> Type SndClass Nonreturnable
+ LVector :: Nat ~> Type FstClass Returnable ~> Type FstClass Returnable
 
 kind HasLType :: *1 where
-  HasL :: forall (c :: TypeClass) . Tag ~> Type c ~> HasLType
+  HasL :: Tag ~> Type FstClass Returnable ~> HasLType
 
-i1 :: Type c
+i1 :: Type FstClass Returnable
 --{i1} = LInt *1
 -- type i1 = LInt #1
 
@@ -50,12 +54,12 @@ kind BB = Entry | Normal
 kind ComesFrom :: *1 where
   From :: Row HasLType ~> ComesFrom
 
-data Departures :: forall (c :: TypeClass) . Type FstClass ~> Type c ~> Row ComesFrom ~> * where
+data Departures :: forall (c :: TypeClass) . Type FstClass Returnable ~> Type c Returnable ~> Row ComesFrom ~> * where
   Nowhere :: Departures prodV t RNil
   Comes :: (Value prod, BasicBlock t n' def) -> Departures prod t alts -> Departures prod t (RCons (From def) alts)
  deriving List(d)
 
-data Instr :: forall (c :: TypeClass) . Type c ~> BB ~> Row HasLType ~> * where
+data Instr :: forall (c :: TypeClass) . Type c Returnable ~> BB ~> Row HasLType ~> * where
   -- Terminators
   Unwind :: Instr t n RNil
   Branch :: BasicBlock t Normal otherdefs -> Instr t n RNil
@@ -67,10 +71,10 @@ data Instr :: forall (c :: TypeClass) . Type c ~> BB ~> Row HasLType ~> * where
   Phi :: Label l -> Departures a t deps -> Instr t n defs -> Instr t Normal (RCons (HasL l a) defs)
 
 
-data BasicBlock :: Type FstClass ~> BB ~> Row HasLType ~> * where
+data BasicBlock :: forall (c :: TypeClass) . Type c Returnable ~> BB ~> Row HasLType ~> * where
   BB :: Label bl -> Instr t n defs -> BasicBlock t n defs
 
-data Value :: forall (c :: TypeClass) . Type c ~> * where
+data Value :: forall (c :: TypeClass) . Type c Returnable ~> * where
   Nada :: Value LVoid
   LitI :: Int -> Value (LInt #32)
   LitB :: Bool -> Value (LInt #1)
@@ -78,7 +82,8 @@ data Value :: forall (c :: TypeClass) . Type c ~> * where
   Undef :: Value t
   P :: Value t -> Value (LPointer t)
 
-data Function :: forall (c :: TypeClass) . Type c ~> * where
+--data Function :: forall (c :: TypeClass) . Type c ~> * where
+data Function :: Type SndClass Nonreturnable ~> * where
   Function :: Value a -> BasicBlock b Entry defs -> Function (LFunction a b)
 
 
