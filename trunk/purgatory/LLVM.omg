@@ -82,7 +82,6 @@ data Value :: forall (c :: TypeClass) . Type c Returnable ~> * where
   Undef :: Value t
   P :: Value t -> Value (LPointer t)
 
---data Function :: forall (c :: TypeClass) . Type c ~> * where
 data Function :: Type SndClass Nonreturnable ~> * where
   Function :: Value a -> BasicBlock b Entry defs -> Function (LFunction a b)
 
@@ -121,6 +120,7 @@ t1 = BB `t1 (Phi `tl11 #[(lTrue, BB `other1 (Phi `tl12 #[(Ref `uff, t1), (Ref `b
 t2 = BB `t1 (Branch (BB `other1 (Add `ret (LitI 42) (Ref `in) (Return (Ref `ret)))))
 t3 = BB `t3 (Branch t2)
 t4 = BB `t4 (Switch (Ref `ggg) t2 [(LitB True, t3)])
+t5 = BB `t5 (Return Nada)
 
 ##test "Phis must be of first class type"
   p1 = Phi `tl12 #[(Nada, BB `other2 (Branch (BB `other4 Unwind)))]d Unreachable
@@ -134,3 +134,11 @@ lF = LitB False
 f2 = Function (LitB False) t2
 f3 = Function (LitI 42) t3
 f4 = Function (LitI 42) t4
+f5 = Function (LitI 42) t5
+
+
+-- Function for computing live inputs (Label, LType) sequence to a BB --
+
+intersectLTypeRows :: Row HasLType ~> Row HasLType  ~> Row HasLType
+{ intersectLTypeRows RNil rhs } = RNil
+{ intersectLTypeRows (RCons (HasL l t) rest1) (RCons (HasL l t) rest2) } = RCons (HasL l t) { intersectLTypeRows rest1 rest2 }
