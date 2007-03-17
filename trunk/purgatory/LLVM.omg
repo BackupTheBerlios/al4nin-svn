@@ -40,8 +40,17 @@ kind HasLType :: *1 where
 
 i1 :: Type
 --{i1} = LInt *1
+-- type i1 = LInt #1
 
 kind BB = Entry | Normal
+
+kind ComesFrom :: *1 where
+  From :: Row HasLType ~> ComesFrom
+
+data Departures :: Type ~> Type ~> Row ComesFrom ~> * where
+  Nowhere :: Departures prodV t RNil
+  Comes :: (Value prod, BasicBlock t n' def) -> Departures prod t alts -> Departures prod t (RCons (From def) alts)
+ deriving List(d)
 
 data Instr :: Type ~> BB ~> Row HasLType ~> * where
   -- Terminators
@@ -52,16 +61,9 @@ data Instr :: Type ~> BB ~> Row HasLType ~> * where
   Unreachable :: Instr t n RNil
   -- Value generators
   Add :: Label l -> Value (LInt bits) -> Value (LInt bits) -> Instr t n defs -> Instr t n (RCons (HasL l (LInt bits)) defs)
-  Phi :: Label l -> [(Value a, BasicBlock t n' odefs)] -> Instr t n defs -> Instr t Normal (RCons (HasL l a) defs)
+  -- Phi :: Label l -> [(Value a, BasicBlock t n' odefs)] -> Instr t n defs -> Instr t Normal (RCons (HasL l a) defs)
+  Phi :: Label l -> Departures a t deps -> Instr t n defs -> Instr t Normal (RCons (HasL l a) defs)
 
-
-kind ComesFrom :: *1 where
-  From :: Row HasLType ~> ComesFrom
-
-data Departures :: Type ~> Type ~> Row ComesFrom ~> * where
-  Nowhere :: Departures prodV t RNil
-  Comes :: (Value prod, BasicBlock t n' def) -> Departures prod t alts -> Departures prod t (RCons (From def) alts)
- deriving List(d)
 
 data BasicBlock :: Type ~> BB ~> Row HasLType ~> * where
   BB :: Label bl -> Instr t n defs -> BasicBlock t n defs
@@ -103,7 +105,7 @@ showRef l = '%':tail (show l)
 -- ###### TESTS #####
 
 -- t1 = BB `t1 (Phi `tl11 [(lTrue, BB `other1 (Phi `tl12 [(Ref `uff, BB `other2 (Branch (BB `other4 Unwind)))] Unreachable))] Unreachable)
-t1 = BB `t1 (Phi `tl11 [(lTrue, BB `other1 (Phi `tl12 [(Ref `uff, t1)] Unreachable))] Unreachable)
+t1 = BB `t1 (Phi `tl11 #[(lTrue, BB `other1 (Phi `tl12 #[(Ref `uff, t1)]d Unreachable))]d Unreachable)
 t2 = BB `t1 (Branch (BB `other1 (Add `ret (LitI 42) (Ref `in) (Return (Ref `ret)))))
 t3 = BB `t3 (Branch t2)
 t4 = BB `t4 (Switch (Ref `ggg) t2 [(LitB True, t3)])
