@@ -44,14 +44,6 @@ i1 :: Type
 
 kind BB = Entry | Normal
 
-kind ComesFrom :: *1 where
-  From :: Row HasLType ~> ComesFrom
-
-data Departures :: Type ~> Type ~> Row ComesFrom ~> * where
-  Nowhere :: Departures prodV t RNil
-  Comes :: (Value prod, BasicBlock t n' def) -> Departures prod t alts -> Departures prod t (RCons (From def) alts)
- deriving List(d)
-
 data Instr :: Type ~> BB ~> Row HasLType ~> * where
   -- Terminators
   Unwind :: Instr t n RNil
@@ -64,6 +56,13 @@ data Instr :: Type ~> BB ~> Row HasLType ~> * where
   -- Phi :: Label l -> [(Value a, BasicBlock t n' odefs)] -> Instr t n defs -> Instr t Normal (RCons (HasL l a) defs)
   Phi :: Label l -> Departures a t deps -> Instr t n defs -> Instr t Normal (RCons (HasL l a) defs)
 
+kind ComesFrom :: *1 where
+  From :: Row HasLType ~> ComesFrom
+
+data Departures :: Type ~> Type ~> Row ComesFrom ~> * where
+  Nowhere :: Departures prodV t RNil
+  Comes :: (Value prod, BasicBlock t n' def) -> Departures prod t alts -> Departures prod t (RCons (From def) alts)
+ deriving List(d)
 
 data BasicBlock :: Type ~> BB ~> Row HasLType ~> * where
   BB :: Label bl -> Instr t n defs -> BasicBlock t n defs
