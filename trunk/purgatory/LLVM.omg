@@ -23,7 +23,7 @@
 
 
 import "LangPrelude.prg"
-  (head,tail,lookup,member,fst,snd,map,Monad,maybeM,id,ioM,Row,HasType,RCons,RNil,Eq,Equal)
+  (head,tail,lookup,member,fst,snd,map,Monad,maybeM,id,ioM,Row,HasType,RCons,RNil,Eq,Equal,(==))
 
 kind TypeClass :: *1 where
   FstClass :: TypeClass
@@ -140,9 +140,9 @@ f5 = Function (LitI 42) t5
 
 intersectRows :: Row t ~> Row t ~> Row t
 { intersectRows RNil rhs } = RNil
-{ intersectRows (RCons a rest1) rhs }
+{ intersectRows (RCons a rest) rhs }
   = { appendRows { findInRow a rhs }
-                      { intersectRows rest1 rhs } }
+                      { intersectRows rest rhs } }
 
 findInRow :: t ~> Row t ~> Row t
 { findInRow a (RCons a rest) } = RCons a { findInRow a rest }
@@ -168,3 +168,13 @@ data Wum :: Row HasLType  ~> * where
 a :: Wum { intersectRows (RCons (HasL `gg LFloat) (RCons (HasL `hh LFloat) RNil)) (RCons (HasL `hh LFloat) RNil) }
 --a :: Wum { intersectRows (RCons (HasL `hh LFloat) RNil) RNil }
 a = Wum2
+
+
+-- make two rows the same if they are only permutations of each other
+-- dabbling with Prop
+
+
+
+isPermutation :: Row t ~> Row t ~> Prop
+{ isPermutation r1 r2 } = r1 == { intersectRows r1 r2 }
+

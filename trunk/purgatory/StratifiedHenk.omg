@@ -27,15 +27,14 @@
 --
 --  Set up the environment
 --     setenv LD_LIBRARY_PATH /opt/exp/gnu/lib:$LD_LIBRARY_PATH
---     setenv PATH /home/ggreif/%NoBackup%/omega3.0:$PATH
+--     setenv PATH /home/ggreif/%NoBackup%/Omega1.4:$PATH
 --
 --  Start the omega interpreter by typing
 --     omega StratifiedHenk.omg
 --  and run your commands on the prompt
 --
 
---import "/Users/ggreif/Desktop/Omega1.3/LangPrelude.prg" 
-import "/home/ggreif/%NoBackup%/omega3.0/LangPrelude.prg" 
+import "LangPrelude.prg" 
   (head,tail,lookup,member,fst,snd,map,Monad,maybeM,id,ioM,Row,HasType,RCons,RNil,Eq,Equal)
 
 -- \(x:T).x : Pi (x:T) T
