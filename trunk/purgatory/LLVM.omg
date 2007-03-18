@@ -138,20 +138,20 @@ f5 = Function (LitI 42) t5
 
 -- Function for computing live inputs (Label, LType) sequence to a BB --
 
-intersectLTypeRows :: Row HasLType ~> Row HasLType ~> Row HasLType
-{ intersectLTypeRows RNil rhs } = RNil
-{ intersectLTypeRows (RCons a rest1) rhs }
-  = { appendLTypeRows { findInLTypeRow a rhs }
-                      { intersectLTypeRows rest1 rhs } }
+intersectRows :: Row t ~> Row t ~> Row t
+{ intersectRows RNil rhs } = RNil
+{ intersectRows (RCons a rest1) rhs }
+  = { appendRows { findInRow a rhs }
+                      { intersectRows rest1 rhs } }
 
-findInLTypeRow :: HasLType ~> Row HasLType ~> Row HasLType
-{ findInLTypeRow a (RCons a rest) } = RCons a { findInLTypeRow a rest }
-{ findInLTypeRow a (RCons a' rest) } = { findInLTypeRow a rest }
-{ findInLTypeRow a RNil } = RNil
+findInRow :: t ~> Row t ~> Row t
+{ findInRow a (RCons a rest) } = RCons a { findInRow a rest }
+{ findInRow a (RCons a' rest) } = { findInRow a rest }
+{ findInRow a RNil } = RNil
 
-appendLTypeRows :: Row HasLType ~> Row HasLType ~> Row HasLType
-{ appendLTypeRows RNil rhs } = rhs
-{ appendLTypeRows (RCons head rest) rhs } = RCons head { appendLTypeRows rest rhs }
+appendRows :: Row t ~> Row t ~> Row t
+{ appendRows RNil rhs } = rhs
+{ appendRows (RCons head rest) rhs } = RCons head { appendRows rest rhs }
 
 
 prefix :: Nat ~> Nat ~> Nat
@@ -163,8 +163,8 @@ data Wum :: Row HasLType  ~> * where
  Wum :: Wum RNil
  Wum2 :: Wum (RCons (HasL `hh LFloat) RNil)
 
---a :: Wum { intersectLTypeRows (RCons (HasL `hh LFloat) RNil) (RCons (HasL `hh LFloat) RNil) }
---a :: Wum { intersectLTypeRows (RCons (HasL `hh LFloat) RNil) (RCons (HasL `gg LFloat) (RCons (HasL `hh LFloat) RNil)) }
-a :: Wum { intersectLTypeRows (RCons (HasL `gg LFloat) (RCons (HasL `hh LFloat) RNil)) (RCons (HasL `hh LFloat) RNil) }
---a :: Wum { intersectLTypeRows (RCons (HasL `hh LFloat) RNil) RNil }
+--a :: Wum { intersectRows (RCons (HasL `hh LFloat) RNil) (RCons (HasL `hh LFloat) RNil) }
+--a :: Wum { intersectRows (RCons (HasL `hh LFloat) RNil) (RCons (HasL `gg LFloat) (RCons (HasL `hh LFloat) RNil)) }
+a :: Wum { intersectRows (RCons (HasL `gg LFloat) (RCons (HasL `hh LFloat) RNil)) (RCons (HasL `hh LFloat) RNil) }
+--a :: Wum { intersectRows (RCons (HasL `hh LFloat) RNil) RNil }
 a = Wum2
