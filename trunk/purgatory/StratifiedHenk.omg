@@ -72,6 +72,10 @@ data Henk :: Stratum ~> Stratum ~> *0 where
 --  Ref :: Label l -> Henk Ground strat
   Type :: Henk Ground (Up Ground)
   Star :: Henk Ground (Up (Up g))
+  -- Application
+--  App :: Henk (Up s) s -> Henk st s -> Henk st s
+  App :: Henk (Up s) u -> Henk st s -> Henk st u
+--  Dep :: Henk (Up s) (Up s) -> Henk st s -> Henk st (Up s)
 
 
 --a :: Henk Ground Ground
@@ -87,5 +91,5 @@ tau (s@Star) = Star
 --getType :: Henk strat to -> Henk strat (Up to)
 --getType (b@Bind l q r) = tau b
 
-evalLam :: Henk (Up s) s -> Henk st s -> Henk st s
+eval :: Henk st s -> Henk st s
 --evalLam (Bind l q r) (a@Lit) = r
