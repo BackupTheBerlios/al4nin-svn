@@ -1,0 +1,295 @@
+-- -*-Haskell-*-
+
+{-
+ * Copyright (c) 2006, 2007 Gabor Greif
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to deal
+ * in the Software without restriction, including without limitation the rights
+ * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies
+ * of the Software, and to permit persons to whom the Software is furnished to do
+ * so, subject to the following conditions:
+ *
+ * The above copyright notice and this permission notice shall be
+ * included in all copies or substantial portions of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
+ * EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES
+ * OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
+ * NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT
+ * HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY,
+ * WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+ * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE
+ * OR OTHER DEALINGS IN THE SOFTWARE.
+ -}
+
+-- Usage:
+--
+--  Set up the environment
+--     setenv LD_LIBRARY_PATH /opt/exp/gnu/lib:$LD_LIBRARY_PATH
+--     setenv PATH /home/ggreif/%NoBackup%/Omega1.4:$PATH
+--
+--  Start the omega interpreter by typing
+--     omega StratifiedHenk.omg
+--  and run your commands on the prompt
+--
+
+import "LangPrelude.prg" 
+  (head,tail,lookup,member,fst,snd,map,Monad,maybeM,id,ioM,Row,HasType,RCons,RNil,Eq,Equal)
+
+-- \(x:T).x : Pi (x:T) T
+
+-- cit: Kamareddine jfp6
+-- Higher Degrees:
+-- tau(Gam, lam[i+1]x:A.B) === lam[i]x:A.tau(Gam\x:A, B) forall i of N
+--  where lam[0]x:A.B === B
+-- lam[1] == Pi, lam[2] == lambda
+-- Specialize (i=1):
+--  tau(Gam, lambda x:A.B) === Pi x:A.tau(Gam\x:A, B)
+-- Specialize (A=int, B=42):
+--  tau(Gam, lambda x:Int.42) === Pi x:Int.tau(Gam\x:Int, 42)
+--  with tau(Gam, 42) === Int
+--  gets: tau(Gam, lambda x:Int.42) === Pi x:Int.Int  (aka. Int->Int)
+
+-- Specialize (i=0, A=Int, B=Int):
+-- tau(Gam, Pi x:Int.Int) === lam[0]x:Int.tau(Gam\x:Int, Int)
+-- with tau(Gam, Int) === *0
+-- tau(Gam, Pi x:Int.Int) === lam[0]x:Int.*0
+-- with lam[0]x:Int.*0 === *0
+-- tau(Gam, Pi x:Int.Int) === *0
+
+--kind Typable = Indifferent | Ground *0 | Elevate Typable
+kind Typable = Indifferent | Elevate Typable
+
+-- Binder:: track the structure of binding expressions
+--------------------|degree|structure
+kind Binder = Binds Nat Binder'
+--kind Binder = Binds Nat (Binder' Nat)
+kind Binder' = Non | Nest Binder
+
+{-
+kind Binder' n :: Nat ~> *1 where
+  Non :: Binder' Z
+  Nest :: Binder ~> Binder' (S n)
+-}
+
+{-
+strat :: Typable ~> Nat
+{strat (Ground a)} = Z
+{strat (Elevate a)} = S {strat a}
+-}
+
+{-
+binder :: Nat ~> Nat ~> Nat ~> Nat
+{binder (S Z) Z Z} = #2 -- \a:T.c
+{binder (S Z) Z #2} = #2 -- \a:T.\...
+{binder Z Z Z} = #1 -- Pi
+{binder Z Z #1} = #1 -- Pi.Pi
+{binder (S a) (S b) c} = {binder a b c}
+binder :: Typable ~> Typable ~> Nat ~> Nat
+{binder (Elevate (Ground a)) (Ground b) Z} = #2 -- \a:T.c
+{binder (Elevate (Ground a)) (Ground b) #2} = #2 -- \a:T.\...
+{binder (Elevate (Elevate (Ground a))) (Elevate (Ground b)) Z} = #2 -- \a:*.c
+{binder (Elevate (Elevate (Ground a))) (Elevate (Ground b)) #2} = #2 -- \a:*.\...
+{binder (Elevate (Ground a)) (Elevate (Ground b)) Z} = #1 -- Pi
+{binder (Elevate (Ground a)) (Elevate (Ground b)) #1} = #1 -- Pi.Pi
+{binder (Elevate (Elevate (Ground a))) (Elevate (Elevate (Ground b))) Z} = #1 -- Pi:*
+{binder (Elevate (Elevate (Ground a))) (Elevate (Elevate (Ground b))) #1} = #1 -- Pi:*.Pi
+-}
+
+{-
+bound  :: Typable ~> Typable ~> Nat ~> Nat ~> Nat
+{bound (Ground a) (Ground b) #2 Z} = Z
+{bound (Elevate (Ground a)) (Ground b) #1 Z} = Z
+-}
+
+-- some examples:
+--  Pi _:Int.Int  (aka. Int->Int)
+--  Pi _:Int.Pi _:Bool.Int  (aka. Int->Bool->Int)
+--  Lam a:*.Pi _:Int.a  (aka. a |-> Int->a, a:*)
+--  Pi a:*.a  (aka. forall a:*.a)
+--  Pi a:*. Lam n:a.[n]  (aka. forall a:*. n |-> [n])
+
+-- elev: compute the degree of the binder
+elev :: Typable ~> Typable ~> Nat
+{ elev (Elevate st) (Elevate st') } = { elev st st' }
+{ elev (Elevate st) Indifferent } = S { elev st Indifferent }
+{ elev Indifferent Indifferent } = Z
+--{ elev (Ground a) st' } = Z
+
+-- examples of Appnew
+-- Appnew (Pi i:Int.Int) Five
+-- Appnew (Pi a:*.a) Int
+
+resultant :: Typable ~> Typable ~> Nat ~> Typable
+{resultant (Elevate st) (Elevate st') #2} = Elevate {resultant st st' #2}
+{resultant Indifferent Indifferent #2} = Indifferent
+
+{resultant (Elevate st) (Elevate st') #1} = Elevate {resultant st st' #1}
+{resultant (Elevate Indifferent) Indifferent #1} = Elevate Indifferent
+
+
+-------------|stratum---|binder-------
+data Henk :: Typable ~> Binder ~> * where
+  Star :: Henk (Elevate (Elevate Indifferent)) (Binds Z Non)
+  Pi :: Symbol -> Henk (Elevate st) (Binds Z Non) -> Henk st' bind -> Henk st' (Binds (S { elev (Elevate st) st' }) (Nest bind))
+  IInt :: Henk (Elevate Indifferent) (Binds Z Non) -- testing only
+  Five :: Henk Indifferent (Binds Z Non) -- testing only
+  Appnew :: {-Eq binder (Binds {resultant stratum stratum' b b'} nest) => -} Henk stratum (Binds b (Nest binder)) -> Henk stratum' (Binds b' Non) -> Henk {resultant stratum stratum' b} binder
+----------      -> Henk stratum (Binds {resultant stratum stratum' b b'} nest)
+{-
+--  Pi :: Symbol -> Henk st Z -> Henk st' Z -> Henk { combstrat st st' } #1 -- { elev st st' }
+  Lam :: Symbol -> Henk (Elevate stratum) Z -> Henk stratum' b -> Henk stratum {binder {strat (Elevate stratum)} {strat stratum'} b}
+  App :: Henk stratum b -> Henk stratum' b' -> Henk stratum {bound stratum stratum' b b'}
+  Var :: Symbol -> Henk stratum Z
+  Type :: String -> Henk (Elevate (Ground a)) Z
+  Const :: a -> Henk (Ground a) Z
+-}
+
+
+
+
+a = fresh 'a'
+
+q1 = Appnew (Pi a IInt IInt) Five
+
+q2 :: Henk (Elevate Indifferent) (Binds #0 Non)
+--##test "No rule for resultant"
+--q2 = Appnew (Pi a IInt IInt) IInt
+
+q3 = Appnew (Pi a Star IInt) IInt
+
+eval :: Henk st deg -> Henk st deg
+eval (Appnew (Pi _ v result) subst) = result
+
+
+
+{-
+l = Lam a Star (Var a)
+
+int = Type "Int"
+
+pi1 = Lam a Star Star
+pi0 = Lam a int int
+
+
+freshVar c = Var (fresh c)
+
+
+al = fresh 'a'
+ll = Lam al Star l
+all = fresh 'a'
+lll :: Henk (Ground a) #2
+lll = Lam all int (Const 42)
+
+alll = fresh 'a'
+llll :: Henk (Ground a) #2
+--vlll :: Henk (Ground Int) #0
+vlll = Var all
+llll = Lam alll int (vlll::Henk (Ground Int) #0)
+
+b = fresh 'b'
+
+app = App l (Var b)
+
+l1 = Lam b int (Const 42)
+a1 = App l1  (Var $ fresh 'c')
+
+
+eval :: Henk stratum b -> [(Symbol, Henk stratum b)] -> Henk stratum b
+eval Star _ = Star
+eval (var@Var name) ((s, v):svs) = if symbolEq name s then v else eval var svs
+eval (l@Lam s t e) bs = l
+--eval (App (Lam s t e) h) bs = eval e ((s, h):bs)
+eval (c@Const _) _ = c
+
+lessen :: Nat ~> Nat
+{lessen #2} = #1
+{lessen #1} = #0
+{lessen #0} = #0
+
+-}
+
+{-
+tau :: Henk stratum b -> Henk (Elevate stratum) {lessen b}
+tau (Type _) = Star
+tau (Const _) = int
+--not yet:tau (l@Lam s t e) = case l of Lam a b c -> Lam s t t
+--tau (App f e) = App (tau f) e
+-}
+
+{-
+data Henk' :: (Nat ~> Nat ~> Nat ~> *) ~> Nat ~> Nat ~> * where
+  Star :: Henk' appl #2 Z
+  Rectangle :: Henk' appl #3 Z
+  Var :: String -> Henk' appl stratum Z
+  App :: Henk' appl stratum b -> Henk' appl s binding -> Henk' appl stratum Z
+  Lam 
+-}
+{-
+data Henk' appl stratum binding
+ = Star where stratum = #2, binding = Z
+ | Rectangle where stratum = #3, binding = Z
+ | Lozenge where stratum = #3, binding = Z
+ | Var String where binding = Z
+ | exists s b . App (Henk' appl stratum b) (Henk' appl s binding) where appl stratum b s, binding = Z
+ | Lam (Henk' appl stratum Z) (Henk' appl (S stratum) Z) (Henk' appl stratum Z) where binding = #2
+ | exists s . Pi (Henk' appl s Z) (Henk' appl (S s) Z) (Henk' appl (S s) Z) where stratum = (S s), binding = #1
+-}
+
+{-
+prop Applicable stratum binder stratum'
+ = PiAppl where binder = #1, stratum = S stratum'
+ | LamAppl where binder = #2, stratum = stratum'
+
+--Henk :: Nat ~> Nat ~> *
+type Henk = Henk' Applicable
+
+--- Bug?
+--- type Value = Henk #0 #0
+
+type Value = Henk' Applicable #0 #0
+type ValueLam = Henk' Applicable #0 #2
+type Type = Henk' Applicable #1 #0
+type TypeLam = Henk' Applicable #1 #2
+type Kind = Henk' Applicable #2 #0
+type KindPi = Henk' Applicable #2 #1
+type KindLam = Henk' Applicable #2 #2
+
+exp0 :: Value
+exp0 = Var "b:Bool"
+
+exp1 :: TypeLam
+exp1 = Lam (Var "s") Star (Var "s")  -- lam s:*0 . s
+exp1' :: Kind
+exp1' = App exp2' Star
+-- this should not typecheck:
+-- exp1'' = App exp2' Rectangle
+
+exp2 :: KindPi
+exp2 = Pi (Var "_") Star Star        -- *0 ~> *0
+exp2' :: KindLam
+exp2' = Lam (Var "_") Rectangle Star -- LAM _:*1 . *0
+
+-- todo:
+--  - Item notation
+--  - reduction rules
+--  - type inference of lambda terms
+--  - ANF conversion
+
+-- type inference of lambda terms
+down :: Nat ~> Nat
+{down Z} = Z
+{down (S b)} = b
+
+tau :: Henk' appl n b -> Henk' appl (S n) {down b}
+tau Star = Rectangle
+--tau Rectangle = Lozenge
+tau (Lam v domain result) = Pi (Var "_") domain (tau result)
+tau (App (Lam _ _ expansion) _) = tau expansion
+tau (App (Pi _ _ expansion) _) = tau expansion
+
+--tt1 = tau exp1
+--tt2 = tau (App exp2 exp1)
+tt3 = tau (App exp2' Star)
+ -}
