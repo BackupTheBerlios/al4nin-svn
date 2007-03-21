@@ -61,35 +61,36 @@ import "LangPrelude.prg"
 kind Stratum :: *1 where
   Ground :: Stratum
   Up :: Stratum ~> Stratum
- deriving Nat(s)
+  Push :: Stratum ~> Stratum ~> Stratum
+-- deriving Nat(s)
 
 -- --------- From       To
 data Henk :: Stratum ~> Stratum ~> *0 where
---  Lit :: a -> Henk Ground Ground
-  Lit :: Henk Ground Ground
-  Bind :: Label l -> Henk Ground strat -> Henk from to -> Henk strat to
+  Lit :: a -> Henk Ground Ground
+--  Lit :: Henk Ground Ground
+  Bind :: Label l -> Henk Ground strat -> Henk from to -> Henk (Push strat from) to
   Func :: (a->b) -> Henk (Up Ground) Ground
 --  Ref :: Label l -> Henk Ground strat
   Type :: Henk Ground (Up Ground)
   Star :: Henk Ground (Up (Up g))
   -- Application
---  App :: Henk (Up s) s -> Henk st s -> Henk st s
-  App :: Henk (Up s) u -> Henk st s -> Henk st u
---  Dep :: Henk (Up s) (Up s) -> Henk st s -> Henk st (Up s)
+  App :: Henk (Push (Up s) from) u -> Henk Ground s -> Henk from u
 
 
 --a :: Henk Ground Ground
 --a = Ref `a
 
 tau :: Henk strat to -> Henk strat (Up to)
-tau (Bind l q r) = Bind l q (lazy tau r)
-tau (a@Lit) = tau (Bind `ignore a a)
---tau (a@Lit) = Type
+--tau (Bind l q r) = Bind l q (lazy tau r)
+tau (Bind l q r) = Bind l q (tau r)
+--tau (a@Lit) = tau (Bind `ignore a a)
+tau (a@Lit _) = Type
 tau (t@Type) = Star
 tau (s@Star) = Star
 
---getType :: Henk strat to -> Henk strat (Up to)
---getType (b@Bind l q r) = tau b
+kind HasHenk :: *1 where {}
 
-eval :: Henk st s -> Henk st s
---evalLam (Bind l q r) (a@Lit) = r
+--eval :: Row HasHenk -> Henk st s -> Henk st s
+eval :: Int -> Henk st s -> Henk st s
+eval _ (App (Bind l q r) inp)  = r
+eval _ other = other
