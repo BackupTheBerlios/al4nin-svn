@@ -59,17 +59,29 @@ import "LangPrelude.prg"
 -- tau(Gam, Pi x:Int.Int) === *0
 
 kind Stratum :: *1 where
-  Ground :: Stratum
-  Up :: Stratum ~> Stratum
-  Push :: Stratum ~> Stratum ~> Stratum
+  Ground :: Stratum -- Regular
+  Up :: Stratum ~> Stratum -- Regular
+  Push :: Stratum ~> Stratum ~> Stratum -- Admin
+--  Push :: Stratum Regular ~> Stratum x ~> Stratum Admin
 -- deriving Nat(s)
+
+collapse :: Stratum ~> Stratum
+{ collapse (Push Ground Ground) } = Ground
+{ collapse (Up x) } = (Up x)
+{ collapse Ground } = Ground
+
+arr2stratum :: * ~> Stratum
+{ arr2stratum (a -> b) } = Push (Up Ground) { arr2stratum b }
+{ arr2stratum Int } = Ground
 
 -- --------- From       To
 data Henk :: Stratum ~> Stratum ~> *0 where
   Lit :: a -> Henk Ground Ground
 --  Lit :: Henk Ground Ground
-  Bind :: Label l -> Henk Ground strat -> Henk from to -> Henk (Push strat from) to
-  Func :: (a->b) -> Henk (Up Ground) Ground
+--  Bind :: Label l -> Henk Ground strat -> Henk from to -> Henk { collapse (Push strat from) } to
+--  Bind :: Label l -> Henk Ground strat -> Henk from to -> Henk (Push strat from) to
+  Bind :: Label l -> Henk Ground (Up strat) -> Henk from to -> Henk (Push (Up strat) from) to
+  Func :: (a->b) -> Henk (Up Ground) Ground -- use Lit and {arr2stratum + cleaner}
 --  Ref :: Label l -> Henk Ground strat
   Type :: Henk Ground (Up Ground)
   Star :: Henk Ground (Up (Up g))
@@ -82,6 +94,7 @@ data Henk :: Stratum ~> Stratum ~> *0 where
 
 tau :: Henk strat to -> Henk strat (Up to)
 --tau (Bind l q r) = Bind l q (lazy tau r)
+--tau (Bind l (q@(Lit _)) (r@(Lit _))) = tau r
 tau (Bind l q r) = Bind l q (tau r)
 --tau (a@Lit) = tau (Bind `ignore a a)
 tau (a@Lit _) = Type
@@ -92,5 +105,5 @@ kind HasHenk :: *1 where {}
 
 --eval :: Row HasHenk -> Henk st s -> Henk st s
 eval :: Int -> Henk st s -> Henk st s
-eval _ (App (Bind l q r) inp)  = r
+eval _ (App (Bind l q r) inp) = r
 eval _ other = other
