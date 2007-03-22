@@ -66,22 +66,23 @@ kind Stratum :: *1 where
 -- deriving Nat(s)
 
 collapse :: Stratum ~> Stratum
-{ collapse (Push Ground Ground) } = Ground
+{ collapse (Push (Up x) y) } = (Up x)
 { collapse (Up x) } = (Up x)
 { collapse Ground } = Ground
 
 arr2stratum :: * ~> Stratum
 { arr2stratum (a -> b) } = Push (Up Ground) { arr2stratum b }
 { arr2stratum Int } = Ground
+{ arr2stratum Bool } = Ground
+{ arr2stratum () } = Ground
+{ arr2stratum Float } = Ground
+{ arr2stratum (a, b) } = Ground
 
 -- --------- From       To
 data Henk :: Stratum ~> Stratum ~> *0 where
-  Lit :: a -> Henk Ground Ground
---  Lit :: Henk Ground Ground
---  Bind :: Label l -> Henk Ground strat -> Henk from to -> Henk { collapse (Push strat from) } to
---  Bind :: Label l -> Henk Ground strat -> Henk from to -> Henk (Push strat from) to
+  Lit :: a -> Henk { arr2stratum a } Ground
   Bind :: Label l -> Henk Ground (Up strat) -> Henk from to -> Henk (Push (Up strat) from) to
-  Func :: (a->b) -> Henk (Up Ground) Ground -- use Lit and {arr2stratum + cleaner}
+--  Func :: (a->b) -> Henk (Up Ground) Ground -- use Lit and {arr2stratum + cleaner}
 --  Ref :: Label l -> Henk Ground strat
   Type :: Henk Ground (Up Ground)
   Star :: Henk Ground (Up (Up g))
@@ -92,12 +93,16 @@ data Henk :: Stratum ~> Stratum ~> *0 where
 --a :: Henk Ground Ground
 --a = Ref `a
 
-tau :: Henk strat to -> Henk strat (Up to)
+--canon :: Henk strat to -> Henk { collapse strat } to
+--canon (Bind l (q@Type) (r@Type)) = Type
+
+tau :: Henk strat to -> Henk { collapse strat } (Up to)
 --tau (Bind l q r) = Bind l q (lazy tau r)
 --tau (Bind l (q@(Lit _)) (r@(Lit _))) = tau r
-tau (Bind l q r) = Bind l q (tau r)
+tau (Bind l (q@Type) (r@Type)) = Type
+tau (Bind l q r) = canon (Bind l q (tau r))
 --tau (a@Lit) = tau (Bind `ignore a a)
-tau (a@Lit _) = Type
+tau (Lit _) = Type
 tau (t@Type) = Star
 tau (s@Star) = Star
 
