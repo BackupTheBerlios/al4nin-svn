@@ -95,11 +95,12 @@ stratDiff :: Stratum ~> Stratum ~> Nat
 { stratDiff Ground Ground } = #0
 { stratDiff (Up x) (Up y)} = { stratDiff x y }
 { stratDiff (Up x) Ground } = S { stratDiff x Ground }
+{ stratDiff (Push x y) z } = { stratDiff x z }
 
 -- --------- From       To
 data Henk :: Stratum ~> Stratum ~> *0 where
   Lit :: Tractable a -> a -> Henk { tract2stratum (Tractable a) } Ground
-  Bind :: Nat' { stratDiff (Up strat) to } -> Label l -> Henk Ground (Up strat) -> Henk from to -> Henk { collapsePi { stratDiff (Up strat) to } (Push (Up strat) from) } to
+  Bind :: Nat' { stratDiff (Up strat) to } -> Label l -> Henk Ground (Up strat) -> Henk from to -> Henk (Push (Up strat) from) to
 --  Func :: (a->b) -> Henk (Up Ground) Ground -- use Lit and {arr2stratum + cleaner}
 --  Ref :: Label l -> Henk Ground strat
 --  Type :: Tractable a -> Henk { tract2stratum (Tractable a) } (Up Ground)
@@ -153,11 +154,28 @@ sameStrat0 :: Stratum' a -> Equal { stratDiff a Ground } #0 -> Equal a Ground
 sameStrat0 Ground Eq = Eq
 sameStrat0 (Up g) Eq = unreachable
 
+sameStrat2 :: forall (a :: Stratum) (b :: Stratum) . Stratum' a -> Stratum' b -> Equal { stratDiff (Up a) b } #0 -> Equal b (Up a)
+sameStrat2 Ground Ground Eq = unreachable
+sameStrat2 Ground (Up Ground) Eq = Eq
+--sameStrat2 Ground (Up (Up b)) Eq = unreachable
+--sameStrat2 (Up a) Ground Eq = unreachable
+--sameStrat2 a (Up a) (Up Ground) = Eq
+
+
 --sameStratUp :: Stratum' a -> Equal { stratDiff a  } #0 -> Equal a a
 
 
 tau (Bind Z l q r) = check Star
- where theorem sameStrat0, sameStrat1
+ where theorem sameStrat0, sameStrat2
+
+
+{-
+:set solving
+:set predicate_emission
+:set narrowing
+:set theorem
+:set
+-}
 
 -----###tau (Type _) = Star
 -----###tau Star = Star
