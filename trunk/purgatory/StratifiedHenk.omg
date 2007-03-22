@@ -65,10 +65,13 @@ kind Stratum :: *1 where
 --  Push :: Stratum Regular ~> Stratum x ~> Stratum Admin
 -- deriving Nat(s)
 
-collapsePi :: Stratum ~> Stratum ~> Stratum
-{ collapsePi (Push (Up x) y) (Up x) } = Ground
-{ collapsePi (Up x) z } = (Up x)
-{ collapsePi Ground z } = Ground
+collapsePi :: Nat ~> Stratum ~> Stratum
+--{ collapsePi x y } = x
+{ collapsePi Z (Push (Up x) y) } = Ground
+{ collapsePi Z (Up x) } = (Up x)
+{ collapsePi Z Ground } = Ground
+{ collapsePi (S n) x } = x
+
 
 arr2stratum :: * ~> Stratum
 { arr2stratum (a -> b) } = Push (Up Ground) { arr2stratum b }
@@ -88,13 +91,19 @@ tract2stratum :: * ~> Stratum
 { tract2stratum (Tractable Int) } = Ground
 { tract2stratum (Tractable (a, b)) } = Ground
 
+stratDiff :: Stratum ~> Stratum ~> Nat
+{ stratDiff Ground Ground } = #0
+{ stratDiff (Up x) (Up y)} = { stratDiff x y }
+{ stratDiff (Up x) Ground } = S { stratDiff x Ground }
+
 -- --------- From       To
 data Henk :: Stratum ~> Stratum ~> *0 where
   Lit :: Tractable a -> a -> Henk { tract2stratum (Tractable a) } Ground
-  Bind :: Label l -> Henk Ground (Up strat) -> Henk from to -> Henk { collapsePi (Push (Up strat) from) to } to
+  Bind :: Nat' { stratDiff (Up strat) to } -> Label l -> Henk Ground (Up strat) -> Henk from to -> Henk { collapsePi { stratDiff (Up strat) to } (Push (Up strat) from) } to
 --  Func :: (a->b) -> Henk (Up Ground) Ground -- use Lit and {arr2stratum + cleaner}
 --  Ref :: Label l -> Henk Ground strat
-  Type :: Tractable a -> Henk { tract2stratum (Tractable a) } (Up Ground)
+--  Type :: Tractable a -> Henk { tract2stratum (Tractable a) } (Up Ground)
+  Type :: Tractable a -> Henk Ground (Up Ground)
   Star :: Henk Ground (Up (Up g))
   -- Application
   App :: Henk (Push (Up s) from) u -> Henk Ground s -> Henk from u
@@ -109,19 +118,49 @@ data Henk :: Stratum ~> Stratum ~> *0 where
 guess :: Tractable a -> a
 guess IntTractable = 42
 
-tau :: Henk strat to -> Henk { collapsePi strat (Up to) } (Up to)
+tau :: Henk strat to -> Henk { collapsePi { stratDiff strat to } strat } (Up to)
 --tau (Bind l q r) = Bind l q (lazy tau r)
 --tau (Bind l (q@(Lit _)) (r@(Lit _))) = tau r
 --tau (Bind l (q@Type) (r@Type)) = Type
-tau (Bind l q r) = Bind l q (tau r)
+--tau (Bind l q r) = Bind l q (tau r)
 --tau (a@Lit) = tau (Bind `ignore a a)
 --tau (Lit (ArrTractable a (b@(ArrTractable c d)) f) = Bind `woot (tau (Lit b (f (guess a))))
 --tau (Lit (ArrTractable IntTractable IntTractable) f) = Bind `woot (Lit IntTractable 3) (tau (Lit IntTractable (f 42)))
 --tau (Lit (ArrTractable IntTractable IntTractable) f) = Bind `woot (Lit IntTractable 3) (tau (Lit IntTractable (f 42)))
 --tau (Lit (ArrTractable a b) f) = Bind `woot (tau (Lit b (f (guess a))))
-tau (Lit t _) = Type t
-tau (Type _) = Star
-tau Star = Star
+--tau (Lit t _) = Type t
+
+prop Stratum' :: Stratum ~> *0 where
+  Ground :: Stratum' Ground
+  Up :: forall (a :: Stratum) . Stratum' a -> Stratum' (Up a)
+  Push :: forall (a :: Stratum) (b :: Stratum) . Stratum' a -> Stratum' b -> Stratum' (Push a b)
+
+
+
+
+--sameStrat1 :: forall (a :: Stratum) (b :: Stratum) . Stratum' a -> Stratum' b -> Equal { stratDiff (Up a) (Up b) } #0 -> Equal a b
+
+
+sameStrat1 :: forall (a :: Stratum) (b :: Stratum) . Stratum' a -> Stratum' b -> Equal { stratDiff a b } #0 -> Equal a b
+sameStrat1 Ground Ground Eq = Eq
+--sameStrat1 (Up x) (Up y) Eq = check (sameStrat1 x y Eq)
+-- where theorem hyp = sameStrat1 x y
+
+--sameStrat :: forall (a :: Stratum) (b :: Stratum) . Equal a b -> Equal { stratDiff a b } #0
+--sameStrat Eq = check Eq
+
+sameStrat0 :: Stratum' a -> Equal { stratDiff a Ground } #0 -> Equal a Ground
+sameStrat0 Ground Eq = Eq
+sameStrat0 (Up g) Eq = unreachable
+
+--sameStratUp :: Stratum' a -> Equal { stratDiff a  } #0 -> Equal a a
+
+
+tau (Bind Z l q r) = check Star
+ where theorem sameStrat0, sameStrat1
+
+-----###tau (Type _) = Star
+-----###tau Star = Star
 
 kind HasHenk :: *1 where {}
 
