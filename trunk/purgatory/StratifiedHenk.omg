@@ -78,9 +78,14 @@ arr2stratum :: * ~> Stratum
 { arr2stratum Float } = Ground
 { arr2stratum (a, b) } = Ground
 
+prop Tractable :: * ~> * where
+  IntTractable :: Tractable Int
+  PairTractable :: Tractable a -> Tractable b -> Tractable (a, b)
+  ArrTractable :: Tractable a -> Tractable b -> Tractable (a -> b)
+
 -- --------- From       To
 data Henk :: Stratum ~> Stratum ~> *0 where
-  Lit :: a -> Henk { arr2stratum a } Ground
+  Lit :: Tractable a => a -> Henk { arr2stratum a } Ground
   Bind :: Label l -> Henk Ground (Up strat) -> Henk from to -> Henk (Push (Up strat) from) to
 --  Func :: (a->b) -> Henk (Up Ground) Ground -- use Lit and {arr2stratum + cleaner}
 --  Ref :: Label l -> Henk Ground strat
@@ -96,13 +101,13 @@ data Henk :: Stratum ~> Stratum ~> *0 where
 --canon :: Henk strat to -> Henk { collapse strat } to
 --canon (Bind l (q@Type) (r@Type)) = Type
 
-tau :: Henk strat to -> Henk { collapse strat } (Up to)
+tau :: Henk strat to -> Henk strat (Up to)
 --tau (Bind l q r) = Bind l q (lazy tau r)
 --tau (Bind l (q@(Lit _)) (r@(Lit _))) = tau r
-tau (Bind l (q@Type) (r@Type)) = Type
-tau (Bind l q r) = canon (Bind l q (tau r))
+--tau (Bind l (q@Type) (r@Type)) = Type
+tau (Bind l q r) = Bind l q (tau r)
 --tau (a@Lit) = tau (Bind `ignore a a)
-tau (Lit _) = Type
+--tau (Lit _) = Type
 tau (t@Type) = Star
 tau (s@Star) = Star
 
