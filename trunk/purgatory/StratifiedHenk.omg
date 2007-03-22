@@ -65,10 +65,10 @@ kind Stratum :: *1 where
 --  Push :: Stratum Regular ~> Stratum x ~> Stratum Admin
 -- deriving Nat(s)
 
-collapse :: Stratum ~> Stratum
-{ collapse (Push (Up x) y) } = (Up x)
-{ collapse (Up x) } = (Up x)
-{ collapse Ground } = Ground
+collapsePi :: Stratum ~> Stratum ~> Stratum
+{ collapsePi (Push (Up x) y) (Up x) } = Ground
+{ collapsePi (Up x) z } = (Up x)
+{ collapsePi Ground z } = Ground
 
 arr2stratum :: * ~> Stratum
 { arr2stratum (a -> b) } = Push (Up Ground) { arr2stratum b }
@@ -83,13 +83,18 @@ prop Tractable :: * ~> * where
   PairTractable :: Tractable a -> Tractable b -> Tractable (a, b)
   ArrTractable :: Tractable a -> Tractable b -> Tractable (a -> b)
 
+tract2stratum :: * ~> Stratum
+{ tract2stratum (Tractable (a -> b)) } = Push (Up Ground) { tract2stratum (Tractable b) }
+{ tract2stratum (Tractable Int) } = Ground
+{ tract2stratum (Tractable (a, b)) } = Ground
+
 -- --------- From       To
 data Henk :: Stratum ~> Stratum ~> *0 where
-  Lit :: Tractable a => a -> Henk { arr2stratum a } Ground
-  Bind :: Label l -> Henk Ground (Up strat) -> Henk from to -> Henk (Push (Up strat) from) to
+  Lit :: Tractable a -> a -> Henk { tract2stratum (Tractable a) } Ground
+  Bind :: Label l -> Henk Ground (Up strat) -> Henk from to -> Henk { collapsePi (Push (Up strat) from) to } to
 --  Func :: (a->b) -> Henk (Up Ground) Ground -- use Lit and {arr2stratum + cleaner}
 --  Ref :: Label l -> Henk Ground strat
-  Type :: Henk Ground (Up Ground)
+  Type :: Tractable a -> Henk { tract2stratum (Tractable a) } (Up Ground)
   Star :: Henk Ground (Up (Up g))
   -- Application
   App :: Henk (Push (Up s) from) u -> Henk Ground s -> Henk from u
@@ -101,19 +106,28 @@ data Henk :: Stratum ~> Stratum ~> *0 where
 --canon :: Henk strat to -> Henk { collapse strat } to
 --canon (Bind l (q@Type) (r@Type)) = Type
 
-tau :: Henk strat to -> Henk strat (Up to)
+guess :: Tractable a -> a
+guess IntTractable = 42
+
+tau :: Henk strat to -> Henk { collapsePi strat (Up to) } (Up to)
 --tau (Bind l q r) = Bind l q (lazy tau r)
 --tau (Bind l (q@(Lit _)) (r@(Lit _))) = tau r
 --tau (Bind l (q@Type) (r@Type)) = Type
 tau (Bind l q r) = Bind l q (tau r)
 --tau (a@Lit) = tau (Bind `ignore a a)
---tau (Lit _) = Type
-tau (t@Type) = Star
-tau (s@Star) = Star
+--tau (Lit (ArrTractable a (b@(ArrTractable c d)) f) = Bind `woot (tau (Lit b (f (guess a))))
+--tau (Lit (ArrTractable IntTractable IntTractable) f) = Bind `woot (Lit IntTractable 3) (tau (Lit IntTractable (f 42)))
+--tau (Lit (ArrTractable IntTractable IntTractable) f) = Bind `woot (Lit IntTractable 3) (tau (Lit IntTractable (f 42)))
+--tau (Lit (ArrTractable a b) f) = Bind `woot (tau (Lit b (f (guess a))))
+tau (Lit t _) = Type t
+tau (Type _) = Star
+tau Star = Star
 
 kind HasHenk :: *1 where {}
 
+{-
 --eval :: Row HasHenk -> Henk st s -> Henk st s
 eval :: Int -> Henk st s -> Henk st s
 eval _ (App (Bind l q r) inp) = r
 eval _ other = other
+-}
