@@ -93,6 +93,7 @@ tract2stratum :: * ~> Stratum
 
 stratDiff :: Stratum ~> Stratum ~> Nat
 { stratDiff Ground Ground } = #0
+{ stratDiff (Up x) (Up x)} = #0
 { stratDiff (Up x) (Up y)} = { stratDiff x y }
 { stratDiff (Up x) Ground } = S { stratDiff x Ground }
 { stratDiff (Push x y) z } = { stratDiff x z }
@@ -161,12 +162,41 @@ sameStrat2 Ground (Up Ground) Eq = Eq
 --sameStrat2 (Up a) Ground Eq = unreachable
 --sameStrat2 a (Up a) (Up Ground) = Eq
 
+--sameStrat2' :: forall (a :: Stratum) (b :: Stratum) . Equal { stratDiff (Up a) b } #0 -> Equal b (Up a)
+--sameStrat2' Eq = Eq
 
 --sameStratUp :: Stratum' a -> Equal { stratDiff a  } #0 -> Equal a a
 
+teachPi2Up :: Stratum' d -> Stratum' to -> Stratum' result -> (Equal to (Up d), Equal result (Up to)) -> Equal result (Up (Up d))
+teachPi2Up d (Up d) (Up (Up d)) (Eq, Eq) = Eq
 
-tau (Bind Z l q r) = check Star
- where theorem sameStrat0, sameStrat2
+teachPi2Up' :: Equal to (Up d) -> Equal result (Up to) -> Equal result (Up (Up d))
+teachPi2Up' Eq Eq = Eq
+
+teachMore :: Nat' #0 -> Henk (Push (Up g) i) to -> Equal (Up g) to
+teachMore t (Bind t _ (Type IntTractable) (Type IntTractable)) = Eq
+
+difficult :: Equal (Up g) to -> Equal {stratDiff (Up g) to} #0
+difficult Eq = Eq
+
+teachDifficult :: Nat' #0 -> Henk (Push (Up g) i) to -> Equal {stratDiff (Up g) to} #0
+teachDifficult t (Bind t _ (Type IntTractable) (Type IntTractable)) = Eq
+
+teachVictory :: Nat' #0 -> Henk (Push (Up g) i) to -> Equal {collapsePi {stratDiff (Push (Up g) i) to} (Push (Up g) i)} Ground
+teachVictory t (Bind t _ (Type IntTractable) (Type IntTractable)) = Eq
+-- where theorem teachDifficult
+
+--teachTo :: Nat' #0 -> Henk (Push (Up g) i) to -> Equal (Up g) to -> Equal to (Up g)
+--teachTo t (Bind t _ (Type IntTractable) (Type IntTractable)) Eq = check Eq
+
+teachTo :: Nat' #0 -> Henk (Push (Up g) i) to -> Henk Ground (Up (Up g)) -> Equal (Henk Ground (Up to)) (Henk Ground (Up (Up g)))
+teachTo t (Bind t _ (Type IntTractable) (Type IntTractable)) Star = Eq
+
+
+tau (b@(Bind Z l q r)) = check Star
+ where theorem teachDifficult, teachVictory, teachTo
+-- where theorem sameStrat0, sameStrat2, teachPi2Up', teachVictory, teachTo
+-- where theorem sameStrat0, sameStrat2, teachPi2Up', teachDifficult, teachVictory
 
 
 {-
