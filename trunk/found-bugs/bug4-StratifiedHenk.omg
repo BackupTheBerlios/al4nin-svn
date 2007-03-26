@@ -1,0 +1,190 @@
+-- -*-Haskell-*-
+
+{-
+ * Copyright (c) 2006, 2007 Gabor Greif
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to deal
+ * in the Software without restriction, including without limitation the rights
+ * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies
+ * of the Software, and to permit persons to whom the Software is furnished to do
+ * so, subject to the following conditions:
+ *
+ * The above copyright notice and this permission notice shall be
+ * included in all copies or substantial portions of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
+ * EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES
+ * OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
+ * NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT
+ * HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY,
+ * WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+ * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE
+ * OR OTHER DEALINGS IN THE SOFTWARE.
+ -}
+
+-- Usage:
+--
+--  Set up the environment
+--     setenv LD_LIBRARY_PATH /opt/exp/gnu/lib:$LD_LIBRARY_PATH
+--     setenv PATH /home/ggreif/%NoBackup%/Omega1.4:$PATH
+--
+--  Start the omega interpreter by typing
+--     omega StratifiedHenk.omg
+--  and run your commands on the prompt
+--
+
+import "LangPrelude.prg" 
+  (head,tail,lookup,member,fst,snd,map,Monad,maybeM,id,ioM,Row,HasType,RCons,RNil,Eq,Equal)
+
+-- \(x:T).x : Pi (x:T) T
+
+-- cit: Kamareddine jfp6
+-- Higher Degrees:
+-- tau(Gam, lam[i+1]x:A.B) === lam[i]x:A.tau(Gam\x:A, B) forall i of N
+--  where lam[0]x:A.B === B
+-- lam[1] == Pi, lam[2] == lambda
+-- Specialize (i=1):
+--  tau(Gam, lambda x:A.B) === Pi x:A.tau(Gam\x:A, B)
+-- Specialize (A=int, B=42):
+--  tau(Gam, lambda x:Int.42) === Pi x:Int.tau(Gam\x:Int, 42)
+--  with tau(Gam, 42) === Int
+--  gets: tau(Gam, lambda x:Int.42) === Pi x:Int.Int  (aka. Int->Int)
+
+-- Specialize (i=0, A=Int, B=Int):
+-- tau(Gam, Pi x:Int.Int) === lam[0]x:Int.tau(Gam\x:Int, Int)
+-- with tau(Gam, Int) === *0
+-- tau(Gam, Pi x:Int.Int) === lam[0]x:Int.*0
+-- with lam[0]x:Int.*0 === *0
+-- tau(Gam, Pi x:Int.Int) === *0
+
+diff :: Nat ~> Nat ~> Nat
+{ diff Z Z } = Z
+{ diff (S x) (S y) } = { diff x y }
+{ diff (S x) Z } = S { diff x y }
+
+--kind Diff :: *1
+--  At 
+
+kind Stratum :: Nat ~> *1 where
+  Ground :: Stratum #0
+  Up :: Stratum n ~> Stratum (S n)
+  Binder :: Stratum (S i) ~> Stratum o ~> Nat ~> Stratum o
+--  Binder :: Stratum (S i) ~> Stratum o ~> { diff (S i) o } ~> Stratum o
+
+clean :: Stratum n ~> Stratum n
+{ clean (Up x) } = Up { clean x }
+
+-- tau for the type
+collapsePi :: Stratum n ~> Stratum (S n)
+{ collapsePi Ground } = Up Ground
+{ collapsePi (Up Ground) } = Up (Up Ground)
+{ collapsePi (Up (Up x)) } = Up (Up (Up x))
+{ collapsePi (Up (Binder a b Z)) } = Up b --{ clean b }
+--{ collapsePi (Up (Binder a b (S c))) } = Binder a { collapsePi b } c -- dunno yet
+
+
+prop Tractable :: * ~> * where
+  IntTractable :: Tractable Int
+  PairTractable :: Tractable a -> Tractable b -> Tractable (a, b)
+  ArrTractable :: Tractable a -> Tractable b -> Tractable (a -> b)
+
+tract2stratum :: * ~> Stratum #1
+{ tract2stratum (Tractable (a -> b)) } = Binder { tract2stratum (Tractable a) } { tract2stratum (Tractable b) } #1
+{ tract2stratum (Tractable Int) } = Up Ground
+{ tract2stratum (Tractable (a, b)) } = Up Ground
+
+{-
+stratDiff :: Stratum ~> Stratum ~> Nat
+{ stratDiff Ground Ground } = #0
+--{ stratDiff Ground (Up y) } = #0 -- cheating
+{ stratDiff (Up x) (Up x)} = #0
+{ stratDiff (Up x) (Up y)} = { stratDiff x y }
+{ stratDiff (Up x) Ground } = S { stratDiff x Ground }
+{ stratDiff (Push x y b) z } = { stratDiff x z }
+--{ stratDiff Ground (Up x) } = unreachable
+-}
+
+
+data Henk :: forall (n :: Nat) . Stratum n ~> *0 where
+  Lit :: Tractable a -> a -> Henk { tract2stratum (Tractable a) }
+---  Bind :: Nat' n -> Label l -> Henk (Up a) -> Henk b -> Henk (Up (Binder a b n))
+--  Bind :: forall (f :: Nat) (t :: Nat) (n :: Nat) (from :: Stratum (S f)) (to :: Stratum t) (l :: Tag). Nat' n -> Label l -> Henk from -> Henk to -> Henk (Up (Binder from to n))
+  Bind :: forall (f :: Nat) (t :: Nat) (from :: Stratum (S f)) (to :: Stratum t) (l :: Tag). Nat' { diff (S f) t } -> Label l -> Henk from -> Henk to -> Henk (Up (Binder from to { diff (S f) t }))
+  Type :: Tractable a -> Henk (Up Ground)
+  Star :: Henk (Up (Up g))
+  -- Application
+---  App :: Henk (Push (Up s) from b') u b -> Henk Ground s #0 -> Henk from u b'
+
+
+--a :: Henk Ground Ground
+--a = Ref `a
+
+--reducebind :: Nat ~> Nat
+--{ reducebind Z } = Z
+--{ reducebind (S b) } = b
+
+
+tau :: Henk a-> Henk { collapsePi a }
+--tau (Bind l q r) = Bind l q (lazy tau r)
+--tau (Bind l (q@(Lit _)) (r@(Lit _))) = tau r
+--tau (Bind l (q@Type) (r@Type)) = Type
+--tau (Bind l q r) = Bind l q (tau r)
+--tau (a@Lit) = tau (Bind `ignore a a)
+--tau (Lit (ArrTractable a (b@(ArrTractable c d)) f) = Bind `woot (tau (Lit b (f (guess a))))
+--tau (Lit (ArrTractable IntTractable IntTractable) f) = Bind `woot (Lit IntTractable 3) (tau (Lit IntTractable (f 42)))
+--tau (Lit (ArrTractable IntTractable IntTractable) f) = Bind `woot (Lit IntTractable 3) (tau (Lit IntTractable (f 42)))
+--tau (Lit (ArrTractable a b) f) = Bind `woot (tau (Lit b (f (guess a))))
+--tau (Lit t _) = Type t
+
+--prop Stratum' :: Stratum ~> *0 where
+--  Ground :: Stratum' Ground
+--  Up :: forall (a :: Stratum) . Stratum' a -> Stratum' (Up a)
+--  Push :: forall (a :: Stratum) (b :: Stratum) (n :: Nat) . Stratum' a -> Stratum' b -> Nat' n -> Stratum' (Push a b n)
+
+{-
+teachZImplies0 :: Nat' #0 -> Stratum' (Push (Up f) i) -> Stratum' (Up g) -> Henk (Push (Up f) i) (Up g) -> Equal {stratDiff (Push (Up f) i) (Up g)} #0
+teachZImplies0 #0 (Push (Up Ground) _) (Up Ground) (Bind #0 l (Type IntTractable) (Type IntTractable)) = Eq
+teachZImplies0 d (Push (Up x) _) (Up y) (Bind d l Star Star) = check Eq
+ where theorem indHyp = teachZImplies0 #0 (Push x Ground) y (Bind d l Star Star)
+-}
+
+{-
+teachZImplies1 :: Nat' #0 -> Nat' {stratDiff (Push (Up f) i b) (Up g)} -> Stratum' (Push (Up f) i b) -> Stratum' (Up g) -> Henk (Push (Up f) i b) (Up g) {stratDiff (Push (Up f) i b) (Up g)} -> Henk (Push (Up f) i b) (Up g) #0 -> Equal {stratDiff (Push (Up f) i b) (Up g)} #0
+teachZImplies1 #0 #0 (Push (Up (Up Ground)) _ _) (Up (Up Ground)) (Bind d l Star Star) (Bind d l Star Star) = Eq
+--teachZImplies1 (Push (Up (Up x)) _) (Up (Up y)) (Bind d l Star Star) = check Eq
+-- where theorem indHyp = teachZImplies1 (Push (Up x) Ground) (Up y) (Bind d l Star Star)
+-}
+
+{-
+teachZImplies2 :: Nat' #0 -> Nat' {stratDiff (Push (Up f) i b) g} -> Henk (Push (Up f) i b) g {stratDiff (Push (Up f) i b) g} -> Henk (Push (Up f) i b) g #0 -> Equal {stratDiff (Up f) g} #0
+teachZImplies2 #0 #0 (Bind d l Star Star) (Bind d l Star Star) = Eq
+
+teachZImplies3 :: Nat' #0 -> Nat' {stratDiff (Push (Up f) i b) (Up h)} -> Henk (Push (Up f) i b) g {stratDiff (Push (Up f) i b) (Up h)} -> Henk (Push (Up f) i b) g #0 -> Equal {stratDiff (Up f) (Up h)} #0
+teachZImplies3 #0 #0 (Bind d l Star Star) (Bind d l Star Star) = Eq
+-}
+
+
+tau (b@(Bind Z l q r)) = check Star
+-- where theorem hyp = teachZImplies2 Z Z b b, hyp3 = teachZImplies3 Z Z b b
+
+
+{-
+:set solving
+:set predicate_emission
+:set narrowing
+:set theorem
+:set
+-}
+
+-----###tau (Type _) = Star
+-----###tau Star = Star
+
+kind HasHenk :: *1 where {}
+
+{-
+--eval :: Row HasHenk -> Henk st s -> Henk st s
+eval :: Int -> Henk st s -> Henk st s
+eval _ (App (Bind l q r) inp) = r
+eval _ other = other
+-}
