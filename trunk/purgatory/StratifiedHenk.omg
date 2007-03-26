@@ -58,39 +58,43 @@ import "LangPrelude.prg"
 -- with lam[0]x:Int.*0 === *0
 -- tau(Gam, Pi x:Int.Int) === *0
 
-kind Stratum :: *1 where
-  Ground :: Stratum -- Regular
-  Up :: Stratum ~> Stratum -- Regular
-  Push :: Stratum ~> Stratum ~> Nat ~> Stratum -- Admin
---  Push :: Stratum Regular ~> Stratum x ~> Stratum Admin
--- deriving Nat(s)
+diff :: Nat ~> Nat ~> Nat
+{ diff Z Z } = Z
+{ diff (S x) (S y) } = { diff x y }
+{ diff (S x) Z } = S { diff x y }
 
-collapsePi :: Nat ~> Stratum ~> Stratum
---{ collapsePi x y } = x
-{ collapsePi Z (Push (Up x) y b) } = Ground
-{ collapsePi Z (Up x) } = (Up x)
-{ collapsePi Z Ground } = Ground
-{ collapsePi (S n) x } = x
+--kind Diff :: *1
+--  At 
 
+kind Stratum :: Nat ~> *1 where
+  Ground :: Stratum #0
+  Up :: Stratum n ~> Stratum (S n)
+  Binder :: Stratum (S i) ~> Stratum o ~> Nat ~> Stratum o
+--  Binder :: Stratum (S i) ~> Stratum o ~> { diff (S i) o } ~> Stratum o
 
-arr2stratum :: * ~> Stratum
-{ arr2stratum (a -> b) } = Push (Up Ground) { arr2stratum b } #1
-{ arr2stratum Int } = Ground
-{ arr2stratum Bool } = Ground
-{ arr2stratum () } = Ground
-{ arr2stratum Float } = Ground
-{ arr2stratum (a, b) } = Ground
+clean :: Stratum n ~> Stratum n
+{ clean (Up x) } = Up { clean x }
+
+-- tau for the type
+collapsePi :: Stratum n ~> Stratum (S n)
+{ collapsePi Ground } = Up Ground
+{ collapsePi (Up Ground) } = Up (Up Ground)
+{ collapsePi (Up (Up x)) } = Up (Up (Up x))
+{ collapsePi (Up (Binder a b Z)) } = Up b --{ clean b }
+--{ collapsePi (Up (Binder a b (S c))) } = Binder a { collapsePi b } c -- dunno yet
+
 
 prop Tractable :: * ~> * where
   IntTractable :: Tractable Int
   PairTractable :: Tractable a -> Tractable b -> Tractable (a, b)
   ArrTractable :: Tractable a -> Tractable b -> Tractable (a -> b)
 
-tract2stratum :: * ~> Stratum
-{ tract2stratum (Tractable (a -> b)) } = Push (Up Ground) { tract2stratum (Tractable b) } #1
-{ tract2stratum (Tractable Int) } = Ground
-{ tract2stratum (Tractable (a, b)) } = Ground
+tract2stratum :: * ~> Stratum #1
+{ tract2stratum (Tractable (a -> b)) } = Binder { tract2stratum (Tractable a) } { tract2stratum (Tractable b) } #1
+{ tract2stratum (Tractable Int) } = Up Ground
+{ tract2stratum (Tractable (a, b)) } = Up Ground
 
+{-
 stratDiff :: Stratum ~> Stratum ~> Nat
 { stratDiff Ground Ground } = #0
 --{ stratDiff Ground (Up y) } = #0 -- cheating
@@ -99,29 +103,29 @@ stratDiff :: Stratum ~> Stratum ~> Nat
 { stratDiff (Up x) Ground } = S { stratDiff x Ground }
 { stratDiff (Push x y b) z } = { stratDiff x z }
 --{ stratDiff Ground (Up x) } = unreachable
+-}
 
--- --------- From       To
-data Henk :: Stratum ~> Stratum ~> Nat ~> *0 where
-  Lit :: Tractable a -> a -> Henk { tract2stratum (Tractable a) } Ground #0
-  Bind :: Nat' { stratDiff (Up strat) to } -> Label l -> Henk Ground (Up strat) b -> Henk from to #0 -> Henk (Push (Up strat) from b) to { stratDiff (Up strat) to }
---  Func :: (a->b) -> Henk (Up Ground) Ground -- use Lit and {arr2stratum + cleaner}
---  Ref :: Label l -> Henk Ground strat
---  Type :: Tractable a -> Henk { tract2stratum (Tractable a) } (Up Ground)
-  Type :: Tractable a -> Henk Ground (Up Ground) #0
-  Star :: Henk Ground (Up (Up g)) #0
+
+data Henk :: forall (n :: Nat) . Stratum n ~> *0 where
+  Lit :: Tractable a -> a -> Henk { tract2stratum (Tractable a) }
+---  Bind :: Nat' n -> Label l -> Henk (Up a) -> Henk b -> Henk (Up (Binder a b n))
+--  Bind :: forall (f :: Nat) (t :: Nat) (n :: Nat) (from :: Stratum (S f)) (to :: Stratum t) (l :: Tag). Nat' n -> Label l -> Henk from -> Henk to -> Henk (Up (Binder from to n))
+  Bind :: forall (f :: Nat) (t :: Nat) (from :: Stratum (S f)) (to :: Stratum t) (l :: Tag). Nat' { diff (S f) t } -> Label l -> Henk from -> Henk to -> Henk (Up (Binder from to { diff (S f) t }))
+  Type :: Tractable a -> Henk (Up Ground)
+  Star :: Henk (Up (Up g))
   -- Application
-  App :: Henk (Push (Up s) from b') u b -> Henk Ground s #0 -> Henk from u b'
+---  App :: Henk (Push (Up s) from b') u b -> Henk Ground s #0 -> Henk from u b'
 
 
 --a :: Henk Ground Ground
 --a = Ref `a
 
-reducebind :: Nat ~> Nat
-{ reducebind Z } = Z
-{ reducebind (S b) } = b
+--reducebind :: Nat ~> Nat
+--{ reducebind Z } = Z
+--{ reducebind (S b) } = b
 
 
-tau :: Henk strat to b -> Henk { collapsePi b strat } (Up to) { reducebind b }
+tau :: Henk a-> Henk { collapsePi a }
 --tau (Bind l q r) = Bind l q (lazy tau r)
 --tau (Bind l (q@(Lit _)) (r@(Lit _))) = tau r
 --tau (Bind l (q@Type) (r@Type)) = Type
@@ -133,10 +137,10 @@ tau :: Henk strat to b -> Henk { collapsePi b strat } (Up to) { reducebind b }
 --tau (Lit (ArrTractable a b) f) = Bind `woot (tau (Lit b (f (guess a))))
 --tau (Lit t _) = Type t
 
-prop Stratum' :: Stratum ~> *0 where
-  Ground :: Stratum' Ground
-  Up :: forall (a :: Stratum) . Stratum' a -> Stratum' (Up a)
-  Push :: forall (a :: Stratum) (b :: Stratum) (n :: Nat) . Stratum' a -> Stratum' b -> Nat' n -> Stratum' (Push a b n)
+--prop Stratum' :: Stratum ~> *0 where
+--  Ground :: Stratum' Ground
+--  Up :: forall (a :: Stratum) . Stratum' a -> Stratum' (Up a)
+--  Push :: forall (a :: Stratum) (b :: Stratum) (n :: Nat) . Stratum' a -> Stratum' b -> Nat' n -> Stratum' (Push a b n)
 
 {-
 teachZImplies0 :: Nat' #0 -> Stratum' (Push (Up f) i) -> Stratum' (Up g) -> Henk (Push (Up f) i) (Up g) -> Equal {stratDiff (Push (Up f) i) (Up g)} #0
@@ -145,22 +149,24 @@ teachZImplies0 d (Push (Up x) _) (Up y) (Bind d l Star Star) = check Eq
  where theorem indHyp = teachZImplies0 #0 (Push x Ground) y (Bind d l Star Star)
 -}
 
-
+{-
 teachZImplies1 :: Nat' #0 -> Nat' {stratDiff (Push (Up f) i b) (Up g)} -> Stratum' (Push (Up f) i b) -> Stratum' (Up g) -> Henk (Push (Up f) i b) (Up g) {stratDiff (Push (Up f) i b) (Up g)} -> Henk (Push (Up f) i b) (Up g) #0 -> Equal {stratDiff (Push (Up f) i b) (Up g)} #0
 teachZImplies1 #0 #0 (Push (Up (Up Ground)) _ _) (Up (Up Ground)) (Bind d l Star Star) (Bind d l Star Star) = Eq
 --teachZImplies1 (Push (Up (Up x)) _) (Up (Up y)) (Bind d l Star Star) = check Eq
 -- where theorem indHyp = teachZImplies1 (Push (Up x) Ground) (Up y) (Bind d l Star Star)
+-}
 
-
-teachZImplies2 :: Nat' #0 -> Nat' {stratDiff (Push (Up f) i b) g} -> Henk (Push (Up f) i b) g {stratDiff (Push (Up f) i b) g} -> Henk (Push (Up f) i b) g #0 -> Equal {stratDiff (Push (Up f) i b) g} #0
+{-
+teachZImplies2 :: Nat' #0 -> Nat' {stratDiff (Push (Up f) i b) g} -> Henk (Push (Up f) i b) g {stratDiff (Push (Up f) i b) g} -> Henk (Push (Up f) i b) g #0 -> Equal {stratDiff (Up f) g} #0
 teachZImplies2 #0 #0 (Bind d l Star Star) (Bind d l Star Star) = Eq
 
-teachZImplies3 :: Nat' #0 -> Nat' {stratDiff (Push (Up f) i b) g} -> Henk (Push (Up f) i b) g {stratDiff (Push (Up f) i b) g} -> Henk (Push (Up f) i b) g #0 -> Equal (Up f) g
+teachZImplies3 :: Nat' #0 -> Nat' {stratDiff (Push (Up f) i b) (Up h)} -> Henk (Push (Up f) i b) g {stratDiff (Push (Up f) i b) (Up h)} -> Henk (Push (Up f) i b) g #0 -> Equal {stratDiff (Up f) (Up h)} #0
 teachZImplies3 #0 #0 (Bind d l Star Star) (Bind d l Star Star) = Eq
+-}
 
 
 tau (b@(Bind Z l q r)) = check Star
- where theorem hyp = teachZImplies2 Z Z b b--, hyp3 = teachZImplies3 Z Z b b
+-- where theorem hyp = teachZImplies2 Z Z b b, hyp3 = teachZImplies3 Z Z b b
 
 
 {-
