@@ -58,10 +58,16 @@ import "LangPrelude.prg"
 -- with lam[0]x:Int.*0 === *0
 -- tau(Gam, Pi x:Int.Int) === *0
 
-diff :: Nat ~> Nat ~> Nat
-{ diff Z Z } = Z
+kind Signed = Positive Nat | Negative
+
+diff :: Nat ~> Nat ~> Signed
+{ diff Z Z } = Positive Z
+{ diff Z (S y) } = Negative
 { diff (S x) (S y) } = { diff x y }
-{ diff (S x) Z } = S { diff x y }
+{ diff (S x) Z } = Positive (S x)
+
+extractPos :: Signed ~> Nat
+{ extractPos (Positive n) } = n
 
 --kind Diff :: *1
 --  At 
@@ -109,7 +115,8 @@ data Henk :: forall (n :: Nat) . Stratum n ~> *0 where
   Lit :: Tractable a -> a -> Henk { tract2stratum (Tractable a) }
 ---  Bind :: Nat' n -> Label l -> Henk (Up a) -> Henk b -> Henk (Up (Binder a b n))
 --  Bind :: forall (f :: Nat) (t :: Nat) (n :: Nat) (from :: Stratum (S f)) (to :: Stratum t) (l :: Tag). Nat' n -> Label l -> Henk from -> Henk to -> Henk (Up (Binder from to n))
-  Bind :: forall (f :: Nat) (t :: Nat) (from :: Stratum (S f)) (to :: Stratum t) (l :: Tag). Nat' { diff (S f) t } -> Label l -> Henk from -> Henk to -> Henk (Binder from to { diff (S f) t })
+--  Bind :: forall (f :: Nat) (t :: Nat) (from :: Stratum (S f)) (to :: Stratum t) (l :: Tag). Nat' { extractPos { diff (S f) t } } -> Label l -> Henk from -> Henk to -> Henk (Binder from to { extractPos { diff (S f) t } })
+  Bind :: forall (f :: Nat) (t :: Nat) (from :: Stratum (S f)) (to :: Stratum t) (l :: Tag). Signed' { diff (S f) t } -> Label l -> Henk from -> Henk to -> Henk (Binder from to { extractPos { diff (S f) t } })
   Type :: Tractable a -> Henk (Up Ground)
 ---  Star :: Henk (Up (Up g))
   Star :: forall (f :: Nat) (g :: Stratum (S f)) . Henk (Up g)
@@ -167,14 +174,28 @@ teachZImplies3 #0 #0 (Bind d l Star Star) (Bind d l Star Star) = Eq
 sss :: forall (a :: *) . a -> a
 ida a = a
 
+prop Signed' :: Signed ~> *0 where
+  Positive :: Nat' n -> Signed' (Positive n)
+  Negative :: Signed' Negative
+
 
 -- we need a theorem over diff: when result is Z then the arguments are the same
-zeroDiff :: forall (f :: Nat) (t :: Nat) . Nat' f -> Nat' t -> Nat' { diff t f } -> Equal { diff t f } Z -> Equal f t
-zeroDiff Z Z Z Eq = Eq
-zeroDiff (S a) Z _ Eq = unreachable
-zeroDiff Z (S a) _ Eq = unreachable
-zeroDiff (S a) (S b) Z Eq = check Eq
- where theorem hyp = zeroDiff a b
+--zeroDiff :: forall (f :: Nat) (t :: Nat) . Nat' f -> Nat' t -> Nat' { extractPos { diff t f } } -> Equal { extractPos { diff t f } } Z -> Equal f t
+zeroDiffRewrite :: forall (f :: Nat) (t :: Nat) . Nat' f -> Nat' t -> Signed' { diff t f } -> Equal { extractPos { diff t f } } Z
+zeroDiffRewrite Z Z (Positive Z) = Eq
+zeroDiffRewrite (S a) Z (Positive Z) = unreachable
+zeroDiffRewrite Z (S a) (Positive Z) = unreachable
+zeroDiffRewrite (S a) (S b) (Positive Z) = Eq
+ where theorem hyp = zeroDiffRewrite a b (Positive Z)
+
+
+zeroDiff :: forall (f :: Nat) (t :: Nat) . Nat' f -> Nat' t -> Signed' { diff t f } -> Equal { extractPos { diff t f } } Z -> Equal f t
+zeroDiff Z Z (Positive Z) Eq = Eq
+zeroDiff (S a) Z (Positive Z) Eq = unreachable
+zeroDiff Z (S a) (Positive Z) Eq = unreachable
+zeroDiff (S a) (S b) (Positive Z) Eq = check Eq
+ where theorem zeroDiff, hyp = zeroDiffRewrite a b
+-- where theorem hyp = zeroDiff a b (Positive Z)
 
 {-
 
