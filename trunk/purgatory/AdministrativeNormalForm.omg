@@ -47,12 +47,30 @@ import "LangPrelude.prg"
 kind Cat = Term | Value
 kind Form = General | Administrative
 
-data L :: Cat ~> *0 where
-  Var :: Label l -> L Term
-  Lam :: Label l -> L a -> L Value
-  App :: L a -> L b -> L Term
-  Let :: Label l -> L a -> L b -> L Term
-  LetRec :: [(Label l, L Value)] -> L a -> L Term
+data L :: Cat ~> Form ~> *0 where
+  Var :: Label l -> L Term General
+  Lam :: Label l -> L a f -> L Value General
+  App :: L a f -> L b g -> L Term General
+  Let :: Label l -> L a f -> L b g -> L Term Administrative
+  LetRec :: [(Label l, L Value General)] -> L a f -> L Term Administrative
+
+anf :: L a f -> L Term Administrative
+
+anf (App (Let x e1 e2) e3) = anf (Let x e1 (App e2 e3))
+anf (App y (Let x e1 e2)) = anf (Let x e1 (App y e2))
+anf (Let x2 (Let x1 e1 e2) e) = anf (Let x1 e1 (Let x2 e2 e))
+
+-- idempotent form
+anf (i@(Let _ _ _)) = i
+
+-- LetRec reductions (from cyclic call-by-value calculus)
+
+-- TODO
+-- idempotent form
+anf (i@(LetRec _ _)) = i
+
+-- kill-all rule
+anf e = Let `fresh e (Var `fresh)
 
 
 
