@@ -73,7 +73,15 @@ anf (i@(LetRec _ _)) = i
 -- kill-all rule
 anf e = Let `fresh e (Var `fresh)
 
+kind YesNo = Yes | No
+--                    Named? Lambda?
+kind ANFCat = ANFTerm YesNo YesNo
+kind Potence = Name | Other
 
-
-
+data ANF :: ANFCat ~> Potence ~> *0 where
+  ANFVar :: Label l -> ANF (ANFTerm Yes No) Name
+  ANFLet :: Label l -> ANF (ANFTerm Yes a) b -> ANF (ANFTerm No No) Other
+  ANFLetRec :: [(Label l, ANF (ANFTerm a Yes) Other)] -> ANF (ANFTerm No No) Other
+  ANFLam :: Label l -> ANF a b -> ANF (ANFTerm Yes Yes) Other
+  ANFApp :: ANF (ANFTerm Yes No) Name -> ANF (ANFTerm Yes No) Name -> ANF (ANFTerm Yes No) Other
 
