@@ -1,0 +1,60 @@
+-- -*-Haskell-*-
+
+{-
+ * Copyright (c) 2007 Gabor Greif
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to deal
+ * in the Software without restriction, including without limitation the rights
+ * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies
+ * of the Software, and to permit persons to whom the Software is furnished to do
+ * so, subject to the following conditions:
+ *
+ * The above copyright notice and this permission notice shall be
+ * included in all copies or substantial portions of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
+ * EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES
+ * OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
+ * NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT
+ * HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY,
+ * WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+ * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE
+ * OR OTHER DEALINGS IN THE SOFTWARE.
+ -}
+
+-- Usage:
+--
+--  Set up the environment
+--     setenv LD_LIBRARY_PATH /opt/exp/gnu/lib:$LD_LIBRARY_PATH
+--     setenv PATH /home/ggreif/%NoBackup%/Omega1.4:$PATH
+--
+--  Start the omega interpreter by typing
+--     omega StratifiedHenk.omg
+--  and run your commands on the prompt
+--
+
+import "LangPrelude.prg" 
+  (head,tail,lookup,member,fst,snd,map,Monad,maybeM,id,ioM,Row,HasType,RCons,RNil,Eq,Equal)
+
+
+-- This document is a tentative to formalize the system
+-- "The Essence of Compiling Call-by-Need"
+-- by Amr Sabry (1999).
+
+-- Figure 1 introduces the source language (CBV variant)
+
+kind Cat = Term | Value
+kind Form = General | Administrative
+
+data L :: Cat ~> *0 where
+  Var :: Label l -> L Term
+  Lam :: Label l -> L a -> L Value
+  App :: L a -> L b -> L Term
+  Let :: Label l -> L a -> L b -> L Term
+  LetRec :: [(Label l, L Value)] -> L a -> L Term
+
+
+
+
+
