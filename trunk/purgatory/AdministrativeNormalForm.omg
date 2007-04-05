@@ -56,17 +56,18 @@ data L :: Cat ~> Form ~> *0 where
 
 anf :: L a f -> L Term Administrative
 
+-- Let reductions (from computational lambda calculus)
 anf (App (Let x e1 e2) e3) = anf (Let x e1 (App e2 e3))
 anf (App y (Let x e1 e2)) = anf (Let x e1 (App y e2))
 anf (Let x2 (Let x1 e1 e2) e) = anf (Let x1 e1 (Let x2 e2 e))
 
--- idempotent form
-anf (i@(Let _ _ _)) = i
-
 -- LetRec reductions (from cyclic call-by-value calculus)
+anf (App (LetRec d e) e') = anf (LetRec d (App e e'))
+anf (App y (LetRec d e)) = anf (LetRec d (App y e))
+anf (Let x1 (LetRec d e1) e) = LetRec d (Let x1 e1 e)
 
--- TODO
--- idempotent form
+-- idempotent forms
+anf (i@(Let _ _ _)) = i
 anf (i@(LetRec _ _)) = i
 
 -- kill-all rule
