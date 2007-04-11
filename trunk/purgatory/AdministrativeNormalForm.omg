@@ -45,16 +45,16 @@ import "LangPrelude.prg"
 -- Figure 1 introduces the source language (CBV variant)
 
 kind Cat = Term | Value
-kind Form = General | Administrative
+kind Form = General | Administrative Form
 
 data L :: Cat ~> Form ~> *0 where
   Var :: Label l -> L Term General
   Lam :: Label l -> L a f -> L Value General
   App :: L a f -> L b g -> L Term General
-  Let :: Label l -> L a f -> L b g -> L Term Administrative
-  LetRec :: [(Label l, L Value General)] -> L a f -> L Term Administrative
+  Let :: Label l -> L a f -> L b g -> L Term (Administrative f)
+  LetRec :: [(Label l, L Value General)] -> L a f -> L Term (Administrative General)
 
-anf :: L a f -> L Term Administrative
+anf :: L a f -> L Term (Administrative General)
 
 -- Let reductions (from computational lambda calculus)
 anf (App (Let x e1 e2) e3) = anf (Let x e1 (App e2 e3))
@@ -67,11 +67,15 @@ anf (App y (LetRec d e)) = anf (LetRec d (App y e))
 anf (Let x1 (LetRec d e1) e) = LetRec d (Let x1 e1 e)
 
 -- idempotent forms
-anf (i@(Let _ _ _)) = i
+anf (i@(Let _ (Var _) _)) = i
+anf (i@(Let _ (Lam _ _) _)) = i
+anf (i@(Let _ (App _ _) _)) = i
 anf (i@(LetRec _ _)) = i
 
 -- kill-all rule
-anf e = Let `fresh e (Var `fresh)
+anf (e@(Var _)) = Let `fresh e (Var `fresh)
+anf (e@(App _ _)) = Let `fresh e (Var `fresh)
+anf (e@(Lam _ _)) = Let `fresh e (Var `fresh)
 
 
 -- Section 2.3 -- Introduce the ANF language
@@ -88,10 +92,22 @@ data ANF :: ANFCat ~> *0 where
 
 -- convert normalized source to ANF
 
-conv :: L Term Administrative -> ANF (ANFTerm No No)
+conv :: L Term (Administrative General) -> ANF (ANFTerm No No)
 conv (Let l e1 e2) = ANFLet l (conv' e1) (conv' e2)
 
+--cat2lambda :: Cat ~> YesNo
+--{cat2lambda Term} = No
+--{cat2lambda Value} = Yes
+
+cat2lambda' :: Cat ~> ANFCat
+{cat2lambda' Term} = ANFTerm Yes No
+{cat2lambda' Value} = ANFTerm Yes Yes
+ 
+
 -- expression conversions
-conv' :: L a General -> ANF (ANFTerm Yes l)
+conv' :: L a General -> ANF {cat2lambda' a}
+--conv' :: L a General -> ANF (ANFTerm Yes {cat2lambda a}) -- BUG?
+-- While parsing a type var, unknown type: cat2lambda, at line: 105 column: 1
+
 conv' (Var l) = ANFVar l
 
