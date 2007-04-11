@@ -73,15 +73,25 @@ anf (i@(LetRec _ _)) = i
 -- kill-all rule
 anf e = Let `fresh e (Var `fresh)
 
+
+-- Section 2.3 -- Introduce the ANF language
 kind YesNo = Yes | No
 --                    Named? Lambda?
 kind ANFCat = ANFTerm YesNo YesNo
-kind Potence = Name | Other
 
-data ANF :: ANFCat ~> Potence ~> *0 where
-  ANFVar :: Label l -> ANF (ANFTerm Yes No) Name
-  ANFLet :: Label l -> ANF (ANFTerm Yes a) b -> ANF (ANFTerm No No) Other
-  ANFLetRec :: [(Label l, ANF (ANFTerm a Yes) Other)] -> ANF (ANFTerm No No) Other
-  ANFLam :: Label l -> ANF a b -> ANF (ANFTerm Yes Yes) Other
-  ANFApp :: ANF (ANFTerm Yes No) Name -> ANF (ANFTerm Yes No) Name -> ANF (ANFTerm Yes No) Other
+data ANF :: ANFCat ~> *0 where
+  ANFVar :: Label l -> ANF (ANFTerm Yes No)
+  ANFLet :: Label l -> ANF (ANFTerm Yes a) -> ANF (ANFTerm a b) -> ANF (ANFTerm No No)
+  ANFLetRec :: [(Label l, ANF (ANFTerm a Yes))] -> ANF (ANFTerm a b) -> ANF (ANFTerm No No)
+  ANFLam :: Label l -> ANF a -> ANF (ANFTerm Yes Yes)
+  ANFApp :: ANF (ANFTerm Yes No) -> ANF (ANFTerm Yes No) -> ANF (ANFTerm Yes No)
+
+-- convert normalized source to ANF
+
+conv :: L Term Administrative -> ANF (ANFTerm No No)
+conv (Let l e1 e2) = ANFLet l (conv' e1) (conv' e2)
+
+-- expression conversions
+conv' :: L a General -> ANF (ANFTerm Yes l)
+conv' (Var l) = ANFVar l
 
