@@ -92,9 +92,6 @@ data ANF :: ANFCat ~> *0 where
 
 -- convert normalized source to ANF
 
-conv :: L Term (Administrative General) -> ANF (ANFTerm No No)
-conv (Let l e1 e2) = ANFLet l (conv' e1) (conv' e2)
-
 --cat2lambda :: Cat ~> YesNo
 --{cat2lambda Term} = No
 --{cat2lambda Value} = Yes
@@ -103,11 +100,14 @@ cat2lambda' :: Cat ~> ANFCat
 {cat2lambda' Term} = ANFTerm Yes No
 {cat2lambda' Value} = ANFTerm Yes Yes
  
+conv :: L Term (Administrative General) -> ANF (ANFTerm No No)
+--conv (Let l e1 e2) = ANFLet l (conv' e1) (conv'' e2)
+conv (Let l e1 e2) = ANFLet l (check (conv' e1)) (ANFVar l) -- cheat
+
 
 -- expression conversions
 conv' :: L a General -> ANF {cat2lambda' a}
 --conv' :: L a General -> ANF (ANFTerm Yes {cat2lambda a}) -- BUG?
--- While parsing a type var, unknown type: cat2lambda, at line: 105 column: 1
 
 conv' (Var l) = ANFVar l
 
