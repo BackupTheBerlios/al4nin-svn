@@ -45,3 +45,19 @@ data Thrist :: Doe ~> Doe ~> * where
   SoToWi :: Thrist a So -> Thrist a Wi
   SoTo :: Thrist a So -> Thrist a b
 
+data Lisead :: Doe ~> Doe ~> * where
+  Nil :: Lisead a a
+  Cons :: (Thrist a b -> Thrist a c) -> Lisead a b -> Lisead a c
+ deriving List(l)
+
+{- Example session:
+
+prompt> #[]l
+ #[]l : forall (a:Doe).Lisead a a
+prompt> #[ToWi]l
+ #[<primfun ToWi>]l : forall (a:Doe).Lisead a Wi
+prompt> #[ToWi,SoToWi]l
+ #[<primfun ToWi>,<primfun SoToWi>]l : Lisead So Wi
+
+-}
+
