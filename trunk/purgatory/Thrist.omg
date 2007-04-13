@@ -42,11 +42,14 @@ kind Doe = Wi | So
 data Thrist :: Doe ~> Doe ~> * where
   ToWi :: Thrist a Wi
   SoToWi :: Thrist So Wi
+  WiToWi :: Thrist Wi Wi
+  WiToSo :: Thrist Wi So
   SoTo :: Thrist So b
+  ToSo :: Thrist a So
 
 data Lisead :: Doe ~> Doe ~> * where
   Nil :: Lisead a a
-  Cons :: Thrist b c -> Lisead a b -> Lisead a c
+  Cons :: Thrist c b -> Lisead b a -> Lisead c a
  deriving List(l)
 
 {- Example session:
@@ -55,8 +58,17 @@ prompt> #[]l
  #[]l : forall (a:Doe).Lisead a a
 prompt> #[ToWi]l
  #[ToWi]l : forall (a:Doe).Lisead a Wi
-prompt> #[ToWi,SoToWi]l
- #[ToWi,SoToWi]l : Lisead So Wi
+prompt> #[ToWi,WiToWi]l
+ #[ToWi,WiToWi]l : forall (a:Doe).Lisead a Wi
+prompt> #[ToWi,WiToWi,ToSo]l
+ #[ToWi,WiToWi,ToSo]l : forall (a:Doe).Lisead a So
 
 -}
+
+cat :: Lisead a b -> String
+cat Nil = ""
+cat (Cons ToWi r) = "ToWi " ++ cat r
+cat (Cons WiToWi r) = "WiToWi " ++ cat r
+cat (Cons WiToSo r) = "WiToSo " ++ cat r
+cat (Cons SoTo r) = "SoTo " ++ cat r
 
