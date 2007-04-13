@@ -40,14 +40,13 @@ import "LangPrelude.prg"
 kind Doe = Wi | So
 
 data Thrist :: Doe ~> Doe ~> * where
-  Start :: Thrist a a
-  ToWi :: Thrist a b -> Thrist a Wi
-  SoToWi :: Thrist a So -> Thrist a Wi
-  SoTo :: Thrist a So -> Thrist a b
+  ToWi :: Thrist a Wi
+  SoToWi :: Thrist So Wi
+  SoTo :: Thrist So b
 
 data Lisead :: Doe ~> Doe ~> * where
   Nil :: Lisead a a
-  Cons :: (Thrist a b -> Thrist a c) -> Lisead a b -> Lisead a c
+  Cons :: Thrist b c -> Lisead a b -> Lisead a c
  deriving List(l)
 
 {- Example session:
@@ -55,9 +54,9 @@ data Lisead :: Doe ~> Doe ~> * where
 prompt> #[]l
  #[]l : forall (a:Doe).Lisead a a
 prompt> #[ToWi]l
- #[<primfun ToWi>]l : forall (a:Doe).Lisead a Wi
+ #[ToWi]l : forall (a:Doe).Lisead a Wi
 prompt> #[ToWi,SoToWi]l
- #[<primfun ToWi>,<primfun SoToWi>]l : Lisead So Wi
+ #[ToWi,SoToWi]l : Lisead So Wi
 
 -}
 
