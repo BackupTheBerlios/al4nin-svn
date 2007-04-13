@@ -30,7 +30,7 @@
 --     setenv PATH /home/ggreif/%NoBackup%/Omega1.4:$PATH
 --
 --  Start the omega interpreter by typing
---     omega StratifiedHenk.omg
+--     omega AdministrativeNormalForm.omg
 --  and run your commands on the prompt
 --
 
