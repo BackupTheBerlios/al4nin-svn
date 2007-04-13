@@ -35,7 +35,8 @@
 --
 
 import "LangPrelude.prg" 
-  (head,tail,lookup,member,fst,snd,map,Monad,maybeM,id,ioM,Row,HasType,RCons,RNil,Eq,Equal)
+  (head,tail,lookup,member,fst,snd,map,Monad,maybeM,id,ioM,Row,HasType,RCons,RNil,Eq,Equal,
+  listM)
 
 kind Doe = Wi | So
 
@@ -72,3 +73,12 @@ cat (Cons WiToWi r) = "WiToWi " ++ cat r
 cat (Cons WiToSo r) = "WiToSo " ++ cat r
 cat (Cons SoTo r) = "SoTo " ++ cat r
 
+
+t1 = do
+     let a = 1
+     b <- Just 4
+     c <- Just a
+     return (c + b)
+    where monad maybeM
+
+liseadM = Monad (\t -> #[t]l) (\t -> #[t]l) (\t -> #[t]l)
