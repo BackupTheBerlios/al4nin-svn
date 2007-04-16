@@ -1,0 +1,89 @@
+-- -*-Haskell-*-
+
+{-
+ * Copyright (c) 2007 Gabor Greif
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to deal
+ * in the Software without restriction, including without limitation the rights
+ * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies
+ * of the Software, and to permit persons to whom the Software is furnished to do
+ * so, subject to the following conditions:
+ *
+ * The above copyright notice and this permission notice shall be
+ * included in all copies or substantial portions of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
+ * EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES
+ * OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
+ * NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT
+ * HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY,
+ * WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+ * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE
+ * OR OTHER DEALINGS IN THE SOFTWARE.
+ -}
+
+-- Usage:
+--
+--  Set up the environment
+--     setenv LD_LIBRARY_PATH /opt/exp/gnu/lib:$LD_LIBRARY_PATH
+--     setenv PATH /home/ggreif/%NoBackup%/Omega1.4:$PATH
+--
+--  Start the omega interpreter by typing
+--     omega Thrist.omg
+--  and run your commands on the prompt
+--
+
+import "LangPrelude.prg" 
+  (head,tail,lookup,member,fst,snd,map,Monad,maybeM,id,ioM,Row,HasType,RCons,RNil,Eq,Equal,
+  listM)
+
+kind Doe = Wi | So
+
+data Thrist :: Doe ~> Doe ~> * where
+  ToWi :: Thrist a Wi
+  SoToWi :: Thrist So Wi
+  WiToWi :: Thrist Wi Wi
+  WiToSo :: Thrist Wi So
+  SoTo :: Thrist So b
+  ToSo :: Thrist a So
+
+
+data Lisead :: forall (l :: *1) . (l ~> l ~> *)  ~> l ~> l ~> * where
+  Nil :: Lisead k a a
+  Cons :: k c b -> Lisead k b a -> Lisead k c a
+ deriving List(l)
+
+
+{- Example session:
+
+prompt> #[]l
+ #[]l : forall (a:*1) (b:a ~> a ~> *0) (c:a:*1).Lisead b c c
+prompt> #[ToWi]l
+ #[ToWi]l : forall (a:Doe).Lisead Thrist a Wi
+prompt> #[ToWi,WiToWi]l
+ #[ToWi,WiToWi]l : forall (a:Doe).Lisead Thrist a Wi
+prompt> #[ToWi,WiToWi,ToSo]l
+ #[ToWi,WiToWi,ToSo]l : forall (a:Doe).Lisead Thrist a So
+prompt> #[ToWi,WiToWi,ToSo,SoTo]l
+ #[ToWi,WiToWi,ToSo,SoTo]l : forall (a:Doe) (b:Doe).Lisead Thrist a b
+
+-}
+
+cat :: Lisead Thrist a b -> String
+cat Nil = ""
+cat (Cons ToWi r) = "ToWi " ++ cat r
+cat (Cons WiToWi r) = "WiToWi " ++ cat r
+cat (Cons WiToSo r) = "WiToSo " ++ cat r
+cat (Cons SoTo r) = "SoTo " ++ cat r
+cat (Cons ToSo r) = "ToSo " ++ cat r
+
+
+t1 = do
+     let a = 1
+     b <- Just 4
+     c <- Just a
+     return (c + b)
+    where monad maybeM
+
+liseadM = Monad (\t -> #[t]l) (\t -> #[t]l) (\t -> #[t]l)
