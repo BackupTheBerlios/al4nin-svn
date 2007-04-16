@@ -25,11 +25,11 @@
 import "LangPrelude.prg"
   (head,tail,lookup,member,fst,snd,map,Monad,maybeM,id,ioM,Row,HasType,RCons,RNil,Eq,Equal,(==))
 
-kind TypeClass :: *1 where
+kind TypeClass :: *2 where
   FstClass :: TypeClass
   SndClass :: TypeClass
 
-kind Returnability :: *1 where
+kind Returnability :: *2 where
   Returnable :: Returnability
   Nonreturnable :: Returnability
 
@@ -174,7 +174,7 @@ a = Wum2
 -- dabbling with Prop
 
 
-
+{-
 isPermutation :: Row t ~> Row t ~> Prop
-{ isPermutation r1 r2 } = r1 == { intersectRows r1 r2 }
-
+{ isPermutation r1 r2 } = (==) r1 { intersectRows r1 r2 }
+-}
