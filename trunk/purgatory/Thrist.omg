@@ -75,7 +75,7 @@ cat Nil = ""
 cat (Cons ToWi r) = "ToWi " ++ cat r
 cat (Cons WiToWi r) = "WiToWi " ++ cat r
 cat (Cons WiToSo r) = "WiToSo " ++ cat r
-cat (Cons SoTo r) = "SoTo " ++ cat r
+-- cat (Cons SoTo r) = "SoTo " ++ cat r
 cat (Cons ToSo r) = "ToSo " ++ cat r
 
 
@@ -86,4 +86,4 @@ t1 = do
      return (c + b)
     where monad maybeM
 
-liseadM = Monad (\t -> #[t]l) (\t -> #[t]l) (\t -> #[t]l)
+--- liseadM = Monad (\t -> #[t]l) (\t -> #[t]l) (\t -> #[t]l)

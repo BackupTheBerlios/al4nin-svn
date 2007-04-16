@@ -25,6 +25,9 @@
 import "LangPrelude.prg"
   (head,tail,lookup,member,fst,snd,map,Monad,maybeM,id,ioM,Row,HasType,RCons,RNil,Eq,Equal,(==))
 
+import "Thrist.omg"
+  (Lisead, l, Nil, Cons)
+
 kind TypeClass :: *2 where
   FstClass :: TypeClass
   SndClass :: TypeClass
@@ -177,4 +180,26 @@ a = Wum2
 {-
 isPermutation :: Row t ~> Row t ~> Prop
 { isPermutation r1 r2 } = (==) r1 { intersectRows r1 r2 }
+-}
+
+
+-- experimenting with Lisead
+
+kind Uses = Indifferent | Use Tag Uses
+
+joinUses :: Uses ~> Uses ~> Uses
+{joinUses Indifferent us} = us
+{joinUses (Use t rest) us} = Use t us
+
+data Val :: Uses ~> *0 where
+  Re :: Label l -> Val (Use l Indifferent)
+
+data Ins :: Uses ~> Uses ~> *0 where
+  Ret :: Val u -> Ins a {joinUses u a}
+
+{- Example transcript
+prompt> Cons (Ret (Re `a)) Nil
+ #[(Ret (Re `a))]l : forall (a:Uses).Lisead Ins a (Use `a a)
+prompt> Cons (Ret (Re `a)) (Cons (Ret (Re `b)) Nil)
+ #[(Ret (Re `a)),(Ret (Re `b))]l : forall (a:Uses).Lisead Ins a (Use `b (Use `a a))
 -}
