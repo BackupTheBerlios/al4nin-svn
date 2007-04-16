@@ -48,30 +48,35 @@ data Thrist :: Doe ~> Doe ~> * where
   SoTo :: Thrist So b
   ToSo :: Thrist a So
 
-data Lisead :: Doe ~> Doe ~> * where
-  Nil :: Lisead a a
-  Cons :: Thrist c b -> Lisead b a -> Lisead c a
+
+data Lisead :: forall (l :: *1) . (l ~> l ~> *)  ~> l ~> l ~> * where
+  Nil :: Lisead k a a
+  Cons :: k c b -> Lisead k b a -> Lisead k c a
  deriving List(l)
+
 
 {- Example session:
 
 prompt> #[]l
- #[]l : forall (a:Doe).Lisead a a
+ #[]l : forall (a:*1) (b:a ~> a ~> *0) (c:a:*1).Lisead b c c
 prompt> #[ToWi]l
- #[ToWi]l : forall (a:Doe).Lisead a Wi
+ #[ToWi]l : forall (a:Doe).Lisead Thrist a Wi
 prompt> #[ToWi,WiToWi]l
- #[ToWi,WiToWi]l : forall (a:Doe).Lisead a Wi
+ #[ToWi,WiToWi]l : forall (a:Doe).Lisead Thrist a Wi
 prompt> #[ToWi,WiToWi,ToSo]l
- #[ToWi,WiToWi,ToSo]l : forall (a:Doe).Lisead a So
+ #[ToWi,WiToWi,ToSo]l : forall (a:Doe).Lisead Thrist a So
+prompt> #[ToWi,WiToWi,ToSo,SoTo]l
+ #[ToWi,WiToWi,ToSo,SoTo]l : forall (a:Doe) (b:Doe).Lisead Thrist a b
 
 -}
 
-cat :: Lisead a b -> String
+cat :: Lisead Thrist a b -> String
 cat Nil = ""
 cat (Cons ToWi r) = "ToWi " ++ cat r
 cat (Cons WiToWi r) = "WiToWi " ++ cat r
 cat (Cons WiToSo r) = "WiToSo " ++ cat r
 cat (Cons SoTo r) = "SoTo " ++ cat r
+cat (Cons ToSo r) = "ToSo " ++ cat r
 
 
 t1 = do
