@@ -40,18 +40,18 @@ import "LangPrelude.prg"
 
 kind Doe = Wi | So
 
-data Thrist :: Doe ~> Doe ~> * where
-  ToWi :: Thrist a Wi
-  SoToWi :: Thrist So Wi
-  WiToWi :: Thrist Wi Wi
-  WiToSo :: Thrist Wi So
-  SoTo :: Thrist So b
-  ToSo :: Thrist a So
+data DooBiDoo :: Doe ~> Doe ~> * where
+  ToWi :: DooBiDoo a Wi
+  SoToWi :: DooBiDoo So Wi
+  WiToWi :: DooBiDoo Wi Wi
+  WiToSo :: DooBiDoo Wi So
+  SoTo :: DooBiDoo So b
+  ToSo :: DooBiDoo a So
 
 
-data Lisead :: forall (l :: *1) . (l ~> l ~> *)  ~> l ~> l ~> * where
-  Nil :: Lisead k a a
-  Cons :: k c b -> Lisead k b a -> Lisead k c a
+data Thrist :: forall (l :: *1) . (l ~> l ~> *)  ~> l ~> l ~> * where
+  Nil :: Thrist k a a
+  Cons :: k c b -> Thrist k b a -> Thrist k c a
  deriving List(l)
 
 
@@ -70,12 +70,12 @@ prompt> #[ToWi,WiToWi,ToSo,SoTo]l
 
 -}
 
-cat :: Lisead Thrist a b -> String
+cat :: Thrist DooBiDoo a b -> String
 cat Nil = ""
 cat (Cons ToWi r) = "ToWi " ++ cat r
 cat (Cons WiToWi r) = "WiToWi " ++ cat r
 cat (Cons WiToSo r) = "WiToSo " ++ cat r
--- cat (Cons SoTo r) = "SoTo " ++ cat r
+cat (Cons SoTo r) = "SoTo " ++ cat r
 cat (Cons ToSo r) = "ToSo " ++ cat r
 
 
@@ -87,3 +87,21 @@ t1 = do
     where monad maybeM
 
 --- liseadM = Monad (\t -> #[t]l) (\t -> #[t]l) (\t -> #[t]l)
+
+kind Type = T *0
+
+kind CatShape = Shape (Row Type)
+
+data Cat :: CatShape ~> CatShape ~> *0 where
+  Push :: a -> Cat (Shape s) (Shape (RCons (T a) s))
+  Dup :: Cat (Shape (RCons t s)) (Shape (RCons t (RCons t s)))
+  Print :: Cat (Shape (RCons t s)) (Shape s)
+
+cat' :: Thrist Cat a b -> String
+cat' Nil = ""
+cat' (Cons (Push a) r) = "Push " ++ show a ++ "\n" ++ cat' r
+cat' (Cons Dup r) = "Dup" ++ "\n" ++ cat' r
+cat' (Cons Print r) = "Print" ++ "\n" ++ cat' r
+
+interpretCat :: Thrist Cat (forall a . a) b -> IO Int
+
