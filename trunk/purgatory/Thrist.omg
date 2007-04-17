@@ -86,7 +86,8 @@ t1 = do
      return (c + b)
     where monad maybeM
 
---- liseadM = Monad (\t -> #[t]l) (\t -> #[t]l) (\t -> #[t]l)
+-- Cat thrist
+-- See: http://en.wikipedia.org/wiki/Cat_%28programming_language%29
 
 kind Type = T *0
 
@@ -96,12 +97,26 @@ data Cat :: CatShape ~> CatShape ~> *0 where
   Push :: a -> Cat (Shape s) (Shape (RCons (T a) s))
   Dup :: Cat (Shape (RCons t s)) (Shape (RCons t (RCons t s)))
   Print :: Cat (Shape (RCons t s)) (Shape s)
+  Pop :: Cat (Shape (RCons t s)) (Shape s)
+  Swap :: Cat (Shape (RCons a (RCons b s))) (Shape (RCons b (RCons a s)))
+  Add :: Cat (Shape (RCons (T Int) (RCons (T Int) s))) (Shape (RCons (T Int) s))
+  Greater :: Cat (Shape (RCons (T Int) (RCons (T Int) s))) (Shape (RCons (T Bool) s))
+  If :: Thrist Cat (Shape s) (Shape t) ->
+        Thrist Cat (Shape s) (Shape t) ->
+        Cat (Shape (RCons (T Bool) s)) (Shape t)
+
+te1 = #[Push 42, Dup, Greater, If #[Pop, Push `hh]l #[Push 42, Add, Print, Push `hh]l]l
 
 cat' :: Thrist Cat a b -> String
 cat' Nil = ""
 cat' (Cons (Push a) r) = "Push " ++ show a ++ "\n" ++ cat' r
 cat' (Cons Dup r) = "Dup" ++ "\n" ++ cat' r
 cat' (Cons Print r) = "Print" ++ "\n" ++ cat' r
+cat' (Cons Pop r) = "Pop" ++ "\n" ++ cat' r
+cat' (Cons Swap r) = "Swap" ++ "\n" ++ cat' r
+cat' (Cons Add r) = "Add" ++ "\n" ++ cat' r
+cat' (Cons Greater r) = "Greater" ++ "\n" ++ cat' r
+cat' (Cons (If yes no) r) = "If " ++ show yes ++ " ELSE " ++ show no ++ "\n" ++ cat' r
 
-interpretCat :: Thrist Cat (forall a . a) b -> IO Int
-
+--interpretCat :: Thrist Cat (forall a . (Shape a)) b -> IO a
+--interpretCat _ = putStr "Hello"
