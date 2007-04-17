@@ -116,5 +116,12 @@ cat' (Cons Add r) = "Add" ++ "\n" ++ cat' r
 cat' (Cons Greater r) = "Greater" ++ "\n" ++ cat' r
 cat' (Cons (If yes no) r) = "If " ++ show yes ++ " ELSE " ++ show no ++ "\n" ++ cat' r
 
---interpretCat :: Thrist Cat (forall a . (Shape a)) b -> IO a
---interpretCat _ = putStr "Hello"
+interpretCat :: (forall a . Thrist Cat (Shape a) (Shape a)) -> IO ()
+-- interpretCat :: (forall a . exists b . Thrist Cat (Shape a) b) -> IO ()
+interpretCat _ = putStr "Hello"
+
+##test "was not what was expected"
+  te2 = interpretCat (Cons (Push 11) te1)
+
+te3 = interpretCat #[Push 23, Pop]l
+
