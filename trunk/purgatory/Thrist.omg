@@ -173,3 +173,7 @@ te3 = interpretCat #[Push 23, Pop]l
 te4 = interpretCat #[Push 42, Push 11, Greater, If #[Push True]l #[Push False]l, Print]l
 te5 = interpretCat #[Push 42, Push 32, Push 1, Add, Swap, Print, Print]l
 
+##test "Mixup in Decs (not reported yet)"
+ Weee :: CatShape
+ type Weee = Shape (Row *0)
+
