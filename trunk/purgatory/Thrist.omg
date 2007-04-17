@@ -89,21 +89,19 @@ t1 = do
 -- Cat thrist
 -- See: http://en.wikipedia.org/wiki/Cat_%28programming_language%29
 
-kind Type = T *0
-
-kind CatShape = Shape (Row Type)
+kind CatShape = Shape (Row *0)
 
 data Cat :: CatShape ~> CatShape ~> *0 where
-  Push :: a -> Cat (Shape s) (Shape (RCons (T a) s))
+  Push :: a -> Cat (Shape s) (Shape (RCons a s))
   Dup :: Cat (Shape (RCons t s)) (Shape (RCons t (RCons t s)))
   Print :: Cat (Shape (RCons t s)) (Shape s)
   Pop :: Cat (Shape (RCons t s)) (Shape s)
   Swap :: Cat (Shape (RCons a (RCons b s))) (Shape (RCons b (RCons a s)))
-  Add :: Cat (Shape (RCons (T Int) (RCons (T Int) s))) (Shape (RCons (T Int) s))
-  Greater :: Cat (Shape (RCons (T Int) (RCons (T Int) s))) (Shape (RCons (T Bool) s))
+  Add :: Cat (Shape (RCons Int (RCons Int s))) (Shape (RCons Int s))
+  Greater :: Cat (Shape (RCons Int (RCons Int s))) (Shape (RCons Bool s))
   If :: Thrist Cat (Shape s) (Shape t) ->
         Thrist Cat (Shape s) (Shape t) ->
-        Cat (Shape (RCons (T Bool) s)) (Shape t)
+        Cat (Shape (RCons Bool s)) (Shape t)
 
 te1 = #[Push 42, Dup, Greater, If #[Pop, Push `hh]l #[Push 42, Add, Print, Push `hh]l]l
 
