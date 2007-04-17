@@ -102,6 +102,7 @@ data Cat :: CatShape ~> CatShape ~> *0 where
   If :: Thrist Cat (Shape s) (Shape t) ->
         Thrist Cat (Shape s) (Shape t) ->
         Cat (Shape (RCons Bool s)) (Shape t)
+---  Plug :: Cat (Shape a) (Shape b) , exists???
 
 te1 = #[Push 42, Dup, Greater, If #[Pop, Push `hh]l #[Push 42, Add, Print, Push `hh]l]l
 
@@ -116,9 +117,34 @@ cat' (Cons Add r) = "Add" ++ "\n" ++ cat' r
 cat' (Cons Greater r) = "Greater" ++ "\n" ++ cat' r
 cat' (Cons (If yes no) r) = "If " ++ show yes ++ " ELSE " ++ show no ++ "\n" ++ cat' r
 
-interpretCat :: (forall a . Thrist Cat (Shape a) (Shape a)) -> IO ()
+data Stack :: Row *0 ~> *0 where
+  Empty :: Stack RNil
+  Pu :: a -> Stack s -> Stack (RCons a s)
+
+interpretCat :: (forall a . Thrist Cat (Shape a) (Shape a)) -> IO (Stack RNil)
 -- interpretCat :: (forall a . exists b . Thrist Cat (Shape a) b) -> IO ()
-interpretCat _ = putStr "Hello"
+interpretCat thr = interpretCat' thr (returnIO Empty)
+
+--interpretCat' :: Thrist Cat (Shape a) (Shape b) -> Stack a -> IO () -> (Stack b, IO ())
+interpretCat' :: Thrist Cat (Shape a) (Shape b) -> IO (Stack a) -> IO (Stack b)
+interpretCat' Nil act = act
+interpretCat' (Cons (Push a) r) act = do
+--  bind act (\st' -> return (Pu a st'))
+  let a1 = bind act (\st' -> return (Pu a st'))
+  interpretCat' r a1
+      where monad ioM
+
+interpretCat' (Cons Pop r) act = do
+  Pu _ st <- act
+  interpretCat' r (return st)
+      where monad ioM
+
+interpretCat' (Cons Print r) act = do
+  Pu a st <- act
+  new <- putStr (show a)
+  interpretCat' r (return st)
+      where monad ioM
+
 
 ##test "was not what was expected"
   te2 = interpretCat (Cons (Push 11) te1)
