@@ -58,15 +58,15 @@ data Thrist :: forall (l :: *1) . (l ~> l ~> *)  ~> l ~> l ~> * where
 {- Example session:
 
 prompt> #[]l
- #[]l : forall (a:*1) (b:a ~> a ~> *0) (c:a:*1).Lisead b c c
+ #[]l : forall (a:*1) (b:a ~> a ~> *0) (c:a:*1).Thrist b c c
 prompt> #[ToWi]l
- #[ToWi]l : forall (a:Doe).Lisead Thrist a Wi
+ #[ToWi]l : forall (a:Doe).Thrist DooBiDoo a Wi
 prompt> #[ToWi,WiToWi]l
- #[ToWi,WiToWi]l : forall (a:Doe).Lisead Thrist a Wi
+ #[ToWi,WiToWi]l : forall (a:Doe).Thrist DooBiDoo a Wi
 prompt> #[ToWi,WiToWi,ToSo]l
- #[ToWi,WiToWi,ToSo]l : forall (a:Doe).Lisead Thrist a So
+ #[ToWi,WiToWi,ToSo]l : forall (a:Doe).Thrist DooBiDoo a So
 prompt> #[ToWi,WiToWi,ToSo,SoTo]l
- #[ToWi,WiToWi,ToSo,SoTo]l : forall (a:Doe) (b:Doe).Lisead Thrist a b
+ #[ToWi,WiToWi,ToSo,SoTo]l : forall (a:Doe) (b:Doe).Thrist DooBiDoo a b
 
 -}
 
@@ -78,13 +78,6 @@ cat (Cons WiToSo r) = "WiToSo " ++ cat r
 cat (Cons SoTo r) = "SoTo " ++ cat r
 cat (Cons ToSo r) = "ToSo " ++ cat r
 
-
-t1 = do
-     let a = 1
-     b <- Just 4
-     c <- Just a
-     return (c + b)
-    where monad maybeM
 
 -- Cat thrist
 -- See: http://en.wikipedia.org/wiki/Cat_%28programming_language%29
@@ -102,7 +95,6 @@ data Cat :: CatShape ~> CatShape ~> *0 where
   If :: Thrist Cat (Shape s) (Shape t) ->
         Thrist Cat (Shape s) (Shape t) ->
         Cat (Shape (RCons Bool s)) (Shape t)
----  Plug :: Cat (Shape a) (Shape b) , exists???
 
 te1 = #[Push 42, Dup, Greater, If #[Pop, Push `hh]l #[Push 42, Add, Print, Push `hh]l]l
 
@@ -122,16 +114,15 @@ data Stack :: Row *0 ~> *0 where
   Pu :: a -> Stack s -> Stack (RCons a s)
 
 interpretCat :: (forall a . Thrist Cat (Shape a) (Shape a)) -> IO (Stack RNil)
--- interpretCat :: (forall a . exists b . Thrist Cat (Shape a) b) -> IO ()
 interpretCat thr = interpretCat' thr (returnIO Empty)
 
---interpretCat' :: Thrist Cat (Shape a) (Shape b) -> Stack a -> IO () -> (Stack b, IO ())
 interpretCat' :: Thrist Cat (Shape a) (Shape b) -> IO (Stack a) -> IO (Stack b)
+
 interpretCat' Nil act = act
+
 interpretCat' (Cons (Push a) r) act = do
---  bind act (\st' -> return (Pu a st'))
-  let a1 = bind act (\st' -> return (Pu a st'))
-  interpretCat' r a1
+  st <- act
+  interpretCat' r (return (Pu a st))
       where monad ioM
 
 interpretCat' (Cons Pop r) act = do
@@ -145,9 +136,40 @@ interpretCat' (Cons Print r) act = do
   interpretCat' r (return st)
       where monad ioM
 
+interpretCat' (Cons Dup r) act = do
+  Pu a st <- act
+  interpretCat' r (return (Pu a (Pu a st)))
+      where monad ioM
+
+interpretCat' (Cons Swap r) act = do
+  Pu a st <- act
+  let (Pu b st') = st
+  interpretCat' r (return (Pu b (Pu a st')))
+      where monad ioM
+
+interpretCat' (Cons Add r) act = do
+  Pu a st <- act
+  let (Pu b st') = st
+  interpretCat' r (return (Pu (a + b) st'))
+      where monad ioM
+
+interpretCat' (Cons Greater r) act = do
+  Pu a st <- act
+  let (Pu b st') = st
+  interpretCat' r (return (Pu (b > a) st'))
+      where monad ioM
+
+interpretCat' (Cons (If yes no) r) act = do
+  Pu cond st <- act
+  let act' = return st
+  interpretCat' r (if cond then interpretCat' yes act' else interpretCat' no act')
+      where monad ioM
+
 
 ##test "was not what was expected"
   te2 = interpretCat (Cons (Push 11) te1)
 
 te3 = interpretCat #[Push 23, Pop]l
+te4 = interpretCat #[Push 42, Push 11, Greater, If #[Push True]l #[Push False]l, Print]l
+te5 = interpretCat #[Push 42, Push 32, Push 1, Add, Swap, Print, Print]l
 
