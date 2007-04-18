@@ -36,7 +36,7 @@
 
 import "LangPrelude.prg" 
   (head,tail,lookup,member,fst,snd,map,Monad,maybeM,id,ioM,Row,HasType,RCons,RNil,Eq,Equal,
-  listM)
+  listM, foldl, foldr)
 
 
 data Thrist :: forall (l :: *1) . (l ~> l ~> *)  ~> l ~> l ~> * where
@@ -46,16 +46,26 @@ data Thrist :: forall (l :: *1) . (l ~> l ~> *)  ~> l ~> l ~> * where
 
 
 data Parse :: *0 ~> *0 ~> *0 where
-  Atom :: (a -> b) -> a -> Parse a b
-  Try :: (a -> Maybe b) -> a -> Parse a b
---  Rep :: 
+  Atom :: Char -> Parse Char Char                -- exact match
+--  Atom :: a -> (a -> Bool) Parse a a                -- exact match
+  Sure :: (a -> b) -> Parse a b         -- always matches and converts
+  Try :: (a -> Maybe b) -> Parse a b    -- pipeline stops if no match
+  Rep :: Parse a b -> Parse [a] [b]     -- consume as many as matches
+  Group :: [Parse a b] -> Parse [a] [b] -- all must match
+  CataStar :: ((a -> b -> b) -> b -> [a] -> b) -> Parse [a] b
+  CataPlus :: ([a] -> b) -> Parse [a] b
+  Wrap :: Thrist Parse a b -> Parse a b
 
-
-char = Atom (id :: Char -> Char)
+letter = (Atom :: Char -> Parse Char Char)
+char = Sure (id :: Char -> Char)
 digit = Try (\c -> if ord '0' <= ord c && ord c <= ord '9' then Just (ord c - ord '0') else Nothing)
 
+num = Wrap #[Rep digit, CataPlus (foldr (\s n -> 10 * s + n) 0)]l
 
 
+abcd = Group [letter 'a', letter 'b', letter 'c', letter 'd']
 
 
-
+parse :: Thrist Parse a b -> a -> Maybe b
+parse Nil _ = Nothing
+parse (Cons (Atom a) _) b = if ord a == ord b then Just a else Nothing
