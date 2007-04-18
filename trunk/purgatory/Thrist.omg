@@ -120,49 +120,37 @@ interpretCat' :: Thrist Cat (Shape a) (Shape b) -> IO (Stack a) -> IO (Stack b)
 
 interpretCat' Nil act = act
 
-interpretCat' (Cons (Push a) r) act = do
-  st <- act
-  interpretCat' r (return (Pu a st))
-      where monad ioM
-
-interpretCat' (Cons Pop r) act = do
-  Pu _ st <- act
-  interpretCat' r (return st)
-      where monad ioM
-
-interpretCat' (Cons Print r) act = do
-  Pu a st <- act
-  new <- putStr (show a)
-  interpretCat' r (return st)
-      where monad ioM
-
-interpretCat' (Cons Dup r) act = do
-  Pu a st <- act
-  interpretCat' r (return (Pu a (Pu a st)))
-      where monad ioM
-
-interpretCat' (Cons Swap r) act = do
-  Pu a st <- act
-  let (Pu b st') = st
-  interpretCat' r (return (Pu b (Pu a st')))
-      where monad ioM
-
-interpretCat' (Cons Add r) act = do
-  Pu a st <- act
-  let (Pu b st') = st
-  interpretCat' r (return (Pu (a + b) st'))
-      where monad ioM
-
-interpretCat' (Cons Greater r) act = do
-  Pu a st <- act
-  let (Pu b st') = st
-  interpretCat' r (return (Pu (b > a) st'))
-      where monad ioM
-
-interpretCat' (Cons (If yes no) r) act = do
-  Pu cond st <- act
-  let act' = return st
-  interpretCat' r (if cond then interpretCat' yes act' else interpretCat' no act')
+interpretCat' thr act =
+    case thr of
+	     (Cons (Push a) r) -> do
+				  st <- act
+				  interpretCat' r (return (Pu a st))
+	     (Cons Pop r) -> do
+			     Pu _ st <- act
+			     interpretCat' r (return st)
+	     (Cons Print r) -> do
+			       Pu a st <- act
+			       new <- putStr (show a)
+			       interpretCat' r (return st)
+	     (Cons Dup r) -> do
+			     Pu a st <- act
+  			     interpretCat' r (return (Pu a (Pu a st)))
+	     (Cons Swap r) -> do
+			      Pu a st <- act
+			      let (Pu b st') = st
+			      interpretCat' r (return (Pu b (Pu a st')))
+	     (Cons Add r) -> do
+			     Pu a st <- act
+			     let (Pu b st') = st
+			     interpretCat' r (return (Pu (a + b) st'))
+	     (Cons Greater r) -> do
+				 Pu a st <- act
+				 let (Pu b st') = st
+				 interpretCat' r (return (Pu (b > a) st'))
+	     (Cons (If yes no) r) -> do
+				     Pu cond st <- act
+				     let act' = return st
+				     interpretCat' r (if cond then interpretCat' yes act' else interpretCat' no act')
       where monad ioM
 
 
