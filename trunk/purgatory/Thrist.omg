@@ -82,6 +82,10 @@ cat (Cons ToSo r) = "ToSo " ++ cat r
 -- Cat thrist
 -- See: http://en.wikipedia.org/wiki/Cat_%28programming_language%29
 
+blow :: Nat ~> Row *0 ~> Row *0
+{blow Z s} = s
+{blow (S n) s} = RCons t {blow n s}
+
 kind CatShape = Shape (Row *0)
 
 data Cat :: CatShape ~> CatShape ~> *0 where
@@ -89,6 +93,7 @@ data Cat :: CatShape ~> CatShape ~> *0 where
   Dup :: Cat (Shape (RCons t s)) (Shape (RCons t (RCons t s)))
   Print :: Cat (Shape (RCons t s)) (Shape s)
   Pop :: Cat (Shape (RCons t s)) (Shape s)
+  PopN :: Nat' (S n) -> Cat (Shape {blow (S n) s}) (Shape s)
   Swap :: Cat (Shape (RCons a (RCons b s))) (Shape (RCons b (RCons a s)))
   Add :: Cat (Shape (RCons Int (RCons Int s))) (Shape (RCons Int s))
   Greater :: Cat (Shape (RCons Int (RCons Int s))) (Shape (RCons Bool s))
@@ -104,6 +109,7 @@ cat' (Cons (Push a) r) = "Push " ++ show a ++ "\n" ++ cat' r
 cat' (Cons Dup r) = "Dup" ++ "\n" ++ cat' r
 cat' (Cons Print r) = "Print" ++ "\n" ++ cat' r
 cat' (Cons Pop r) = "Pop" ++ "\n" ++ cat' r
+cat' (Cons (PopN n) r) = "PopN " ++ show n ++ "\n" ++ cat' r
 cat' (Cons Swap r) = "Swap" ++ "\n" ++ cat' r
 cat' (Cons Add r) = "Add" ++ "\n" ++ cat' r
 cat' (Cons Greater r) = "Greater" ++ "\n" ++ cat' r
@@ -128,6 +134,18 @@ interpretCat' thr act =
 	     (Cons Pop r) -> do
 			     Pu _ st <- act
 			     interpretCat' r (return st)
+	     (Cons (PopN (S n)) r) -> do
+				      Pu _ st <- act
+				      interpretCat' r (popMore n st)
+--	     (Cons (PopN (S n)) r) -> do
+--				      Pu _ st <- act
+--				      popMore n st
+--					  where
+--					  popMore :: Nat' n -> Stack {blow n b} -> IO (Stack b)
+--					  popMore Z st = interpretCat' r (return st)
+--					  popMore (S n) st = do
+--							     let (Pu _ st') = st
+--							     popMore n st'
 	     (Cons Print r) -> do
 			       Pu a st <- act
 			       new <- putStr (show a)
@@ -153,6 +171,14 @@ interpretCat' thr act =
 				     interpretCat' r (if cond then interpretCat' yes act' else interpretCat' no act')
       where monad ioM
 
+
+popMore :: Nat' n -> Stack {blow n b} -> IO (Stack b)
+popMore Z st = return st
+    where monad ioM
+popMore (S n) st = do
+		   let (Pu _ st') = st
+		   popMore n st'
+    where monad ioM
 
 ##test "was not what was expected"
   te2 = interpretCat (Cons (Push 11) te1)
