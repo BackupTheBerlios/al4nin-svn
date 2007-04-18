@@ -92,7 +92,6 @@ data Cat :: CatShape ~> CatShape ~> *0 where
   Push :: a -> Cat (Shape s) (Shape (RCons a s))
   Dup :: Cat (Shape (RCons t s)) (Shape (RCons t (RCons t s)))
   Print :: Cat (Shape (RCons t s)) (Shape s)
-  Pop :: Cat (Shape (RCons t s)) (Shape s)
   PopN :: Nat' (S n) -> Cat (Shape {blow (S n) s}) (Shape s)
   Swap :: Cat (Shape (RCons a (RCons b s))) (Shape (RCons b (RCons a s)))
   Add :: Cat (Shape (RCons Int (RCons Int s))) (Shape (RCons Int s))
@@ -101,14 +100,13 @@ data Cat :: CatShape ~> CatShape ~> *0 where
         Thrist Cat (Shape s) (Shape t) ->
         Cat (Shape (RCons Bool s)) (Shape t)
 
-te1 = #[Push 42, Dup, Greater, If #[Pop, Push `hh]l #[Push 42, Add, Print, Push `hh]l]l
+te1 = #[Push 42, Dup, Greater, If #[pop, Push `hh]l #[Push 42, Add, Print, Push `hh]l]l
 
 cat' :: Thrist Cat a b -> String
 cat' Nil = ""
 cat' (Cons (Push a) r) = "Push " ++ show a ++ "\n" ++ cat' r
 cat' (Cons Dup r) = "Dup" ++ "\n" ++ cat' r
 cat' (Cons Print r) = "Print" ++ "\n" ++ cat' r
-cat' (Cons Pop r) = "Pop" ++ "\n" ++ cat' r
 cat' (Cons (PopN n) r) = "PopN " ++ show n ++ "\n" ++ cat' r
 cat' (Cons Swap r) = "Swap" ++ "\n" ++ cat' r
 cat' (Cons Add r) = "Add" ++ "\n" ++ cat' r
@@ -131,9 +129,6 @@ interpretCat' thr act =
 	     (Cons (Push a) r) -> do
 				  st <- act
 				  interpretCat' r (return (Pu a st))
-	     (Cons Pop r) -> do
-			     Pu _ st <- act
-			     interpretCat' r (return st)
 	     (Cons (PopN (S n)) r) -> do
 				      Pu _ st <- act
 				      interpretCat' r (popMore n st)
@@ -175,8 +170,7 @@ popMore (S n) st = do
 ##test "was not what was expected"
   te2 = interpretCat (Cons (Push 11) te1)
 
-te3 = interpretCat #[Push 23, Pop]l
-te3a = interpretCat #[Push 23, pop]l
+te3 = interpretCat #[Push 23, pop]l
 te4 = interpretCat #[Push 42, Push 11, Greater, If #[Push True]l #[Push False]l, Print]l
 te5 = interpretCat #[Push 42, Push 32, Push 1, Add, Swap, Print, Print]l
 te6 = interpretCat #[Push 42, Push 32, Push 1, Add, Swap, Print, Dup, PopN #2]l
