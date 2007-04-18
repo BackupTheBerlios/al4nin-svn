@@ -102,6 +102,12 @@ data Cat :: CatShape ~> CatShape ~> *0 where
 
 te1 = #[Push 42, Dup, Greater, If #[pop, Push `hh]l #[Push 42, Add, Print, Push `hh]l]l
 
+{- This needs more magic:
+showThrist :: (t a b -> String) -> Thrist t a b -> String
+showThrist f Nil = ""
+showThrist f (Cons t r) = f t ++ showThrist f r
+-}
+
 cat' :: Thrist Cat a b -> String
 cat' Nil = ""
 cat' (Cons (Push a) r) = "Push " ++ show a ++ "\n" ++ cat' r
