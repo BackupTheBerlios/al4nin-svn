@@ -1,0 +1,193 @@
+-- -*-Haskell-*-
+
+{-
+ * Copyright (c) 2007 Gabor Greif
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to deal
+ * in the Software without restriction, including without limitation the rights
+ * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies
+ * of the Software, and to permit persons to whom the Software is furnished to do
+ * so, subject to the following conditions:
+ *
+ * The above copyright notice and this permission notice shall be
+ * included in all copies or substantial portions of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
+ * EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES
+ * OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
+ * NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT
+ * HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY,
+ * WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+ * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE
+ * OR OTHER DEALINGS IN THE SOFTWARE.
+ -}
+
+-- Usage:
+--
+--  Set up the environment
+--     setenv LD_LIBRARY_PATH /opt/exp/gnu/lib:$LD_LIBRARY_PATH
+--     setenv PATH /home/ggreif/%NoBackup%/Omega1.4:$PATH
+--
+--  Start the omega interpreter by typing
+--     omega Thrist.omg
+--  and run your commands on the prompt
+--
+
+import "LangPrelude.prg" 
+  (head,tail,lookup,member,fst,snd,map,Monad,maybeM,id,ioM,Row,HasType,RCons,RNil,Eq,Equal,
+  listM)
+
+kind Doe = Wi | So
+
+data DooBiDoo :: Doe ~> Doe ~> * where
+  ToWi :: DooBiDoo a Wi
+  SoToWi :: DooBiDoo So Wi
+  WiToWi :: DooBiDoo Wi Wi
+  WiToSo :: DooBiDoo Wi So
+  SoTo :: DooBiDoo So b
+  ToSo :: DooBiDoo a So
+
+
+data Thrist :: forall (l :: *1) . (l ~> l ~> *)  ~> l ~> l ~> * where
+  Nil :: Thrist k a a
+  Cons :: k c b -> Thrist k b a -> Thrist k c a
+ deriving List(l)
+
+
+{- Example session:
+
+prompt> #[]l
+ #[]l : forall (a:*1) (b:a ~> a ~> *0) (c:a:*1).Thrist b c c
+prompt> #[ToWi]l
+ #[ToWi]l : forall (a:Doe).Thrist DooBiDoo a Wi
+prompt> #[ToWi,WiToWi]l
+ #[ToWi,WiToWi]l : forall (a:Doe).Thrist DooBiDoo a Wi
+prompt> #[ToWi,WiToWi,ToSo]l
+ #[ToWi,WiToWi,ToSo]l : forall (a:Doe).Thrist DooBiDoo a So
+prompt> #[ToWi,WiToWi,ToSo,SoTo]l
+ #[ToWi,WiToWi,ToSo,SoTo]l : forall (a:Doe) (b:Doe).Thrist DooBiDoo a b
+
+-}
+
+cat :: Thrist DooBiDoo a b -> String
+cat Nil = ""
+cat (Cons ToWi r) = "ToWi " ++ cat r
+cat (Cons WiToWi r) = "WiToWi " ++ cat r
+cat (Cons WiToSo r) = "WiToSo " ++ cat r
+cat (Cons SoTo r) = "SoTo " ++ cat r
+cat (Cons ToSo r) = "ToSo " ++ cat r
+
+
+-- Cat thrist
+-- See: http://en.wikipedia.org/wiki/Cat_%28programming_language%29
+
+blow :: Nat ~> Row *0 ~> Row *0
+{blow Z s} = s
+{blow (S n) s} = RCons t {blow n s}
+
+kind CatShape = Shape (Row *0)
+
+data Cat :: CatShape ~> CatShape ~> *0 where
+  Push :: a -> Cat (Shape s) (Shape (RCons a s))
+  Dup :: Cat (Shape (RCons t s)) (Shape (RCons t (RCons t s)))
+  Print :: Cat (Shape (RCons t s)) (Shape s)
+  Pop :: Cat (Shape (RCons t s)) (Shape s)
+  PopN :: Nat' (S n) -> Cat (Shape {blow (S n) s}) (Shape s)
+  Swap :: Cat (Shape (RCons a (RCons b s))) (Shape (RCons b (RCons a s)))
+  Add :: Cat (Shape (RCons Int (RCons Int s))) (Shape (RCons Int s))
+  Greater :: Cat (Shape (RCons Int (RCons Int s))) (Shape (RCons Bool s))
+  If :: Thrist Cat (Shape s) (Shape t) ->
+        Thrist Cat (Shape s) (Shape t) ->
+        Cat (Shape (RCons Bool s)) (Shape t)
+
+te1 = #[Push 42, Dup, Greater, If #[Pop, Push `hh]l #[Push 42, Add, Print, Push `hh]l]l
+
+cat' :: Thrist Cat a b -> String
+cat' Nil = ""
+cat' (Cons (Push a) r) = "Push " ++ show a ++ "\n" ++ cat' r
+cat' (Cons Dup r) = "Dup" ++ "\n" ++ cat' r
+cat' (Cons Print r) = "Print" ++ "\n" ++ cat' r
+cat' (Cons Pop r) = "Pop" ++ "\n" ++ cat' r
+cat' (Cons (PopN n) r) = "PopN " ++ show n ++ "\n" ++ cat' r
+cat' (Cons Swap r) = "Swap" ++ "\n" ++ cat' r
+cat' (Cons Add r) = "Add" ++ "\n" ++ cat' r
+cat' (Cons Greater r) = "Greater" ++ "\n" ++ cat' r
+cat' (Cons (If yes no) r) = "If " ++ show yes ++ " ELSE " ++ show no ++ "\n" ++ cat' r
+
+data Stack :: Row *0 ~> *0 where
+  Empty :: Stack RNil
+  Pu :: a -> Stack s -> Stack (RCons a s)
+
+interpretCat :: (forall a . Thrist Cat (Shape a) (Shape a)) -> IO (Stack RNil)
+interpretCat thr = interpretCat' thr (returnIO Empty)
+
+interpretCat' :: Thrist Cat (Shape a) (Shape b) -> IO (Stack a) -> IO (Stack b)
+
+interpretCat' Nil act = act
+
+interpretCat' thr act =
+    case thr of
+	     (Cons (Push a) r) -> do
+				  st <- act
+				  interpretCat' r (return (Pu a st))
+	     (Cons Pop r) -> do
+			     Pu _ st <- act
+			     interpretCat' r (return st)
+--	     (Cons (PopN (S n)) r) -> do
+--				      Pu _ st <- act
+--				      interpretCat' r (popMore' n st)
+	     (Cons (PopN (S n)) r) -> do
+				      Pu _ st <- act
+				      popMore n st
+					  where
+					  popMore :: Nat' n -> Stack {blow n b} -> IO (Stack b)
+					  popMore Z st = interpretCat' r (return st)
+					  popMore (S n) st = do
+							     let (Pu _ st') = st
+							     popMore n st'
+	     (Cons Print r) -> do
+			       Pu a st <- act
+			       new <- putStr (show a)
+			       interpretCat' r (return st)
+	     (Cons Dup r) -> do
+			     Pu a st <- act
+  			     interpretCat' r (return (Pu a (Pu a st)))
+	     (Cons Swap r) -> do
+			      Pu a st <- act
+			      let (Pu b st') = st
+			      interpretCat' r (return (Pu b (Pu a st')))
+	     (Cons Add r) -> do
+			     Pu a st <- act
+			     let (Pu b st') = st
+			     interpretCat' r (return (Pu (a + b) st'))
+	     (Cons Greater r) -> do
+				 Pu a st <- act
+				 let (Pu b st') = st
+				 interpretCat' r (return (Pu (b > a) st'))
+	     (Cons (If yes no) r) -> do
+				     Pu cond st <- act
+				     let act' = return st
+				     interpretCat' r (if cond then interpretCat' yes act' else interpretCat' no act')
+      where monad ioM
+
+
+popMore' :: Nat' n -> Stack {blow n b} -> IO (Stack b)
+popMore' Z st = return st
+    where monad ioM
+popMore' (S n) st = do
+		    let (Pu _ st') = st
+		    popMore' n st'
+    where monad ioM
+
+##test "was not what was expected"
+  te2 = interpretCat (Cons (Push 11) te1)
+
+te3 = interpretCat #[Push 23, Pop]l
+te4 = interpretCat #[Push 42, Push 11, Greater, If #[Push True]l #[Push False]l, Print]l
+te5 = interpretCat #[Push 42, Push 32, Push 1, Add, Swap, Print, Print]l
+
+##test "Mixup in Decs (not reported yet)"
+ Weee :: CatShape
+ type Weee = Shape (Row *0)
+
