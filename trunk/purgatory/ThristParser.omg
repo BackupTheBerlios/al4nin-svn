@@ -52,7 +52,7 @@ data Parse :: *0 ~> *0 ~> *0 where
   Try :: (a -> Maybe b) -> Parse a b    -- pipeline stops if no match
   Rep :: Parse a b -> Parse [a] [b]     -- consume as many as matches
   Group :: [Parse a b] -> Parse [a] [b] -- all must match
-  CataStar :: ((a -> b -> b) -> b -> [a] -> b) -> Parse [a] b
+  CataStar :: ([a] -> b) -> Parse [a] b
   CataPlus :: ([a] -> b) -> Parse [a] b
   Wrap :: Thrist Parse a b -> Parse a b
 
@@ -60,26 +60,40 @@ letter = (Atom :: Char -> Parse Char Char)
 char = Sure (id :: Char -> Char)
 digit = Try (\c -> if ord '0' <= ord c && ord c <= ord '9' then Just (ord c - ord '0') else Nothing)
 
-num = Wrap #[Rep digit, CataPlus (foldr (\n s -> 10 * s + n) 0)]l
+num = Wrap #[Rep digit, CataPlus (foldl (\acc x -> (acc * 10) + x) 0)]l
 
 
 abcd = Group [letter 'a', letter 'b', letter 'c', letter 'd']
 
-
+-- ###############################
+-- ############ parse ############
+-- ###############################
 parse :: Thrist Parse a b -> a -> Maybe b
 parse Nil a = Just a
-parse (Cons (Atom a) r) b = if ord a == ord b
-            then
-                parse r b
-            else Nothing
 
-parse (Cons (Sure f) r) b = parse r (f b)
-parse (Cons (Try f) r) b = do { a <- f b; parse r a } where monad maybeM
---parse (Cons (Rep p) r) (b:bs) = do { a <- parse #[p]l b; parse r [a] } where monad maybeM
+parse (Cons (Atom a) r) b = if ord a == ord b then parse r b else Nothing
+
+parse (Cons (Sure f) r) a = parse r (f a)
+
+parse (Cons (Try f) r) a = do { b <- f a; parse r b } where monad maybeM
+
 parse (Cons (Rep p) r) as = parse r (parseRep p as) where
       parseRep :: Parse a b -> [a] -> [b]
       parseRep _ [] = []
       parseRep p (a:as) = case parse #[p]l a of { Nothing -> []; Just b -> b:parseRep p as }
+
+parse (Cons (Group ps) r) as = do { bs <- parseGroup ps as; parse r bs } where
+      monad maybeM
+      parseGroup :: [Parse a b] -> [a] -> Maybe [b]
+      parseGroup [] _ = Just [] -- overlength input
+      parseGroup _ [] = Nothing -- input too short
+      parseGroup (p:ps) (a:as) = do { b <- parse #[p]l a; bs <- parseGroup ps as; return (b:bs) }
+
+parse (Cons (CataStar f) r) a = parse r (f a)
+
+parse (Cons (CataPlus _) _) [] = Nothing
+
 parse (Cons (CataPlus f) r) a = parse r (f a)
+
 parse (Cons (Wrap thr) r) a = do { a' <- parse thr a; parse r a' } where monad maybeM
 
