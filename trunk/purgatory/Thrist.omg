@@ -27,7 +27,7 @@
 --
 --  Set up the environment
 --     setenv LD_LIBRARY_PATH /opt/exp/gnu/lib:$LD_LIBRARY_PATH
---     setenv PATH /home/ggreif/%NoBackup%/Omega1.4:$PATH
+--     setenv PATH /home/ggreif/%NoBackup%/Omega1.4.1:$PATH
 --
 --  Start the omega interpreter by typing
 --     omega Thrist.omg
@@ -137,15 +137,6 @@ interpretCat' thr act =
 	     (Cons (PopN (S n)) r) -> do
 				      Pu _ st <- act
 				      interpretCat' r (popMore n st)
---	     (Cons (PopN (S n)) r) -> do
---				      Pu _ st <- act
---				      popMore n st
---					  where
---					  popMore :: Nat' n -> Stack {blow n b} -> IO (Stack b)
---					  popMore Z st = interpretCat' r (return st)
---					  popMore (S n) st = do
---							     let (Pu _ st') = st
---							     popMore n st'
 	     (Cons Print r) -> do
 			       Pu a st <- act
 			       new <- putStr (show a)
@@ -171,6 +162,7 @@ interpretCat' thr act =
 				     interpretCat' r (if cond then interpretCat' yes act' else interpretCat' no act')
       where monad ioM
 
+pop = PopN #1
 
 popMore :: Nat' n -> Stack {blow n b} -> IO (Stack b)
 popMore Z st = return st
@@ -184,8 +176,10 @@ popMore (S n) st = do
   te2 = interpretCat (Cons (Push 11) te1)
 
 te3 = interpretCat #[Push 23, Pop]l
+te3a = interpretCat #[Push 23, pop]l
 te4 = interpretCat #[Push 42, Push 11, Greater, If #[Push True]l #[Push False]l, Print]l
 te5 = interpretCat #[Push 42, Push 32, Push 1, Add, Swap, Print, Print]l
+te6 = interpretCat #[Push 42, Push 32, Push 1, Add, Swap, Print, Dup, PopN #2]l
 
 ##test "Mixup in Decs (not reported yet)"
  Weee :: CatShape
