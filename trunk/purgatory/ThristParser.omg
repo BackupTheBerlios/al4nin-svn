@@ -60,12 +60,26 @@ letter = (Atom :: Char -> Parse Char Char)
 char = Sure (id :: Char -> Char)
 digit = Try (\c -> if ord '0' <= ord c && ord c <= ord '9' then Just (ord c - ord '0') else Nothing)
 
-num = Wrap #[Rep digit, CataPlus (foldr (\s n -> 10 * s + n) 0)]l
+num = Wrap #[Rep digit, CataPlus (foldr (\n s -> 10 * s + n) 0)]l
 
 
 abcd = Group [letter 'a', letter 'b', letter 'c', letter 'd']
 
 
 parse :: Thrist Parse a b -> a -> Maybe b
-parse Nil _ = Nothing
-parse (Cons (Atom a) _) b = if ord a == ord b then Just a else Nothing
+parse Nil a = Just a
+parse (Cons (Atom a) r) b = if ord a == ord b
+            then
+                parse r b
+            else Nothing
+
+parse (Cons (Sure f) r) b = parse r (f b)
+parse (Cons (Try f) r) b = do { a <- f b; parse r a } where monad maybeM
+--parse (Cons (Rep p) r) (b:bs) = do { a <- parse #[p]l b; parse r [a] } where monad maybeM
+parse (Cons (Rep p) r) as = parse r (parseRep p as) where
+      parseRep :: Parse a b -> [a] -> [b]
+      parseRep _ [] = []
+      parseRep p (a:as) = case parse #[p]l a of { Nothing -> []; Just b -> b:parseRep p as }
+parse (Cons (CataPlus f) r) a = parse r (f a)
+parse (Cons (Wrap thr) r) a = do { a' <- parse thr a; parse r a' } where monad maybeM
+
