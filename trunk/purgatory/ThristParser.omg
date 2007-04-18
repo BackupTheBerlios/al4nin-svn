@@ -46,11 +46,11 @@ data Thrist :: forall (l :: *1) . (l ~> l ~> *)  ~> l ~> l ~> * where
 
 
 data Parse :: *0 ~> *0 ~> *0 where
-  Atom :: Char -> Parse Char Char                -- exact match
---  Atom :: a -> (a -> Bool) Parse a a                -- exact match
+  Atom :: Char -> Parse Char Char       -- exact match
+  Pred :: (a -> Bool) -> Parse a a      -- conditional match
   Sure :: (a -> b) -> Parse a b         -- always matches and converts
   Try :: (a -> Maybe b) -> Parse a b    -- pipeline stops if no match
-  Rep :: Parse a b -> Parse [a] [b]     -- consume as many as matches
+  Rep :: Parse a b -> Parse [a] ([b], [a])    -- consume as many as matches
   Group :: [Parse a b] -> Parse [a] [b] -- all must match
   CataStar :: ([a] -> b) -> Parse [a] b
   CataPlus :: ([a] -> b) -> Parse [a] b
@@ -60,7 +60,12 @@ letter = (Atom :: Char -> Parse Char Char)
 char = Sure (id :: Char -> Char)
 digit = Try (\c -> if ord '0' <= ord c && ord c <= ord '9' then Just (ord c - ord '0') else Nothing)
 
-num = Wrap #[Rep digit, CataPlus (foldl (\acc x -> (acc * 10) + x) 0)]l
+hexdigit = Try (\c -> if ord '0' <= ord c && ord c <= ord '9' then Just (ord c - ord '0') else
+                      if ord 'a' <= ord c && ord c <= ord 'f' then Just (ord c - ord '0') else Nothing)
+
+crop = Try (\(good, rest) -> Just good)
+
+num = Wrap #[Rep digit, Try (\(good, rest) -> Just good), CataPlus (foldl (\acc x -> (acc * 10) + x) 0)]l
 
 
 abcd = Group [letter 'a', letter 'b', letter 'c', letter 'd']
@@ -68,7 +73,9 @@ abcd = Group [letter 'a', letter 'b', letter 'c', letter 'd']
 -- ###############################
 -- ############ parse ############
 -- ###############################
+
 parse :: Thrist Parse a b -> a -> Maybe b
+
 parse Nil a = Just a
 
 parse (Cons (Atom a) r) b = if ord a == ord b then parse r b else Nothing
@@ -78,9 +85,9 @@ parse (Cons (Sure f) r) a = parse r (f a)
 parse (Cons (Try f) r) a = do { b <- f a; parse r b } where monad maybeM
 
 parse (Cons (Rep p) r) as = parse r (parseRep p as) where
-      parseRep :: Parse a b -> [a] -> [b]
-      parseRep _ [] = []
-      parseRep p (a:as) = case parse #[p]l a of { Nothing -> []; Just b -> b:parseRep p as }
+      parseRep :: Parse a b -> [a] -> ([b], [a])
+      parseRep _ [] = ([], [])
+      parseRep p (a:as) = case parse #[p]l a of { Nothing -> ([], a:as); Just b -> (b:bs, rest) where (bs, rest) = parseRep p as }
 
 parse (Cons (Group ps) r) as = do { bs <- parseGroup ps as; parse r bs } where
       monad maybeM
