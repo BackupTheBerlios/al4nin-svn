@@ -143,9 +143,10 @@ compileParse (Cons (Or p1 p2) r) = [| \a ->
 				    (Just b1) -> parse r b1
 				    Nothing -> let monad maybeM in do { b2 <- parse #[p2]l a; parse r b2 } |]
 
-t0 = (run compileParse $ #[Or (letter 's') (letter 'm')]l) 's'
+tbug0 = (run compileParse $ #[Or (letter 's') (letter 'm')]l) 's'
 
--- bug8 = (run compileParse $ #[Or (letter 's') (letter 'm')]l) 'm'
+##test "Unknown Var at level 0: bind"
+ tbug1 = (run compileParse $ #[Or (letter 's') (letter 'm')]l) 'm'
 
 -- ###############################
 -- ############ tests ############
