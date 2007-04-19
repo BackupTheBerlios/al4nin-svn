@@ -136,12 +136,16 @@ parse (Cons (Or p1 p2) r) a = case parse #[p1]l a of
 
 compileParse :: Thrist Parse a b -> Code (a -> Maybe b)
 compileParse Nil = [| Just |]
-compileParse (Cons (Atom c) r) = [| \b -> if ord c == ord b then parse r b else Nothing |]
+compileParse (Cons (Atom c) r) = [| \b -> if ord c == ord b then $parseR b else Nothing |]
+				 where parseR = compileParse r
 
 compileParse (Cons (Or p1 p2) r) = [| \a ->
-				    case parse #[p1]l a of
-				    (Just b1) -> parse r b1
-				    Nothing -> let monad maybeM in do { b2 <- parse #[p2]l a; parse r b2 } |]
+				    case $parseP1 a of
+				    (Just b1) -> $parseR b1
+				    Nothing -> let monad maybeM in do { b2 <- $parseP2 a; $parseR b2 } |]
+				   where parseR = compileParse r
+					 parseP1 = compileParse #[p1]l
+					 parseP2 = compileParse #[p2]l
 
 t0 = (run compileParse $ #[Or (letter 's') (letter 'm')]l) 's'
 
