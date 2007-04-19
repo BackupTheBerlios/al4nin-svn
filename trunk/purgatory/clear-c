@@ -1,0 +1,47 @@
+#!/opt/exp/bin/tclsh
+#  -*-Tcl-*- for (X)emacs ##
+
+
+### USAGE:
+#   rm ./Version.o makefile ; make EXEC=omega
+#        GHC="ghc -O -pgmc clear-c -pgmm clear-c -pgma clear-c -pgml clear-c"
+
+
+proc find-o { } {
+    global argv
+
+    if [llength $argv]==2 {
+	puts stderr "OUT2: [lindex $argv 1]\n"
+	return [lindex $argv 1]
+    }
+
+    set flag ""
+
+    foreach i $argv {
+	puts stderr "\#\#\#\#\#\#\#\# $i $flag\n"
+	if [string equal "" $flag] {
+	puts stderr "WOOOO $i\n"
+	    if [string equal $i "-o"] {
+		set flag $i
+	puts stderr "POOOO $flag\n"
+	    }
+	} else {
+	puts stderr "HEY $flag    ---> $i\n"
+	    switch -exact -- $flag {
+		-o { set out $i }
+	    }
+	    set flag ""
+	}
+    }
+
+	puts stderr "OUT: $out\n"
+    return $out
+}
+
+set mak [open "makefile" a]
+puts $mak "$argv"
+puts $mak "OUTFILE is [find-o]"
+close $mak
+
+exec touch ./Version.o
+
