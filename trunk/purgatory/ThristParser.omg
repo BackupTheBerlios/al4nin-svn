@@ -46,6 +46,7 @@ data Thrist :: forall (l :: *1) . (l ~> l ~> *)  ~> l ~> l ~> * where
 
 
 data Parse :: *0 ~> *0 ~> *0 where
+  Epsilon :: Parse [a] ([b], [a])       -- always match
   Atom :: Char -> Parse Char Char       -- exact match
   Pred :: (a -> Bool) -> Parse a a      -- conditional match
   Sure :: (a -> b) -> Parse a b         -- always matches and converts
@@ -96,6 +97,8 @@ parse :: Thrist Parse a b -> a -> Maybe b
 
 parse Nil a = Just a
 
+parse (Cons (Epsilon) r) as = parse r ([], as)
+
 parse (Cons (Atom c) r) b = if ord c == ord b then parse r b else Nothing
 
 parse (Cons (Sure f) r) a = parse r (f a)
@@ -136,6 +139,8 @@ parse (Cons (Or p1 p2) r) a = case parse #[p1]l a of
 
 compileParse :: Thrist Parse a b -> Code (a -> Maybe b)
 compileParse Nil = [| Just |]
+compileParse (Cons (Epsilon) r) = [| \as -> $parseR ([], as)  |]
+				 where parseR = compileParse r
 compileParse (Cons (Atom c) r) = [| \b -> if ord c == ord b then $parseR b else Nothing |]
 				 where parseR = compileParse r
 
@@ -160,6 +165,8 @@ t1a = parse #[Seq (proper' $ Rep $ letter 'a') (Seq (Rep $ letter 'b') (Rep (let
 t2 = parse (unwrap chexnum) "0xFF"
 t3 = Group [letter 'a', letter 'b', letter 'c', letter 'd']
 t3a = word "abcd"
+
+t4 = Or (word ";") Epsilon
 
 
 
