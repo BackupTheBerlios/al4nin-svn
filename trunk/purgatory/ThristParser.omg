@@ -50,22 +50,39 @@ data Parse :: *0 ~> *0 ~> *0 where
   Pred :: (a -> Bool) -> Parse a a      -- conditional match
   Sure :: (a -> b) -> Parse a b         -- always matches and converts
   Try :: (a -> Maybe b) -> Parse a b    -- pipeline stops if no match
-  Rep :: Parse a b -> Parse [a] ([b], [a])    -- consume as many as matches
-  Group :: [Parse a b] -> Parse [a] [b] -- all must match
+  Rep :: Parse a b -> Parse [a] ([b], [a])     -- consume as many as matches, return rest
+  Group :: [Parse a b] -> Parse [a] ([b], [a]) -- all must match, return rest
   CataStar :: ([a] -> b) -> Parse [a] b
   CataPlus :: ([a] -> b) -> Parse [a] b
   Wrap :: Thrist Parse a b -> Parse a b
+--  Or :: (Parse a b, Parse a c) -> Parse a (b, c)
+  Or :: Parse a b -> Parse a b -> Parse a b
+  Seq :: Parse [a] (b, [a]) -> Parse [a] (c, [a]) -> Parse [a] ((b, c), [a])
+  Seq2 :: Parse a b -> Parse a c -> Parse [a] ((b, c), [a])
+
 
 letter = (Atom :: Char -> Parse Char Char)
 char = Sure (id :: Char -> Char)
+
 digit = Try (\c -> if ord '0' <= ord c && ord c <= ord '9' then Just (ord c - ord '0') else Nothing)
 
 hexdigit = Try (\c -> if ord '0' <= ord c && ord c <= ord '9' then Just (ord c - ord '0') else
-                      if ord 'a' <= ord c && ord c <= ord 'f' then Just (ord c - ord '0') else Nothing)
+                      if ord 'a' <= ord c && ord c <= ord 'f' then Just (ord c - ord 'W') else
+                      if ord 'A' <= ord c && ord c <= ord 'F' then Just (ord c - ord '7') else Nothing)
 
 crop = Try (\(good, rest) -> Just good)
+snap = Try (\(good, rest) -> case rest of { [] -> Just good; _ -> Nothing })
 
-num = Wrap #[Rep digit, Try (\(good, rest) -> Just good), CataPlus (foldl (\acc x -> (acc * 10) + x) 0)]l
+proper = Try (\(it, rest) -> case it of { [] -> Nothing; _ -> Just (it, rest) })
+propersnap = Try (\a -> case a of { ([], _) -> Nothing; (_, r:rest) -> Nothing; _ -> Just a })
+
+base n = foldl (\acc x -> (acc * n) + x) 0
+num = Wrap #[Rep digit, crop, CataPlus (foldl (\acc x -> (acc * 10) + x) 0)]l
+chexnum = Wrap #[Seq (Seq2 (letter '0') (Or (letter 'x') (letter 'X'))) (Wrap #[Rep hexdigit, propersnap]l), second, CataPlus (base 16)]l
+
+unwrap (Wrap x) = x
+
+second = Sure (\((_, x), _) -> x)
 
 
 abcd = Group [letter 'a', letter 'b', letter 'c', letter 'd']
@@ -91,10 +108,10 @@ parse (Cons (Rep p) r) as = parse r (parseRep p as) where
 
 parse (Cons (Group ps) r) as = do { bs <- parseGroup ps as; parse r bs } where
       monad maybeM
-      parseGroup :: [Parse a b] -> [a] -> Maybe [b]
-      parseGroup [] _ = Just [] -- overlength input
-      parseGroup _ [] = Nothing -- input too short
-      parseGroup (p:ps) (a:as) = do { b <- parse #[p]l a; bs <- parseGroup ps as; return (b:bs) }
+      parseGroup :: [Parse a b] -> [a] -> Maybe ([b], [a])
+      parseGroup [] rest = Just ([], rest) -- overlength input
+      parseGroup _ [] = Nothing            -- input too short
+      parseGroup (p:ps) (a:as) = do { b <- parse #[p]l a; (bs, rest) <- parseGroup ps as; return (b:bs, rest) }
 
 parse (Cons (CataStar f) r) a = parse r (f a)
 
@@ -104,3 +121,17 @@ parse (Cons (CataPlus f) r) a = parse r (f a)
 
 parse (Cons (Wrap thr) r) a = do { a' <- parse thr a; parse r a' } where monad maybeM
 
+parse (Cons (Seq2 p1 p2) r) (a1:a2:rest) = do { b1 <- parse #[p1]l a1; b2 <- parse #[p2]l a2; parse r ((b1, b2), rest) } where monad maybeM
+
+parse (Cons (Seq p1 p2) r) as = do { (b1, as') <- parse #[p1]l as; (b2, rest) <- parse #[p2]l as'; parse r ((b1, b2), rest) } where monad maybeM
+
+parse (Cons (Or p1 p2) r) a = case parse #[p1]l a of
+      (Just b1) -> parse r b1
+      Nothing -> do { b2 <- parse #[p2]l a; parse r b2 } where monad maybeM
+
+-- ###############################
+-- ############ tests ############
+-- ###############################
+
+t1 = parse #[Seq (Wrap #[Rep $ letter 'a', proper]l) (Seq (Rep $ letter 'b') (Rep (letter 'c')))]l "abbc"
+t2 = parse (unwrap chexnum) "0xFF"
