@@ -40,7 +40,7 @@ import "LangPrelude.prg"
 
 kind Doe = Wi | So
 
-data DooBiDoo :: Doe ~> Doe ~> * where
+data DooBiDoo :: Doe ~> Doe ~> *0 where
   ToWi :: DooBiDoo a Wi
   SoToWi :: DooBiDoo So Wi
   WiToWi :: DooBiDoo Wi Wi
@@ -48,12 +48,34 @@ data DooBiDoo :: Doe ~> Doe ~> * where
   SoTo :: DooBiDoo So b
   ToSo :: DooBiDoo a So
 
+data ShuBiDoo :: Doe ~> Doe ~> *0 where
+  WiTo :: ShuBiDoo Wi a
 
+--$   @Definition { A @I thrist is a list-like datastructure
+--$ with three type indices. It enforces the invariants that
+--$ @List { @Item { it can only contain members of the same type with two type indices
+--$ and } @Item { that the type indices of consequtive members must match
+--$ up in the specific manner that the second type index of the
+--$ left member must equal the first type index of the right one. } } }
+
+--{
 data Thrist :: forall (l :: *1) . (l ~> l ~> *)  ~> l ~> l ~> * where
   Nil :: Thrist k a a
   Cons :: k c b -> Thrist k b a -> Thrist k c a
  deriving List(l)
+--}
 
+--$   @Note { The name thrist is a portmanteau of thread and list
+--$ conveying the essence of a list where the members' types are
+--$ threaded up. }
+
+{--@
+By means of the @Code { deriving List(l) } declaration
+we specified that thrists can be entered in @Omega using
+special syntax, making it amenable to reading from the
+listener, pattern matching and outputting.
+@P The following example session demonstrates this:
+--@-}
 
 {- Example session:
 
@@ -67,8 +89,15 @@ prompt> #[ToWi,WiToWi,ToSo]l
  #[ToWi,WiToWi,ToSo]l : forall (a:Doe).Thrist DooBiDoo a So
 prompt> #[ToWi,WiToWi,ToSo,SoTo]l
  #[ToWi,WiToWi,ToSo,SoTo]l : forall (a:Doe) (b:Doe).Thrist DooBiDoo a b
+prompt> #[ToWi, WiTo]l
+ In the expression: Cons WiTo Nil
+ the result type: Thrist ShuBiDoo Wi b
+ was not what was expected: Thrist DooBiDoo Wi a
 
 -}
+
+##test "different constants: SchubiDoo   !=   DooBiDoo"
+ fail0 = #[ToWi, WiTo]l
 
 cat :: Thrist DooBiDoo a b -> String
 cat Nil = ""
@@ -91,9 +120,11 @@ kind CatShape = Shape (Row *0)
 data Cat :: CatShape ~> CatShape ~> *0 where
   Push :: a -> Cat (Shape s) (Shape (RCons a s))
   Dup :: Cat (Shape (RCons t s)) (Shape (RCons t (RCons t s)))
+--  Dig :: Pick Row Nat -> Cat (Shape (RCons t s)) (Shape (RCons t (RCons t s)))
   Print :: Cat (Shape (RCons t s)) (Shape s)
   PopN :: Nat' (S n) -> Cat (Shape {blow (S n) s}) (Shape s)
   Swap :: Cat (Shape (RCons a (RCons b s))) (Shape (RCons b (RCons a s)))
+-- Perm :: Pick Row Nat -- TODO
   Add :: Cat (Shape (RCons Int (RCons Int s))) (Shape (RCons Int s))
   Greater :: Cat (Shape (RCons Int (RCons Int s))) (Shape (RCons Bool s))
   If :: Thrist Cat (Shape s) (Shape t) ->
