@@ -80,7 +80,12 @@ proper' p = Wrap #[p, proper]l
 propersnap' p = Wrap #[p, propersnap]l
 
 base n = foldl (\acc x -> (acc * n) + x) 0
+
+---num' rest = Wrap #[Rep digit, crop, CataPlus (base 10)]l
+
 num = Wrap #[Rep digit, crop, CataPlus (base 10)]l
+---num = 
+
 chexnum = Wrap #[Seq (Seq2 (letter '0') (Or (letter 'x') (letter 'X'))) (Wrap #[Rep hexdigit, propersnap]l), second, CataPlus (base 16)]l
 
 unwrap (Wrap x) = x
@@ -99,7 +104,8 @@ parse Nil a = Just a
 
 parse (Cons (Epsilon) r) as = parse r ([], as)
 
-parse (Cons (Atom c) r) b = if ord c == ord b then parse r b else Nothing
+-- Get rid of Atom, it should be @Code { Pred (chrEqual c) } ###
+parse (Cons (Atom c) r) a = if ord c == ord a then parse r a else Nothing
 
 parse (Cons (Sure f) r) a = parse r (f a)
 
@@ -170,4 +176,49 @@ t4 = Or (word ";") Epsilon
 
 
 
+-- ############ a simple lexer ############
 
+data Reserved = Rdefine
+	      | Rend
+	      | Rhandler
+	      | Rlet
+	      | Rlocal
+	      | Rmacro
+	      | Rotherwise
+
+data Punctuation = PparenthesisOpen | PparenthesisClose
+		 | Pcomma
+		 | Pdot
+		 | PbracketOpen | PbracketClose
+		 | PbraceOpen | PbraceClose
+		 | Pcoloncolon
+		 | Pminus
+		 | Pequal
+		 | Pequalequal
+		 | Pequalgreater
+		 | Phashparenthesis
+		 | Phashbracket
+		 | Phashhash
+		 | Pquestion
+		 | Pquestionquestion
+		 | Pquestionequal
+		 | Pdotdotdot
+
+data Token = R Reserved | Str String | Num Int | P Punctuation
+
+data Token' = Token | Whitespace String
+
+whitespace = alts letter " \n\t\r"
+
+lexer :: Thrist Parse Char Token
+
+or :: [Parse a b] -> Parse a b
+or (p:ps) = foldl Or p ps
+
+
+alts :: (a -> Parse a b) -> [a] -> Thrist Parse a b
+alts f as = #[or (map f as)]l
+
+lexer' :: Thrist Parse Char Token'
+
+-- lexer' = #[Or (Seq token whitespace) token, Munch lexer']
