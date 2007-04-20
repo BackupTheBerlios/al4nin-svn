@@ -52,6 +52,7 @@ data Parse :: *0 ~> *0 ~> *0 where
   Sure :: (a -> b) -> Parse a b         -- always matches and converts
   Try :: (a -> Maybe b) -> Parse a b    -- pipeline stops if no match
   Rep :: Parse a b -> Parse [a] ([b], [a])     -- consume as many as matches, return rest
+  Rep1 :: Parse [a] (b, [a]) -> Parse [a] ([b], [a])     -- consume as many as matches, return rest
   Group :: [Parse a b] -> Parse [a] ([b], [a]) -- all must match, return rest
   CataStar :: ([a] -> b) -> Parse ([a], c) (b, c) -- collapse one or more elements
   CataPlus :: ([a] -> b) -> Parse ([a], c) (b, c) -- collapse zero or more elements
@@ -93,6 +94,8 @@ second = Sure (\((_, x), _) -> x)
 
 word cs = Group (map letter cs)
 
+optional p = Or p Epsilon
+
 -- ###############################
 -- ############ parse ############
 -- ###############################
@@ -114,6 +117,15 @@ parse (Cons (Rep p) r) as = parse r (parseRep p as) where
       parseRep :: Parse a b -> [a] -> ([b], [a])
       parseRep _ [] = ([], [])
       parseRep p (a:as) = case parse #[p]l a of { Nothing -> ([], a:as); Just b -> (b:bs, rest) where (bs, rest) = parseRep p as }
+
+--parse (Cons (Rep1 p) r) as = do { (bs, rest) <- parseRep p as; parse r (bs, rest) } where monad maybeM
+parse (Cons (Rep1 p) r) as = parse r (parseRep #[p]l as) where
+      parseRep :: Thrist Parse [a] (b, [a]) -> [a] -> ([b], [a])
+      parseRep _ [] = ([], [])
+      parseRep p as = case parse p as of
+                      Nothing -> ([], as)
+                      Just (b, as') -> (b:bs, rest)
+                          where (bs, rest) = parseRep p as'
 
 parse (Cons (Group ps) r) as = do { bs <- parseGroup ps as; parse r bs } where
       monad maybeM
@@ -176,6 +188,7 @@ t3 = Group [letter 'a', letter 'b', letter 'c', letter 'd']
 t3a = word "abcd"
 
 t4 = Or (word ";") Epsilon
+t4a = optional (word ";")
 
 
 
@@ -257,7 +270,8 @@ appendThrist Nil a = #[a]l
 appendThrist (Cons b r) a = Cons b (appendThrist r a)
 -}
 
-lexer' = #[Wrap token', Try munch]l
+--lexer' = #[token', Try munch]l
+lexer' = #[Rep1 token']l
 
 
 munch :: (Token', [Char]) -> Maybe ([Token'], [Char])
@@ -271,7 +285,13 @@ munch (t, rest) = do
 				return (t:ts, [])
 		      where monad maybeM
 
-token' = extendThrist num' (Sure (\ (i, r) -> (Token $ Num i, (trace "r is: " r))))
+
+sureFirst f (a, b) = (f a, b)
+
+token' :: Parse [Char] (Token', [Char])
+token' = or [ Wrap $ extendThrist num' (Sure $ sureFirst (Token . Num))
+            , Wrap #[Rep whitespace, Sure $ sureFirst Whitespace]l
+            ]
 
 
 tokenwhite = token'
