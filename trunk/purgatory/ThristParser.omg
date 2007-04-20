@@ -54,7 +54,7 @@ data Parse :: *0 ~> *0 ~> *0 where
   Rep :: Parse a b -> Parse [a] ([b], [a])     -- consume as many as matches, return rest
   Group :: [Parse a b] -> Parse [a] ([b], [a]) -- all must match, return rest
   CataStar :: ([a] -> b) -> Parse ([a], c) (b, c) -- collapse one or more elements
-  CataPlus :: ([a] -> b) -> Parse [a] b -- collapse zero or more elements
+  CataPlus :: ([a] -> b) -> Parse ([a], c) (b, c) -- collapse zero or more elements
   Wrap :: Thrist Parse a b -> Parse a b -- treat a chain of parses as one
   Or :: Parse a b -> Parse a b -> Parse a b    -- match first or if it doesn't the second
   Seq :: Parse [a] (b, [a]) -> Parse [a] (c, [a]) -> Parse [a] ((b, c), [a]) -- parse front first then second
@@ -81,12 +81,11 @@ propersnap' p = Wrap #[p, propersnap]l
 
 base n = foldl (\acc x -> (acc * n) + x) 0
 
-num' = #[Rep digit, CataStar (base 10)]l
+num' = #[Rep digit, CataPlus (base 10)]l
 
-num = Wrap #[Rep digit, crop, CataPlus (base 10)]l
+---num = Wrap #[Rep digit, crop, CataPlus (base 10)]l
 ---num = 
 
-chexnum = Wrap #[Seq (Seq2 (letter '0') (Or (letter 'x') (letter 'X'))) (Wrap #[Rep hexdigit, propersnap]l), second, CataPlus (base 16)]l
 
 unwrap (Wrap x) = x
 
@@ -125,9 +124,8 @@ parse (Cons (Group ps) r) as = do { bs <- parseGroup ps as; parse r bs } where
 
 parse (Cons (CataStar f) r) (a, over) = parse r ((f a), over)
 
-parse (Cons (CataPlus _) _) [] = Nothing
-
-parse (Cons (CataPlus f) r) a = parse r (f a)
+parse (Cons (CataPlus _) _) ([], _) = Nothing
+parse (Cons (CataPlus f) r) (a, over) = parse r ((f a), over)
 
 parse (Cons (Wrap thr) r) a = do { a' <- parse thr a; parse r a' } where monad maybeM
 
@@ -168,7 +166,12 @@ t0 = (run compileParse $ #[Or (letter 's') (letter 'm')]l) 's'
 
 t1 = parse #[Seq (Wrap #[Rep $ letter 'a', proper]l) (Seq (Rep $ letter 'b') (Rep (letter 'c')))]l "abbc"
 t1a = parse #[Seq (proper' $ Rep $ letter 'a') (Seq (Rep $ letter 'b') (Rep (letter 'c')))]l "abbc"
-t2 = parse (unwrap chexnum) "0xFF"
+
+
+--chexnum = Wrap #[Seq (Seq2 (letter '0') (Or (letter 'x') (letter 'X'))) (Wrap #[Rep hexdigit, propersnap]l), CataPlus (base 16)]l
+--t2 = parse (unwrap chexnum) "0xFF"
+
+
 t3 = Group [letter 'a', letter 'b', letter 'c', letter 'd']
 t3a = word "abcd"
 
@@ -216,8 +219,8 @@ or :: [Parse a b] -> Parse a b
 or (p:ps) = foldl Or p ps
 
 
-alts :: (a -> Parse a b) -> [a] -> Thrist Parse a b
-alts f as = #[or (map f as)]l
+alts :: (a -> Parse a b) -> [a] -> Parse a b
+alts f as = or (map f as)
 
 lexer' :: Thrist Parse [Char] ([Token'], [Char])
 
@@ -254,18 +257,22 @@ appendThrist Nil a = #[a]l
 appendThrist (Cons b r) a = Cons b (appendThrist r a)
 -}
 
-lexer' = #[Wrap token, Try munch]l
+lexer' = #[Wrap token', Try munch]l
+
 
 munch :: (Token', [Char]) -> Maybe ([Token'], [Char])
-munch (t, rest) = Just ([t], rest)-- do { (ts, undigestable) <- parse lexer' rest; return (t:ts, undigestable) } where monad maybeM
+munch (t, []) = Just ([t], "")
+munch (t, rest) = do
+		  (spaces, rest) <- parse #[Rep whitespace]l rest
+		  case rest of
+			   [] -> munch (t, [])
+			   _ -> do
+				(ts, []) <- parse lexer' (trace "rest is: " rest)
+				return (t:ts, [])
+		      where monad maybeM
 
-token = extendThrist num' (Sure (\ (i, r) -> (Token $ Num i, r)))
+token' = extendThrist num' (Sure (\ (i, r) -> (Token $ Num i, (trace "r is: " r))))
 
 
-{-
-kk = extendThrist
-     (extendThrist
-      num'
-      (Sure (\ (i, r) -> (Token $ Num i, r))))
-     (Try munch)
--}
+tokenwhite = token'
+--tokenwhite = Seq (Wrap token') (Rep whitespace)
