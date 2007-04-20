@@ -53,7 +53,7 @@ data Parse :: *0 ~> *0 ~> *0 where
   Try :: (a -> Maybe b) -> Parse a b    -- pipeline stops if no match
   Rep :: Parse a b -> Parse [a] ([b], [a])     -- consume as many as matches, return rest
   Group :: [Parse a b] -> Parse [a] ([b], [a]) -- all must match, return rest
-  CataStar :: ([a] -> b) -> Parse [a] b -- collapse one or more elements
+  CataStar :: ([a] -> b) -> Parse ([a], c) (b, c) -- collapse one or more elements
   CataPlus :: ([a] -> b) -> Parse [a] b -- collapse zero or more elements
   Wrap :: Thrist Parse a b -> Parse a b -- treat a chain of parses as one
   Or :: Parse a b -> Parse a b -> Parse a b    -- match first or if it doesn't the second
@@ -81,7 +81,7 @@ propersnap' p = Wrap #[p, propersnap]l
 
 base n = foldl (\acc x -> (acc * n) + x) 0
 
----num' rest = Wrap #[Rep digit, crop, CataPlus (base 10)]l
+num' = #[Rep digit, CataStar (base 10)]l
 
 num = Wrap #[Rep digit, crop, CataPlus (base 10)]l
 ---num = 
@@ -123,7 +123,7 @@ parse (Cons (Group ps) r) as = do { bs <- parseGroup ps as; parse r bs } where
       parseGroup _ [] = Nothing            -- input too short
       parseGroup (p:ps) (a:as) = do { b <- parse #[p]l a; (bs, rest) <- parseGroup ps as; return (b:bs, rest) }
 
-parse (Cons (CataStar f) r) a = parse r (f a)
+parse (Cons (CataStar f) r) (a, over) = parse r ((f a), over)
 
 parse (Cons (CataPlus _) _) [] = Nothing
 
@@ -206,11 +206,11 @@ data Punctuation = PparenthesisOpen | PparenthesisClose
 
 data Token = R Reserved | Str String | Num Int | P Punctuation
 
-data Token' = Token | Whitespace String
+data Token' = Token Token | Whitespace String
 
 whitespace = alts letter " \n\t\r"
 
-lexer :: Thrist Parse Char Token
+lexer :: Thrist Parse [Char] ([Token], [Char])
 
 or :: [Parse a b] -> Parse a b
 or (p:ps) = foldl Or p ps
@@ -219,6 +219,53 @@ or (p:ps) = foldl Or p ps
 alts :: (a -> Parse a b) -> [a] -> Thrist Parse a b
 alts f as = #[or (map f as)]l
 
-lexer' :: Thrist Parse Char Token'
+lexer' :: Thrist Parse [Char] ([Token'], [Char])
 
 -- lexer' = #[Or (Seq token whitespace) token, Munch lexer']
+
+
+{- not ready yet :-(
+foldThrist :: forall (a :: *1) (b :: a ~> a ~> *0) (c :: a) (d :: a) (e :: a) (f :: a) .
+	      (b c d -> Thrist b d e -> Thrist b c e) ->
+	      Thrist b e f ->
+	      Thrist b d e ->
+	      Thrist b d f
+foldThrist c n Nil     = n
+foldThrist c n (Cons x xs) = c x (foldThrist c n xs)
+-}
+
+
+extendThrist :: forall (a :: *1) (b :: a ~> a ~> *0) (c :: a) (d :: a) (e :: a) .
+		Thrist b c d ->
+		b d e ->
+		Thrist b c e
+
+extendThrist Nil a = #[a]l
+extendThrist (Cons b r) a = Cons b (extendThrist r a)
+
+
+{- not ready yet :-(
+appendThrist :: forall (a :: *1) (b :: a ~> a ~> *0) (c :: a) (d :: a) (e :: a) .
+		Thrist b c d ->
+		Thrist b d e ->
+		Thrist b c e
+
+appendThrist Nil a = #[a]l
+appendThrist (Cons b r) a = Cons b (appendThrist r a)
+-}
+
+lexer' = #[Wrap token, Try munch]l
+
+munch :: (Token', [Char]) -> Maybe ([Token'], [Char])
+munch (t, rest) = Just ([t], rest)-- do { (ts, undigestable) <- parse lexer' rest; return (t:ts, undigestable) } where monad maybeM
+
+token = extendThrist num' (Sure (\ (i, r) -> (Token $ Num i, r)))
+
+
+{-
+kk = extendThrist
+     (extendThrist
+      num'
+      (Sure (\ (i, r) -> (Token $ Num i, r))))
+     (Try munch)
+-}
