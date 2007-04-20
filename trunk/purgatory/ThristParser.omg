@@ -51,8 +51,8 @@ data Parse :: *0 ~> *0 ~> *0 where
   Pred :: (a -> Bool) -> Parse a a      -- conditional match
   Sure :: (a -> b) -> Parse a b         -- always matches and converts
   Try :: (a -> Maybe b) -> Parse a b    -- pipeline stops if no match
-  Rep :: Parse a b -> Parse [a] ([b], [a])     -- consume as many as matches, return rest
-  Rep1 :: Parse [a] (b, [a]) -> Parse [a] ([b], [a])     -- consume as many as matches, return rest
+  Rep1 :: Parse a b -> Parse [a] ([b], [a])     -- consume as many as matches, return rest
+  Rep :: Parse [a] (b, [a]) -> Parse [a] ([b], [a])     -- consume as many as matches, return rest
   Group :: [Parse a b] -> Parse [a] ([b], [a]) -- all must match, return rest
   CataStar :: ([a] -> b) -> Parse ([a], c) (b, c) -- collapse one or more elements
   CataPlus :: ([a] -> b) -> Parse ([a], c) (b, c) -- collapse zero or more elements
@@ -82,9 +82,9 @@ propersnap' p = Wrap #[p, propersnap]l
 
 base n = foldl (\acc x -> (acc * n) + x) 0
 
-num' = #[Rep digit, CataPlus (base 10)]l
+num' = #[Rep1 digit, CataPlus (base 10)]l
 
----num = Wrap #[Rep digit, crop, CataPlus (base 10)]l
+---num = Wrap #[Rep1 digit, crop, CataPlus (base 10)]l
 ---num = 
 
 
@@ -113,13 +113,12 @@ parse (Cons (Sure f) r) a = parse r (f a)
 
 parse (Cons (Try f) r) a = do { b <- f a; parse r b } where monad maybeM
 
-parse (Cons (Rep p) r) as = parse r (parseRep p as) where
+parse (Cons (Rep1 p) r) as = parse r (parseRep p as) where
       parseRep :: Parse a b -> [a] -> ([b], [a])
       parseRep _ [] = ([], [])
       parseRep p (a:as) = case parse #[p]l a of { Nothing -> ([], a:as); Just b -> (b:bs, rest) where (bs, rest) = parseRep p as }
 
---parse (Cons (Rep1 p) r) as = do { (bs, rest) <- parseRep p as; parse r (bs, rest) } where monad maybeM
-parse (Cons (Rep1 p) r) as = parse r (parseRep #[p]l as) where
+parse (Cons (Rep p) r) as = parse r (parseRep #[p]l as) where
       parseRep :: Thrist Parse [a] (b, [a]) -> [a] -> ([b], [a])
       parseRep _ [] = ([], [])
       parseRep p as = case parse p as of
@@ -176,11 +175,11 @@ t0 = (run compileParse $ #[Or (letter 's') (letter 'm')]l) 's'
 -- ############ tests ############
 -- ###############################
 
-t1 = parse #[Seq (Wrap #[Rep $ letter 'a', proper]l) (Seq (Rep $ letter 'b') (Rep (letter 'c')))]l "abbc"
-t1a = parse #[Seq (proper' $ Rep $ letter 'a') (Seq (Rep $ letter 'b') (Rep (letter 'c')))]l "abbc"
+t1 = parse #[Seq (Wrap #[Rep1 $ letter 'a', proper]l) (Seq (Rep1 $ letter 'b') (Rep1 (letter 'c')))]l "abbc"
+t1a = parse #[Seq (proper' $ Rep1 $ letter 'a') (Seq (Rep1 $ letter 'b') (Rep1 (letter 'c')))]l "abbc"
 
 
---chexnum = Wrap #[Seq (Seq2 (letter '0') (Or (letter 'x') (letter 'X'))) (Wrap #[Rep hexdigit, propersnap]l), CataPlus (base 16)]l
+--chexnum = Wrap #[Seq (Seq2 (letter '0') (Or (letter 'x') (letter 'X'))) (Wrap #[Rep1 hexdigit, propersnap]l), CataPlus (base 16)]l
 --t2 = parse (unwrap chexnum) "0xFF"
 
 
@@ -235,11 +234,6 @@ or (p:ps) = foldl Or p ps
 alts :: (a -> Parse a b) -> [a] -> Parse a b
 alts f as = or (map f as)
 
-lexer' :: Thrist Parse [Char] ([Token'], [Char])
-
--- lexer' = #[Or (Seq token whitespace) token, Munch lexer']
-
-
 {- not ready yet :-(
 foldThrist :: forall (a :: *1) (b :: a ~> a ~> *0) (c :: a) (d :: a) (e :: a) (f :: a) .
 	      (b c d -> Thrist b d e -> Thrist b c e) ->
@@ -270,29 +264,13 @@ appendThrist Nil a = #[a]l
 appendThrist (Cons b r) a = Cons b (appendThrist r a)
 -}
 
---lexer' = #[token', Try munch]l
-lexer' = #[Rep1 token']l
+lexer' :: Thrist Parse [Char] ([Token'], [Char])
+lexer' = #[Rep token']l
 
-
-munch :: (Token', [Char]) -> Maybe ([Token'], [Char])
-munch (t, []) = Just ([t], "")
-munch (t, rest) = do
-		  (spaces, rest) <- parse #[Rep whitespace]l rest
-		  case rest of
-			   [] -> munch (t, [])
-			   _ -> do
-				(ts, []) <- parse lexer' (trace "rest is: " rest)
-				return (t:ts, [])
-		      where monad maybeM
-
-
-sureFirst f (a, b) = (f a, b)
+sureFirst f = Sure (\(a, b) -> (f a, b))
 
 token' :: Parse [Char] (Token', [Char])
-token' = or [ Wrap $ extendThrist num' (Sure $ sureFirst (Token . Num))
-            , Wrap #[Rep whitespace, Sure $ sureFirst Whitespace]l
+token' = or [ Wrap $ extendThrist num' (sureFirst (Token . Num))
+            , Wrap #[Rep1 whitespace, sureFirst Whitespace]l
             ]
 
-
-tokenwhite = token'
---tokenwhite = Seq (Wrap token') (Rep whitespace)
