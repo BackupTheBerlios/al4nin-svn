@@ -63,7 +63,7 @@ data Parse :: *0 ~> *0 ~> *0 where
 
 
 letter = (Atom :: Char -> Parse Char Char)
-char = Sure (id :: Char -> Char)
+---char = Sure (id :: Char -> Char)
 
 digit = Try (\c -> if ord '0' <= ord c && ord c <= ord '9' then Just (ord c - ord '0') else Nothing)
 
@@ -153,8 +153,10 @@ compileParse :: Thrist Parse a b -> Code (a -> Maybe b)
 compileParse Nil = [| Just |]
 compileParse (Cons (Epsilon) r) = [| \as -> $parseR ([], as)  |]
 				 where parseR = compileParse r
-compileParse (Cons (Atom c) r) = [| \b -> if ord c == ord b then $parseR b else Nothing |]
+compileParse (Cons (Atom c) r) = [| \a -> if ord c == ord a then $parseR a else Nothing |]
 				 where parseR = compileParse r
+
+compileParse (Cons (Pred p) r) = [| \a -> if p a then $(compileParse r) a else Nothing |]
 
 compileParse (Cons (Or p1 p2) r) = [| \a ->
 				    case $parseP1 a of
@@ -201,23 +203,33 @@ data Reserved = Rdefine
 	      | Rmacro
 	      | Rotherwise
 
-data Punctuation = PparenthesisOpen | PparenthesisClose
-		 | Pcomma
-		 | Pdot
-		 | PbracketOpen | PbracketClose
-		 | PbraceOpen | PbraceClose
-		 | Pcoloncolon
-		 | Pminus
-		 | Pequal
-		 | Pequalequal
-		 | Pequalgreater
-		 | Phashparenthesis
-		 | Phashbracket
-		 | Phashhash
-		 | Pquestion
-		 | Pquestionquestion
-		 | Pquestionequal
-		 | Pdotdotdot
+data Punctuation = PparenthesisOpen | PparenthesisClose -- ( )
+		 | Pcomma                               -- ,
+		 | Pdot                                 -- .
+		 | PbracketOpen | PbracketClose         -- [ ]
+		 | PbraceOpen | PbraceClose             -- { }
+		 | Pcoloncolon                          -- ::
+		 | Pminus                               -- -
+		 | Pequal                               -- =
+		 | Pequalequal                          -- ==
+		 | Pequalgreater                        -- =>
+		 | Phashparenthesis                     -- #(
+		 | Phashbracket                         -- #[
+		 | Phashhash                            -- ##
+		 | Pquestion                            -- ?
+		 | Pquestionquestion                    -- ??
+		 | Pquestionequal                       -- ?=
+		 | Pdotdotdot                           -- ...
+
+punct = [ PparenthesisOpen, PparenthesisClose, Pcomma, Pdot, PbracketOpen, PbracketClose
+        , PbraceOpen, PbraceClose, Pcoloncolon, Pminus, Pequal, Pequalequal, Pequalgreater
+        , Phashparenthesis, Phashbracket, Phashhash, Pquestion, Pquestionquestion
+        , Pquestionequal, Pdotdotdot ]
+
+punctSymbols = [ "(", ")", ",", ".", "[", "]", "{", "}", "::", "-"
+               , "=", "==", "=>", "#(", "#[", "##", "?", "??", "?=", "..."]
+
+
 
 data Token = R Reserved | Str String | Num Int | P Punctuation
 
@@ -271,6 +283,14 @@ sureFirst f = Sure (\(a, b) -> (f a, b))
 
 notEmpty ([], _) = False
 notEmpty (_, _) = True
+
+isAlpha caseinsensitive c = case (caseinsensitive, ord 'A' <= o, o <= ord 'Z') of
+                            (_, True, True) -> True
+                            (True, _, False) -> case (ord 'a' <= o, o <= ord 'z') of
+                                                (True, True) -> True
+                                                _ -> False
+                            _ -> False
+                  where o = ord c
 
 token' :: Parse [Char] (Token', [Char])
 token' = or [ Wrap $ extendThrist num (sureFirst (Token . Num))
