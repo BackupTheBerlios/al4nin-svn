@@ -216,3 +216,106 @@ te6 = interpretCat #[Push 42, Push 32, Push 1, Add, Swap, Print, Dup, PopN #2]l
  Weee :: CatShape
  type Weee = Shape (Row *0)
 
+
+
+--$ @Section { Crazy uses of Thrists }
+--$ For example we can put functions of type
+--$ a->b, b->c into a thrist:
+
+--{
+funThrist = #[ord, (+) 2, chr]l
+
+runThrist :: Thrist (->) a b -> a -> b
+runThrist Nil b = b
+runThrist (Cons f r) a = runThrist r (f a)
+--}
+
+{-
+-- Example session:
+
+prompt> funThrist
+ #[<primfun to1>,<fn>,<primfun to1>]l : Thrist (->) Char Char
+prompt> runThrist funThrist
+ <fn> : Char -> Char
+prompt> runThrist funThrist 'x'
+ 'z' : Char
+
+-}
+
+--$ @Item { An interesting use are @Code { Equal } thrists
+--$ as they can express transitivity relationships of
+--$ type equality: @Code { Equal a b /\ Equal b c ==> Equal c a }
+
+plus:: Nat ~> Nat ~> Nat
+{plus Z m} = m
+{plus (S n) m} = S {plus n m}
+
+plusZ :: Nat' n -> Equal {plus n Z} n
+plusZ Z = Eq
+plusZ (S n) = Eq -- :: Equal {plus (S n) Z} (S n) -- reduces to Equal (S {plus n Z}) (S n)
+  where theorem because = plusZ n -- :: Equal {plus n Z} n
+
+
+plusS :: Nat' n -> Equal {plus n (S m)} (S {plus n m})
+plusS Z = Eq :: Equal {plus Z (S m)} (S {plus Z m}) --> Equal (S m) (S {plus Z m}) --> Equal m {plus Z m} --> Equal m m
+plusS (S n) = Eq --::  Equal {plus (S n) (S m)} (S {plus (S n) m})
+                   --> Equal (S {plus n (S m)}) (S (S {plus n m}))
+                   --% Equal    {plus n (S m)}     (S {plus n m})
+    where theorem because = plusS n
+
+
+plusCommutes :: Nat' n -> Nat' m -> Equal {plus n m} {plus m n}
+plusCommutes Z m = Eq --:: Equal {plus Z m} {plus m Z}
+                      -->  Equal m {plus m Z}
+    where theorem because = plusZ m
+
+plusCommutes (S n) m = Eq --:: Equal {plus (S n) m} {plus m (S n)}
+                          -->  Equal (S {plus n m}) {plus m (S n)}
+                          --%  Equal (S {plus n m}) (S {plus m n})
+                          --%  Equal    {plus n m}     {plus m n}
+    where theorem because1 = plusS m, because2 = plusCommutes n m
+
+impliesZero :: Nat' n -> Nat' m -> Equal {plus n m} m -> Equal m Z
+
+{-
+##test "current refinement fails because _a != {plus #0 _a}"
+ impliesZero Z m Eq = Eq --? Equal {plus Z m} m -> Equal m Z
+                        --> Equal m m -> Equal m Z
+-}
+{-
+##test "Annotation not polymorphic enough"
+ impliesZero Z (m :: Nat' m')  (Eq :: Equal m' m') = Eq --? Equal {plus Z m} m -> Equal m Z
+                        --> Equal m m -> Equal m Z
+-}
+impliesZero (S n) m Eq = unreachable --? Equal {plus (S n) m} m -> Equal m Z
+                                     --> Equal (S {plus n m}) m -> Equal m Z
+
+{-
+impliesZero (S n) Z Eq = unreachable --? Equal {plus (S n) Z} Z -> Equal Z Z
+                                     --> Equal (S {plus n Z}) Z -> Equal Z Z
+                                     --% Equal (S n) Z -> Equal Z Z
+--    where theorem plusZ
+
+
+impliesZero (S n) (S m) Eq = unreachable --? Equal {plus (S n) (S m)} (S m) -> Equal (S m) Z
+                                      --> Equal (S {plus n m}) m -> Equal m Z
+-}
+
+
+
+
+--$ I am writing this as an equivalent thrist now
+
+
+{-
+hyp1 :: Nat' a -> Nat' (S b) -> Equal a (S b)
+hyp1 #1 #1 = Eq
+hyp1 (S a) (S b) = Eq
+  where theorem because = hyp1 a b
+-}
+
+##test "Does not work yet"
+ eqThrist = #[Eq :: Equal a (S b)
+           , Eq :: Equal (S b) (S c)
+           , Eq :: (S c) a
+           ]l
