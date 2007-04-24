@@ -210,6 +210,7 @@ data Reserved = Rdefine
 data Punctuation = PparenthesisOpen | PparenthesisClose -- ( )
 		 | Pcomma                               -- ,
 		 | Pdot                                 -- .
+		 | Psemicolon                           -- ;
 		 | PbracketOpen | PbracketClose         -- [ ]
 		 | PbraceOpen | PbraceClose             -- { }
 		 | Pcoloncolon                          -- ::
@@ -225,15 +226,24 @@ data Punctuation = PparenthesisOpen | PparenthesisClose -- ( )
 		 | Pquestionequal                       -- ?=
 		 | Pdotdotdot                           -- ...
 
-punct = [ PparenthesisOpen, PparenthesisClose, Pcomma, Pdot, PbracketOpen, PbracketClose
-        , PbraceOpen, PbraceClose, Pcoloncolon, Pminus, Pequal, Pequalequal, Pequalgreater
-        , Phashparenthesis, Phashbracket, Phashhash, Pquestion, Pquestionquestion
-        , Pquestionequal, Pdotdotdot ]
+-- the below lists are maximum munch sorted
+punctSymbols = [ "(", ")", ",", "...", ".", ";", "[", "]", "{", "}", "::", "-"
+               , "==", "=>", "=", "#(", "#[", "##", "??", "?=", "?"]
 
-punctSymbols = [ "(", ")", ",", ".", "[", "]", "{", "}", "::", "-"
-               , "=", "==", "=>", "#(", "#[", "##", "?", "??", "?=", "..."]
+punct = [ PparenthesisOpen, PparenthesisClose, Pcomma, Pdotdotdot, Pdot, Psemicolon, PbracketOpen, PbracketClose
+        , PbraceOpen, PbraceClose, Pcoloncolon, Pminus, Pequalequal, Pequalgreater, Pequal
+        , Phashparenthesis, Phashbracket, Phashhash, Pquestionquestion
+        , Pquestionequal, Pquestion ]
 
 
+reservedWords = ["define", "end", "handler", "let", "local", "macro", "otherwise"]
+
+reserved = [Rdefine, Rend, Rhandler, Rlet, Rlocal, Rmacro, Rotherwise]
+
+bulkWords :: [[Char]] -> [a] -> (a -> Token') -> Parse [Char] (Token', [Char])
+bulkWords syntax semantics conv = or $ drosel syntax semantics where
+				  drosel (sy:sys) (se:ses) = Wrap #[word sy, Sure (\(_, rest) -> (conv se, rest))]l : drosel sys ses
+				  drosel [] [] = []
 
 data Token = R Reserved | Str String | Num Int | P Punctuation
 
@@ -301,5 +311,7 @@ token' = or [ Wrap $ extendThrist num (sureFirst (Token . Num))
             , Wrap $ Cons (Seq1 (letter '#') (alts letter "xX")) (Cons (Sure snd) (extendThrist hexnum (sureFirst (Token . Num))))
             , Wrap #[Rep1 whitespace, Pred notEmpty, sureFirst Whitespace]l
             , Wrap $ Cons (Seq1 (letter '#') (alts letter "bB")) (Cons (Sure snd) (extendThrist binnum (sureFirst (Token . Num))))
+	    , bulkWords punctSymbols punct (Token . P)
+	    , bulkWords reservedWords reserved (Token . R)
             ]
 
