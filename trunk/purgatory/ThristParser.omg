@@ -335,13 +335,27 @@ isQuestion :: Token' -> Bool
 isQuestion (Token (P Pquestion)) = True
 isQuestion _ = False
 
+isDot :: Token' -> Bool
+isDot (Token (P Pdot)) = True
+isDot _ = False
 
-natuator :: Thrist Parse [Token'] (exists (n :: Nat) . Nat' n, [Token'])
-natuator = #[Group [Pred isTest, Pred isQuestion, Pred isTest], sureFirst (\ [Test a, _, Test b] -> sum a b)]l
+
+natuator :: Thrist Parse [Token'] (Maybe (exists (n :: Nat) . Nat' n), [Token'])
+natuator = #[Or (Wrap #[Group [Pred isTest, Pred isQuestion, Pred isTest], sureFirst (\ [Test a, _, Test b] -> Just $ sum a b)]l)
+	        (Wrap #[Group [Pred isTest, Pred isDot, Pred isTest], sureFirst (\ [Test a, _, Test b] -> diff a b)]l)]l
 
 sum :: (exists (m :: Nat) . Nat' m) -> (exists (n :: Nat) . Nat' n) -> (exists (o :: Nat) . Nat' o)
 sum (Ex Z) rhs = rhs
 sum lhs (Ex Z) = lhs
 sum (Ex (S a)) (Ex b) = sum (Ex a) (Ex (S b))
 
+
+diff :: (exists (m :: Nat) . Nat' m) -> (exists (n :: Nat) . Nat' n) -> Maybe (exists (o :: Nat) . Nat' o)
+diff (Ex Z) (z@Ex Z) = Just z
+diff (Ex Z) _ = Nothing
+diff z (Ex Z) = Just z
+diff (Ex (S a)) (Ex (S b)) = diff (Ex a) (Ex b)
+
 (Just (natu0, [])) = parse lexer' "!23?!42"
+(Just (natu1, [])) = parse lexer' "!23.!42"
+(Just (natu2, [])) = parse lexer' "!42.!23"
