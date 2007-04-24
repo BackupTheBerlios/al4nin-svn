@@ -47,22 +47,23 @@ data Thrist :: forall (l :: *1) . (l ~> l ~> *)  ~> l ~> l ~> * where
 
 data Parse :: *0 ~> *0 ~> *0 where
   Epsilon :: Parse [a] ([b], [a])       -- always match
-  Atom :: Char -> Parse Char Char       -- exact match
+--  Atom :: Char -> Parse Char Char       -- exact match
   Pred :: (a -> Bool) -> Parse a a      -- conditional match
   Sure :: (a -> b) -> Parse a b         -- always matches and converts
   Try :: (a -> Maybe b) -> Parse a b    -- pipeline stops if no match
-  Rep1 :: Parse a b -> Parse [a] ([b], [a])     -- consume as many as matches, return rest
-  Rep :: Parse [a] (b, [a]) -> Parse [a] ([b], [a])     -- consume as many as matches, return rest
-  Group :: [Parse a b] -> Parse [a] ([b], [a]) -- all must match, return rest
-  CataStar :: ([a] -> b) -> Parse ([a], c) (b, c) -- collapse one or more elements
-  CataPlus :: ([a] -> b) -> Parse ([a], c) (b, c) -- collapse zero or more elements
+  Rep1 :: Parse a b -> Parse [a] ([b], [a])          -- consume as many as matches, return rest
+  Rep :: Parse [a] (b, [a]) -> Parse [a] ([b], [a])  -- consume as many as matches, return rest
+  Group :: [Parse a b] -> Parse [a] ([b], [a])       -- all must match, return rest
+  CataStar :: ([a] -> b) -> Parse ([a], c) (b, c)    -- collapse one or more elements
+  CataPlus :: ([a] -> b) -> Parse ([a], c) (b, c)    -- collapse zero or more elements
   Wrap :: Thrist Parse a b -> Parse a b -- treat a chain of parses as one
-  Or :: Parse a b -> Parse a b -> Parse a b    -- match first or if it doesn't the second
+  Or :: Parse a b -> Parse a b -> Parse a b          -- match first or if it doesn't, the second
   Seq :: Parse [a] (b, [a]) -> Parse [a] (c, [a]) -> Parse [a] ((b, c), [a]) -- parse front first then second
   Seq1 :: Parse a b -> Parse a c -> Parse [a] ((b, c), [a]) -- same, but with single-elem first and second
 
 
-letter = (Atom :: Char -> Parse Char Char)
+--letter = (Atom :: Char -> Parse Char Char)
+letter a = Pred (\(c :: Char) -> ord c == ord a)
 ---char = Sure (id :: Char -> Char)
 
 digit = Try (\c -> if ord '0' <= ord c && ord c <= ord '9' then Just (ord c - ord '0') else Nothing)
@@ -104,7 +105,7 @@ parse Nil a = Just a
 parse (Cons (Epsilon) r) as = parse r ([], as)
 
 -- Get rid of Atom, it should be @Code { Pred (chrEqual c) } ###
-parse (Cons (Atom c) r) a = if ord c == ord a then parse r a else Nothing
+---parse (Cons (Atom c) r) a = if ord c == ord a then parse r a else Nothing
 
 parse (Cons (Pred p) r) a = if p a then parse r a else Nothing
 
@@ -156,8 +157,8 @@ compileParse :: Thrist Parse a b -> Code (a -> Maybe b)
 compileParse Nil = [| Just |]
 compileParse (Cons (Epsilon) r) = [| \as -> $parseR ([], as)  |]
 				 where parseR = compileParse r
-compileParse (Cons (Atom c) r) = [| \a -> if ord c == ord a then $parseR a else Nothing |]
-				 where parseR = compileParse r
+--compileParse (Cons (Atom c) r) = [| \a -> if ord c == ord a then $parseR a else Nothing |]
+--				 where parseR = compileParse r
 
 compileParse (Cons (Pred p) r) = [| \a -> if p a then $(compileParse r) a else Nothing |]
 
@@ -199,6 +200,8 @@ t4a = optional (word ";")
 
 -- ############ a simple lexer ############
 
+-- see: http://www.opendylan.org/books/drm/Lexical_Grammar
+
 data Reserved = Rdefine
 	      | Rend
 	      | Rhandler
@@ -206,6 +209,14 @@ data Reserved = Rdefine
 	      | Rlocal
 	      | Rmacro
 	      | Rotherwise
+
+data HashWord = Ht
+	      | Hf
+	      | Hnext
+	      | Hrest
+	      | Hkey
+	      | Hallkeys
+	      | Hinclude
 
 data Punctuation = PparenthesisOpen | PparenthesisClose -- ( )
 		 | Pcomma                               -- ,
@@ -237,15 +248,17 @@ punct = [ PparenthesisOpen, PparenthesisClose, Pcomma, Pdotdotdot, Pdot, Psemico
 
 
 coreWords = ["define", "end", "handler", "let", "local", "macro", "otherwise"]
-
 core = [Rdefine, Rend, Rhandler, Rlet, Rlocal, Rmacro, Rotherwise]
+
+hashWords = ["#t", "#f", "#next", "#rest", "#key", "#all-keys", "#include"]
+hash = [Ht, Hf, Hnext, Hrest, Hkey, Hallkeys, Hinclude]
 
 bulkWords :: [String] -> [a] -> (a -> Token') -> Parse [Char] (Token', [Char])
 bulkWords syntax semantics conv = or $ drosel syntax semantics where
 				  drosel (sy:sys) (se:ses) = Wrap #[word sy, Sure (\(_, rest) -> (conv se, rest))]l : drosel sys ses
 				  drosel [] [] = []
 
-data Token = R Reserved | Str String | Num Int | P Punctuation
+data Token = R Reserved | Str String | Num Int | P Punctuation | H HashWord
 
 data Token' = Token Token | Whitespace String | Test (exists (n :: Nat) . Nat' n)
 
@@ -313,6 +326,7 @@ token' = or [ Wrap $ extendThrist num (sureFirst (Token . Num))
             , Wrap $ Cons (Seq1 (letter '#') (alts letter "bB")) (Cons (Sure snd) (extendThrist binnum (sureFirst (Token . Num))))
 	    , bulkWords punctSymbols punct (Token . P)
 	    , bulkWords coreWords core (Token . R)
+	    , bulkWords hashWords hash (Token . H)
             , Wrap $ Cons (word "!") (Cons (Sure snd) (extendThrist num (sureFirst mkTest)))
             ]
 
@@ -359,3 +373,10 @@ diff (Ex (S a)) (Ex (S b)) = diff (Ex a) (Ex b)
 (Just (natu0, [])) = parse lexer' "!23?!42"
 (Just (natu1, [])) = parse lexer' "!23.!42"
 (Just (natu2, [])) = parse lexer' "!42.!23"
+
+
+-- ############### Cat syntax ###############
+
+-- see: http://www.cat-language.com/manual.html#syntax
+
+data Catoken = Cinteger Int | Ccomment String
