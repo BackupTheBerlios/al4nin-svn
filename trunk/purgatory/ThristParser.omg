@@ -67,6 +67,8 @@ letter = (Atom :: Char -> Parse Char Char)
 
 digit = Try (\c -> if ord '0' <= ord c && ord c <= ord '9' then Just (ord c - ord '0') else Nothing)
 
+bindigit = Try (\c -> if ord '0' <= ord c && ord c <= ord '1' then Just (ord c - ord '0') else Nothing)
+
 hexdigit = Try (\c -> if ord '0' <= ord c && ord c <= ord '9' then Just (ord c - ord '0') else
                       if ord 'a' <= ord c && ord c <= ord 'f' then Just (ord c - ord 'W') else
                       if ord 'A' <= ord c && ord c <= ord 'F' then Just (ord c - ord '7') else Nothing)
@@ -138,12 +140,13 @@ parse (Cons (CataPlus f) r) (a, over) = parse r ((f a), over)
 parse (Cons (Wrap thr) r) a = do { a' <- parse thr a; parse r a' } where monad maybeM
 
 parse (Cons (Seq1 p1 p2) r) (a1:a2:rest) = do { b1 <- parse #[p1]l a1; b2 <- parse #[p2]l a2; parse r ((b1, b2), rest) } where monad maybeM
+parse (Cons (Seq1 _ _) _) _ = Nothing
 
 parse (Cons (Seq p1 p2) r) as = do { (b1, as') <- parse #[p1]l as; (b2, rest) <- parse #[p2]l as'; parse r ((b1, b2), rest) } where monad maybeM
 
 parse (Cons (Or p1 p2) r) a = case parse #[p1]l a of
-      (Just b1) -> parse r b1
-      Nothing -> do { b2 <- parse #[p2]l a; parse r b2 } where monad maybeM
+			      (Just b1) -> parse r b1
+			      Nothing -> do { b2 <- parse #[p2]l a; parse r b2 } where monad maybeM
 
 -- ##########################################
 -- ############ pattern compiler ############
@@ -179,6 +182,7 @@ t1a = parse #[Seq (proper' $ Rep1 $ letter 'a') (Seq (Rep1 $ letter 'b') (Rep1 (
 
 num = #[Rep1 digit, CataPlus (base 10)]l
 hexnum = #[Rep1 hexdigit, CataPlus (base 16)]l
+binnum = #[Rep1 bindigit, CataPlus (base 2)]l
 
 
 chexnum = #[Seq (Seq1 (letter '0') (alts letter "xX")) (Wrap hexnum), Sure (snd . fst)]l
@@ -296,5 +300,6 @@ token' :: Parse [Char] (Token', [Char])
 token' = or [ Wrap $ extendThrist num (sureFirst (Token . Num))
             , Wrap $ Cons (Seq1 (letter '#') (alts letter "xX")) (Cons (Sure snd) (extendThrist hexnum (sureFirst (Token . Num))))
             , Wrap #[Rep1 whitespace, Pred notEmpty, sureFirst Whitespace]l
+            , Wrap $ Cons (Seq1 (letter '#') (alts letter "bB")) (Cons (Sure snd) (extendThrist binnum (sureFirst (Token . Num))))
             ]
 
