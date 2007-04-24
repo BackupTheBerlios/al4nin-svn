@@ -232,22 +232,22 @@ punctSymbols = [ "(", ")", ",", "...", ".", ";", "[", "]", "{", "}", "::", "-"
 
 punct = [ PparenthesisOpen, PparenthesisClose, Pcomma, Pdotdotdot, Pdot, Psemicolon, PbracketOpen, PbracketClose
         , PbraceOpen, PbraceClose, Pcoloncolon, Pminus, Pequalequal, Pequalgreater, Pequal
-        , Phashparenthesis, Phashbracket, Phashhash, Pquestionquestion
-        , Pquestionequal, Pquestion ]
+        , Phashparenthesis, Phashbracket, Phashhash
+        , Pquestionquestion, Pquestionequal, Pquestion ]
 
 
-reservedWords = ["define", "end", "handler", "let", "local", "macro", "otherwise"]
+coreWords = ["define", "end", "handler", "let", "local", "macro", "otherwise"]
 
-reserved = [Rdefine, Rend, Rhandler, Rlet, Rlocal, Rmacro, Rotherwise]
+core = [Rdefine, Rend, Rhandler, Rlet, Rlocal, Rmacro, Rotherwise]
 
-bulkWords :: [[Char]] -> [a] -> (a -> Token') -> Parse [Char] (Token', [Char])
+bulkWords :: [String] -> [a] -> (a -> Token') -> Parse [Char] (Token', [Char])
 bulkWords syntax semantics conv = or $ drosel syntax semantics where
 				  drosel (sy:sys) (se:ses) = Wrap #[word sy, Sure (\(_, rest) -> (conv se, rest))]l : drosel sys ses
 				  drosel [] [] = []
 
 data Token = R Reserved | Str String | Num Int | P Punctuation
 
-data Token' = Token Token | Whitespace String
+data Token' = Token Token | Whitespace String | Test (exists (n :: Nat) . Nat' n)
 
 whitespace = alts letter " \n\t\r"
 
@@ -312,6 +312,36 @@ token' = or [ Wrap $ extendThrist num (sureFirst (Token . Num))
             , Wrap #[Rep1 whitespace, Pred notEmpty, sureFirst Whitespace]l
             , Wrap $ Cons (Seq1 (letter '#') (alts letter "bB")) (Cons (Sure snd) (extendThrist binnum (sureFirst (Token . Num))))
 	    , bulkWords punctSymbols punct (Token . P)
-	    , bulkWords reservedWords reserved (Token . R)
+	    , bulkWords coreWords core (Token . R)
+            , Wrap $ Cons (word "!") (Cons (Sure snd) (extendThrist num (sureFirst mkTest)))
             ]
 
+
+
+mkTest :: Int -> Token'
+mkTest i = Test (walk i (Ex Z)) where
+	   walk :: Int -> (exists (m :: Nat) . Nat' m) -> (exists (n :: Nat) . Nat' n)
+	   walk 0 n = n
+	   walk i (Ex n) = walk (i - 1) (Ex (S n))
+
+
+-- evaluator for arithmetics on Nat'
+
+isTest :: Token' -> Bool
+isTest (Test _) = True
+isTest _ = False
+
+isQuestion :: Token' -> Bool
+isQuestion (Token (P Pquestion)) = True
+isQuestion _ = False
+
+
+natuator :: Thrist Parse [Token'] (exists (n :: Nat) . Nat' n, [Token'])
+natuator = #[Group [Pred isTest, Pred isQuestion, Pred isTest], sureFirst (\ [Test a, _, Test b] -> sum a b)]l
+
+sum :: (exists (m :: Nat) . Nat' m) -> (exists (n :: Nat) . Nat' n) -> (exists (o :: Nat) . Nat' o)
+sum (Ex Z) rhs = rhs
+sum lhs (Ex Z) = lhs
+sum (Ex (S a)) (Ex b) = sum (Ex a) (Ex (S b))
+
+(Just (natu0, [])) = parse lexer' "!23?!42"
