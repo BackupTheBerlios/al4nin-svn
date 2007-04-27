@@ -115,27 +115,27 @@ blow :: Nat ~> Row *0 ~> Row *0
 {blow Z s} = s
 {blow (S n) s} = RCons t {blow n s}
 
-blowLike :: *0 ~> Row *0 ~> Row *0
-{blowLike (c -> d) s} = {blowLike d (RCons c s)}
-{blowLike Int s} = s
-{blowLike Char s} = s
-{blowLike Bool s} = s
-{blowLike [a] s} = s
+blowLike :: Nat ~> *0 ~> Row *0 ~> Row *0
+{blowLike (S arty) (c -> d) s} = {blowLike arty d (RCons c s)}
+{blowLike Z a s} = s
+--{blowLike Z Char s} = s
+--{blowLike Z Bool s} = s
+--{blowLike Z [a] s} = s
 
-range :: *0 ~> *0
-{range (c -> d)} = {range d}
+range :: Nat ~> *0 ~> *0
+{range (S arty) (c -> d)} = {range arty d}
 --{range (c -> d)} = {range d}
-{range Int} = Int
-{range Char} = Char
-{range Bool} = Bool
+{range Z a} = a
+--{range Char} = Char
+--{range Bool} = Bool
 --{range ((a :: x ~> y) b)} = (a b)
-{range [a]} = [a]
+--{range [a]} = [a]
 
 kind CatShape = Shape (Row *0)
 
 data Cat :: CatShape ~> CatShape ~> *0 where
   Push :: a -> Cat (Shape s) (Shape (RCons a s))
-  Prim :: (a -> b) -> Cat (Shape {blowLike b (RCons a s)}) (Shape (RCons {range b} s))
+  Prim :: Nat' (S arty) -> (a -> b) -> Cat (Shape {blowLike arty b (RCons a s)}) (Shape (RCons {range arty b} s))
   Dup :: Cat (Shape (RCons t s)) (Shape (RCons t (RCons t s)))
 --  Dig :: Pick Row Nat -> Cat (Shape (RCons t s)) (Shape (RCons t (RCons t s)))
   Print :: Cat (Shape (RCons t s)) (Shape s)
@@ -205,6 +205,9 @@ interpretCat' thr act =
 				 Pu a st <- act
 				 let (Pu b st') = st
 				 interpretCat' r (return (Pu (b > a) st'))
+	     (Cons (Prim (S Z) f) r) -> do
+	                                Pu a st <- act
+				        interpretCat' r (return (Pu (check (f a)) st))
 	     (Cons (If yes no) r) -> do
 				     Pu cond st <- act
 				     let act' = return st
@@ -228,6 +231,7 @@ te3 = interpretCat #[Push 23, pop]l
 te4 = interpretCat #[Push 42, Push 11, Greater, If #[Push True]l #[Push False]l, Print]l
 te5 = interpretCat #[Push 42, Push 32, Push 1, Add, Swap, Print, Print]l
 te6 = interpretCat #[Push 42, Push 32, Push 1, Add, Swap, Print, Dup, PopN #2]l
+te7 = interpretCat #[Push ord, Push "Fun", Prim #2 map, Print]l
 
 ##test "Mixup in Decs (not reported yet)"
  Weee :: CatShape
