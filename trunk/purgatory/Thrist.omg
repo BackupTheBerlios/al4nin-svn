@@ -115,17 +115,27 @@ blow :: Nat ~> Row *0 ~> Row *0
 {blow Z s} = s
 {blow (S n) s} = RCons t {blow n s}
 
-blowLike :: *0 ~> *0 ~> Row *0 ~> Row *0
-{blowLike a (c -> d) s} = RCons a {blowLike c d s}
-{blowLike a Int s} = RCons a s
-{blowLike a Char s} = RCons a s
-{blowLike a Bool s} = RCons a s
+blowLike :: *0 ~> Row *0 ~> Row *0
+{blowLike (c -> d) s} = {blowLike d (RCons c s)}
+{blowLike Int s} = s
+{blowLike Char s} = s
+{blowLike Bool s} = s
+{blowLike [a] s} = s
+
+range :: *0 ~> *0
+{range (c -> d)} = {range d}
+--{range (c -> d)} = {range d}
+{range Int} = Int
+{range Char} = Char
+{range Bool} = Bool
+--{range ((a :: x ~> y) b)} = (a b)
+{range [a]} = [a]
 
 kind CatShape = Shape (Row *0)
 
 data Cat :: CatShape ~> CatShape ~> *0 where
   Push :: a -> Cat (Shape s) (Shape (RCons a s))
-  Prim :: (a -> b) -> Cat (Shape {blowLike a b s}) (Shape (RCons b s))
+  Prim :: (a -> b) -> Cat (Shape {blowLike b (RCons a s)}) (Shape (RCons {range b} s))
   Dup :: Cat (Shape (RCons t s)) (Shape (RCons t (RCons t s)))
 --  Dig :: Pick Row Nat -> Cat (Shape (RCons t s)) (Shape (RCons t (RCons t s)))
   Print :: Cat (Shape (RCons t s)) (Shape s)
