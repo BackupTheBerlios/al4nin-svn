@@ -131,11 +131,36 @@ range :: Nat ~> *0 ~> *0
 --{range ((a :: x ~> y) b)} = (a b)
 --{range [a]} = [a]
 
+arity :: Nat ~> *0 ~> *0
+{arity Z c} = c
+{arity (S n) (c -> d) } = c -> {arity n d}
+
 kind CatShape = Shape (Row *0)
+
+countArr :: *0 ~> Nat
+{countArr Int} = #0
+{countArr Bool} = #0
+{countArr Char} = #0
+{countArr (a->b)} = S {countArr b}
+
+prop Tractable :: * ~> * where
+  IntTractable :: Tractable Int
+  BoolTractable :: Tractable Bool
+  CharTractable :: Tractable Char
+  PairTractable :: Tractable a -> Tractable b -> Tractable (a, b)
+  ArrTractable :: Tractable a -> Tractable b -> Tractable (a -> b)
+
+
+--arityProof :: Nat' (S n) -> Equal (a -> {arity n b}) {arity (S n) (a -> b)} -> exists c d . Equal b (c -> d)
+--arityProof (S Z) Eq = check (Ex Eq)
+
+-- show that for a function with signature {arity n b} and a stack shape of {blowLike arty {arity arty c} s} the function can always be saturated
 
 data Cat :: CatShape ~> CatShape ~> *0 where
   Push :: a -> Cat (Shape s) (Shape (RCons a s))
-  Prim :: Nat' (S arty) -> (a -> b) -> Cat (Shape {blowLike arty b (RCons a s)}) (Shape (RCons {range arty b} s))
+--  Prim :: Nat' (S arty) -> (a -> b) -> Cat (Shape (RCons a {blowLike arty b s})) (Shape (RCons {range arty b} s))
+--  Prim :: Equal c {arity arty c} => Nat' (S arty) -> (a -> c) -> Cat (Shape (RCons a {blowLike arty {arity arty c} s})) (Shape (RCons {range arty {arity arty c}} s))
+  Prim :: Tractable c -> (a -> c) -> Cat (Shape (RCons a {blowLike {countArr c} c s})) (Shape (RCons {range {countArr c} c} s))
   Dup :: Cat (Shape (RCons t s)) (Shape (RCons t (RCons t s)))
 --  Dig :: Pick Row Nat -> Cat (Shape (RCons t s)) (Shape (RCons t (RCons t s)))
   Print :: Cat (Shape (RCons t s)) (Shape s)
@@ -171,7 +196,7 @@ data Stack :: Row *0 ~> *0 where
   Empty :: Stack RNil
   Pu :: a -> Stack s -> Stack (RCons a s)
 
-
+{-
 --blowLike1 :: Nat' f -> Equal {blowLike #(1 + f) g (RCons h i)} (RCons j k) -> Equal {blowLike #(1 + f) (u -> v) (RCons h i)} (RCons j k)
 blowLike1 :: Nat' n -> Equal {blowLike arty d (RCons c s)} r -> Equal {blowLike (S arty) (c -> d) s} r
 blowLike1 Z Eq = Eq --:: Equal {blowLike Z d (RCons c s)} r -> Equal {blowLike (S Z) (c -> d) s} r
@@ -182,7 +207,7 @@ blowLike1 (S n) Eq = Eq --:: Equal {blowLike (S n) d (RCons c s)} r -> Equal {bl
       where theorem because = blowLike1 n
 
 
-
+-}
 
 
 
@@ -199,13 +224,16 @@ blowLike1a Z Eq = Ex (Eq, Eq) --:: Equal r {blowLike Z d (RCons c s)} -> exists 
                               -->  Equal r               (RCons c s)  -> exists cd . (Equal cd (c -> d), Equal (RCons c s)               (RCons c s))
 blowLike1a (S n) (f@Eq) = Ex (Eq, Eq) --:: 
 --      where theorem because1 = blowLike1a n, because2 = blowLike1 (S n) f
+
+
 test234 :: Thrist Cat (Shape a) (Shape b) -> IO (Stack a) -> IO (Stack b)
 
-test234 (Cons (p@Prim (S (S n)) f) r) act = do
-                                            Pu a st <- act
-				            check (test234 (Cons (Prim (S n) (f a)) r) (return st))
-                                                where monad ioM
-                                                      theorem because = blowLike1a (S n)
+--test234 (Cons (p@Prim (S (S n)) f) r) act = do
+--                                            Pu a st <- act
+--				            check (test234 (Cons (Prim (S n) (f a)) r) (return st))
+--                                                where monad ioM
+--                                                      theorem blowLike1a
+--                                                      theorem because = blowLike1a (S n)
 --                                                    theorem because = blowLike1a n
 
 
@@ -259,9 +287,9 @@ interpretCat' thr act =
 				 Pu a st <- act
 				 let (Pu b st') = st
 				 interpretCat' r (return (Pu (b > a) st'))
-	     (Cons (Prim (S Z) f) r) -> do
-	                                Pu a st <- act
-				        interpretCat' r (return (Pu (f a) st))
+---	     (Cons (Prim (ArrTractable x y) f) r) -> do
+---	                                Pu a st <- act
+---				        interpretCat' r (return (Pu (f a) st))
 --	     (Cons (Prim (S (S n)) (f :: x -> y -> z)) r) -> do
 --	                                    Pu a st <- act
 --				            interpretCat' (Cons (Prim (S n) (check (f a))) r) (return st)
@@ -288,7 +316,7 @@ te3 = interpretCat #[Push 23, pop]l
 te4 = interpretCat #[Push 42, Push 11, Greater, If #[Push True]l #[Push False]l, Print]l
 te5 = interpretCat #[Push 42, Push 32, Push 1, Add, Swap, Print, Print]l
 te6 = interpretCat #[Push 42, Push 32, Push 1, Add, Swap, Print, Dup, PopN #2]l
-te7 = interpretCat #[Push ord, Push "Fun", Prim #2 map, Print]l
+--te7 = interpretCat #[Push "Fun", Push ord, Prim (ArrTractable CharTractable IntTractable) map, Print]l
 
 ##test "Mixup in Decs (not reported yet)"
  Weee :: CatShape
