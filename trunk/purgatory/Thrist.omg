@@ -116,7 +116,7 @@ blow :: Nat ~> Row *0 ~> Row *0
 {blow (S n) s} = RCons t {blow n s}
 
 blowLike :: Nat ~> *0 ~> Row *0 ~> Row *0
-{blowLike (S arty) (c -> d) s} = {blowLike arty d (RCons c s)}
+{blowLike (S arty) (c -> d) s} = RCons c {blowLike arty d s}
 {blowLike Z a s} = s
 --{blowLike Z Char s} = s
 --{blowLike Z Bool s} = s
@@ -197,6 +197,13 @@ data Stack :: Row *0 ~> *0 where
   Pu :: a -> Stack s -> Stack (RCons a s)
 
 
+proveRange :: Tractable d -> Tractable e -> Equal {range {countArr (e -> d)} (e -> d)} {range {countArr d} d}
+proveRange IntTractable e = Eq
+proveRange BoolTractable e = Eq
+proveRange CharTractable e = Eq
+proveRange (ArrTractable from to) e = Eq
+                                      where theorem because = proveRange to
+{-
 test234 :: Thrist Cat (Shape a) (Shape b) -> IO (Stack a) -> IO (Stack b)
 
 test234 (Cons (p@Prim IntTractable f) r) act = do
@@ -204,17 +211,19 @@ test234 (Cons (p@Prim IntTractable f) r) act = do
 				            test234 r (return (Pu (f a) st))
                                                 where monad ioM
 
---test234 (Cons (p@Prim (ArrTractable from to) f) r) act = do
---                                            Pu a st <- act
---				            check (test234 (Cons (Prim (S n) (f a)) r) (return st))
---                                                where monad ioM
+test234 (Cons (p@Prim (ArrTractable from to) f) r) act = do
+                                            Pu a st <- act
+				            check (test234 (Cons (Prim to (f a)) r) (return st))
+                                                where monad ioM
+                                                      theorem because = proveRange to from
+
+-}
 
 
 
 
 
-
-
+{-
 
 blowLike2 :: Nat' n -> Equal {blowLike (S arty) d (RCons c s)} (RCons u r) -> Equal {blowLike (S (S arty)) (c -> d) s} (RCons u r)
 blowLike2 Z Eq = Eq --:: Equal {blowLike (S Z) d (RCons c s)} r -> Equal {blowLike (S (S Z)) (c -> d) s} r
@@ -223,7 +232,7 @@ blowLike2 Z Eq = Eq --:: Equal {blowLike (S Z) d (RCons c s)} r -> Equal {blowLi
 blowLike2 (S n) Eq = Eq --:: Equal {blowLike (S n) d (RCons c s)} r -> Equal {blowLike (S (S n)) (c -> d) s} r
                         --%  Equal {blowLike (S (S n)) (e -> f) (RCons c s)} r -> Equal {blowLike (S (S n)) (c -> (e -> f)) s} r
       where theorem because = blowLike2 n
-
+-}
 
 interpretCat :: (forall a . Thrist Cat (Shape a) (Shape a)) -> IO (Stack RNil)
 interpretCat thr = interpretCat' thr (returnIO Empty)
@@ -259,12 +268,13 @@ interpretCat' thr act =
 				 Pu a st <- act
 				 let (Pu b st') = st
 				 interpretCat' r (return (Pu (b > a) st'))
----	     (Cons (Prim (ArrTractable x y) f) r) -> do
----	                                Pu a st <- act
----				        interpretCat' r (return (Pu (f a) st))
---	     (Cons (Prim (S (S n)) (f :: x -> y -> z)) r) -> do
---	                                    Pu a st <- act
---				            interpretCat' (Cons (Prim (S n) (check (f a))) r) (return st)
+	     (Cons (Prim (ArrTractable x y) f) r) -> do
+	                                             Pu a st <- act
+				                     interpretCat' (Cons (Prim y (f a)) r) (return st)
+                                                         where theorem because = proveRange y x
+	     (Cons (Prim IntTractable f) r) -> do
+	                            Pu a st <- act
+				    interpretCat' r (return (Pu (f a) st))
 	     (Cons (If yes no) r) -> do
 				     Pu cond st <- act
 				     let act' = return st
@@ -289,6 +299,7 @@ te4 = interpretCat #[Push 42, Push 11, Greater, If #[Push True]l #[Push False]l,
 te5 = interpretCat #[Push 42, Push 32, Push 1, Add, Swap, Print, Print]l
 te6 = interpretCat #[Push 42, Push 32, Push 1, Add, Swap, Print, Dup, PopN #2]l
 --te7 = interpretCat #[Push "Fun", Push ord, Prim (ArrTractable CharTractable IntTractable) map, Print]l
+te8 = interpretCat #[Push 'Z', Prim IntTractable ord, Push 2, Prim (ArrTractable IntTractable IntTractable) (+), Print]l
 
 ##test "Mixup in Decs (not reported yet)"
  Weee :: CatShape
