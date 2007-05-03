@@ -275,6 +275,34 @@ te6 = interpretCat #[Push 42, Push 32, Push 1, Add, Swap, Print, Dup, PopN #2]l
 te7 = interpretCat #[Push "Fun", Push ord, Prim (ArrTractable (ListTractable CharTractable) (ListTractable IntTractable)) map, Print]l
 te8 = interpretCat #[Push 'Z', Prim IntTractable ord, Push 2, Prim (ArrTractable IntTractable IntTractable) (+), Print]l
 
+
+optimizeCat :: Thrist Cat a b -> Thrist Cat a b
+optimizeCat (i@Cons (If yes no) r) = optimizeIf i yes no r
+optimizeCat (Cons (p@Push a) r) = Cons p (optimizeCat r)
+optimizeCat (Cons (p@Swap) r) = Cons p (optimizeCat r)
+optimizeCat Nil = Nil
+
+optimizeIf :: Thrist Cat (Shape (RCons Bool a)) b -> Thrist Cat (Shape a) (Shape c) -> Thrist Cat (Shape a) (Shape c) -> Thrist Cat (Shape c) b -> Thrist Cat (Shape (RCons Bool a)) b
+
+
+-- @@@REPORT this!!
+--optimizeIf all (Cons (p@Push a1) t1) (Cons (Push a2) t2) rest = if eqStr (show a1) (show a2) then check (Cons p (Cons Swap (Cons (If t1 t1) rest))) else all
+
+-- we are cheating here:
+-- 1) using eqStr
+-- 2) (If t1 t1), because we do not have a proof yet that t1 and t2 have the same type
+optimizeIf all (Cons (Push a1) t1) (Cons (Push a2) t2) rest = if eqStr (show a1) (show a2) then optimizeCat $ Cons (Push a1) (Cons Swap (Cons (If t1 t1) rest)) else all
+
+optimizeIf _ Nil Nil rest = Cons pop rest
+
+
+optimizeIf all _ _ _ = all
+
+to0 = optimizeCat #[If #[Push 42]l #[Push 42]l, Print]l
+to1 = optimizeCat #[If #[Push 42]l #[Push 43]l, Print]l
+
+
+
 ##test "Mixup in Decs (not reported yet)"
  Weee :: CatShape
  type Weee = Shape (Row *0)
