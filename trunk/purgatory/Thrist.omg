@@ -196,46 +196,18 @@ data Stack :: Row *0 ~> *0 where
   Empty :: Stack RNil
   Pu :: a -> Stack s -> Stack (RCons a s)
 
-{-
---blowLike1 :: Nat' f -> Equal {blowLike #(1 + f) g (RCons h i)} (RCons j k) -> Equal {blowLike #(1 + f) (u -> v) (RCons h i)} (RCons j k)
-blowLike1 :: Nat' n -> Equal {blowLike arty d (RCons c s)} r -> Equal {blowLike (S arty) (c -> d) s} r
-blowLike1 Z Eq = Eq --:: Equal {blowLike Z d (RCons c s)} r -> Equal {blowLike (S Z) (c -> d) s} r
-                    -->  Equal               (RCons c s)  r -> Equal {blowLike Z d (RCons c s)} r
-                    -->  Equal               (RCons c s)  r -> Equal               (RCons c s)  r
-blowLike1 (S n) Eq = Eq --:: Equal {blowLike (S n) d (RCons c s)} r -> Equal {blowLike (S (S n)) (c -> d) s} r
-                        --%  Equal {blowLike (S (S n)) (e -> f) (RCons c s)} r -> Equal {blowLike (S (S n)) (c -> (e -> f)) s} r
-      where theorem because = blowLike1 n
-
-
--}
-
-
-
-
-
-
-
-
-blowLike1a :: Nat' n -> Equal r {blowLike n d (RCons c s)} -> exists cd . (Equal cd (c -> d), Equal r {blowLike (S n) cd s})
-blowLike1a Z Eq = Ex (Eq, Eq) --:: Equal r {blowLike Z d (RCons c s)} -> exists cd . (Equal cd (c -> d), Equal r {blowLike (S Z) cd s})
-                              -->  Equal r               (RCons c s)  -> exists cd . (Equal cd (c -> d), Equal (RCons c s) {blowLike (S Z) cd s})
-                              -->  Equal r               (RCons c s)  -> exists cd . (Equal cd (c -> d), Equal (RCons c s) {blowLike (S Z) (c -> d) s})
-                              -->  Equal r               (RCons c s)  -> exists cd . (Equal cd (c -> d), Equal (RCons c s) {blowLike Z d (RCons c s)})
-                              -->  Equal r               (RCons c s)  -> exists cd . (Equal cd (c -> d), Equal (RCons c s)               (RCons c s))
-blowLike1a (S n) (f@Eq) = Ex (Eq, Eq) --:: 
---      where theorem because1 = blowLike1a n, because2 = blowLike1 (S n) f
-
 
 test234 :: Thrist Cat (Shape a) (Shape b) -> IO (Stack a) -> IO (Stack b)
 
---test234 (Cons (p@Prim (S (S n)) f) r) act = do
+test234 (Cons (p@Prim IntTractable f) r) act = do
+                                            Pu a st <- act
+				            test234 r (return (Pu (f a) st))
+                                                where monad ioM
+
+--test234 (Cons (p@Prim (ArrTractable from to) f) r) act = do
 --                                            Pu a st <- act
 --				            check (test234 (Cons (Prim (S n) (f a)) r) (return st))
 --                                                where monad ioM
---                                                      theorem blowLike1a
---                                                      theorem because = blowLike1a (S n)
---                                                    theorem because = blowLike1a n
-
 
 
 
