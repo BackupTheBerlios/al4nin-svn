@@ -147,7 +147,7 @@ prop Tractable :: * ~> * where
 
 
 data Cat :: CatShape ~> CatShape ~> *0 where
-  Push :: a -> Cat (Shape s) (Shape (RCons a s))
+  Push :: Tractable a -> a -> Cat (Shape s) (Shape (RCons a s))
   Prim :: Tractable c -> (a -> c) -> Cat (Shape (RCons a {blowLike {countArr c} c s})) (Shape (RCons {range {countArr c} c} s))
   Dup :: Cat (Shape (RCons t s)) (Shape (RCons t (RCons t s)))
 --  Dig :: Pick Row Nat -> Cat (Shape (RCons t s)) (Shape (RCons t (RCons t s)))
@@ -161,7 +161,9 @@ data Cat :: CatShape ~> CatShape ~> *0 where
         Thrist Cat (Shape s) (Shape t) ->
         Cat (Shape (RCons Bool s)) (Shape t)
 
-te1 = #[Push 42, Dup, Greater, If #[pop, Push `hh]l #[Push 42, Add, Print, Push `hh]l]l
+
+strTract = ListTractable CharTractable
+te1 = #[Push IntTractable 42, Dup, Greater, If #[pop, Push strTract "hh"]l #[Push IntTractable 42, Add, Print, Push strTract "hh"]l]l
 
 {- This needs more magic:
 showThrist :: (t a b -> String) -> Thrist t a b -> String
@@ -171,7 +173,7 @@ showThrist f (Cons t r) = f t ++ showThrist f r
 
 cat' :: Thrist Cat a b -> String
 cat' Nil = ""
-cat' (Cons (Push a) r) = "Push " ++ show a ++ "\n" ++ cat' r
+cat' (Cons (Push rep a) r) = "Push " ++ show a ++ "\n" ++ cat' r
 --cat' (Cons (Prim t f) r) = "Prim " ++ show a ++ "\n" ++ cat' r
 cat' (Cons Dup r) = "Dup" ++ "\n" ++ cat' r
 cat' (Cons Print r) = "Print" ++ "\n" ++ cat' r
@@ -205,9 +207,9 @@ interpretCat' Nil act = act
 
 interpretCat' thr act =
     case thr of
-	     (Cons (Push a) r) -> do
-				  st <- act
-				  interpretCat' r (return (Pu a st))
+	     (Cons (Push rep a) r) -> do
+				      st <- act
+				      interpretCat' r (return (Pu a st))
 	     (Cons (PopN (S n)) r) -> do
 				      Pu _ st <- act
 				      interpretCat' r (popMore n st)
@@ -268,19 +270,33 @@ popMore (S n) st = do
 ##test "was not what was expected"
   te2 = interpretCat (Cons (Push 11) te1)
 
-te3 = interpretCat #[Push 23, pop]l
-te4 = interpretCat #[Push 42, Push 11, Greater, If #[Push True]l #[Push False]l, Print]l
-te5 = interpretCat #[Push 42, Push 32, Push 1, Add, Swap, Print, Print]l
-te6 = interpretCat #[Push 42, Push 32, Push 1, Add, Swap, Print, Dup, PopN #2]l
-te7 = interpretCat #[Push "Fun", Push ord, Prim (ArrTractable (ListTractable CharTractable) (ListTractable IntTractable)) map, Print]l
-te8 = interpretCat #[Push 'Z', Prim IntTractable ord, Push 2, Prim (ArrTractable IntTractable IntTractable) (+), Print]l
+pushI = Push IntTractable
+pushB = Push BoolTractable
+pushC = Push CharTractable
+pushStr = Push (ListTractable CharTractable)
+
+te3 = interpretCat #[pushI 23, pop]l
+te4 = interpretCat #[pushI 42, pushI 11, Greater, If #[pushB True]l #[pushB False]l, Print]l
+te5 = interpretCat #[pushI 42, pushI 32, pushI 1, Add, Swap, Print, Print]l
+te6 = interpretCat #[pushI 42, pushI 32, pushI 1, Add, Swap, Print, Dup, PopN #2]l
+te7 = interpretCat #[pushStr "Fun", Push (ArrTractable CharTractable IntTractable) ord, Prim (ArrTractable (ListTractable CharTractable) (ListTractable IntTractable)) map, Print]l
+te8 = interpretCat #[pushC 'Z', Prim IntTractable ord, pushI 2, Prim (ArrTractable IntTractable IntTractable) (+), Print]l
 
 
 optimizeCat :: Thrist Cat a b -> Thrist Cat a b
 optimizeCat (i@Cons (If yes no) r) = optimizeIf i yes no r
-optimizeCat (Cons (p@Push a) r) = Cons p (optimizeCat r)
+optimizeCat (Cons (p@Push rep a) r) = Cons p (optimizeCat r)
 optimizeCat (Cons (p@Swap) r) = Cons p (optimizeCat r)
 optimizeCat Nil = Nil
+
+splitOff :: Thrist Cat (Shape a) (Shape c) -> Thrist Cat (Shape a) (Shape c) -> exists b . (Thrist Cat (Shape a) (Shape b), Thrist Cat (Shape b) (Shape c))
+--splitOff (Cons (p1@Push rep1 a1) r1) (Cons (p2@Push rep2 a2) r2) = check (Ex (#[p1]l, r2))
+splitOff (Cons (p1@Push IntTractable a1) r1) (Cons (p2@Push IntTractable a2) r2) = Ex (#[p1]l, r2)
+
+
+
+sameTractable :: Tractable a -> Tractable b -> Maybe (Equal a b)
+sameTractable IntTractable IntTractable = Just Eq
 
 optimizeIf :: Thrist Cat (Shape (RCons Bool a)) b -> Thrist Cat (Shape a) (Shape c) -> Thrist Cat (Shape a) (Shape c) -> Thrist Cat (Shape c) b -> Thrist Cat (Shape (RCons Bool a)) b
 
@@ -290,16 +306,23 @@ optimizeIf :: Thrist Cat (Shape (RCons Bool a)) b -> Thrist Cat (Shape a) (Shape
 
 -- we are cheating here:
 -- 1) using eqStr
--- 2) (If t1 t1), because we do not have a proof yet that t1 and t2 have the same type
-optimizeIf all (Cons (Push a1) t1) (Cons (Push a2) t2) rest = if eqStr (show a1) (show a2) then optimizeCat $ Cons (Push a1) (Cons Swap (Cons (If t1 t1) rest)) else all
+--optimizeIf all (Cons (Push IntTractable a1) t1) (Cons (Push IntTractable a2) t2) rest = if eqStr (show a1) (show a2) then optimizeCat $ Cons (Push IntTractable a1) (Cons Swap (Cons (If t1 t2) rest)) else all
+
+optimizeIf all (Cons (Push rep1 a1) t1) (Cons (Push rep2 a2) t2) rest = case (sameTractable rep1 rep2, eqStr (show a1) (show a2)) of
+                                                                          (Just Eq, True) -> optimizeCat $ Cons (Push rep1 a1) (Cons Swap (Cons (If t1 t2) rest))
+                                                                          _ -> all
+
+
+--optimizeIf all (Cons (Push rep1 a1) t1) (Cons (Push rep2 a2) t2) rest = if eqStr (show a1) (show a2) then optimizeCat $ Cons (Push rep1 a1) (Cons Swap (Cons (If t1 t2) rest)) else all
+--           where theorem splitOff
 
 optimizeIf _ Nil Nil rest = Cons pop rest
 
 
 optimizeIf all _ _ _ = all
 
-to0 = optimizeCat #[If #[Push 42]l #[Push 42]l, Print]l
-to1 = optimizeCat #[If #[Push 42]l #[Push 43]l, Print]l
+to0 = optimizeCat #[If #[pushI 42]l #[pushI 42]l, Print]l
+to1 = optimizeCat #[If #[pushI 42]l #[pushI 43]l, Print]l
 
 
 
