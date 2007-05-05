@@ -289,28 +289,26 @@ optimizeCat (Cons (p@Push rep a) r) = Cons p (optimizeCat r)
 optimizeCat (Cons (p@Swap) r) = Cons p (optimizeCat r)
 optimizeCat Nil = Nil
 
-splitOff :: Thrist Cat (Shape a) (Shape c) -> Thrist Cat (Shape a) (Shape c) -> exists b . (Thrist Cat (Shape a) (Shape b), Thrist Cat (Shape b) (Shape c))
---splitOff (Cons (p1@Push rep1 a1) r1) (Cons (p2@Push rep2 a2) r2) = check (Ex (#[p1]l, r2))
-splitOff (Cons (p1@Push IntTractable a1) r1) (Cons (p2@Push IntTractable a2) r2) = Ex (#[p1]l, r2)
-
-
-
 sameTractable :: Tractable a -> Tractable b -> Maybe (Equal a b)
 sameTractable IntTractable IntTractable = Just Eq
 
+sameValue :: Tractable a -> a -> a -> Bool
+sameValue IntTractable a b = a == b
+
+splitOff :: Thrist Cat (Shape a) (Shape c) -> Thrist Cat (Shape a) (Shape c) -> exists b . Maybe (Cat (Shape a) (Shape b), Thrist Cat (Shape b) (Shape c), Thrist Cat (Shape b) (Shape c))
+splitOff (Cons (p1@Push rep1 a1) r1) (Cons (Push rep2 a2) r2) = case sameTractable rep1 rep2 of
+                                                               Just Eq -> Ex (Just (p1, r1, r2))
+splitOff (Cons (s@Swap) r1) (Cons Swap r2) =  Ex (Just (s, r1, r2))
+
+
+
 optimizeIf :: Thrist Cat (Shape (RCons Bool a)) b -> Thrist Cat (Shape a) (Shape c) -> Thrist Cat (Shape a) (Shape c) -> Thrist Cat (Shape c) b -> Thrist Cat (Shape (RCons Bool a)) b
 
-
--- @@@REPORT this!!
---optimizeIf all (Cons (p@Push a1) t1) (Cons (Push a2) t2) rest = if eqStr (show a1) (show a2) then check (Cons p (Cons Swap (Cons (If t1 t1) rest))) else all
-
--- we are cheating here:
--- 1) using eqStr
---optimizeIf all (Cons (Push IntTractable a1) t1) (Cons (Push IntTractable a2) t2) rest = if eqStr (show a1) (show a2) then optimizeCat $ Cons (Push IntTractable a1) (Cons Swap (Cons (If t1 t2) rest)) else all
-
-optimizeIf all (Cons (Push rep1 a1) t1) (Cons (Push rep2 a2) t2) rest = case (sameTractable rep1 rep2, eqStr (show a1) (show a2)) of
-                                                                          (Just Eq, True) -> optimizeCat $ Cons (Push rep1 a1) (Cons Swap (Cons (If t1 t2) rest))
+optimizeIf all (Cons (Push rep1 a1) t1) (Cons (Push rep2 a2) t2) rest = case sameTractable rep1 rep2 of
+                                                                          Just Eq -> if sameValue rep1 a1 a2 then optimizeCat $ Cons (Push rep1 a1) (Cons Swap (Cons (If t1 t2) rest)) else all
                                                                           _ -> all
+----optimizeIf all a b rest = case splitOff a b of
+----                            Just (Ex (p, t1, t2)) -> 
 
 
 --optimizeIf all (Cons (Push rep1 a1) t1) (Cons (Push rep2 a2) t2) rest = if eqStr (show a1) (show a2) then optimizeCat $ Cons (Push rep1 a1) (Cons Swap (Cons (If t1 t2) rest)) else all
