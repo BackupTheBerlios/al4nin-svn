@@ -123,10 +123,6 @@ range :: Nat ~> *0 ~> *0
 {range (S arty) (c -> d)} = {range arty d}
 {range Z a} = a
 
-arity :: Nat ~> *0 ~> *0
-{arity Z c} = c
-{arity (S n) (c -> d) } = c -> {arity n d}
-
 kind CatShape = Shape (Row *0)
 
 countArr :: *0 ~> Nat
@@ -190,7 +186,7 @@ data Stack :: Row *0 ~> *0 where
   Empty :: Stack RNil
   Pu :: a -> Stack s -> Stack (RCons a s)
 
-
+{-
 proveRange :: Tractable d -> Tractable e -> Equal {range {countArr (e -> d)} (e -> d)} {range {countArr d} d}
 proveRange IntTractable e = Eq
 proveRange BoolTractable e = Eq
@@ -199,7 +195,7 @@ proveRange (ListTractable _) e = Eq
 proveRange (PairTractable _ _) e = Eq
 proveRange (ArrTractable from to) e = Eq
                                       where theorem because = proveRange to
-
+-}
 
 interpretCat :: (forall a . Thrist Cat (Shape a) (Shape a)) -> IO (Stack RNil)
 interpretCat thr = interpretCat' thr (returnIO Empty)
@@ -238,7 +234,7 @@ interpretCat' thr act =
 	     (Cons (Prim (ArrTractable x y) f) r) -> do
 	                                             Pu a st <- act
 				                     interpretCat' (Cons (Prim y (f a)) r) (return st)
-                                                         where theorem because = proveRange y x
+                                                         -- where theorem because = proveRange y x
 	     (Cons (Prim IntTractable f) r) -> do
 	                                       Pu a st <- act
 				               interpretCat' r (return (Pu (f a) st))
