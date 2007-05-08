@@ -157,6 +157,9 @@ data Cat :: CatShape ~> CatShape ~> *0 where
 -- Perm :: Pick Row Nat -- TODO
   Add :: Cat (Shape (RCons Int (RCons Int s))) (Shape (RCons Int s))      -- use Prim instead
   Greater :: Cat (Shape (RCons Int (RCons Int s))) (Shape (RCons Bool s)) -- use Prim instead
+  Block :: Thrist Cat (Shape b) (Shape c) -> Cat (Shape a) (Shape (RCons (Cat (Shape b) (Shape c)) a))
+  Quote :: Thrist Cat a b -> Cat a b
+  Eval :: Cat (Shape (RCons (Cat (Shape a) (Shape b)) a)) (Shape b)
   If :: Thrist Cat (Shape s) (Shape t) ->
         Thrist Cat (Shape s) (Shape t) ->
         Cat (Shape (RCons Bool s)) (Shape t)
@@ -255,6 +258,13 @@ interpretCat' thr act =
 				     Pu cond st <- act
 				     let act' = return st
 				     interpretCat' r (if cond then interpretCat' yes act' else interpretCat' no act')
+	     (Cons (Block thr) r) -> do
+	       st <- act
+	       interpretCat' r (return (Pu (Quote thr) st))
+	     (Cons Eval r) -> do
+	       Pu (Quote thr) st <- act
+	       let act' = return st
+	       interpretCat' r (interpretCat' thr act')
       where monad ioM
 
 pop = PopN #1
@@ -281,7 +291,7 @@ te5 = interpretCat #[pushI 42, pushI 32, pushI 1, Add, Swap, Print, Print]l
 te6 = interpretCat #[pushI 42, pushI 32, pushI 1, Add, Swap, Print, Dup, PopN #2]l
 te7 = interpretCat #[pushStr "Fun", Push (ArrTractable CharTractable IntTractable) ord, Prim (ArrTractable (ListTractable CharTractable) (ListTractable IntTractable)) map, Print]l
 te8 = interpretCat #[pushC 'Z', Prim IntTractable ord, pushI 2, Prim (ArrTractable IntTractable IntTractable) (+), Print]l
-
+te9 = interpretCat #[pushI 42, Block #[Print]l, Eval]l
 
 optimizeCat :: Thrist Cat a b -> Thrist Cat a b
 optimizeCat (i@Cons (If yes no) r) = optimizeIf i yes no r
@@ -323,6 +333,31 @@ to0 = optimizeCat #[If #[pushI 42]l #[pushI 42]l, Print]l
 to1 = optimizeCat #[If #[pushI 42]l #[pushI 43]l, Print]l
 
 
+------------------------------------
+-- representing polynomial datatypes
+------------------------------------
+{- does not work yet
+how :: *0 ~> Row *0
+{how (t -> u)} = RCons t {how u}
+{how Int} = RCons Int RNil
+{how Bool} = RCons Bool RNil
+
+last :: *0 ~> Row *0
+{last (t -> u)} = {last u}
+{last Int} = Int
+{last Bool} = Bool
+
+
+
+data Sum :: *0 ~> Row *0 ~> *0 where
+  Fin :: Sum a RNil
+  Case :: t -> Sum a b -> Sum a {how t}
+ deriving List(s)
+
+--tp1 :: Sum Bool (Row a)
+tp0 = #[False, True]s
+tp1 = #[Nothing, Just]s
+-}
 
 ##test "Mixup in Decs (not reported yet)"
  Weee :: CatShape
