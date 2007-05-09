@@ -133,13 +133,14 @@ countArr :: *0 ~> Nat
 {countArr [a]} = #0
 {countArr (a->b)} = S {countArr b}
 
-prop Tractable :: * ~> * where
+data Tractable :: * ~> * where
   IntTractable :: Tractable Int
   BoolTractable :: Tractable Bool
   CharTractable :: Tractable Char
   PairTractable :: Tractable a -> Tractable b -> Tractable (a, b)
   ListTractable :: Tractable a -> Tractable [a]
   ArrTractable :: Tractable a -> Tractable b -> Tractable (a -> b)
+  CatTractable :: ShapeTractable a -> ShapeTractable b -> Tractable (Cat a b)
 
 
 data Cat :: CatShape ~> CatShape ~> *0 where
@@ -160,6 +161,16 @@ data Cat :: CatShape ~> CatShape ~> *0 where
         Thrist Cat (Shape s) (Shape t) ->
         Cat (Shape (RCons Bool s)) (Shape t)
 
+
+data ShapeTractable :: CatShape ~> * where
+  Opaque :: ShapeTractable (Shape a)
+  Ontop :: Tractable b -> ShapeTractable (Shape a) -> ShapeTractable (Shape (RCons b a))
+ deriving List(st)
+  
+tc0 = (let a = Opaque in (CatTractable a (Ontop IntTractable a))) :: Tractable (Cat (Shape a) (Shape (RCons Int a)))
+tc1 = #[Push tc0 (Push IntTractable 42)]l
+tc2 = #[Push tc0 (Push IntTractable 42), Eval]l
+tc3 = #[Push tc0 (Push IntTractable 42), Eval, Print]l
 
 strTract = ListTractable CharTractable
 te1 = #[Push IntTractable 42, Dup, Greater, If #[pop, Push strTract "hh"]l #[Push IntTractable 42, Add, Print, Push strTract "hh"]l]l
