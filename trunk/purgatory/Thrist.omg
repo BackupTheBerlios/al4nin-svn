@@ -123,8 +123,6 @@ range :: Nat ~> *0 ~> *0
 {range (S arty) (c -> d)} = {range arty d}
 {range Z a} = a
 
-kind CatShape = Shape (Row *0)
-
 countArr :: *0 ~> Nat
 {countArr Int} = #0
 {countArr Bool} = #0
@@ -143,31 +141,31 @@ data Tractable :: * ~> * where
   CatTractable :: ShapeTractable a -> ShapeTractable b -> Tractable (Cat a b)
 
 
-data Cat :: CatShape ~> CatShape ~> *0 where
-  Push :: Tractable a -> a -> Cat (Shape s) (Shape (RCons a s))
-  Prim :: Tractable c -> (a -> c) -> Cat (Shape (RCons a {blowLike {countArr c} c s})) (Shape (RCons {range {countArr c} c} s))
-  Dup :: Cat (Shape (RCons t s)) (Shape (RCons t (RCons t s)))
---  Dig :: Pick Row Nat -> Cat (Shape (RCons t s)) (Shape (RCons t (RCons t s)))
-  Print :: Cat (Shape (RCons t s)) (Shape s)
-  PopN :: Nat' (S n) -> Cat (Shape {blow (S n) s}) (Shape s)
-  Swap :: Cat (Shape (RCons a (RCons b s))) (Shape (RCons b (RCons a s)))
+data Cat :: (Row *0) ~> (Row *0) ~> *0 where
+  Push :: Tractable a -> a -> Cat s (RCons a s)
+  Prim :: Tractable c -> (a -> c) -> Cat (RCons a {blowLike {countArr c} c s}) (RCons {range {countArr c} c} s)
+  Dup :: Cat (RCons t s) (RCons t (RCons t s))
+--  Dig :: Pick Row Nat -> Cat (RCons t s) (RCons t (RCons t s))
+  Print :: Cat (RCons t s) s
+  PopN :: Nat' (S n) -> Cat {blow (S n) s} s
+  Swap :: Cat (RCons a (RCons b s)) (RCons b (RCons a s))
 -- Perm :: Pick Row Nat -- TODO
-  Add :: Cat (Shape (RCons Int (RCons Int s))) (Shape (RCons Int s))      -- use Prim instead
-  Greater :: Cat (Shape (RCons Int (RCons Int s))) (Shape (RCons Bool s)) -- use Prim instead
-  Block :: Thrist Cat (Shape b) (Shape c) -> Cat (Shape a) (Shape (RCons (Cat (Shape b) (Shape c)) a))
+  Add :: Cat (RCons Int (RCons Int s)) (RCons Int s)      -- use Prim instead
+  Greater :: Cat (RCons Int (RCons Int s)) (RCons Bool s) -- use Prim instead
+  Block :: Thrist Cat b c -> Cat a (RCons (Cat b c) a)
   Quote :: Thrist Cat a b -> Cat a b
-  Eval :: Cat (Shape (RCons (Cat (Shape a) (Shape b)) a)) (Shape b)
-  If :: Thrist Cat (Shape s) (Shape t) ->
-        Thrist Cat (Shape s) (Shape t) ->
-        Cat (Shape (RCons Bool s)) (Shape t)
+  Eval :: Cat (RCons (Cat a b) a) b
+  If :: Thrist Cat s t ->
+        Thrist Cat s t ->
+        Cat (RCons Bool s) t
 
 
-data ShapeTractable :: CatShape ~> * where
-  Opaque :: ShapeTractable (Shape a)
-  Ontop :: Tractable b -> ShapeTractable (Shape a) -> ShapeTractable (Shape (RCons b a))
+data ShapeTractable :: (Row *0) ~> * where
+  Opaque :: ShapeTractable a
+  Ontop :: Tractable b -> ShapeTractable a -> ShapeTractable (RCons b a)
  deriving List(st)
   
-tc0 = (let a = Opaque in (CatTractable a (Ontop IntTractable a))) :: Tractable (Cat (Shape a) (Shape (RCons Int a)))
+tc0 = (let a = Opaque in (CatTractable a (Ontop IntTractable a))) :: Tractable (Cat a (RCons Int a))
 tc1 = #[Push tc0 (Push IntTractable 42)]l
 tc2 = #[Push tc0 (Push IntTractable 42), Eval]l
 tc3 = #[Push tc0 (Push IntTractable 42), Eval, Print]l
@@ -196,6 +194,7 @@ cat' (Cons (If yes no) r) = "If " ++ show yes ++ " ELSE " ++ show no ++ "\n" ++ 
 data Stack :: Row *0 ~> *0 where
   Empty :: Stack RNil
   Pu :: a -> Stack s -> Stack (RCons a s)
+ deriving List(s)
 
 {-
 proveRange :: Tractable d -> Tractable e -> Equal {range {countArr (e -> d)} (e -> d)} {range {countArr d} d}
@@ -208,10 +207,10 @@ proveRange (ArrTractable from to) e = Eq
                                       where theorem because = proveRange to
 -}
 
-interpretCat :: (forall a . Thrist Cat (Shape a) (Shape a)) -> IO (Stack RNil)
+interpretCat :: (forall a . Thrist Cat a a) -> IO (Stack RNil)
 interpretCat thr = interpretCat' thr (returnIO Empty)
 
-interpretCat' :: Thrist Cat (Shape a) (Shape b) -> IO (Stack a) -> IO (Stack b)
+interpretCat' :: Thrist Cat a b -> IO (Stack a) -> IO (Stack b)
 
 interpretCat' Nil act = act
 
@@ -312,14 +311,14 @@ sameTractable IntTractable IntTractable = Just Eq
 sameValue :: Tractable a -> a -> a -> Bool
 sameValue IntTractable a b = a == b
 
-splitOff :: Thrist Cat (Shape a) (Shape c) -> Thrist Cat (Shape a) (Shape c) -> exists b . Maybe (Cat (Shape a) (Shape b), Thrist Cat (Shape b) (Shape c), Thrist Cat (Shape b) (Shape c))
+splitOff :: Thrist Cat a c -> Thrist Cat a c -> exists b . Maybe (Cat a b, Thrist Cat b c, Thrist Cat b c)
 splitOff (Cons (p1@Push rep1 a1) r1) (Cons (Push rep2 a2) r2) = case sameTractable rep1 rep2 of
                                                                Just Eq -> Ex (Just (p1, r1, r2))
 splitOff (Cons (s@Swap) r1) (Cons Swap r2) =  Ex (Just (s, r1, r2))
 
 
 
-optimizeIf :: Thrist Cat (Shape (RCons Bool a)) b -> Thrist Cat (Shape a) (Shape c) -> Thrist Cat (Shape a) (Shape c) -> Thrist Cat (Shape c) b -> Thrist Cat (Shape (RCons Bool a)) b
+optimizeIf :: Thrist Cat (RCons Bool a) b -> Thrist Cat a c -> Thrist Cat a c -> Thrist Cat c b -> Thrist Cat (RCons Bool a) b
 
 optimizeIf all (Cons (Push rep1 a1) t1) (Cons (Push rep2 a2) t2) rest = case sameTractable rep1 rep2 of
                                                                           Just Eq -> if sameValue rep1 a1 a2 then optimizeCat $ Cons (Push rep1 a1) (Cons Swap (Cons (If t1 t2) rest)) else all
@@ -367,8 +366,8 @@ tp1 = #[Nothing, Just]s
 -}
 
 ##test "Mixup in Decs (not reported yet)"
- Weee :: CatShape
- type Weee = Shape (Row *0)
+ Weee :: Row *0
+ type Weee = RNil
 
 
 
