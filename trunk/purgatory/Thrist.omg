@@ -140,17 +140,33 @@ data Tractable :: * ~> * where
   ArrTractable :: Tractable a -> Tractable b -> Tractable (a -> b)
   CatTractable :: ShapeTractable a -> ShapeTractable b -> Tractable (Cat a b)
 
+data Primitive
+    = Padd
+    | Psub
+    | Pmul
+    | Pdiv
+    | Pgt
+    | Plt
+    | Pgteq
+    | Plteq
+    | Pneg
+    | Peq
+    | Pneq
+    | Pmin
+    | Pmax
+    | Pmap -- made up
+    | Pord
+
 
 data Cat :: (Row *0) ~> (Row *0) ~> *0 where
   Push :: Tractable a -> a -> Cat s (RCons a s)
-  Prim :: Tractable c -> (a -> c) -> Cat (RCons a {blowLike {countArr c} c s}) (RCons {range {countArr c} c} s)
+  Prim :: Tractable c -> Primitive -> (a -> c) -> Cat (RCons a {blowLike {countArr c} c s}) (RCons {range {countArr c} c} s)
   Dup :: Cat (RCons t s) (RCons t (RCons t s))
 --  Dig :: Pick Row Nat -> Cat (RCons t s) (RCons t (RCons t s))
   Print :: Cat (RCons t s) s
   PopN :: Nat' (S n) -> Cat {blow (S n) s} s
   Swap :: Cat (RCons a (RCons b s)) (RCons b (RCons a s))
 -- Perm :: Pick Row Nat -- TODO
-  Add :: Cat (RCons Int (RCons Int s)) (RCons Int s)      -- use Prim instead
   Greater :: Cat (RCons Int (RCons Int s)) (RCons Bool s) -- use Prim instead
   Block :: Thrist Cat b c -> Cat a (RCons (Cat b c) a)
   Quote :: Thrist Cat a b -> Cat a b
@@ -171,7 +187,19 @@ tc2 = #[Push tc0 (Push IntTractable 42), Eval]l
 tc3 = #[Push tc0 (Push IntTractable 42), Eval, Print]l
 
 strTract = ListTractable CharTractable
-te1 = #[Push IntTractable 42, Dup, Greater, If #[pop, Push strTract "hh"]l #[Push IntTractable 42, Add, Print, Push strTract "hh"]l]l
+
+intPrim = Prim (ArrTractable IntTractable IntTractable)
+add = intPrim Padd (+)
+sub = intPrim Psub (-)
+
+intPred = Prim (ArrTractable IntTractable BoolTractable)
+gt = intPred Pgt (>)
+gteq = intPred Pgteq (>=)
+
+pop = PopN #1
+
+te1 = #[Push IntTractable 42, Dup, Greater, If #[pop, Push strTract "hh"]l #[Push IntTractable 42, add, Print, Push strTract "hh"]l]l
+--te1a = #[Push IntTractable 42, Dup, gt, If #[pop, Push strTract "hh"]l #[Push IntTractable 42, add, Print, Push strTract "hh"]l]l
 
 {- This needs more magic:
 showThrist :: (t a b -> String) -> Thrist t a b -> String
@@ -181,14 +209,14 @@ showThrist f (Cons t r) = f t ++ showThrist f r
 
 cat' :: Thrist Cat a b -> String
 cat' Nil = ""
-cat' (Cons (Push rep a) r) = "Push " ++ show a ++ "\n" ++ cat' r
---cat' (Cons (Prim t f) r) = "Prim " ++ show a ++ "\n" ++ cat' r
-cat' (Cons Dup r) = "Dup" ++ "\n" ++ cat' r
-cat' (Cons Print r) = "Print" ++ "\n" ++ cat' r
+cat' (Cons (Push _ a) r) = "Push " ++ show a ++ "\n" ++ cat' r
+cat' (Cons (Prim _ Padd _) r) = "add\n" ++ cat' r
+cat' (Cons (Prim _ Psub _) r) = "sub\n" ++ cat' r
+cat' (Cons (Prim _ Pgt  _) r) = "gt\n" ++ cat' r
+cat' (Cons Dup r) = "Dup\n" ++ cat' r
+cat' (Cons Print r) = "Print\n" ++ cat' r
 cat' (Cons (PopN n) r) = "PopN " ++ show n ++ "\n" ++ cat' r
-cat' (Cons Swap r) = "Swap" ++ "\n" ++ cat' r
-cat' (Cons Add r) = "Add" ++ "\n" ++ cat' r
-cat' (Cons Greater r) = "Greater" ++ "\n" ++ cat' r
+cat' (Cons Swap r) = "Swap\n" ++ cat' r
 cat' (Cons (If yes no) r) = "If " ++ show yes ++ " ELSE " ++ show no ++ "\n" ++ cat' r
 
 data Stack :: Row *0 ~> *0 where
@@ -233,31 +261,23 @@ interpretCat' thr act =
 			      Pu a st <- act
 			      let (Pu b st') = st
 			      interpretCat' r (return (Pu b (Pu a st')))
-	     (Cons Add r) -> do
-			     Pu a st <- act
-			     let (Pu b st') = st
-			     interpretCat' r (return (Pu (a + b) st'))
-	     (Cons Greater r) -> do
-				 Pu a st <- act
-				 let (Pu b st') = st
-				 interpretCat' r (return (Pu (b > a) st'))
-	     (Cons (Prim (ArrTractable x y) f) r) -> do
+	     (Cons (Prim (ArrTractable x y) p f) r) -> do
 	                                             Pu a st <- act
-				                     interpretCat' (Cons (Prim y (f a)) r) (return st)
+				                     interpretCat' (Cons (Prim y p (f a)) r) (return st)
                                                          -- where theorem because = proveRange y x
-	     (Cons (Prim IntTractable f) r) -> do
+	     (Cons (Prim IntTractable _ f) r) -> do
 	                                       Pu a st <- act
 				               interpretCat' r (return (Pu (f a) st))
-	     (Cons (Prim BoolTractable f) r) -> do
+	     (Cons (Prim BoolTractable _ f) r) -> do
 	                                        Pu a st <- act
 				                interpretCat' r (return (Pu (f a) st))
-	     (Cons (Prim CharTractable f) r) -> do
+	     (Cons (Prim CharTractable _ f) r) -> do
 	                                        Pu a st <- act
 				                interpretCat' r (return (Pu (f a) st))
-	     (Cons (Prim (PairTractable _ _) f) r) -> do
+	     (Cons (Prim (PairTractable _ _) _ f) r) -> do
 	                                              Pu a st <- act
 				                      interpretCat' r (return (Pu (f a) st))
-	     (Cons (Prim (ListTractable _) f) r) -> do
+	     (Cons (Prim (ListTractable _) _ f) r) -> do
 	                                            Pu a st <- act
 				                    interpretCat' r (return (Pu (f a) st))
 	     (Cons (If yes no) r) -> do
@@ -272,8 +292,6 @@ interpretCat' thr act =
 	       let act' = return st
 	       interpretCat' r (interpretCat' thr act')
       where monad ioM
-
-pop = PopN #1
 
 popMore :: Nat' n -> Stack {blow n b} -> IO (Stack b)
 popMore Z st = return st
@@ -292,11 +310,11 @@ pushC = Push CharTractable
 pushStr = Push (ListTractable CharTractable)
 
 te3 = interpretCat #[pushI 23, pop]l
-te4 = interpretCat #[pushI 42, pushI 11, Greater, If #[pushB True]l #[pushB False]l, Print]l
-te5 = interpretCat #[pushI 42, pushI 32, pushI 1, Add, Swap, Print, Print]l
-te6 = interpretCat #[pushI 42, pushI 32, pushI 1, Add, Swap, Print, Dup, PopN #2]l
-te7 = interpretCat #[pushStr "Fun", Push (ArrTractable CharTractable IntTractable) ord, Prim (ArrTractable (ListTractable CharTractable) (ListTractable IntTractable)) map, Print]l
-te8 = interpretCat #[pushC 'Z', Prim IntTractable ord, pushI 2, Prim (ArrTractable IntTractable IntTractable) (+), Print]l
+te4 = interpretCat #[pushI 42, pushI 11, gt, If #[pushB True]l #[pushB False]l, Print]l
+te5 = interpretCat #[pushI 42, pushI 32, pushI 1, add, Swap, Print, Print]l
+te6 = interpretCat #[pushI 42, pushI 32, pushI 1, add, Swap, Print, Dup, PopN #2]l
+te7 = interpretCat #[pushStr "Fun", Push (ArrTractable CharTractable IntTractable) ord, Prim (ArrTractable (ListTractable CharTractable) (ListTractable IntTractable)) Pmap map, Print]l
+te8 = interpretCat #[pushC 'Z', Prim IntTractable Pord ord, pushI 2, add, Print]l
 te9 = interpretCat #[pushI 42, Block #[Print]l, Eval]l
 
 optimizeCat :: Thrist Cat a b -> Thrist Cat a b
