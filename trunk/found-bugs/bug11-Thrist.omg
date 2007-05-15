@@ -154,6 +154,8 @@ data Primitive
     | Pneq
     | Pmin
     | Pmax
+    | Pmap -- made up
+    | Pord
 
 
 data Cat :: (Row *0) ~> (Row *0) ~> *0 where
@@ -165,6 +167,8 @@ data Cat :: (Row *0) ~> (Row *0) ~> *0 where
   PopN :: Nat' (S n) -> Cat {blow (S n) s} s
   Swap :: Cat (RCons a (RCons b s)) (RCons b (RCons a s))
 -- Perm :: Pick Row Nat -- TODO
+  Add :: Cat (RCons Int (RCons Int s)) (RCons Int s)      -- use Prim instead
+  Greater :: Cat (RCons Int (RCons Int s)) (RCons Bool s) -- use Prim instead
   Block :: Thrist Cat b c -> Cat a (RCons (Cat b c) a)
   Quote :: Thrist Cat a b -> Cat a b
   Eval :: Cat (RCons (Cat a b) a) b
@@ -195,8 +199,8 @@ gteq = intPred Pgteq (>=)
 
 pop = PopN #1
 
---te1 = #[Push IntTractable 42, Dup, gt, If #[pop, Push strTract "hh"]l #[Push IntTractable 42, add, Print, Push strTract "hh"]l]l
-te1 = #[Push IntTractable 42, Dup, gt, If #[PopN #1, Push strTract "hh"]l #[Push IntTractable 42, add, Print, Push strTract "hh"]l]l
+te1 = #[Push IntTractable 42, Dup, Greater, If #[pop, Push strTract "hh"]l #[Push IntTractable 42, Add, Print, Push strTract "hh"]l]l
+te1a = #[Push IntTractable 42, Dup, gt, If #[pop, Push strTract "hh"]l #[Push IntTractable 42, Add, Print, Push strTract "hh"]l]l
 
 {- This needs more magic:
 showThrist :: (t a b -> String) -> Thrist t a b -> String
@@ -258,9 +262,9 @@ interpretCat' thr act =
 			      Pu a st <- act
 			      let (Pu b st') = st
 			      interpretCat' r (return (Pu b (Pu a st')))
-	     (Cons (Prim (ArrTractable x y) _ f) r) -> do
+	     (Cons (Prim (ArrTractable x y) p f) r) -> do
 	                                             Pu a st <- act
-				                     interpretCat' (Cons (Prim y (f a)) r) (return st)
+				                     interpretCat' (Cons (Prim y p (f a)) r) (return st)
                                                          -- where theorem because = proveRange y x
 	     (Cons (Prim IntTractable _ f) r) -> do
 	                                       Pu a st <- act
@@ -310,8 +314,8 @@ te3 = interpretCat #[pushI 23, pop]l
 te4 = interpretCat #[pushI 42, pushI 11, gt, If #[pushB True]l #[pushB False]l, Print]l
 te5 = interpretCat #[pushI 42, pushI 32, pushI 1, add, Swap, Print, Print]l
 te6 = interpretCat #[pushI 42, pushI 32, pushI 1, add, Swap, Print, Dup, PopN #2]l
-te7 = interpretCat #[pushStr "Fun", Push (ArrTractable CharTractable IntTractable) ord, Prim (ArrTractable (ListTractable CharTractable) (ListTractable IntTractable)) map, Print]l
-te8 = interpretCat #[pushC 'Z', Prim IntTractable ord, pushI 2, Prim (ArrTractable IntTractable IntTractable) (+), Print]l
+te7 = interpretCat #[pushStr "Fun", Push (ArrTractable CharTractable IntTractable) ord, Prim (ArrTractable (ListTractable CharTractable) (ListTractable IntTractable)) Pmap map, Print]l
+te8 = interpretCat #[pushC 'Z', Prim IntTractable Pord ord, pushI 2, add, Print]l
 te9 = interpretCat #[pushI 42, Block #[Print]l, Eval]l
 
 optimizeCat :: Thrist Cat a b -> Thrist Cat a b
