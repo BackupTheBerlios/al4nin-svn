@@ -60,6 +60,7 @@ data Parse :: *0 ~> *0 ~> *0 where
   Or :: Parse a b -> Parse a b -> Parse a b          -- match first or if it doesn't, the second
   Seq :: Parse [a] (b, [a]) -> Parse [a] (c, [a]) -> Parse [a] ((b, c), [a]) -- parse front first then second
   Seq1 :: Parse a b -> Parse a c -> Parse [a] ((b, c), [a]) -- same, but with single-elem first and second
+  ButNot1 :: Parse a b -> Parse a b -> Parse a b     -- match first and expect second to fail
 
 
 --letter = (Atom :: Char -> Parse Char Char)
@@ -149,6 +150,13 @@ parse (Cons (Or p1 p2) r) a = case parse #[p1]l a of
 			      (Just b1) -> parse r b1
 			      Nothing -> do { b2 <- parse #[p2]l a; parse r b2 } where monad maybeM
 
+parse (Cons (ButNot1 p1 p2) r) a = case parse #[p1]l a of
+				   Nothing -> Nothing
+				   (Just b1) -> case parse #[p2]l a of
+						Nothing -> parse r b1
+						_ -> Nothing
+
+
 -- ##########################################
 -- ############ pattern compiler ############
 -- ##########################################
@@ -196,7 +204,7 @@ t3a = word "abcd"
 t4 = Or (word ";") Epsilon
 t4a = optional (word ";")
 
-
+t5 = parse #[Rep1 (ButNot1 (alts letter "ab") (letter 'b'))]l "abc"
 
 -- ############ a simple lexer ############
 
