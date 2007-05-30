@@ -335,10 +335,11 @@ token' = or [ Wrap $ extendThrist num (sureFirst (Token . Num))
 	    , bulkWords punctSymbols punct (Token . P)
 	    , bulkWords coreWords core (Token . R)
 	    , bulkWords hashWords hash (Token . H)
-            , Wrap $ Cons (word "!") (Cons (Sure snd) (extendThrist num (sureFirst mkTest)))
+	    , Wrap #[Seq (word "//") (Rep1 $ ButNot1 (Sure id) (letter '\n')), sureFirst (\(boring, comment) -> Whitespace (boring ++ comment))]l
+            , Wrap $ Cons (word "!") (Cons (Sure snd) (extendThrist num (sureFirst mkTest))) -- experiment
             ]
 
-
+t6 = parse #[Rep token']l "33//dsd hh \n42"
 
 mkTest :: Int -> Token'
 mkTest i = Test (walk i (Ex Z)) where
