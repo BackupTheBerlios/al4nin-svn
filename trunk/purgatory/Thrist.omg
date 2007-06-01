@@ -36,7 +36,7 @@
 
 import "LangPrelude.prg" 
   (head,tail,lookup,member,fst,snd,map,Monad,maybeM,id,ioM,Row,HasType,RCons,RNil,Eq,Equal,
-  listM)
+  listM, (!=), (==))
 
 kind Doe = Wi | So
 
@@ -412,6 +412,32 @@ prompt> runThrist funThrist 'x'
  'z' : Char
 
 -}
+
+
+-- Thrist (,)
+
+{-
+-- Example session:
+prompt> #[(1, 'h'), ('u', "ss")]l
+ #[(1,'h'),('u',"ss")]l : Thrist (,) Int [Char]
+-}
+
+-- Thrist (+)
+
+-- Thrist Bind
+{-
+-- Example session:
+prompt> #[fuse 2 ""]l
+TODO###
+-}
+
+-- Thrist ContM
+
+-- Thrist EqTag
+
+-- Thrist (!=)
+
+-- Thrist (==) -- NOT COMPATIBLE
 
 --$ @Item { An interesting use are @Code { Equal } thrists
 --$ as they can express transitivity relationships of
