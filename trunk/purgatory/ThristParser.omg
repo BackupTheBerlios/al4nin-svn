@@ -159,7 +159,7 @@ parse (Cons (ButNot1 p1 p2) r) a = case parse #[p1]l a of
 
 parse (Cons (u@UpTo p1 p2) r) a = case parse' a [] of
 				  Nothing -> Nothing
-				  Just (fill, (b2, rest)) -> case parse #[p1]l fill of
+				  Just (fill, (b2, rest)) -> case parse #[p1]l (reverse fill []) of
 							     Nothing -> Nothing
 							     Just (b1, []) -> parse r ((b1, b2), rest)
 							     _ -> Nothing
@@ -171,6 +171,8 @@ parse (Cons (u@UpTo p1 p2) r) a = case parse' a [] of
     parse' (food@(head:tail)) acc = case parse #[p2]l food of
 				    Nothing -> parse' tail (head:acc)
 				    Just b2 -> Just (acc, b2)
+    reverse [] acc = acc
+    reverse (a:as) acc = reverse as (a:acc)
 
 -- ##########################################
 -- ############ pattern compiler ############
@@ -351,10 +353,13 @@ token' = or [ Wrap $ extendThrist num (sureFirst (Token . Num))
 	    , bulkWords coreWords core (Token . R)
 	    , bulkWords hashWords hash (Token . H)
 	    , Wrap #[Seq (word "//") (Rep1 $ ButNot1 (Sure id) (letter '\n')), sureFirst (\(boring, comment) -> Whitespace (boring ++ comment))]l
+	    , Wrap #[Seq (word "/*") (UpTo (Rep1 $ Sure id) (word "*/")), sureFirst (\(boring1, (comment, boring2)) -> Whitespace (boring1 ++ comment ++ boring2))]l
             , Wrap $ Cons (word "!") (Cons (Sure snd) (extendThrist num (sureFirst mkTest))) -- experiment
             ]
 
 t6 = parse #[Rep token']l "33//dsd hh \n42"
+t7 = parse #[Rep token']l "33/*dsd hh */42"
+t7a = parse #[Rep token']l "33/**/42"
 
 mkTest :: Int -> Token'
 mkTest i = Test (walk i (Ex Z)) where
