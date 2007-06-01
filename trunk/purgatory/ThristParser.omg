@@ -61,9 +61,9 @@ data Parse :: *0 ~> *0 ~> *0 where
   Seq :: Parse [a] (b, [a]) -> Parse [a] (c, [a]) -> Parse [a] ((b, c), [a]) -- parse front first then second
   Seq1 :: Parse a b -> Parse a c -> Parse [a] ((b, c), [a]) -- same, but with single-elem first and second
   ButNot1 :: Parse a b -> Parse a b -> Parse a b     -- match first and expect second to fail
+  UpTo :: Parse [a] (b, [a]) -> Parse [a] (c, [a]) -> Parse [a] ((b, c), [a]) -- scan for c then match b
 
 
---letter = (Atom :: Char -> Parse Char Char)
 letter a = Pred (\(c :: Char) -> ord c == ord a)
 ---char = Sure (id :: Char -> Char)
 
@@ -150,12 +150,27 @@ parse (Cons (Or p1 p2) r) a = case parse #[p1]l a of
 			      (Just b1) -> parse r b1
 			      Nothing -> do { b2 <- parse #[p2]l a; parse r b2 } where monad maybeM
 
+-- probably redundant, use Pred instead
 parse (Cons (ButNot1 p1 p2) r) a = case parse #[p1]l a of
 				   Nothing -> Nothing
 				   (Just b1) -> case parse #[p2]l a of
 						Nothing -> parse r b1
 						_ -> Nothing
 
+parse (Cons (u@UpTo p1 p2) r) a = case parse' a [] of
+				  Nothing -> Nothing
+				  Just (fill, (b2, rest)) -> case parse #[p1]l fill of
+							     Nothing -> Nothing
+							     Just (b1, []) -> parse r ((b1, b2), rest)
+							     _ -> Nothing
+    where
+    --parse' :: [a] -> [a] -> Maybe ([a], c)
+    parse' [] acc = case parse #[p2]l [] of
+		    Nothing -> Nothing
+		    Just b2 -> Just (acc, b2)
+    parse' (food@(head:tail)) acc = case parse #[p2]l food of
+				    Nothing -> parse' tail (head:acc)
+				    Just b2 -> Just (acc, b2)
 
 -- ##########################################
 -- ############ pattern compiler ############
