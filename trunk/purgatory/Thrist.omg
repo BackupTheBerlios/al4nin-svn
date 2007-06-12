@@ -79,17 +79,17 @@ listener, pattern matching and outputting.
 
 {- Example session:
 
-prompt> #[]l
- #[]l : forall (a:*1) (b:a ~> a ~> *0) (c:a:*1).Thrist b c c
-prompt> #[ToWi]l
- #[ToWi]l : forall (a:Doe).Thrist DooBiDoo a Wi
-prompt> #[ToWi,WiToWi]l
- #[ToWi,WiToWi]l : forall (a:Doe).Thrist DooBiDoo a Wi
-prompt> #[ToWi,WiToWi,ToSo]l
- #[ToWi,WiToWi,ToSo]l : forall (a:Doe).Thrist DooBiDoo a So
-prompt> #[ToWi,WiToWi,ToSo,SoTo]l
- #[ToWi,WiToWi,ToSo,SoTo]l : forall (a:Doe) (b:Doe).Thrist DooBiDoo a b
-prompt> #[ToWi, WiTo]l
+prompt> []l
+ []l : forall (a:*1) (b:a ~> a ~> *0) (c:a:*1).Thrist b c c
+prompt> [ToWi]l
+ [ToWi]l : forall (a:Doe).Thrist DooBiDoo a Wi
+prompt> [ToWi,WiToWi]l
+ [ToWi,WiToWi]l : forall (a:Doe).Thrist DooBiDoo a Wi
+prompt> [ToWi,WiToWi,ToSo]l
+ [ToWi,WiToWi,ToSo]l : forall (a:Doe).Thrist DooBiDoo a So
+prompt> [ToWi,WiToWi,ToSo,SoTo]l
+ [ToWi,WiToWi,ToSo,SoTo]l : forall (a:Doe) (b:Doe).Thrist DooBiDoo a b
+prompt> [ToWi, WiTo]l
  In the expression: Cons WiTo Nil
  the result type: Thrist ShuBiDoo Wi b
  was not what was expected: Thrist DooBiDoo Wi a
@@ -97,7 +97,7 @@ prompt> #[ToWi, WiTo]l
 -}
 
 ##test "different constants: ShubiDoo   !=   DooBiDoo"
- fail0 = #[ToWi, WiTo]l
+ fail0 = [ToWi, WiTo]l
 
 cat :: Thrist DooBiDoo a b -> String
 cat Nil = ""
@@ -124,11 +124,11 @@ range :: Nat ~> *0 ~> *0
 {range Z a} = a
 
 countArr :: *0 ~> Nat
-{countArr Int} = #0
-{countArr Bool} = #0
-{countArr Char} = #0
-{countArr (a, b)} = #0
-{countArr [a]} = #0
+{countArr Int} = 0t
+{countArr Bool} = 0t
+{countArr Char} = 0t
+{countArr (a, b)} = 0t
+{countArr [a]} = 0t
 {countArr (a->b)} = S {countArr b}
 
 data Tractable :: * ~> * where
@@ -182,9 +182,9 @@ data ShapeTractable :: (Row *0) ~> * where
  deriving List(st)
   
 tc0 = (let a = Opaque in (CatTractable a (Ontop IntTractable a))) :: Tractable (Cat a (RCons Int a))
-tc1 = #[Push tc0 (Push IntTractable 42)]l
-tc2 = #[Push tc0 (Push IntTractable 42), Eval]l
-tc3 = #[Push tc0 (Push IntTractable 42), Eval, Print]l
+tc1 = [Push tc0 (Push IntTractable 42)]l
+tc2 = [Push tc0 (Push IntTractable 42), Eval]l
+tc3 = [Push tc0 (Push IntTractable 42), Eval, Print]l
 
 strTract = ListTractable CharTractable
 
@@ -198,8 +198,8 @@ gteq = intPred Pgteq (>=)
 
 pop = PopN #1
 
-te1 = #[Push IntTractable 42, Dup, Greater, If #[pop, Push strTract "hh"]l #[Push IntTractable 42, add, Print, Push strTract "hh"]l]l
---te1a = #[Push IntTractable 42, Dup, gt, If #[pop, Push strTract "hh"]l #[Push IntTractable 42, add, Print, Push strTract "hh"]l]l
+te1 = [Push IntTractable 42, Dup, Greater, If [pop, Push strTract "hh"]l [Push IntTractable 42, add, Print, Push strTract "hh"]l]l
+--te1a = [Push IntTractable 42, Dup, gt, If [pop, Push strTract "hh"]l [Push IntTractable 42, add, Print, Push strTract "hh"]l]l
 
 {- This needs more magic:
 showThrist :: (t a b -> String) -> Thrist t a b -> String
@@ -309,13 +309,13 @@ pushB = Push BoolTractable
 pushC = Push CharTractable
 pushStr = Push (ListTractable CharTractable)
 
-te3 = interpretCat #[pushI 23, pop]l
-te4 = interpretCat #[pushI 42, pushI 11, gt, If #[pushB True]l #[pushB False]l, Print]l
-te5 = interpretCat #[pushI 42, pushI 32, pushI 1, add, Swap, Print, Print]l
-te6 = interpretCat #[pushI 42, pushI 32, pushI 1, add, Swap, Print, Dup, PopN #2]l
-te7 = interpretCat #[pushStr "Fun", Push (ArrTractable CharTractable IntTractable) ord, Prim (ArrTractable (ListTractable CharTractable) (ListTractable IntTractable)) Pmap map, Print]l
-te8 = interpretCat #[pushC 'Z', Prim IntTractable Pord ord, pushI 2, add, Print]l
-te9 = interpretCat #[pushI 42, Block #[Print]l, Eval]l
+te3 = interpretCat [pushI 23, pop]l
+te4 = interpretCat [pushI 42, pushI 11, gt, If [pushB True]l [pushB False]l, Print]l
+te5 = interpretCat [pushI 42, pushI 32, pushI 1, add, Swap, Print, Print]l
+te6 = interpretCat [pushI 42, pushI 32, pushI 1, add, Swap, Print, Dup, PopN #2]l
+te7 = interpretCat [pushStr "Fun", Push (ArrTractable CharTractable IntTractable) ord, Prim (ArrTractable (ListTractable CharTractable) (ListTractable IntTractable)) Pmap map, Print]l
+te8 = interpretCat [pushC 'Z', Prim IntTractable Pord ord, pushI 2, add, Print]l
+te9 = interpretCat [pushI 42, Block [Print]l, Eval]l
 
 optimizeCat :: Thrist Cat a b -> Thrist Cat a b
 optimizeCat (i@Cons (If yes no) r) = optimizeIf i yes no r
@@ -353,8 +353,8 @@ optimizeIf _ Nil Nil rest = Cons pop rest
 
 optimizeIf all _ _ _ = all
 
-to0 = optimizeCat #[If #[pushI 42]l #[pushI 42]l, Print]l
-to1 = optimizeCat #[If #[pushI 42]l #[pushI 43]l, Print]l
+to0 = optimizeCat [If [pushI 42]l [pushI 42]l, Print]l
+to1 = optimizeCat [If [pushI 42]l [pushI 43]l, Print]l
 
 
 ------------------------------------
@@ -379,8 +379,8 @@ data Sum :: *0 ~> Row *0 ~> *0 where
  deriving List(s)
 
 --tp1 :: Sum Bool (Row a)
-tp0 = #[False, True]s
-tp1 = #[Nothing, Just]s
+tp0 = [False, True]s
+tp1 = [Nothing, Just]s
 -}
 
 ##test "Mixup in Decs (not reported yet)"
@@ -394,7 +394,7 @@ tp1 = #[Nothing, Just]s
 --$ a->b, b->c into a thrist:
 
 --{
-funThrist = #[ord, (+) 2, chr]l
+funThrist = [ord, (+) 2, chr]l
 
 runThrist :: Thrist (->) a b -> a -> b
 runThrist Nil b = b
@@ -405,7 +405,7 @@ runThrist (Cons f r) a = runThrist r (f a)
 -- Example session:
 
 prompt> funThrist
- #[<primfun to1>,<fn>,<primfun to1>]l : Thrist (->) Char Char
+ [<primfun to1>,<fn>,<primfun to1>]l : Thrist (->) Char Char
 prompt> runThrist funThrist
  <fn> : Char -> Char
 prompt> runThrist funThrist 'x'
@@ -418,8 +418,8 @@ prompt> runThrist funThrist 'x'
 
 {-
 -- Example session:
-prompt> #[(1, 'h'), ('u', "ss")]l
- #[(1,'h'),('u',"ss")]l : Thrist (,) Int [Char]
+prompt> [(1, 'h'), ('u', "ss")]l
+ [(1,'h'),('u',"ss")]l : Thrist (,) Int [Char]
 -}
 
 -- Thrist (+)
@@ -427,7 +427,7 @@ prompt> #[(1, 'h'), ('u', "ss")]l
 -- Thrist Bind
 {-
 -- Example session:
-prompt> #[fuse 2 ""]l
+prompt> [fuse 2 ""]l
 TODO###
 -}
 
@@ -475,7 +475,7 @@ plusCommutes (S n) m = Eq --:: Equal {plus (S n) m} {plus m (S n)}
 impliesZero :: Nat' n -> Nat' m -> Equal {plus n m} m -> Equal m Z
 
 {-
-##test "current refinement fails because _a != {plus #0 _a}"
+##test "current refinement fails because _a != {plus 0t _a}"
  impliesZero Z m Eq = Eq --? Equal {plus Z m} m -> Equal m Z
                         --> Equal m m -> Equal m Z
 -}
@@ -512,7 +512,7 @@ hyp1 (S a) (S b) = Eq
 -}
 
 ##test "Does not work yet"
- eqThrist = #[Eq :: Equal a (S b)
-           , Eq :: Equal (S b) (S c)
-           , Eq :: (S c) a
-           ]l
+ eqThrist = [Eq :: Equal a (S b)
+            , Eq :: Equal (S b) (S c)
+            , Eq :: (S c) a
+            ]l
