@@ -38,6 +38,11 @@ import "LangPrelude.prg"
   (head,tail,lookup,member,fst,snd,map,Monad,maybeM,id,ioM,Row,HasType,RCons,RNil,Eq,Equal,
   listM, (!=), (==))
 
+data Prod:: *1 ~> *1 where
+  PNil:: Prod a
+  PCons:: k ~> Prod k ~> Prod k
+ deriving List(sh)
+
 kind Doe = Wi | So
 
 data DooBiDoo :: Doe ~> Doe ~> *0 where
@@ -111,12 +116,12 @@ cat (Cons ToSo r) = "ToSo " ++ cat r
 -- Cat thrist
 -- See: http://en.wikipedia.org/wiki/Cat_%28programming_language%29
 
-blow :: Nat ~> Row *0 ~> Row *0
+blow :: Nat ~> Prod *0 ~> Prod *0
 {blow Z s} = s
-{blow (S n) s} = RCons t {blow n s}
+{blow (S n) s} = PCons t {blow n s}
 
-blowLike :: Nat ~> *0 ~> Row *0 ~> Row *0
-{blowLike (S arty) (c -> d) s} = RCons c {blowLike arty d s}
+blowLike :: Nat ~> *0 ~> Prod *0 ~> Prod *0
+{blowLike (S arty) (c -> d) s} = PCons c {blowLike arty d s}
 {blowLike Z a s} = s
 
 range :: Nat ~> *0 ~> *0
@@ -158,30 +163,30 @@ data Primitive
     | Pord
 
 
-data Cat :: (Row *0) ~> (Row *0) ~> *0 where
-  Push :: Tractable a -> a -> Cat s (RCons a s)
-  Prim :: Tractable c -> Primitive -> (a -> c) -> Cat (RCons a {blowLike {countArr c} c s}) (RCons {range {countArr c} c} s)
-  Dup :: Cat (RCons t s) (RCons t (RCons t s))
---  Dig :: Pick Row Nat -> Cat (RCons t s) (RCons t (RCons t s))
-  Print :: Cat (RCons t s) s
+data Cat :: (Prod *0) ~> (Prod *0) ~> *0 where
+  Push :: Tractable a -> a -> Cat s (PCons a s)
+  Prim :: Tractable c -> Primitive -> (a -> c) -> Cat (PCons a {blowLike {countArr c} c s}) (PCons {range {countArr c} c} s)
+  Dup :: Cat (PCons t s) (PCons t (PCons t s))
+--  Dig :: Pick Prod Nat -> Cat (PCons t s) (PCons t (PCons t s))
+  Print :: Cat (PCons t s) s
   PopN :: Nat' (S n) -> Cat {blow (S n) s} s
-  Swap :: Cat (RCons a (RCons b s)) (RCons b (RCons a s))
--- Perm :: Pick Row Nat -- TODO
-  Greater :: Cat (RCons Int (RCons Int s)) (RCons Bool s) -- use Prim instead
-  Block :: Thrist Cat b c -> Cat a (RCons (Cat b c) a)
+  Swap :: Cat (PCons a (PCons b s)) (PCons b (PCons a s))
+-- Perm :: Pick Prod Nat -- TODO
+  Greater :: Cat (PCons Int (PCons Int s)) (PCons Bool s) -- use Prim instead
+  Block :: Thrist Cat b c -> Cat a (PCons (Cat b c) a)
   Quote :: Thrist Cat a b -> Cat a b
-  Eval :: Cat (RCons (Cat a b) a) b
+  Eval :: Cat (PCons (Cat a b) a) b
   If :: Thrist Cat s t ->
         Thrist Cat s t ->
-        Cat (RCons Bool s) t
+        Cat (PCons Bool s) t
 
 
-data ShapeTractable :: (Row *0) ~> * where
+data ShapeTractable :: (Prod *0) ~> * where
   Opaque :: ShapeTractable a
-  Ontop :: Tractable b -> ShapeTractable a -> ShapeTractable (RCons b a)
+  Ontop :: Tractable b -> ShapeTractable a -> ShapeTractable (PCons b a)
  deriving List(st)
   
-tc0 = (let a = Opaque in (CatTractable a (Ontop IntTractable a))) :: Tractable (Cat a (RCons Int a))
+tc0 = (let a = Opaque in (CatTractable a (Ontop IntTractable a))) :: Tractable (Cat a (PCons Int a))
 tc1 = [Push tc0 (Push IntTractable 42)]l
 tc2 = [Push tc0 (Push IntTractable 42), Eval]l
 tc3 = [Push tc0 (Push IntTractable 42), Eval, Print]l
@@ -219,9 +224,9 @@ cat' (Cons (PopN n) r) = "PopN " ++ show n ++ "\n" ++ cat' r
 cat' (Cons Swap r) = "Swap\n" ++ cat' r
 cat' (Cons (If yes no) r) = "If " ++ show yes ++ " ELSE " ++ show no ++ "\n" ++ cat' r
 
-data Stack :: Row *0 ~> *0 where
-  Empty :: Stack RNil
-  Pu :: a -> Stack s -> Stack (RCons a s)
+data Stack :: Prod *0 ~> *0 where
+  Empty :: Stack PNil
+  Pu :: a -> Stack s -> Stack (PCons a s)
  deriving List(s)
 
 {-
@@ -235,7 +240,7 @@ proveRange (ArrTractable from to) e = Eq
                                       where theorem because = proveRange to
 -}
 
-interpretCat :: (forall a . Thrist Cat a a) -> IO (Stack RNil)
+interpretCat :: (forall a . Thrist Cat a a) -> IO (Stack PNil)
 interpretCat thr = interpretCat' thr (returnIO Empty)
 
 interpretCat' :: Thrist Cat a b -> IO (Stack a) -> IO (Stack b)
@@ -336,7 +341,7 @@ splitOff (Cons (s@Swap) r1) (Cons Swap r2) =  Ex (Just (s, r1, r2))
 
 
 
-optimizeIf :: Thrist Cat (RCons Bool a) b -> Thrist Cat a c -> Thrist Cat a c -> Thrist Cat c b -> Thrist Cat (RCons Bool a) b
+optimizeIf :: Thrist Cat (PCons Bool a) b -> Thrist Cat a c -> Thrist Cat a c -> Thrist Cat c b -> Thrist Cat (PCons Bool a) b
 
 optimizeIf all (Cons (Push rep1 a1) t1) (Cons (Push rep2 a2) t2) rest = case sameTractable rep1 rep2 of
                                                                           Just Eq -> if sameValue rep1 a1 a2 then optimizeCat $ Cons (Push rep1 a1) (Cons Swap (Cons (If t1 t2) rest)) else all
@@ -361,31 +366,31 @@ to1 = optimizeCat [If [pushI 42]l [pushI 43]l, Print]l
 -- representing polynomial datatypes
 ------------------------------------
 {- does not work yet
-how :: *0 ~> Row *0
-{how (t -> u)} = RCons t {how u}
-{how Int} = RCons Int RNil
-{how Bool} = RCons Bool RNil
+how :: *0 ~> Prod *0
+{how (t -> u)} = PCons t {how u}
+{how Int} = PCons Int PNil
+{how Bool} = PCons Bool PNil
 
-last :: *0 ~> Row *0
+last :: *0 ~> Prod *0
 {last (t -> u)} = {last u}
 {last Int} = Int
 {last Bool} = Bool
 
 
 
-data Sum :: *0 ~> Row *0 ~> *0 where
-  Fin :: Sum a RNil
+data Sum :: *0 ~> Prod *0 ~> *0 where
+  Fin :: Sum a PNil
   Case :: t -> Sum a b -> Sum a {how t}
  deriving List(s)
 
---tp1 :: Sum Bool (Row a)
+--tp1 :: Sum Bool (Prod a)
 tp0 = [False, True]s
 tp1 = [Nothing, Just]s
 -}
 
 ##test "Mixup in Decs (not reported yet)"
- Weee :: Row *0
- type Weee = RNil
+ Weee :: Prod *0
+ type Weee = PNil
 
 
 
