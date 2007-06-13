@@ -27,7 +27,7 @@
 --
 --  Set up the environment
 --     setenv LD_LIBRARY_PATH /opt/exp/gnu/lib:$LD_LIBRARY_PATH
---     setenv PATH /home/ggreif/%NoBackup%/Omega1.4.1:$PATH
+--     setenv PATH /home/ggreif/%NoBackup%/Omega1.4.2:$PATH
 --
 --  Start the omega interpreter by typing
 --     omega Thrist.omg
@@ -35,8 +35,13 @@
 --
 
 import "LangPrelude.prg" 
-  (head,tail,lookup,member,fst,snd,map,Monad,maybeM,id,ioM,Row,HasType,RCons,RNil,Eq,Equal,
+  (head,tail,lookup,member,fst,snd,map,Monad,maybeM,id,ioM,Eq,Equal,
   listM)
+
+data RRow:: *1 ~> *1 where
+  RRNil:: RRow a
+  RRCons:: k ~> RRow k ~> RRow k
+ deriving List(sh)
 
 kind Doe = Wi | So
 
@@ -79,17 +84,17 @@ listener, pattern matching and outputting.
 
 {- Example session:
 
-prompt> #[]l
- #[]l : forall (a:*1) (b:a ~> a ~> *0) (c:a:*1).Thrist b c c
-prompt> #[ToWi]l
- #[ToWi]l : forall (a:Doe).Thrist DooBiDoo a Wi
-prompt> #[ToWi,WiToWi]l
- #[ToWi,WiToWi]l : forall (a:Doe).Thrist DooBiDoo a Wi
-prompt> #[ToWi,WiToWi,ToSo]l
- #[ToWi,WiToWi,ToSo]l : forall (a:Doe).Thrist DooBiDoo a So
-prompt> #[ToWi,WiToWi,ToSo,SoTo]l
- #[ToWi,WiToWi,ToSo,SoTo]l : forall (a:Doe) (b:Doe).Thrist DooBiDoo a b
-prompt> #[ToWi, WiTo]l
+prompt> []l
+ []l : forall (a:*1) (b:a ~> a ~> *0) (c:a:*1).Thrist b c c
+prompt> [ToWi]l
+ [ToWi]l : forall (a:Doe).Thrist DooBiDoo a Wi
+prompt> [ToWi,WiToWi]l
+ [ToWi,WiToWi]l : forall (a:Doe).Thrist DooBiDoo a Wi
+prompt> [ToWi,WiToWi,ToSo]l
+ [ToWi,WiToWi,ToSo]l : forall (a:Doe).Thrist DooBiDoo a So
+prompt> [ToWi,WiToWi,ToSo,SoTo]l
+ [ToWi,WiToWi,ToSo,SoTo]l : forall (a:Doe) (b:Doe).Thrist DooBiDoo a b
+prompt> [ToWi, WiTo]l
  In the expression: Cons WiTo Nil
  the result type: Thrist ShuBiDoo Wi b
  was not what was expected: Thrist DooBiDoo Wi a
@@ -97,7 +102,7 @@ prompt> #[ToWi, WiTo]l
 -}
 
 ##test "different constants: ShubiDoo   !=   DooBiDoo"
- fail0 = #[ToWi, WiTo]l
+ fail0 = [ToWi, WiTo]l
 
 cat :: Thrist DooBiDoo a b -> String
 cat Nil = ""
@@ -111,12 +116,12 @@ cat (Cons ToSo r) = "ToSo " ++ cat r
 -- Cat thrist
 -- See: http://en.wikipedia.org/wiki/Cat_%28programming_language%29
 
-blow :: Nat ~> Row *0 ~> Row *0
+blow :: Nat ~> RRow *0 ~> RRow *0
 {blow Z s} = s
-{blow (S n) s} = RCons t {blow n s}
+{blow (S n) s} = RRCons t {blow n s}
 
-blowLike :: Nat ~> *0 ~> Row *0 ~> Row *0
-{blowLike (S arty) (c -> d) s} = RCons c {blowLike arty d s}
+blowLike :: Nat ~> *0 ~> RRow *0 ~> RRow *0
+{blowLike (S arty) (c -> d) s} = RRCons c {blowLike arty d s}
 {blowLike Z a s} = s
 
 range :: Nat ~> *0 ~> *0
@@ -127,14 +132,14 @@ arity :: Nat ~> *0 ~> *0
 {arity Z c} = c
 {arity (S n) (c -> d) } = c -> {arity n d}
 
-kind CatShape = Shape (Row *0)
+kind CatShape = Shape (RRow *0)
 
 countArr :: *0 ~> Nat
-{countArr Int} = #0
-{countArr Bool} = #0
-{countArr Char} = #0
-{countArr (a, b)} = #0
-{countArr [a]} = #0
+{countArr Int} = 0t
+{countArr Bool} = 0t
+{countArr Char} = 0t
+{countArr (a, b)} = 0t
+{countArr [a]} = 0t
 {countArr (a->b)} = S {countArr b}
 
 prop Tractable :: * ~> * where
@@ -147,23 +152,23 @@ prop Tractable :: * ~> * where
 
 
 data Cat :: CatShape ~> CatShape ~> *0 where
-  Push :: Tractable a -> a -> Cat (Shape s) (Shape (RCons a s))
-  Prim :: Tractable c -> (a -> c) -> Cat (Shape (RCons a {blowLike {countArr c} c s})) (Shape (RCons {range {countArr c} c} s))
-  Dup :: Cat (Shape (RCons t s)) (Shape (RCons t (RCons t s)))
---  Dig :: Pick Row Nat -> Cat (Shape (RCons t s)) (Shape (RCons t (RCons t s)))
-  Print :: Cat (Shape (RCons t s)) (Shape s)
+  Push :: Tractable a -> a -> Cat (Shape s) (Shape (RRCons a s))
+  Prim :: Tractable c -> (a -> c) -> Cat (Shape (RRCons a {blowLike {countArr c} c s})) (Shape (RRCons {range {countArr c} c} s))
+  Dup :: Cat (Shape (RRCons t s)) (Shape (RRCons t (RRCons t s)))
+--  Dig :: Pick RRow Nat -> Cat (Shape (RRCons t s)) (Shape (RRCons t (RRCons t s)))
+  Print :: Cat (Shape (RRCons t s)) (Shape s)
   PopN :: Nat' (S n) -> Cat (Shape {blow (S n) s}) (Shape s)
-  Swap :: Cat (Shape (RCons a (RCons b s))) (Shape (RCons b (RCons a s)))
--- Perm :: Pick Row Nat -- TODO
-  Add :: Cat (Shape (RCons Int (RCons Int s))) (Shape (RCons Int s))      -- use Prim instead
-  Greater :: Cat (Shape (RCons Int (RCons Int s))) (Shape (RCons Bool s)) -- use Prim instead
+  Swap :: Cat (Shape (RRCons a (RRCons b s))) (Shape (RRCons b (RRCons a s)))
+-- Perm :: Pick RRow Nat -- TODO
+  Add :: Cat (Shape (RRCons Int (RRCons Int s))) (Shape (RRCons Int s))      -- use Prim instead
+  Greater :: Cat (Shape (RRCons Int (RRCons Int s))) (Shape (RRCons Bool s)) -- use Prim instead
   If :: Thrist Cat (Shape s) (Shape t) ->
         Thrist Cat (Shape s) (Shape t) ->
-        Cat (Shape (RCons Bool s)) (Shape t)
+        Cat (Shape (RRCons Bool s)) (Shape t)
 
 
 strTract = ListTractable CharTractable
-te1 = #[Push IntTractable 42, Dup, Greater, If #[pop, Push strTract "hh"]l #[Push IntTractable 42, Add, Print, Push strTract "hh"]l]l
+te1 = [Push IntTractable 42, Dup, Greater, If [pop, Push strTract "hh"]l [Push IntTractable 42, Add, Print, Push strTract "hh"]l]l
 
 {- This needs more magic:
 showThrist :: (t a b -> String) -> Thrist t a b -> String
@@ -183,9 +188,9 @@ cat' (Cons Add r) = "Add" ++ "\n" ++ cat' r
 cat' (Cons Greater r) = "Greater" ++ "\n" ++ cat' r
 cat' (Cons (If yes no) r) = "If " ++ show yes ++ " ELSE " ++ show no ++ "\n" ++ cat' r
 
-data Stack :: Row *0 ~> *0 where
-  Empty :: Stack RNil
-  Pu :: a -> Stack s -> Stack (RCons a s)
+data Stack :: RRow *0 ~> *0 where
+  Empty :: Stack RRNil
+  Pu :: a -> Stack s -> Stack (RRCons a s)
 
 
 proveRange :: Tractable d -> Tractable e -> Equal {range {countArr (e -> d)} (e -> d)} {range {countArr d} d}
@@ -198,7 +203,7 @@ proveRange (ArrTractable from to) e = Eq
                                       where theorem because = proveRange to
 
 
-interpretCat :: (forall a . Thrist Cat (Shape a) (Shape a)) -> IO (Stack RNil)
+interpretCat :: (forall a . Thrist Cat (Shape a) (Shape a)) -> IO (Stack RRNil)
 interpretCat thr = interpretCat' thr (returnIO Empty)
 
 interpretCat' :: Thrist Cat (Shape a) (Shape b) -> IO (Stack a) -> IO (Stack b)
@@ -257,7 +262,7 @@ interpretCat' thr act =
 				     interpretCat' r (if cond then interpretCat' yes act' else interpretCat' no act')
       where monad ioM
 
-pop = PopN #1
+pop = PopN 1v
 
 popMore :: Nat' n -> Stack {blow n b} -> IO (Stack b)
 popMore Z st = return st
@@ -275,12 +280,12 @@ pushB = Push BoolTractable
 pushC = Push CharTractable
 pushStr = Push (ListTractable CharTractable)
 
-te3 = interpretCat #[pushI 23, pop]l
-te4 = interpretCat #[pushI 42, pushI 11, Greater, If #[pushB True]l #[pushB False]l, Print]l
-te5 = interpretCat #[pushI 42, pushI 32, pushI 1, Add, Swap, Print, Print]l
-te6 = interpretCat #[pushI 42, pushI 32, pushI 1, Add, Swap, Print, Dup, PopN #2]l
-te7 = interpretCat #[pushStr "Fun", Push (ArrTractable CharTractable IntTractable) ord, Prim (ArrTractable (ListTractable CharTractable) (ListTractable IntTractable)) map, Print]l
-te8 = interpretCat #[pushC 'Z', Prim IntTractable ord, pushI 2, Prim (ArrTractable IntTractable IntTractable) (+), Print]l
+te3 = interpretCat [pushI 23, pop]l
+te4 = interpretCat [pushI 42, pushI 11, Greater, If [pushB True]l [pushB False]l, Print]l
+te5 = interpretCat [pushI 42, pushI 32, pushI 1, Add, Swap, Print, Print]l
+te6 = interpretCat [pushI 42, pushI 32, pushI 1, Add, Swap, Print, Dup, PopN 2v]l
+te7 = interpretCat [pushStr "Fun", Push (ArrTractable CharTractable IntTractable) ord, Prim (ArrTractable (ListTractable CharTractable) (ListTractable IntTractable)) map, Print]l
+te8 = interpretCat [pushC 'Z', Prim IntTractable ord, pushI 2, Prim (ArrTractable IntTractable IntTractable) (+), Print]l
 
 
 optimizeCat :: Thrist Cat a b -> Thrist Cat a b
@@ -290,10 +295,10 @@ optimizeCat (Cons (p@Swap) r) = Cons p (optimizeCat r)
 optimizeCat Nil = Nil
 
 splitOff :: Thrist Cat (Shape a) (Shape c) -> Thrist Cat (Shape a) (Shape c) -> exists b . (Thrist Cat (Shape a) (Shape b), Thrist Cat (Shape b) (Shape c))
---splitOff (Cons (p1@Push rep1 a1) r1) (Cons (p2@Push rep2 a2) r2) = check (Ex (#[p1]l, r2))
-splitOff (Cons (p1@Push IntTractable a1) r1) (Cons (p2@Push IntTractable a2) r2) = check (Ex (#[p1]l, r2))
+--splitOff (Cons (p1@Push rep1 a1) r1) (Cons (p2@Push rep2 a2) r2) = check (Ex ([p1]l, r2))
+splitOff (Cons (p1@Push IntTractable a1) r1) (Cons (p2@Push IntTractable a2) r2) = check (Ex ([p1]l, r2))
 
-optimizeIf :: Thrist Cat (Shape (RCons Bool a)) b -> Thrist Cat (Shape a) (Shape c) -> Thrist Cat (Shape a) (Shape c) -> Thrist Cat (Shape c) b -> Thrist Cat (Shape (RCons Bool a)) b
+optimizeIf :: Thrist Cat (Shape (RRCons Bool a)) b -> Thrist Cat (Shape a) (Shape c) -> Thrist Cat (Shape a) (Shape c) -> Thrist Cat (Shape c) b -> Thrist Cat (Shape (RRCons Bool a)) b
 
 
 -- @@@REPORT this!!
@@ -309,14 +314,14 @@ optimizeIf _ Nil Nil rest = Cons pop rest
 
 optimizeIf all _ _ _ = all
 
-to0 = optimizeCat #[If #[Push 42]l #[Push 42]l, Print]l
-to1 = optimizeCat #[If #[Push 42]l #[Push 43]l, Print]l
+to0 = optimizeCat [If [Push 42]l [Push 42]l, Print]l
+to1 = optimizeCat [If [Push 42]l [Push 43]l, Print]l
 
 
 
 ##test "Mixup in Decs (not reported yet)"
  Weee :: CatShape
- type Weee = Shape (Row *0)
+ type Weee = Shape (RRow *0)
 
 
 
@@ -325,7 +330,7 @@ to1 = optimizeCat #[If #[Push 42]l #[Push 43]l, Print]l
 --$ a->b, b->c into a thrist:
 
 --{
-funThrist = #[ord, (+) 2, chr]l
+funThrist = [ord, (+) 2, chr]l
 
 runThrist :: Thrist (->) a b -> a -> b
 runThrist Nil b = b
@@ -336,7 +341,7 @@ runThrist (Cons f r) a = runThrist r (f a)
 -- Example session:
 
 prompt> funThrist
- #[<primfun to1>,<fn>,<primfun to1>]l : Thrist (->) Char Char
+ [<primfun to1>,<fn>,<primfun to1>]l : Thrist (->) Char Char
 prompt> runThrist funThrist
  <fn> : Char -> Char
 prompt> runThrist funThrist 'x'
@@ -380,7 +385,7 @@ plusCommutes (S n) m = Eq --:: Equal {plus (S n) m} {plus m (S n)}
 impliesZero :: Nat' n -> Nat' m -> Equal {plus n m} m -> Equal m Z
 
 {-
-##test "current refinement fails because _a != {plus #0 _a}"
+##test "current refinement fails because _a != {plus 0t _a}"
  impliesZero Z m Eq = Eq --? Equal {plus Z m} m -> Equal m Z
                         --> Equal m m -> Equal m Z
 -}
@@ -411,13 +416,13 @@ impliesZero (S n) (S m) Eq = unreachable --? Equal {plus (S n) (S m)} (S m) -> E
 
 {-
 hyp1 :: Nat' a -> Nat' (S b) -> Equal a (S b)
-hyp1 #1 #1 = Eq
+hyp1 1v 1v = Eq
 hyp1 (S a) (S b) = Eq
   where theorem because = hyp1 a b
 -}
 
 ##test "Does not work yet"
- eqThrist = #[Eq :: Equal a (S b)
+ eqThrist = [Eq :: Equal a (S b)
            , Eq :: Equal (S b) (S c)
            , Eq :: (S c) a
            ]l
