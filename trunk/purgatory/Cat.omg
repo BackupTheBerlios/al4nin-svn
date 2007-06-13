@@ -140,8 +140,8 @@ gteq = intPred Pgteq (>=)
 
 pop = PopN #1
 
-te1 = [Push IntTractable 42, Dup, Greater, If [pop, Push strTract "hh"]l [Push IntTractable 42, add, Print, Push strTract "hh"]l]l
---te1a = [Push IntTractable 42, Dup, gt, If [pop, Push strTract "hh"]l [Push IntTractable 42, add, Print, Push strTract "hh"]l]l
+te1 =  [Push IntTractable 42, Dup, Greater, If [pop, Push strTract "hh"]l [Push IntTractable 42, add, Print, Push strTract "hh"]l]l
+te1a = [Push IntTractable 42, Dup, gt,      If [pop, Push strTract "hh"]l [Push IntTractable 42, add, Print, Push strTract "hh"]l]l
 
 {- This needs more magic:
 showThrist :: (t a b -> String) -> Thrist t a b -> String
