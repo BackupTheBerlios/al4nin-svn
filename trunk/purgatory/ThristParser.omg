@@ -45,7 +45,7 @@ import "Thrist.omg"
 
 data Parse :: *0 ~> *0 ~> *0 where
   Epsilon :: Parse [a] ([b], [a])       -- always match
---  Atom :: Char -> Parse Char Char       -- exact match
+  Atom :: Char -> Parse Char Char       -- exact match
   Pred :: (a -> Bool) -> Parse a a      -- conditional match
   Sure :: (a -> b) -> Parse a b         -- always matches and converts
   Try :: (a -> Maybe b) -> Parse a b    -- pipeline stops if no match
@@ -62,7 +62,8 @@ data Parse :: *0 ~> *0 ~> *0 where
   UpTo :: Parse [a] (b, [a]) -> Parse [a] (c, [a]) -> Parse [a] ((b, c), [a]) -- scan for c then match b
 
 
-letter a = Pred (\(c :: Char) -> ord c == ord a)
+--letter a = Pred (\(c :: Char) -> ord c == ord a)
+letter a = Atom a
 ---char = Sure (id :: Char -> Char)
 
 digit = Try (\c -> if ord '0' <= ord c && ord c <= ord '9' then Just (ord c - ord '0') else Nothing)
@@ -103,8 +104,7 @@ parse Nil a = Just a
 
 parse (Cons (Epsilon) r) as = parse r ([], as)
 
--- Get rid of Atom, it should be @Code { Pred (chrEqual c) } ###
----parse (Cons (Atom c) r) a = if ord c == ord a then parse r a else Nothing
+parse (Cons (Atom c) r) a = if ord c == ord a then parse r a else Nothing
 
 parse (Cons (Pred p) r) a = if p a then parse r a else Nothing
 
@@ -177,11 +177,14 @@ parse (Cons (u@UpTo p1 p2) r) a = case parse' a [] of
 -- ##########################################
 
 compileParse :: Thrist Parse a b -> Code (a -> Maybe b)
+
 compileParse Nil = [| Just |]
+
 compileParse (Cons (Epsilon) r) = [| \as -> $parseR ([], as)  |]
 				 where parseR = compileParse r
---compileParse (Cons (Atom c) r) = [| \a -> if ord c == ord a then $parseR a else Nothing |]
---				 where parseR = compileParse r
+
+compileParse (Cons (Atom c) r) = [| \a -> if ord c == ord a then $parseR a else Nothing |]
+				 where parseR = compileParse r
 
 compileParse (Cons (Pred p) r) = [| \a -> if p a then $(compileParse r) a else Nothing |]
 
@@ -193,12 +196,12 @@ compileParse (Cons (Or p1 p2) r) = [| \a ->
 					 parseP1 = compileParse [p1]l
 					 parseP2 = compileParse [p2]l
 
-t0 =  (run compileParse $ [Or (letter 's') (letter 'm')]l) 's'
-t0a = (run compileParse $ [Or (letter 's') (letter 'm')]l) 'm'
-
 -- ###############################
 -- ############ tests ############
 -- ###############################
+
+t0 =  (run compileParse $ [Or (letter 's') (letter 'm')]l) 's'
+t0a = (run compileParse $ [Or (letter 's') (letter 'm')]l) 'm'
 
 t1 = parse [Seq (Wrap [Rep1 $ letter 'a', proper]l) (Seq (Rep1 $ letter 'b') (Rep1 (letter 'c')))]l "abbc"
 t1a = parse [Seq (proper' $ Rep1 $ letter 'a') (Seq (Rep1 $ letter 'b') (Rep1 (letter 'c')))]l "abbc"
