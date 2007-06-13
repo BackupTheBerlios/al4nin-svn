@@ -183,8 +183,9 @@ compileParse Nil = [| Just |]
 compileParse (Cons (Epsilon) r) = [| \as -> $parseR ([], as)  |]
 				 where parseR = compileParse r
 
-compileParse (Cons (Atom c) r) = [| \a -> if ord c == ord a then $parseR a else Nothing |]
+compileParse (Cons (Atom c) r) = [| \a -> if $ordC == ord a then $parseR a else Nothing |]
 				 where parseR = compileParse r
+				       ordC = lift $ ord c
 
 compileParse (Cons (Pred p) r) = [| \a -> if p a then $(compileParse r) a else Nothing |]
 
