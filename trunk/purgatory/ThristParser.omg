@@ -39,10 +39,8 @@ import "LangPrelude.prg"
   listM, foldl, foldr)
 
 
-data Thrist :: forall (l :: *1) . (l ~> l ~> *)  ~> l ~> l ~> * where
-  Nil :: Thrist k a a
-  Cons :: k c b -> Thrist k b a -> Thrist k c a
- deriving List(l)
+import "Thrist.omg" 
+  (Thrist, Nil, Cons, syntax List(l))
 
 
 data Parse :: *0 ~> *0 ~> *0 where
@@ -195,9 +193,8 @@ compileParse (Cons (Or p1 p2) r) = [| \a ->
 					 parseP1 = compileParse [p1]l
 					 parseP2 = compileParse [p2]l
 
-t0 = (run compileParse $ [Or (letter 's') (letter 'm')]l) 's'
-
--- bug8 = (run compileParse $ [Or (letter 's') (letter 'm')]l) 'm'
+t0 =  (run compileParse $ [Or (letter 's') (letter 'm')]l) 's'
+t0a = (run compileParse $ [Or (letter 's') (letter 'm')]l) 'm'
 
 -- ###############################
 -- ############ tests ############
