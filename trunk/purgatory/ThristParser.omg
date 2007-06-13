@@ -27,7 +27,7 @@
 --
 --  Set up the environment
 --     setenv LD_LIBRARY_PATH /opt/exp/gnu/lib:$LD_LIBRARY_PATH
---     setenv PATH /home/ggreif/%NoBackup%/Omega1.4.1:$PATH
+--     setenv PATH /home/ggreif/%NoBackup%/Omega1.4.2:$PATH
 --
 --  Start the omega interpreter by typing
 --     omega ThristParser.omg
@@ -81,8 +81,8 @@ snap = Try (\(good, rest) -> case rest of { [] -> Just good; _ -> Nothing })
 proper = Try (\(it, rest) -> case it of { [] -> Nothing; _ -> Just (it, rest) })
 propersnap = Try (\a -> case a of { ([], _) -> Nothing; (_, r:rest) -> Nothing; _ -> Just a })
 
-proper' p = Wrap #[p, proper]l
-propersnap' p = Wrap #[p, propersnap]l
+proper' p = Wrap [p, proper]l
+propersnap' p = Wrap [p, propersnap]l
 
 base n = foldl (\acc x -> (acc * n) + x) 0
 
@@ -117,9 +117,9 @@ parse (Cons (Try f) r) a = do { b <- f a; parse r b } where monad maybeM
 parse (Cons (Rep1 p) r) as = parse r (parseRep p as) where
       parseRep :: Parse a b -> [a] -> ([b], [a])
       parseRep _ [] = ([], [])
-      parseRep p (a:as) = case parse #[p]l a of { Nothing -> ([], a:as); Just b -> (b:bs, rest) where (bs, rest) = parseRep p as }
+      parseRep p (a:as) = case parse [p]l a of { Nothing -> ([], a:as); Just b -> (b:bs, rest) where (bs, rest) = parseRep p as }
 
-parse (Cons (Rep p) r) as = parse r (parseRep #[p]l as) where
+parse (Cons (Rep p) r) as = parse r (parseRep [p]l as) where
       parseRep :: Thrist Parse [a] (b, [a]) -> [a] -> ([b], [a])
       parseRep _ [] = ([], [])
       parseRep p as = case parse p as of
@@ -132,7 +132,7 @@ parse (Cons (Group ps) r) as = do { bs <- parseGroup ps as; parse r bs } where
       parseGroup :: [Parse a b] -> [a] -> Maybe ([b], [a])
       parseGroup [] rest = Just ([], rest) -- overlength input
       parseGroup _ [] = Nothing            -- input too short
-      parseGroup (p:ps) (a:as) = do { b <- parse #[p]l a; (bs, rest) <- parseGroup ps as; return (b:bs, rest) }
+      parseGroup (p:ps) (a:as) = do { b <- parse [p]l a; (bs, rest) <- parseGroup ps as; return (b:bs, rest) }
 
 parse (Cons (CataStar f) r) (a, over) = parse r ((f a), over)
 
@@ -141,34 +141,34 @@ parse (Cons (CataPlus f) r) (a, over) = parse r ((f a), over)
 
 parse (Cons (Wrap thr) r) a = do { a' <- parse thr a; parse r a' } where monad maybeM
 
-parse (Cons (Seq1 p1 p2) r) (a1:a2:rest) = do { b1 <- parse #[p1]l a1; b2 <- parse #[p2]l a2; parse r ((b1, b2), rest) } where monad maybeM
+parse (Cons (Seq1 p1 p2) r) (a1:a2:rest) = do { b1 <- parse [p1]l a1; b2 <- parse [p2]l a2; parse r ((b1, b2), rest) } where monad maybeM
 parse (Cons (Seq1 _ _) _) _ = Nothing
 
-parse (Cons (Seq p1 p2) r) as = do { (b1, as') <- parse #[p1]l as; (b2, rest) <- parse #[p2]l as'; parse r ((b1, b2), rest) } where monad maybeM
+parse (Cons (Seq p1 p2) r) as = do { (b1, as') <- parse [p1]l as; (b2, rest) <- parse [p2]l as'; parse r ((b1, b2), rest) } where monad maybeM
 
-parse (Cons (Or p1 p2) r) a = case parse #[p1]l a of
+parse (Cons (Or p1 p2) r) a = case parse [p1]l a of
 			      (Just b1) -> parse r b1
-			      Nothing -> do { b2 <- parse #[p2]l a; parse r b2 } where monad maybeM
+			      Nothing -> do { b2 <- parse [p2]l a; parse r b2 } where monad maybeM
 
 -- probably redundant, use Pred instead
-parse (Cons (ButNot1 p1 p2) r) a = case parse #[p1]l a of
+parse (Cons (ButNot1 p1 p2) r) a = case parse [p1]l a of
 				   Nothing -> Nothing
-				   (Just b1) -> case parse #[p2]l a of
+				   (Just b1) -> case parse [p2]l a of
 						Nothing -> parse r b1
 						_ -> Nothing
 
 parse (Cons (u@UpTo p1 p2) r) a = case parse' a [] of
 				  Nothing -> Nothing
-				  Just (fill, (b2, rest)) -> case parse #[p1]l (reverse fill []) of
+				  Just (fill, (b2, rest)) -> case parse [p1]l (reverse fill []) of
 							     Nothing -> Nothing
 							     Just (b1, []) -> parse r ((b1, b2), rest)
 							     _ -> Nothing
     where
     --parse' :: [a] -> [a] -> Maybe ([a], c)
-    parse' [] acc = case parse #[p2]l [] of
+    parse' [] acc = case parse [p2]l [] of
 		    Nothing -> Nothing
 		    Just b2 -> Just (acc, b2)
-    parse' (food@(head:tail)) acc = case parse #[p2]l food of
+    parse' (food@(head:tail)) acc = case parse [p2]l food of
 				    Nothing -> parse' tail (head:acc)
 				    Just b2 -> Just (acc, b2)
     reverse [] acc = acc
@@ -192,26 +192,26 @@ compileParse (Cons (Or p1 p2) r) = [| \a ->
 				    (Just b1) -> $parseR b1
 				    Nothing -> let monad maybeM in do { b2 <- $parseP2 a; $parseR b2 } |]
 				   where parseR = compileParse r
-					 parseP1 = compileParse #[p1]l
-					 parseP2 = compileParse #[p2]l
+					 parseP1 = compileParse [p1]l
+					 parseP2 = compileParse [p2]l
 
-t0 = (run compileParse $ #[Or (letter 's') (letter 'm')]l) 's'
+t0 = (run compileParse $ [Or (letter 's') (letter 'm')]l) 's'
 
--- bug8 = (run compileParse $ #[Or (letter 's') (letter 'm')]l) 'm'
+-- bug8 = (run compileParse $ [Or (letter 's') (letter 'm')]l) 'm'
 
 -- ###############################
 -- ############ tests ############
 -- ###############################
 
-t1 = parse #[Seq (Wrap #[Rep1 $ letter 'a', proper]l) (Seq (Rep1 $ letter 'b') (Rep1 (letter 'c')))]l "abbc"
-t1a = parse #[Seq (proper' $ Rep1 $ letter 'a') (Seq (Rep1 $ letter 'b') (Rep1 (letter 'c')))]l "abbc"
+t1 = parse [Seq (Wrap [Rep1 $ letter 'a', proper]l) (Seq (Rep1 $ letter 'b') (Rep1 (letter 'c')))]l "abbc"
+t1a = parse [Seq (proper' $ Rep1 $ letter 'a') (Seq (Rep1 $ letter 'b') (Rep1 (letter 'c')))]l "abbc"
 
-num = #[Rep1 digit, CataPlus (base 10)]l
-hexnum = #[Rep1 hexdigit, CataPlus (base 16)]l
-binnum = #[Rep1 bindigit, CataPlus (base 2)]l
+num = [Rep1 digit, CataPlus (base 10)]l
+hexnum = [Rep1 hexdigit, CataPlus (base 16)]l
+binnum = [Rep1 bindigit, CataPlus (base 2)]l
 
 
-chexnum = #[Seq (Seq1 (letter '0') (alts letter "xX")) (Wrap hexnum), Sure (snd . fst)]l
+chexnum = [Seq (Seq1 (letter '0') (alts letter "xX")) (Wrap hexnum), Sure (snd . fst)]l
 t2 = parse chexnum "0xFF"
 
 
@@ -221,7 +221,7 @@ t3a = word "abcd"
 t4 = Or (word ";") Epsilon
 t4a = optional (word ";")
 
-t5 = parse #[Rep1 (ButNot1 (alts letter "ab") (letter 'b'))]l "abc"
+t5 = parse [Rep1 (ButNot1 (alts letter "ab") (letter 'b'))]l "abc"
 
 -- ############ a simple lexer ############
 
@@ -280,7 +280,7 @@ hash = [Ht, Hf, Hnext, Hrest, Hkey, Hallkeys, Hinclude]
 
 bulkWords :: [String] -> [a] -> (a -> Token') -> Parse [Char] (Token', [Char])
 bulkWords syntax semantics conv = or $ drosel syntax semantics where
-				  drosel (sy:sys) (se:ses) = Wrap #[word sy, Sure (\(_, rest) -> (conv se, rest))]l : drosel sys ses
+				  drosel (sy:sys) (se:ses) = Wrap [word sy, Sure (\(_, rest) -> (conv se, rest))]l : drosel sys ses
 				  drosel [] [] = []
 
 data Token = R Reserved | Str String | Num Int | P Punctuation | H HashWord
@@ -314,7 +314,7 @@ extendThrist :: forall (a :: *1) (b :: a ~> a ~> *0) (c :: a) (d :: a) (e :: a) 
 		b d e ->
 		Thrist b c e
 
-extendThrist Nil a = #[a]l
+extendThrist Nil a = [a]l
 extendThrist (Cons b r) a = Cons b (extendThrist r a)
 
 
@@ -324,12 +324,12 @@ appendThrist :: forall (a :: *1) (b :: a ~> a ~> *0) (c :: a) (d :: a) (e :: a) 
 		Thrist b d e ->
 		Thrist b c e
 
-appendThrist Nil a = #[a]l
+appendThrist Nil a = [a]l
 appendThrist (Cons b r) a = Cons b (appendThrist r a)
 -}
 
 lexer' :: Thrist Parse [Char] ([Token'], [Char])
-lexer' = #[Rep token']l
+lexer' = [Rep token']l
 
 sureFirst f = Sure (\(a, b) -> (f a, b))
 
@@ -347,19 +347,19 @@ isAlpha caseinsensitive c = case (caseinsensitive, ord 'A' <= o, o <= ord 'Z') o
 token' :: Parse [Char] (Token', [Char])
 token' = or [ Wrap $ extendThrist num (sureFirst (Token . Num))
             , Wrap $ Cons (Seq1 (letter '#') (alts letter "xX")) (Cons (Sure snd) (extendThrist hexnum (sureFirst (Token . Num))))
-            , Wrap #[Rep1 whitespace, Pred notEmpty, sureFirst Whitespace]l
+            , Wrap [Rep1 whitespace, Pred notEmpty, sureFirst Whitespace]l
             , Wrap $ Cons (Seq1 (letter '#') (alts letter "bB")) (Cons (Sure snd) (extendThrist binnum (sureFirst (Token . Num))))
 	    , bulkWords punctSymbols punct (Token . P)
 	    , bulkWords coreWords core (Token . R)
 	    , bulkWords hashWords hash (Token . H)
-	    , Wrap #[Seq (word "//") (Rep1 $ ButNot1 (Sure id) (letter '\n')), sureFirst (\(boring, comment) -> Whitespace (boring ++ comment))]l
-	    , Wrap #[Seq (word "/*") (UpTo (Rep1 $ Sure id) (word "*/")), sureFirst (\(boring1, (comment, boring2)) -> Whitespace (boring1 ++ comment ++ boring2))]l
+	    , Wrap [Seq (word "//") (Rep1 $ ButNot1 (Sure id) (letter '\n')), sureFirst (\(boring, comment) -> Whitespace (boring ++ comment))]l
+	    , Wrap [Seq (word "/*") (UpTo (Rep1 $ Sure id) (word "*/")), sureFirst (\(boring1, (comment, boring2)) -> Whitespace (boring1 ++ comment ++ boring2))]l
             , Wrap $ Cons (word "!") (Cons (Sure snd) (extendThrist num (sureFirst mkTest))) -- experiment
             ]
 
-t6 = parse #[Rep token']l "33//dsd hh \n42"
-t7 = parse #[Rep token']l "33/*dsd hh */42"
-t7a = parse #[Rep token']l "33/**/42"
+t6 = parse [Rep token']l "33//dsd hh \n42"
+t7 = parse [Rep token']l "33/*dsd hh */42"
+t7a = parse [Rep token']l "33/**/42"
 
 mkTest :: Int -> Token'
 mkTest i = Test (walk i (Ex Z)) where
@@ -384,8 +384,8 @@ isDot _ = False
 
 
 natuator :: Thrist Parse [Token'] (Maybe (exists (n :: Nat) . Nat' n), [Token'])
-natuator = #[Or (Wrap #[Group [Pred isTest, Pred isQuestion, Pred isTest], sureFirst (\ [Test a, _, Test b] -> Just $ sum a b)]l)
-	        (Wrap #[Group [Pred isTest, Pred isDot, Pred isTest], sureFirst (\ [Test a, _, Test b] -> diff a b)]l)]l
+natuator = [Or (Wrap [Group [Pred isTest, Pred isQuestion, Pred isTest], sureFirst (\ [Test a, _, Test b] -> Just $ sum a b)]l)
+	    (Wrap [Group [Pred isTest, Pred isDot, Pred isTest], sureFirst (\ [Test a, _, Test b] -> diff a b)]l)]l
 
 sum :: (exists (m :: Nat) . Nat' m) -> (exists (n :: Nat) . Nat' n) -> (exists (o :: Nat) . Nat' o)
 sum (Ex Z) rhs = rhs
