@@ -35,7 +35,7 @@
 --
 
 import "LangPrelude.prg" 
-  (head,tail,lookup,member,fst,snd,map,Monad,maybeM,id,ioM,Row,HasType,RCons,RNil,Eq,Equal,
+  (head,tail,lookup,member,fst,snd,map,Monad,maybeM,id,ioM,Eq,Equal,
   listM, (!=), (==))
 
 
@@ -109,7 +109,6 @@ data Cat :: (Prod *0) ~> (Prod *0) ~> *0 where
   PopN :: Nat' (S n) -> Cat {blow (S n) s} s
   Swap :: Cat (PCons a (PCons b s)) (PCons b (PCons a s))
 -- Perm :: Pick Prod Nat -- TODO
-  Greater :: Cat (PCons Int (PCons Int s)) (PCons Bool s) -- use Prim instead
   Block :: Thrist Cat b c -> Cat a (PCons (Cat b c) a)
   Quote :: Thrist Cat a b -> Cat a b
   Eval :: Cat (PCons (Cat a b) a) b
@@ -140,8 +139,7 @@ gteq = intPred Pgteq (>=)
 
 pop = PopN #1
 
-te1 =  [Push IntTractable 42, Dup, Greater, If [pop, Push strTract "hh"]l [Push IntTractable 42, add, Print, Push strTract "hh"]l]l
-te1a = [Push IntTractable 42, Dup, gt,      If [pop, Push strTract "hh"]l [Push IntTractable 42, add, Print, Push strTract "hh"]l]l
+te1 = [Push IntTractable 42, Dup, gt, If [pop, Push strTract "hh"]l [Push IntTractable 42, add, Print, Push strTract "hh"]l]l
 
 {- This needs more magic:
 showThrist :: (t a b -> String) -> Thrist t a b -> String
@@ -150,16 +148,16 @@ showThrist f (Cons t r) = f t ++ showThrist f r
 -}
 
 cat' :: Thrist Cat a b -> String
-cat' Nil = ""
-cat' (Cons (Push _ a) r) = "Push " ++ show a ++ "\n" ++ cat' r
-cat' (Cons (Prim _ Padd _) r) = "add\n" ++ cat' r
-cat' (Cons (Prim _ Psub _) r) = "sub\n" ++ cat' r
-cat' (Cons (Prim _ Pgt  _) r) = "gt\n" ++ cat' r
-cat' (Cons Dup r) = "Dup\n" ++ cat' r
-cat' (Cons Print r) = "Print\n" ++ cat' r
-cat' (Cons (PopN n) r) = "PopN " ++ show n ++ "\n" ++ cat' r
-cat' (Cons Swap r) = "Swap\n" ++ cat' r
-cat' (Cons (If yes no) r) = "If " ++ show yes ++ " ELSE " ++ show no ++ "\n" ++ cat' r
+cat' []l = ""
+cat' [Push _ a; r]l = "Push " ++ show a ++ "\n" ++ cat' r
+cat' [Prim _ Padd _; r]l = "add\n" ++ cat' r
+cat' [Prim _ Psub _; r]l = "sub\n" ++ cat' r
+cat' [Prim _ Pgt  _; r]l = "gt\n" ++ cat' r
+cat' [Dup; r]l = "Dup\n" ++ cat' r
+cat' [Print; r]l = "Print\n" ++ cat' r
+cat' [PopN n; r]l = "PopN " ++ show n ++ "\n" ++ cat' r
+cat' [Swap; r]l = "Swap\n" ++ cat' r
+cat' [If yes no; r]l = "If " ++ show yes ++ " ELSE " ++ show no ++ "\n" ++ cat' r
 
 data Stack :: Prod *0 ~> *0 where
   Empty :: Stack PNil
@@ -182,58 +180,58 @@ interpretCat thr = interpretCat' thr (returnIO Empty)
 
 interpretCat' :: Thrist Cat a b -> IO (Stack a) -> IO (Stack b)
 
-interpretCat' Nil act = act
+interpretCat' []l act = act
 
 interpretCat' thr act =
     case thr of
-	     (Cons (Push rep a) r) -> do
-				      st <- act
-				      interpretCat' r (return (Pu a st))
-	     (Cons (PopN (S n)) r) -> do
-				      Pu _ st <- act
-				      interpretCat' r (popMore n st)
-	     (Cons Print r) -> do
-			       Pu a st <- act
-			       new <- putStr (show a)
-			       interpretCat' r (return st)
-	     (Cons Dup r) -> do
-			     Pu a st <- act
-  			     interpretCat' r (return (Pu a (Pu a st)))
-	     (Cons Swap r) -> do
-			      Pu a st <- act
-			      let (Pu b st') = st
-			      interpretCat' r (return (Pu b (Pu a st')))
-	     (Cons (Prim (ArrTractable x y) p f) r) -> do
-	                                             Pu a st <- act
-				                     interpretCat' (Cons (Prim y p (f a)) r) (return st)
+	     [Push rep a; r]l -> do
+				 st <- act
+				 interpretCat' r (return (Pu a st))
+	     [PopN (S n); r]l -> do
+				 Pu _ st <- act
+				 interpretCat' r (popMore n st)
+	     [Print; r]l -> do
+			    Pu a st <- act
+			    new <- putStr (show a)
+			    interpretCat' r (return st)
+	     [Dup; r]l -> do
+			  Pu a st <- act
+  			  interpretCat' r (return (Pu a (Pu a st)))
+	     [Swap; r]l -> do
+			   Pu a st <- act
+			   let (Pu b st') = st
+			   interpretCat' r (return (Pu b (Pu a st')))
+	     [Prim (ArrTractable x y) p f; r]l -> do
+	                                          Pu a st <- act
+						  interpretCat' [Prim y p (f a); r]l (return st)
                                                          -- where theorem because = proveRange y x
-	     (Cons (Prim IntTractable _ f) r) -> do
-	                                       Pu a st <- act
-				               interpretCat' r (return (Pu (f a) st))
-	     (Cons (Prim BoolTractable _ f) r) -> do
-	                                        Pu a st <- act
-				                interpretCat' r (return (Pu (f a) st))
-	     (Cons (Prim CharTractable _ f) r) -> do
-	                                        Pu a st <- act
-				                interpretCat' r (return (Pu (f a) st))
-	     (Cons (Prim (PairTractable _ _) _ f) r) -> do
-	                                              Pu a st <- act
-				                      interpretCat' r (return (Pu (f a) st))
-	     (Cons (Prim (ListTractable _) _ f) r) -> do
-	                                            Pu a st <- act
-				                    interpretCat' r (return (Pu (f a) st))
-	     (Cons (If yes no) r) -> do
-				     Pu cond st <- act
-				     let act' = return st
-				     interpretCat' r (if cond then interpretCat' yes act' else interpretCat' no act')
-	     (Cons (Block thr) r) -> do
-	       st <- act
-	       interpretCat' r (return (Pu (Quote thr) st))
-	     (Cons Eval r) -> do
-	       Pu (Quote thr) st <- act
-	       let act' = return st
-	       interpretCat' r (interpretCat' thr act')
-      where monad ioM
+	     [Prim IntTractable _ f; r]l -> do
+	                                    Pu a st <- act
+					    interpretCat' r (return (Pu (f a) st))
+	     [Prim BoolTractable _ f; r]l -> do
+	                                     Pu a st <- act
+					     interpretCat' r (return (Pu (f a) st))
+	     [Prim CharTractable _ f; r]l -> do
+	                                     Pu a st <- act
+					     interpretCat' r (return (Pu (f a) st))
+	     [Prim (PairTractable _ _) _ f; r]l -> do
+	                                           Pu a st <- act
+						   interpretCat' r (return (Pu (f a) st))
+	     [Prim (ListTractable _) _ f; r]l -> do
+	                                         Pu a st <- act
+						 interpretCat' r (return (Pu (f a) st))
+	     [If yes no; r]l -> do
+				Pu cond st <- act
+				let act' = return st
+				interpretCat' r (if cond then interpretCat' yes act' else interpretCat' no act')
+	     [Block thr; r]l -> do
+				st <- act
+				interpretCat' r (return (Pu (Quote thr) st))
+	     [Eval; r]l -> do
+			   Pu (Quote thr) st <- act
+			   let act' = return st
+			   interpretCat' r (interpretCat' thr act')
+    where monad ioM
 
 popMore :: Nat' n -> Stack {blow n b} -> IO (Stack b)
 popMore Z st = return st
@@ -261,9 +259,9 @@ te9 = interpretCat [pushI 42, Block [Print]l, Eval]l
 
 optimizeCat :: Thrist Cat a b -> Thrist Cat a b
 optimizeCat (i@Cons (If yes no) r) = optimizeIf i yes no r
-optimizeCat (Cons (p@Push rep a) r) = Cons p (optimizeCat r)
-optimizeCat (Cons (p@Swap) r) = Cons p (optimizeCat r)
-optimizeCat Nil = Nil
+optimizeCat [p@Push rep a; r]l = [p; optimizeCat r]l
+optimizeCat [p@Swap; r]l = [p; optimizeCat r]l
+optimizeCat []l = []l
 
 sameTractable :: Tractable a -> Tractable b -> Maybe (Equal a b)
 sameTractable IntTractable IntTractable = Just Eq
@@ -273,7 +271,7 @@ sameValue IntTractable a b = a == b
 
 splitOff :: Thrist Cat a c -> Thrist Cat a c -> exists b . Maybe (Cat a b, Thrist Cat b c, Thrist Cat b c)
 splitOff (Cons (p1@Push rep1 a1) r1) (Cons (Push rep2 a2) r2) = case sameTractable rep1 rep2 of
-                                                               Just Eq -> Ex (Just (p1, r1, r2))
+								Just Eq -> Ex (Just (p1, r1, r2))
 splitOff (Cons (s@Swap) r1) (Cons Swap r2) =  Ex (Just (s, r1, r2))
 
 
@@ -290,7 +288,7 @@ optimizeIf all (Cons (Push rep1 a1) t1) (Cons (Push rep2 a2) t2) rest = case sam
 --optimizeIf all (Cons (Push rep1 a1) t1) (Cons (Push rep2 a2) t2) rest = if eqStr (show a1) (show a2) then optimizeCat $ Cons (Push rep1 a1) (Cons Swap (Cons (If t1 t2) rest)) else all
 --           where theorem splitOff
 
-optimizeIf _ Nil Nil rest = Cons pop rest
+optimizeIf _ []l []l rest = [pop; rest]l
 
 
 optimizeIf all _ _ _ = all
