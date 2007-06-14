@@ -52,8 +52,10 @@ data Parse :: *0 ~> *0 ~> *0 where
   Rep1 :: Parse a b -> Parse [a] ([b], [a])          -- consume as many as matches, return rest
   Rep :: Parse [a] (b, [a]) -> Parse [a] ([b], [a])  -- consume as many as matches, return rest
   Group :: [Parse a b] -> Parse [a] ([b], [a])       -- all must match, return rest
-  CataStar :: ([a] -> b) -> Parse ([a], c) (b, c)    -- collapse one or more elements
-  CataPlus :: ([a] -> b) -> Parse ([a], c) (b, c)    -- collapse zero or more elements
+-- CataStar can be implemented by Sure
+  CataStar :: ([a] -> b) -> Parse ([a], c) (b, c)    -- collapse zero or more elements
+-- CataPlus can be implemented by Try
+  CataPlus :: ([a] -> b) -> Parse ([a], c) (b, c)    -- collapse one or more elements
   Wrap :: Thrist Parse a b -> Parse a b              -- treat a chain of parses as one
   Or :: Parse a b -> Parse a b -> Parse a b          -- match first or if it doesn't, the second
   Seq :: Parse [a] (b, [a]) -> Parse [a] (c, [a]) -> Parse [a] ((b, c), [a]) -- parse front first then second
