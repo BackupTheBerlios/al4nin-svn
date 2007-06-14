@@ -54,7 +54,7 @@ data Parse :: *0 ~> *0 ~> *0 where
   Group :: [Parse a b] -> Parse [a] ([b], [a])       -- all must match, return rest
   CataStar :: ([a] -> b) -> Parse ([a], c) (b, c)    -- collapse one or more elements
   CataPlus :: ([a] -> b) -> Parse ([a], c) (b, c)    -- collapse zero or more elements
-  Wrap :: Thrist Parse a b -> Parse a b -- treat a chain of parses as one
+  Wrap :: Thrist Parse a b -> Parse a b              -- treat a chain of parses as one
   Or :: Parse a b -> Parse a b -> Parse a b          -- match first or if it doesn't, the second
   Seq :: Parse [a] (b, [a]) -> Parse [a] (c, [a]) -> Parse [a] ((b, c), [a]) -- parse front first then second
   Seq1 :: Parse a b -> Parse a c -> Parse [a] ((b, c), [a]) -- same, but with single-elem first and second
@@ -145,22 +145,22 @@ parse [Seq1 _ _; _]l _ = Nothing
 parse [Seq p1 p2; r]l as = do { (b1, as') <- parse [p1]l as; (b2, rest) <- parse [p2]l as'; parse r ((b1, b2), rest) } where monad maybeM
 
 parse [Or p1 p2; r]l a = case parse [p1]l a of
-			      (Just b1) -> parse r b1
-			      Nothing -> do { b2 <- parse [p2]l a; parse r b2 } where monad maybeM
+			 Just b1 -> parse r b1
+			 Nothing -> do { b2 <- parse [p2]l a; parse r b2 } where monad maybeM
 
 -- probably redundant, use Pred instead
 parse [ButNot1 p1 p2; r]l a = case parse [p1]l a of
-				   Nothing -> Nothing
-				   (Just b1) -> case parse [p2]l a of
-						Nothing -> parse r b1
-						_ -> Nothing
+			      Nothing -> Nothing
+			      (Just b1) -> case parse [p2]l a of
+					   Nothing -> parse r b1
+					   _ -> Nothing
 
 parse [u@UpTo p1 p2; r]l a = case parse' a [] of
-				  Nothing -> Nothing
-				  Just (fill, (b2, rest)) -> case parse [p1]l (reverse fill []) of
-							     Nothing -> Nothing
-							     Just (b1, []) -> parse r ((b1, b2), rest)
-							     _ -> Nothing
+			     Nothing -> Nothing
+			     Just (fill, (b2, rest)) -> case parse [p1]l (reverse fill []) of
+							Nothing -> Nothing
+							Just (b1, []) -> parse r ((b1, b2), rest)
+							_ -> Nothing
     where
     --parse' :: [a] -> [a] -> Maybe ([a], c)
     parse' [] acc = case parse [p2]l [] of
@@ -178,24 +178,24 @@ parse [u@UpTo p1 p2; r]l a = case parse' a [] of
 
 compileParse :: Thrist Parse a b -> Code (a -> Maybe b)
 
-compileParse Nil = [| Just |]
+compileParse []l = [| Just |]
 
-compileParse (Cons (Epsilon) r) = [| \as -> $parseR ([], as)  |]
-				 where parseR = compileParse r
+compileParse [Epsilon; r]l = [| \as -> $parseR ([], as)  |]
+    where parseR = compileParse r
 
-compileParse (Cons (Atom c) r) = [| \a -> if $ordC == ord a then $parseR a else Nothing |]
-				 where parseR = compileParse r
-				       ordC = lift $ ord c
+compileParse [Atom c; r]l = [| \a -> if $ordC == ord a then $parseR a else Nothing |]
+    where parseR = compileParse r
+	  ordC = lift $ ord c
 
-compileParse (Cons (Pred p) r) = [| \a -> if p a then $(compileParse r) a else Nothing |]
+compileParse [Pred p; r]l = [| \a -> if p a then $(compileParse r) a else Nothing |]
 
-compileParse (Cons (Or p1 p2) r) = [| \a ->
-				    case $parseP1 a of
-				    (Just b1) -> $parseR b1
-				    Nothing -> let monad maybeM in do { b2 <- $parseP2 a; $parseR b2 } |]
-				   where parseR = compileParse r
-					 parseP1 = compileParse [p1]l
-					 parseP2 = compileParse [p2]l
+compileParse [Or p1 p2; r]l = [| \a ->
+			       case $parseP1 a of
+			       Just b1 -> $parseR b1
+			       Nothing -> let monad maybeM in do { b2 <- $parseP2 a; $parseR b2 } |]
+    where parseR = compileParse r
+	  parseP1 = compileParse [p1]l
+	  parseP2 = compileParse [p2]l
 
 -- ###############################
 -- ############ tests ############
@@ -343,19 +343,25 @@ isAlpha caseinsensitive c = case (caseinsensitive, ord 'A' <= o, o <= ord 'Z') o
                                                 (True, True) -> True
                                                 _ -> False
                             _ -> False
-                  where o = ord c
+    where o = ord c
 
 token' :: Parse [Char] (Token', [Char])
 token' = or [ Wrap $ extendThrist num (sureFirst (Token . Num))
-            , Wrap $ Cons (Seq1 (letter '#') (alts letter "xX")) (Cons (Sure snd) (extendThrist hexnum (sureFirst (Token . Num))))
+            , Wrap [Seq1 (letter '#') (alts letter "xX")
+		   , Sure snd
+		   ; extendThrist hexnum (sureFirst (Token . Num))]l
             , Wrap [Rep1 whitespace, Pred notEmpty, sureFirst Whitespace]l
-            , Wrap $ Cons (Seq1 (letter '#') (alts letter "bB")) (Cons (Sure snd) (extendThrist binnum (sureFirst (Token . Num))))
+            , Wrap [Seq1 (letter '#') (alts letter "bB")
+		   , Sure snd
+		   ; extendThrist binnum (sureFirst (Token . Num))]l
 	    , bulkWords punctSymbols punct (Token . P)
 	    , bulkWords coreWords core (Token . R)
 	    , bulkWords hashWords hash (Token . H)
 	    , Wrap [Seq (word "//") (Rep1 $ ButNot1 (Sure id) (letter '\n')), sureFirst (\(boring, comment) -> Whitespace (boring ++ comment))]l
 	    , Wrap [Seq (word "/*") (UpTo (Rep1 $ Sure id) (word "*/")), sureFirst (\(boring1, (comment, boring2)) -> Whitespace (boring1 ++ comment ++ boring2))]l
-            , Wrap $ Cons (word "!") (Cons (Sure snd) (extendThrist num (sureFirst mkTest))) -- experiment
+            , Wrap [word "!"
+		   , Sure snd
+		   ; extendThrist num (sureFirst mkTest)]l -- experiment
             ]
 
 t6 = parse [Rep token']l "33//dsd hh \n42"
