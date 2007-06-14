@@ -35,7 +35,7 @@
 --
 
 import "LangPrelude.prg" 
-  (head,tail,lookup,member,fst,snd,map,Monad,maybeM,id,ioM,Row,HasType,RCons,RNil,Eq,Equal,
+  (head,tail,lookup,member,fst,snd,map,Monad,maybeM,id,ioM,Eq,Equal,
   listM, foldl, foldr)
 
 
@@ -74,21 +74,21 @@ hexdigit = Try (\c -> if ord '0' <= ord c && ord c <= ord '9' then Just (ord c -
                       if ord 'a' <= ord c && ord c <= ord 'f' then Just (ord c - ord 'W') else
                       if ord 'A' <= ord c && ord c <= ord 'F' then Just (ord c - ord '7') else Nothing)
 
-crop = Try (\(good, rest) -> Just good)
-snap = Try (\(good, rest) -> case rest of { [] -> Just good; _ -> Nothing })
+--crop = Try (\(good, rest) -> Just good)
+--snap = Try (\(good, rest) -> case rest of { [] -> Just good; _ -> Nothing })
 
 proper = Try (\(it, rest) -> case it of { [] -> Nothing; _ -> Just (it, rest) })
-propersnap = Try (\a -> case a of { ([], _) -> Nothing; (_, r:rest) -> Nothing; _ -> Just a })
+--propersnap = Try (\a -> case a of { ([], _) -> Nothing; (_, r:rest) -> Nothing; _ -> Just a })
 
 proper' p = Wrap [p, proper]l
-propersnap' p = Wrap [p, propersnap]l
+--propersnap' p = Wrap [p, propersnap]l
 
 base n = foldl (\acc x -> (acc * n) + x) 0
 
 
-unwrap (Wrap x) = x
+-- unwrap (Wrap x) = x
 
-second = Sure (\((_, x), _) -> x)
+--second = Sure (\((_, x), _) -> x)
 
 word cs = Group (map letter cs)
 
@@ -100,24 +100,24 @@ optional p = Or p Epsilon
 
 parse :: Thrist Parse a b -> a -> Maybe b
 
-parse Nil a = Just a
+parse []l a = Just a
 
-parse (Cons (Epsilon) r) as = parse r ([], as)
+parse [Epsilon; r]l as = parse r ([], as)
 
-parse (Cons (Atom c) r) a = if ord c == ord a then parse r a else Nothing
+parse [Atom c; r]l a = if ord c == ord a then parse r a else Nothing
 
-parse (Cons (Pred p) r) a = if p a then parse r a else Nothing
+parse [Pred p; r]l a = if p a then parse r a else Nothing
 
-parse (Cons (Sure f) r) a = parse r (f a)
+parse [Sure f; r]l a = parse r (f a)
 
-parse (Cons (Try f) r) a = do { b <- f a; parse r b } where monad maybeM
+parse [Try f; r]l a = do { b <- f a; parse r b } where monad maybeM
 
-parse (Cons (Rep1 p) r) as = parse r (parseRep p as) where
+parse [Rep1 p; r]l as = parse r (parseRep p as) where
       parseRep :: Parse a b -> [a] -> ([b], [a])
       parseRep _ [] = ([], [])
       parseRep p (a:as) = case parse [p]l a of { Nothing -> ([], a:as); Just b -> (b:bs, rest) where (bs, rest) = parseRep p as }
 
-parse (Cons (Rep p) r) as = parse r (parseRep [p]l as) where
+parse [Rep p; r]l as = parse r (parseRep [p]l as) where
       parseRep :: Thrist Parse [a] (b, [a]) -> [a] -> ([b], [a])
       parseRep _ [] = ([], [])
       parseRep p as = case parse p as of
@@ -125,37 +125,37 @@ parse (Cons (Rep p) r) as = parse r (parseRep [p]l as) where
                       Just (b, as') -> (b:bs, rest)
                           where (bs, rest) = parseRep p as'
 
-parse (Cons (Group ps) r) as = do { bs <- parseGroup ps as; parse r bs } where
+parse [Group ps; r]l as = do { bs <- parseGroup ps as; parse r bs } where
       monad maybeM
       parseGroup :: [Parse a b] -> [a] -> Maybe ([b], [a])
       parseGroup [] rest = Just ([], rest) -- overlength input
       parseGroup _ [] = Nothing            -- input too short
       parseGroup (p:ps) (a:as) = do { b <- parse [p]l a; (bs, rest) <- parseGroup ps as; return (b:bs, rest) }
 
-parse (Cons (CataStar f) r) (a, over) = parse r ((f a), over)
+parse [CataStar f; r]l (a, over) = parse r ((f a), over)
 
-parse (Cons (CataPlus _) _) ([], _) = Nothing
-parse (Cons (CataPlus f) r) (a, over) = parse r ((f a), over)
+parse [CataPlus _; _]l ([], _) = Nothing
+parse [CataPlus f; r]l (a, over) = parse r ((f a), over)
 
-parse (Cons (Wrap thr) r) a = do { a' <- parse thr a; parse r a' } where monad maybeM
+parse [Wrap thr; r]l a = do { a' <- parse thr a; parse r a' } where monad maybeM
 
-parse (Cons (Seq1 p1 p2) r) (a1:a2:rest) = do { b1 <- parse [p1]l a1; b2 <- parse [p2]l a2; parse r ((b1, b2), rest) } where monad maybeM
-parse (Cons (Seq1 _ _) _) _ = Nothing
+parse [Seq1 p1 p2; r]l (a1:a2:rest) = do { b1 <- parse [p1]l a1; b2 <- parse [p2]l a2; parse r ((b1, b2), rest) } where monad maybeM
+parse [Seq1 _ _; _]l _ = Nothing
 
-parse (Cons (Seq p1 p2) r) as = do { (b1, as') <- parse [p1]l as; (b2, rest) <- parse [p2]l as'; parse r ((b1, b2), rest) } where monad maybeM
+parse [Seq p1 p2; r]l as = do { (b1, as') <- parse [p1]l as; (b2, rest) <- parse [p2]l as'; parse r ((b1, b2), rest) } where monad maybeM
 
-parse (Cons (Or p1 p2) r) a = case parse [p1]l a of
+parse [Or p1 p2; r]l a = case parse [p1]l a of
 			      (Just b1) -> parse r b1
 			      Nothing -> do { b2 <- parse [p2]l a; parse r b2 } where monad maybeM
 
 -- probably redundant, use Pred instead
-parse (Cons (ButNot1 p1 p2) r) a = case parse [p1]l a of
+parse [ButNot1 p1 p2; r]l a = case parse [p1]l a of
 				   Nothing -> Nothing
 				   (Just b1) -> case parse [p2]l a of
 						Nothing -> parse r b1
 						_ -> Nothing
 
-parse (Cons (u@UpTo p1 p2) r) a = case parse' a [] of
+parse [u@UpTo p1 p2; r]l a = case parse' a [] of
 				  Nothing -> Nothing
 				  Just (fill, (b2, rest)) -> case parse [p1]l (reverse fill []) of
 							     Nothing -> Nothing
@@ -315,8 +315,8 @@ extendThrist :: forall (a :: *1) (b :: a ~> a ~> *0) (c :: a) (d :: a) (e :: a) 
 		b d e ->
 		Thrist b c e
 
-extendThrist Nil a = [a]l
-extendThrist (Cons b r) a = Cons b (extendThrist r a)
+extendThrist []l a = [a]l
+extendThrist [b; r]l a = [b; extendThrist r a]l
 
 
 {- not ready yet :-(
