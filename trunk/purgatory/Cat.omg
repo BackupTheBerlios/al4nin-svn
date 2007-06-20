@@ -297,3 +297,12 @@ to0 = optimizeCat [If [pushI 42]l [pushI 42]l, Print]l
 to1 = optimizeCat [If [pushI 42]l [pushI 43]l, Print]l
 
 
+
+compile :: Thrist Cat a b -> Code (IO (Stack a) -> IO (Stack b))
+
+compile []l = lift id
+
+compile [Push rep a; r]l = [| \act -> let monad ioM in do
+                                       st <- act
+				       $(compile r) (return (Pu a st)) |]
+                    --           where compiledRest = compile r
