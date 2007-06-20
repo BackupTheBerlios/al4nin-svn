@@ -1,0 +1,786 @@
+@SysInclude { report }
+@SysInclude { fig }
+@SysInclude { diag }
+@SysInclude { graph }
+@SysInclude { eq }
+@SysInclude { haskell }
+
+def @Prompt left input right output { prompt> @Haskell { input } @PP @I { output } }
+def @Omega { {@Sym Omega}mega }
+
+#@Database @Reference { refs }
+@Report
+@ColumnNumber { 2 } 
+@InitialFont { Helvetica Base 10p } 
+@DateLine { Yes }
+@Title {
+Thrist: Dominoes of Data
+}
+@Author { Gabor Greif }
+@AbstractDisplay { Yes }
+# @AbstractFormat { @Centre @Title @DP @Body }
+@Abstract {
+
+We develop a novel list-like datastructure (which we name Thrist),
+that is able to capture the typing rule of function composition.
+Indeed we show that when Thrist is parameterized with the function
+type constructor (->) we can provide an interpretation function
+which completely emulates the classical function composition (.). Additionally
+we can perform pattern matching on our Thrist elements, thus
+obtaining the ability to do analysis on them. On the practical side
+we develop two new two-parameter GADTs. The first, when accompanied
+by an appropriate interpreter, directly model the semantics of the Cat language,
+while the second caters for a new type of parser combinator libraries.
+The Thrist approach of exposing the intermediate types where the
+elements are joined together especially shows its potential in the ability to
+stage the interpreter in a type-safe way and only allows for type correct
+transformations.
+
+}
+//
+
+@Section
+@Title { Structure of the Paper }
+@Begin
+@PP
+
+In the first section we motivate our later introduction of Thrist with well known
+examples. In the third section we develop three practial applications of Thrists.
+We also present some less useful but entertaining uses. Section four shows
+up possible future directions and summarizes open problems. Section five concludes.
+@End @Section
+
+@Section
+@Title { Introduction }
+@Begin
+@PP
+We are well acquainted with data structures that are parameterized over
+data types, they are the bread-and-butter tool of functional programmers.
+For example the List datatype could be introduced in Haskell with the following
+definition:
+@PP
+@ID @Haskell {
+data List :: * ~> * where
+  Nil :: List a
+  Cons :: a -> List a -> List a
+}
+@PP
+We deliberately avoid the traditional syntax of defining the List datatype,
+and use a GADT-style definition, because we want to build on this fundament later.
+It is enough to say that List does not impose any constraints on the contained datatype
+whatsoever:
+@LD {
+{Cons 42 (Cons 33 (Cons 5 Nil))} @Prompt
+  { Cons 42 (Cons 33 (Cons 5 Nil)) :: List In }
+}
+
+## prompt> Cons 42 (Cons 33 (Cons 5 Nil))
+##  Cons 42 (Cons 33 (Cons 5 Nil)) :: List In
+
+Departing from single-parameter datatypes we focus on two-parameter
+datatypes from now on. The most prominent member of this class of types
+is the arrow type:
+
+@LD {
+{ :k (->) } @Prompt
+  { (->) :: *0 ~> *0 ~> *0 }
+}
+
+Fully saturated, a -> b signifies the type of all functions that take elements of a to
+elements of b. Again, a and b can be any type, concrete ones will do just like
+universally qualified ones:
+@LD {
+{id} @Prompt
+  {<fn> : forall a.a -> a}
+}
+@LD {
+{ord} @Prompt
+  {<primfun to1> : Char -> Int}
+}
+Now, functions are a bit more interesting than Lists above, they can be composed!
+Interestingly, composition (written as (.)) is again a function:
+@LD {
+{{(.)} @Prompt
+  {<fn> : forall a b c.(a -> b) -> (c -> a) -> c -> b}
+}
+This function signature has several interpretations, but the most common one tells us that
+the composition function @Haskell {(.)} takes a function with type @Haskell {a -> b} as its first argument, then
+a function with type c -> a as its second argument, and returns a function of type @Haskell {c -> b}.
+Again, a, b and c can be arbitrarily specialized or be left universal.
+We can play with our new toy in the following way:
+
+@LD {
+{ let locase = chr . (\x -> x + 32) . ord } @Prompt
+{ locase }
+
+{  locase 'G' }  @Prompt
+{  'g' : Char }
+}
+
+The type of the composition function constrains the types of its arguments in
+a nontrivial way: the range of the second funtion must match with the domain
+of the first. (universal types will always match, monotypes must be equal).
+Violating this rule gives a type error:
+
+@LD @Verbatim {
+prompt> ord . ord
+
+In the expression: ord
+the result type: Char -> Int
+was not what was expected: a -> Char
+}
+
+This crucial property of the composition function will guide our explorations in this
+paper.
+
+@BeginSubSections
+
+@SubSection
+@Title { Generalizing Function Composition }
+@Begin
+@PP
+ While function composition seems to be a cute artifact of mathematics, (where
+nevertheless all computable functions can be derived from), this is no reason
+for us to stop at this point! First, we observe that function composition is a one-way
+street: once two functions are composed, they amalgamate beyond recognition.
+There is no way (inside our system) to take them apart again. This is very much
+resembling the addition, where @Haskell { (23 + 19) } gives @Haskell {42} and this result has completely
+lost all memories of the fact how it was obtained. But can we create a datastructure
+that has all properties of function composition, without being amnesiac?
+
+Indeed we can, and the rest of this chapter shall explain how.
+
+Our crucial observation from the introduction was that the types at the ends of the function
+arrows must thread up (we turn around the arrow for this demonstration), intuitively:
+
+b <- a (.) a <- c  ===  b <- c
+        ^^^^^
+
+We also observe that the intermediate types do not show up in the end result's type.
+
+Let's simulate these rules as a datatype:
+
+@ID @Haskell {
+data Thrist :: * ~> * ~> * where
+  Nil :: Thrist a a
+  Cons :: (b, a) -> Thrist a c -> Thrist b c
+}
+[here we have a proper GADT]
+
+We can now duplicate the "feeling" of function composition:
+
+@Haskell { Cons ('g', 103) (Cons (103, 71) (Cons (71, 'G') Nil)) }
+
+Also we have obtained a datatype that is not amnesiac, it can be
+torn apart at any place by pattern matching, though we have to pay
+the price that the intermediate types are a bit hard to deal with (we revisit this issue later).
+@PP
+It appears that we have reached our goal, we can form list-like data where the intermediate
+types thread up, we are happy and name our new toy Thrist, a pormanteau of thread and list.
+@PP
+Our joy quickly fades away when we compare our thrist with our composition function.
+How can data of type Thrist a b be interpreted as an arrow type a <- b ?
+If we fail to provide this embedding, we cannot consider Thrists being a generalisation of
+function composition.
+
+Not everything is lost, however. Close scrutiny reveals that our usage of (,), pronounced "pair"
+is the culprit. If we could liberate ourselves from this premature decision, we could gain back
+our hope.
+@End @SubSection
+
+
+@SubSection
+@Title { The Improved Thrist }
+@Begin
+@PP
+We try all over again, this time abstracting away the pair into an additional parameter:
+
+@ID @Haskell {
+data Thrist :: (* ~> * ~> *) ~> * ~> * ~> * where
+  Nil :: Thrist p a a
+  Cons :: p b a -> Thrist p a c -> Thrist p b c
+}
+All that remains of the pair is the bitter taste and the letter "p" in the definition of Thrist.
+It looks like we are getting closer now:
+@LD {
+{ Cons chr (Cons (\x -> x + 32) (Cons ord Nil)) } @Prompt
+{ ... : Thrist (->) Char Char }
+}
+We have created an arrow thrist!
+
+Immediately we can think of our previous attempt:
+@LD {
+{ Cons ('g', 103) (Cons (103, 71) (Cons (71, 'G') Nil)) } @Prompt
+{  ... : Thrist (,) Char Char }
+}
+The pair thrist that caused us some headache before!
+
+We shall explore some other interesting but sometimes futile
+thrists later in the discussion. But now let's put the last missing
+piece in place to show that an arrow thrist is strictly more general
+than function composition, the runArrowThrist function:
+
+@ID @Haskell {
+runArrowThrist :: Thrist (->) b c -> c -> b
+(TODO)
+}
+
+This function now confirms the vague intuition that Nil plays the rôle of
+the neutral element of the arrow thrist, just like the identity function
+plays the rôle of the neutal element in the monoid of composed functions.
+
+[Question: is every thrist a monoid? "http://en.wikipedia.org/wiki/Monoid"]
+[close with dominoes: "http://en.wikipedia.org/wiki/Dominoes"]
+
+
+@End @SubSection
+
+@EndSubSections
+
+@End @Section
+
+@Section
+@Title { Three practical Thrists }
+@Begin
+@PP
+
+Now that we have defined the Thrist datatype and gave a sufficiently
+generic interface to cover nontrivial cases, time has come to look for
+real-world applications. Specifically we shall describe a combinator
+library for creating ASTs of the Cat language, a statically typed stack-
+oriented language (http://www.cat-language.com/), and a parser
+combinator library. We shall sketch the use of thrists in transition
+arrows of state machines and finally give some curious examples
+that may have some practical value.
+
+@BeginSubSections
+
+@SubSection
+@Title { Application One: the Cat Thrist }
+@Begin
+@PP
+Like all stack-oriented languages Cat employs a simple idiom of
+computation. A rich set of primitives are available for pushing
+values on a stack, permuting them and popping them off. Logical
+and arithmetic primitives consume portions of the top of the stack
+(TOS) and deposit results in their place. Procedures can be defined
+as a succession of primitive invocations and procedure calls.
+The semantics of procedure calls is defined as the insertion of the
+called procedure's contents to the point of the invocation.
+@PP
+Let's begin with the definition of the Cat datastucture, that will
+serve as the first parameter to Thrist. Clearly it should be
+parametrized with two types. Naturally we choose the
+first type parameter to describe the shape of the stack before
+and the second parameter after the Cat primitive has been
+executed.
+
+@ID @Haskell {
+data Cat :: * ~> * ~> * where
+  Push :: a -> Cat opaque (a, opaque)
+  Pop :: Cat (a, opaque) opaque
+  Dup :: Cat (a, opaque) (a, (a, opaque))
+  Add :: Cat (Int, (Int, opaque)) (Int, opaque)
+}
+
+@BeginSubSubSections
+
+@SubSubSection
+@Title { First Explorations }
+@Begin
+@PP
+We shall extend our Cat with new primitives as the need arises, but
+for now we have enough to perform some experiments.
+We have chosen the tuple datatype to represent stack shapes,
+but we are free to pick any other sequence-like datatype that
+is able to record the type of each element.
+The Cat datatype is defined as a GADT, which will guarantee
+that only sematically sound programs can be expressed as a
+Thrist Cat. We can begin our explorations immediately:
+@LD {
+{ Cons (Push 19) $ Cons (Push 23) $ Cons Add $ Cons Pop Nil } @Prompt
+{ Cons (Push 19) (Cons (Push 23) (Add (Cons Pop (Cons Add (Cons Pop Nil)))) :: Thrist Cat a a }
+}
+The data we built up can be a representation of a Cat program that
+pushes 19 and then 23 on the stack, adds them, keeping only the
+result 42 on the stack, and then pops this result off. The inferred type
+tells us that there is no netto change in the stack's shape.
+
+@End @SubSubSection
+
+
+@SubSubSection
+@Title { Making Use of @Omega{}'s features }
+@Begin
+@PP
+We shall from now on make use of a feature of the @Omega language
+to define custom syntax for datatypes. Our aim is to hide the
+Thrist constructors Cons and Nil behind a more intuitive façade.
+We shall write the above expression as
+
+@LD {
+{ [Push 19, Push 23, Add, Pop]l } @Prompt
+{ [Push 19, Push 23, Add, Pop]l :: Thrist Cat a a }
+}
+@Omega's parser and printer perform the conversion to
+the internal form when the list-like brackets [] followed
+by a l letter are encountered.
+
+We can now continue using this terser syntax:
+
+@LD {
+{ [Pop, Pop]l } @Prompt
+{ [Pop, Pop]l :: Thrist Cat (a, (b, c)) c }
+
+The inferred type reflects the function of this Cat fragment,
+namely starting out with a stack that has at least two elements
+pushed, we end up with those two values removed.
+
+There are invalid Cat programs, for example addition of two
+characters:
+
+@LD {
+{ [Push 'a', Dup, Add]l } @Prompt
+{ TYPE ERROR (TODO) }
+
+The GADT-based type inference fails, because Add
+expects two integers on the stack, but there are two
+Chars available instead.
+@End @SubSubSection
+
+@SubSubSection
+@Title { Interpreter }
+@Begin
+@PP
+Now it is time to build an interpreter for Thrist Cat, and
+thus define its big-step semantics:
+
+interpret' :: Thrist Cat a b -> a -> b
+interpret' []l st = st
+interpret' [Push x; rest]l st = interpret' rest (x, st)
+interpret' [Pop; rest]l (a, st) = interpret' rest st
+interpret' [Dup; rest]l (a, st) = interpret' rest (a, a, st)
+interpret' [Add; rest]l (a, b, st) = interpret' rest (a + b, st)
+
+It works:
+
+prompt> interpret' [Push 19, Push 23, Add]l ()
+  (42, ()) :: (Int, ())
+
+With this basic functionality in place we get bolder and define
+a primitive with side effect:
+
+@ID @Haskell {
+data Cat :: * ~> * ~> * where
+  Print :: Cat (a, opaque) opaque
+  ...
+}
+
+To interpret this primitive we have to restructure
+our interpret' function to wrap the stack into the IO monad:
+
+@ID @Haskell {
+interpret' :: Thrist Cat a b -> IO a -> IO b
+interpret' [Print; rest]l st = do
+	(a, st') <- st
+	putStr $ show a
+	interpret' rest st'
+  where monad ioM
+}
+In similar spirit we have to rewrite the other cases too:
+
+@ID @Haskell {
+interpret' [Pop; rest]l st = do
+	(a, st') <- st
+	interpret' rest $ return st'
+  where monad ioM
+
+interpret' [Push x; rest]l st = do
+	interpret' rest $ return (x, st)
+  where monad ioM
+
+interpret' [Dup; rest]l st = do
+	(a, st') <- st
+	interpret' rest $ return (a, a, st')
+  where monad ioM
+
+interpret' [Add; rest]l st = do
+	(a, b, st') <- st
+	interpret' rest $ return (a + b, st')
+  where monad ioM
+}
+Trying out this monadic interpreter gives us:
+@LD {
+{ interpret' [Push 21, Dup, Add, Print]l (returnIO ()) } @Prompt
+{ Executing IO action
+@LP 42
+@PP () :: IO () }
+}
+
+It is a reasonable restriction to Cat programs that they can
+be started with any stack shape and they finish with the same
+stack unchanged. We can ensure this property by writing
+a top-level interpreter function for Cat programs using
+rank-2 polymorphism:
+
+@ID @Haskell {
+interpret :: (forall a . Thrist Cat a a) -> IO ()
+interpret program = interpret' program (returnIO Empty)
+}
+Obviously this @Haskell {interpret} function is only called for side-effects.
+@End @SubSubSection
+
+@SubSubSection
+@Title { Extending the Primitives }
+@Begin
+@PP
+TODO:
+
+frobbing functions from @Omega for use as primitives
+
+using witnesses to describe arities
+
+@End @SubSubSection
+
+@SubSubSection
+@Title { Staging the Interpreter }
+@Begin
+@PP
+A well-known technique to turn an interpreter into a compiler
+is staging. The compile function takes a Thrist Cat into
+a function of the metalanguage, that when executed causes the
+same effect as the interpretation of the program itself. Naturally,
+the compiled program is expected to run faster, since the interpretative
+overhead is already removed.
+
+We demonstrate the technique for a selection of the Cat primitives
+only.
+
+@ID @Haskell {
+compile' :: Thrist Cat a b -> Code (IO a -> IO b)
+compile' [Print; rest]l = [| \st -> do
+	(a, st') <- st
+	putStr $ show a
+	$compiledRest st'
+    where monad ioM |]
+  where compiledRest = compile' rest
+}
+
+[TODO: Push, etc.]
+
+@End @SubSubSection
+
+@SubSubSection
+@Title { Optimization }
+@Begin
+@PP
+The fact that Cat programs are represented as data in the metalanguage
+that is amenable to analysis by pattern matching, we can write an optimization function
+that performs several code optimizations on a program, such as head and tail merging
+of conditionals, value folding, inlining etc. Because the Cat thrist does not admit wrongly
+typed Cat programs and the optimization function takes Thrist Cat to Thrist Cat,
+all optimizations must be type preserving.
+@End @SubSubSection
+
+@SubSubSection
+@Title { Generalization }
+@Begin
+@PP
+The language Cat is intended as an intermediate language produced by
+front-end compilers and consumed by back-ends that target stack based
+virtual machines like JVM and CIL. It is advisable to generalize Cat in a way
+that Pop gets a count parameter that tells how many elements are to be
+popped of the stack. Also instead of Swap it would be beneficial to have
+a Permute primitive that subsumes all variants of stack shuffling operations,
+allowing us to get rid of Swap and friends. All these parametrized primitives
+would have one problem in common, namely that the stack shape would
+vary depending on the  value of the parameter(s), requiring dependent
+types to define them. Fortunately @Omega provides a device that is approaching
+the power of dependent types, singleton types and type-level functions.
+
+Here is a sketch of PopN:
+
+@ID @Haskell {
+  PopN :: Nat' (S n) -> Cat {blow (S n) s} s
+}
+It uses the type-level function blow to add the
+necessary number of universal type variables
+to the initial stack's shape:
+
+@ID @Haskell {
+blow :: Nat ~> *0 ~> *0
+{blow Z s} = s
+{blow (S n) s} = (t, {blow n s})
+}
+The interpreter can be written thus:
+
+@ID @Haskell {
+interpret [PopN (S n); rest]l st -> do
+	(_, st') <- st
+	case n of
+	0v -> interpret' rest st'
+	_ -> interpret' [PopN n; rest]l st'
+}
+
+@End @SubSubSection
+
+@EndSubSections
+
+@End @SubSection
+
+
+@SubSection
+@Title { Application two: a GADT-based Parse Thrist }
+@Begin
+@PP
+Traditional monadic parser combinator libraries (like Parsec) suffer from the
+same problem like the composition operator: they compose easily
+but cannot be dissected and analysed, or translated to other
+representations. We proceed similarly to the Thist (->) and Thrist Cat to
+create a parsing combinator library that is representation agnostic, i.e.
+can be interpreted or compiled and analysed in any reasonable way.
+
+
+
+@BeginSubSubSections
+
+@SubSubSection
+@Title { Envisioning Parsing }
+@Begin
+@PP
+
+But first let's be clear about what we aim at. We demonstrate the process of
+parsing by the example of a lexer with semantic evaluation. Our tokens
+are the various literal numerals like they occur in the C language:
+
+0xcafeBabe 0XE0UL 123456L
+
+These are the steps we wish to proceed on the second token:
+
+0) token as read from character stream:
+
+0XE0UL
+
+1) We match the "0X" prefix
+
+0XE0UL
+--
+
+2) We expect 0 or more hexadecimal characters (we come to the explanation of 0 later)
+
+0XE0UL
+--++
+
+3) We fold the hex string found to a decimal integer
+
+0XE0UL
+--++
+  vv
+
+4) We look for optional signedness hint
+
+0XE0UL
+--++u
+  vv
+
+5) We look for optional storage size hint
+
+0XE0UL
+--++us
+  vv
+
+6) we encapsulate the distilled information into a token datatype
+
+0XE0UL
+--++us
+  vv
+tttttt
+
+@End @SubSubSection
+
+@SubSubSection
+@Title { Realization }
+@Begin
+@PP
+
+To be able to compose these operations we define the GADT Parse:
+
+@ID @Haskell {
+data Parse :: * ~> * ~> * where
+  Epsilon :: Parse [a] ([b], [a])       -- always match, return everything
+  Atom :: Char -> Parse Char Char       -- exact match
+  Sure :: (a -> b) -> Parse a b         -- always match and convert
+  Try :: (a -> Maybe b) -> Parse a b    -- pipeline stops if no match
+  Rep1 :: Parse a b -> Parse [a] ([b], [a])          -- consume as many as matches found, return rest
+  Rep :: Parse [a] (b, [a]) -> Parse [a] ([b], [a])  -- consume as many as matches, return rest
+  Group :: [Parse a b] -> Parse [a] ([b], [a])       -- all must match, return rest
+  CataPlus :: ([a] -> b) -> Parse ([a], c) (b, c)    -- collapse one or more elements
+  Par :: Parse a b -> Parse c d -> Parse (a, c) (b, d)
+  Wrap :: Thrist Parse a b -> Parse a b
+}
+
+The datatype Parse a b represents a parser that consumes data of type a
+and if a match is found produces data of type b.
+
+@DashList
+@ListItem {  (Atom 'X') matches only the capital X character }
+@ListItem {  Epsilon matches a zero-size prefix of a list of as and returns an empty list of bs along with the unconsumed rest of as }
+@ListItem {  (Sure ord) alway matches, consuming a Char and returning its Int ASCII value }
+@ListItem {  (Try hexdigit) matches only if a characker is a hexadecimal one and returns its hex value, fails otherwise }
+@ListItem {  (Rep1 (Atom 'X')) matches as many capital Xs as possible and returns a pair consisting the matched and unconsumed portions }
+@ListItem {  (Group [Atom 'a', Atom 'b']) matches only a prefix "ab" in the input, returning it in a pair along with the unmatched portion or fails otherwise }
+@ListItem {  (CataPlus foldDec) consumes a pair of a list of digits and some other data, if the list is empty it fails, otherwise it folds the sequence to a number, then returns the pair of this number and the other data, which remains unchanged }
+@EndList
+
+In the above descriptions we only suggest a possible semantics, the data of type Parse does not mandate it in any way. So when we talked about "returns soandso" then this is just an intention.
+
+The end result of parsing a token will amount to
+
+@ID @Haskell {
+data Token =
+  Number Int Bool Bool
+  | ...
+}
+So we expect that our parser that produces Tokens to have a type Thrist Parse [Char] ([Token], [Char]).
+
+@End @SubSubSection
+
+@SubSubSection
+@Title {  }
+@Begin
+@PP
+How can we use our combinators to describe the parsing steps 0) to 6) above?
+
+First, we use
+
+Group [Atom '0', Atom 'X']
+
+to match the prefix of the string "0XE0UL" and produce ("0X", "E0UL") :: ([Char], [Char])
+
+then we can discard the prefix because we know we have to do base 16 conversion later,
+we can use
+
+Sure snd
+
+to do this obtaining "E0UL" :: [Char]. Then
+
+Rep1 $ Try hexdigit
+
+will split off two more characters, converting them to hex values on the way, we obtain ([0, 14], "UL") :: ([Int], [Char]). We cannot
+discard either component, so we proceed in parallel with
+
+Par (CataPlus foldHex)
+       (Wrap [Rep1 $ Atom 'U', Par (Sure id) (Rep1 $ Atom 'L')]l)
+
+the first component produces 14, the second will proceed by splutting of any 'U' and then
+splitting off any L producing a triple ("U", ("L", "")).
+
+At this stage we have (14, ("U", ("L", ""))) :: (Int, ([Char], ([Char], [Char]))).
+
+Finally we feed this into
+
+Try numberToken
+
+that verifies the correct usage of Us and Ls, and creates a pair
+
+(Number 14 True True, "") :: (Token, [Char])
+
+of the parsed token and the rest of the input.
+
+Putting this together we can write
+
+@ID @Haskell {
+signedSized = Wrap [Rep1 $ Atom 'U', Par (Sure id) (Rep1 $ Atom 'L')]l
+
+hexToken = Wrap [Group [Atom '0', Atom 'X']
+  , Sure snd
+  , Rep1 $ Try hexdigit
+  , Par (CataPlus foldHex) signedSized
+  , Try numberToken
+  ]l
+
+tokens = Rep hexToken
+}
+
+Of course there are some pitfalls here but the principle is clear:
+
+- the interesting prefix is split off the rest,
+- if the prefix is semantically important it gets condensed to a more appropriate form or else discarded,
+- parallel processing is used if both components of an input pair are relevant.
+
+@End @SubSubSection
+
+@SubSubSection
+@Title { Defining the Semantics by Interpretation }
+@Begin
+@PP
+We provide the parse function for the Rep constructor as an example:
+
+@LD @Haskell {
+parse :: Thrist Parse a b -> a -> Maybe b
+
+parse [Rep p; r]l as = parse r (parseRep [p]l as) where
+      parseRep :: Thrist Parse [a] (b, [a]) -> [a] -> ([b], [a])
+      parseRep _ [] = ([], [])
+      parseRep p as = case parse p as of
+                      Nothing -> ([], as)
+                      Just (b, as') -> (b:bs, rest)
+                          where (bs, rest) = parseRep p as'
+}
+
+@End @SubSubSection
+
+@SubSubSection
+@Title { Compilation }
+@Begin
+@PP
+Similarly to the Thrist Cat we can compile our parser combinators to
+a more efficient algoritm by removing the interpretative overhead.
+
+@End @SubSubSection
+
+@SubSubSection
+@Title { Analysis }
+@Begin
+@PP
+We can run various analyses on our parsers, to ensure that the grammar is unambiguous, for example.
+
+@End @SubSubSection
+
+@SubSubSection
+@Title { Outlook }
+@Begin
+@PP
+Many interesting other combinators can be defined, my repository contains also
+
+  Seq :: Parse [a] (b, [a]) -> Parse [a] (c, [a]) -> Parse [a] ((b, c), [a]) -- parse front first then second
+  Seq1 :: Parse a b -> Parse a c -> Parse [a] ((b, c), [a]) -- same, but with single-elem first and second
+  ButNot1 :: Parse a b -> Parse a b -> Parse a b     -- match first and expect second to fail
+  UpTo :: Parse [a] (b, [a]) -> Parse [a] (c, [a]) -> Parse [a] ((b, c), [a]) -- scan for c then match b
+
+etc.
+
+I think working together with a parsing expert could result in a minimal set of combinators that
+allow parsing a great variety of grammars and optimization and compilation methods that make
+the parsing process *fast*.
+@End @SubSubSection
+
+@EndSubSubSections
+
+
+
+@End @SubSection
+
+@EndSubSections
+
+@End @Section
+
+
+
+@Appendix
+@Title { App 1 }
+@Begin
+@PP
+
+@End @Appendix
+
