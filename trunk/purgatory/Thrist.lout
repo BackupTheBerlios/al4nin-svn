@@ -100,7 +100,7 @@ universally qualified ones:
 Now, functions are a bit more interesting than Lists above, they can be composed!
 Interestingly, composition (written as (.)) is again a function:
 @LD {
-{{(.)} @Prompt
+{(.)} @Prompt
   {<fn> : forall a b c.(a -> b) -> (c -> a) -> c -> b}
 }
 This function signature has several interpretations, but the most common one tells us that
@@ -110,10 +110,10 @@ Again, a, b and c can be arbitrarily specialized or be left universal.
 We can play with our new toy in the following way:
 
 @LD {
-{ let locase = chr . (\x -> x + 32) . ord } @Prompt
+{ let locase = chr . ("\\"x -> x + 32) . ord } @Prompt
 { locase }
 
-{  locase 'G' }  @Prompt
+{  locase 'G' } @Prompt
 {  'g' : Char }
 }
 
@@ -122,12 +122,13 @@ a nontrivial way: the range of the second funtion must match with the domain
 of the first. (universal types will always match, monotypes must be equal).
 Violating this rule gives a type error:
 
-@LD @Verbatim {
-prompt> ord . ord
-
+@LD {
+{ ord . ord } @Prompt
+{
 In the expression: ord
 the result type: Char -> Int
 was not what was expected: a -> Char
+}
 }
 
 This crucial property of the composition function will guide our explorations in this
@@ -139,7 +140,7 @@ paper.
 @Title { Generalizing Function Composition }
 @Begin
 @PP
- While function composition seems to be a cute artifact of mathematics, (where
+While function composition seems to be a cute artifact of mathematics, (where
 nevertheless all computable functions can be derived from), this is no reason
 for us to stop at this point! First, we observe that function composition is a one-way
 street: once two functions are composed, they amalgamate beyond recognition.
@@ -153,8 +154,8 @@ Indeed we can, and the rest of this chapter shall explain how.
 Our crucial observation from the introduction was that the types at the ends of the function
 arrows must thread up (we turn around the arrow for this demonstration), intuitively:
 
-b <- a (.) a <- c  ===  b <- c
-        ^^^^^
+"b <- a (.) a <- c  ===  b <- c"
+"        ^^^^^"
 
 We also observe that the intermediate types do not show up in the end result's type.
 
@@ -171,7 +172,7 @@ We can now duplicate the "feeling" of function composition:
 
 @Haskell { Cons ('g', 103) (Cons (103, 71) (Cons (71, 'G') Nil)) }
 
-Also we have obtained a datatype that is not amnesiac, it can be
+Also we have obtained a datatype that is not amnesiac, i.e. it can be
 torn apart at any place by pattern matching, though we have to pay
 the price that the intermediate types are a bit hard to deal with (we revisit this issue later).
 @PP
@@ -203,7 +204,7 @@ data Thrist :: (* ~> * ~> *) ~> * ~> * ~> * where
 All that remains of the pair is the bitter taste and the letter "p" in the definition of Thrist.
 It looks like we are getting closer now:
 @LD {
-{ Cons chr (Cons (\x -> x + 32) (Cons ord Nil)) } @Prompt
+{ Cons chr (Cons ("\\"x -> x + 32) (Cons ord Nil)) } @Prompt
 { ... : Thrist (->) Char Char }
 }
 We have created an arrow thrist!
@@ -248,7 +249,7 @@ Now that we have defined the Thrist datatype and gave a sufficiently
 generic interface to cover nontrivial cases, time has come to look for
 real-world applications. Specifically we shall describe a combinator
 library for creating ASTs of the Cat language, a statically typed stack-
-oriented language (http://www.cat-language.com/), and a parser
+oriented language ("http://www.cat-language.com/"), and a parser
 combinator library. We shall sketch the use of thrists in transition
 arrows of state machines and finally give some curious examples
 that may have some practical value.
@@ -331,6 +332,7 @@ We can now continue using this terser syntax:
 @LD {
 { [Pop, Pop]l } @Prompt
 { [Pop, Pop]l :: Thrist Cat (a, (b, c)) c }
+}
 
 The inferred type reflects the function of this Cat fragment,
 namely starting out with a stack that has at least two elements
@@ -342,6 +344,7 @@ characters:
 @LD {
 { [Push 'a', Dup, Add]l } @Prompt
 { TYPE ERROR (TODO) }
+}
 
 The GADT-based type inference fails, because Add
 expects two integers on the stack, but there are two
@@ -703,10 +706,11 @@ tokens = Rep hexToken
 }
 
 Of course there are some pitfalls here but the principle is clear:
-
-- the interesting prefix is split off the rest,
-- if the prefix is semantically important it gets condensed to a more appropriate form or else discarded,
-- parallel processing is used if both components of an input pair are relevant.
+@DashList
+   @ListItem { the interesting prefix is split off the rest, }
+   @ListItem { if the prefix is semantically important it gets condensed to a more appropriate form or else discarded, }
+   @ListItem { parallel processing is used if both components of an input pair are relevant. }
+@EndList
 
 @End @SubSubSection
 
