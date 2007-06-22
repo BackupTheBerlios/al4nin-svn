@@ -1,0 +1,317 @@
+-- -*-Haskell-*-
+
+{-
+ * Copyright (c) 2007 Gabor Greif
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to deal
+ * in the Software without restriction, including without limitation the rights
+ * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies
+ * of the Software, and to permit persons to whom the Software is furnished to do
+ * so, subject to the following conditions:
+ *
+ * The above copyright notice and this permission notice shall be
+ * included in all copies or substantial portions of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
+ * EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES
+ * OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
+ * NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT
+ * HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY,
+ * WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+ * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE
+ * OR OTHER DEALINGS IN THE SOFTWARE.
+ -}
+
+-- Usage:
+--
+--  Set up the environment
+--     setenv LD_LIBRARY_PATH /opt/exp/gnu/lib:$LD_LIBRARY_PATH
+--     setenv PATH /home/ggreif/%NoBackup%/Omega1.4.2:$PATH
+--
+--  Start the omega interpreter by typing
+--     omega Cat.omg
+--  and run your commands on the prompt
+--
+
+import "LangPrelude.prg" 
+  (head,tail,lookup,member,fst,snd,map,Monad,maybeM,id,ioM,Eq,Equal,
+  listM, (!=), (==))
+
+
+import "Thrist.omg" 
+  (Thrist, Nil, Cons, syntax List(l))
+
+
+data Prod:: *1 ~> *1 where
+  PNil:: Prod a
+  PCons:: k ~> Prod k ~> Prod k
+ deriving List(sh)
+
+
+
+-- Cat thrist
+-- See: http://en.wikipedia.org/wiki/Cat_%28programming_language%29
+
+blow :: Nat ~> Prod *0 ~> Prod *0
+{blow Z s} = s
+{blow (S n) s} = PCons t {blow n s}
+
+blowLike :: Nat ~> *0 ~> Prod *0 ~> Prod *0
+{blowLike (S arty) (c -> d) s} = PCons c {blowLike arty d s}
+{blowLike Z a s} = s
+
+range :: Nat ~> *0 ~> *0
+{range (S arty) (c -> d)} = {range arty d}
+{range Z a} = a
+
+countArr :: *0 ~> Nat
+{countArr Int} = 0t
+{countArr Bool} = 0t
+{countArr Char} = 0t
+{countArr (a, b)} = 0t
+{countArr [a]} = 0t
+{countArr (a->b)} = S {countArr b}
+
+data Tractable :: * ~> * where
+  IntTractable :: Tractable Int
+  BoolTractable :: Tractable Bool
+  CharTractable :: Tractable Char
+  PairTractable :: Tractable a -> Tractable b -> Tractable (a, b)
+  ListTractable :: Tractable a -> Tractable [a]
+  ArrTractable :: Tractable a -> Tractable b -> Tractable (a -> b)
+  CatTractable :: ShapeTractable a -> ShapeTractable b -> Tractable (Cat a b)
+
+data Primitive
+    = Padd
+    | Psub
+    | Pmul
+    | Pdiv
+    | Pgt
+    | Plt
+    | Pgteq
+    | Plteq
+    | Pneg
+    | Peq
+    | Pneq
+    | Pmin
+    | Pmax
+    | Pmap -- made up
+    | Pord
+
+
+data Cat :: (Prod *0) ~> (Prod *0) ~> *0 where
+  Push :: Tractable a -> a -> Cat s (PCons a s)
+  Prim :: Tractable c -> Primitive -> (a -> c) -> Cat (PCons a {blowLike {countArr c} c s}) (PCons {range {countArr c} c} s)
+  Dup :: Cat (PCons t s) (PCons t (PCons t s))
+--  Dig :: Pick Prod Nat -> Cat (PCons t s) (PCons t (PCons t s))
+  Print :: Cat (PCons t s) s
+  PopN :: Nat' (S n) -> Cat {blow (S n) s} s
+  Swap :: Cat (PCons a (PCons b s)) (PCons b (PCons a s))
+-- Perm :: Pick Prod Nat -- TODO
+  Block :: Thrist Cat b c -> Cat a (PCons (Cat b c) a)
+  Quote :: Thrist Cat a b -> Cat a b
+  Eval :: Cat (PCons (Cat a b) a) b
+  If :: Thrist Cat s t ->
+        Thrist Cat s t ->
+        Cat (PCons Bool s) t
+
+
+data ShapeTractable :: (Prod *0) ~> * where
+  Opaque :: ShapeTractable a
+  Ontop :: Tractable b -> ShapeTractable a -> ShapeTractable (PCons b a)
+ deriving List(st)
+  
+tc0 = (let a = Opaque in (CatTractable a (Ontop IntTractable a))) :: Tractable (Cat a (PCons Int a))
+tc1 = [Push tc0 (Push IntTractable 42)]l
+tc2 = [Push tc0 (Push IntTractable 42), Eval]l
+tc3 = [Push tc0 (Push IntTractable 42), Eval, Print]l
+
+strTract = ListTractable CharTractable
+
+intPrim = Prim (ArrTractable IntTractable IntTractable)
+add = intPrim Padd (+)
+sub = intPrim Psub (-)
+
+intPred = Prim (ArrTractable IntTractable BoolTractable)
+gt = intPred Pgt (>)
+gteq = intPred Pgteq (>=)
+
+pop = PopN #1
+
+te1 = [Push IntTractable 42, Dup, gt, If [pop, Push strTract "hh"]l [Push IntTractable 42, add, Print, Push strTract "hh"]l]l
+
+{- This needs more magic:
+showThrist :: (t a b -> String) -> Thrist t a b -> String
+showThrist f Nil = ""
+showThrist f (Cons t r) = f t ++ showThrist f r
+-}
+
+cat' :: Thrist Cat a b -> String
+cat' []l = ""
+cat' [Push _ a; r]l = "Push " ++ show a ++ "\n" ++ cat' r
+cat' [Prim _ Padd _; r]l = "add\n" ++ cat' r
+cat' [Prim _ Psub _; r]l = "sub\n" ++ cat' r
+cat' [Prim _ Pgt  _; r]l = "gt\n" ++ cat' r
+cat' [Dup; r]l = "Dup\n" ++ cat' r
+cat' [Print; r]l = "Print\n" ++ cat' r
+cat' [PopN n; r]l = "PopN " ++ show n ++ "\n" ++ cat' r
+cat' [Swap; r]l = "Swap\n" ++ cat' r
+cat' [If yes no; r]l = "If " ++ show yes ++ " ELSE " ++ show no ++ "\n" ++ cat' r
+
+data Stack :: Prod *0 ~> *0 where
+  Empty :: Stack PNil
+  Pu :: a -> Stack s -> Stack (PCons a s)
+ deriving List(s)
+
+{-
+proveRange :: Tractable d -> Tractable e -> Equal {range {countArr (e -> d)} (e -> d)} {range {countArr d} d}
+proveRange IntTractable e = Eq
+proveRange BoolTractable e = Eq
+proveRange CharTractable e = Eq
+proveRange (ListTractable _) e = Eq
+proveRange (PairTractable _ _) e = Eq
+proveRange (ArrTractable from to) e = Eq
+                                      where theorem because = proveRange to
+-}
+
+interpretCat :: (forall a . Thrist Cat a a) -> IO (Stack PNil)
+interpretCat thr = interpretCat' thr (returnIO Empty)
+
+interpretCat' :: Thrist Cat a b -> IO (Stack a) -> IO (Stack b)
+
+interpretCat' []l act = act
+
+interpretCat' thr act =
+    case thr of
+	     [Push rep a; r]l -> do
+				 st <- act
+				 interpretCat' r (return (Pu a st))
+	     [PopN (S n); r]l -> do
+				 Pu _ st <- act
+				 interpretCat' r (popMore n st)
+	     [Print; r]l -> do
+			    Pu a st <- act
+			    new <- putStr (show a)
+			    interpretCat' r (return st)
+	     [Dup; r]l -> do
+			  Pu a st <- act
+  			  interpretCat' r (return (Pu a (Pu a st)))
+	     [Swap; r]l -> do
+			   Pu a st <- act
+			   let (Pu b st') = st
+			   interpretCat' r (return (Pu b (Pu a st')))
+	     [Prim (ArrTractable x y) p f; r]l -> do
+	                                          Pu a st <- act
+						  interpretCat' [Prim y p (f a); r]l (return st)
+                                                         -- where theorem because = proveRange y x
+	     [Prim IntTractable _ f; r]l -> do
+	                                    Pu a st <- act
+					    interpretCat' r (return (Pu (f a) st))
+	     [Prim BoolTractable _ f; r]l -> do
+	                                     Pu a st <- act
+					     interpretCat' r (return (Pu (f a) st))
+	     [Prim CharTractable _ f; r]l -> do
+	                                     Pu a st <- act
+					     interpretCat' r (return (Pu (f a) st))
+	     [Prim (PairTractable _ _) _ f; r]l -> do
+	                                           Pu a st <- act
+						   interpretCat' r (return (Pu (f a) st))
+	     [Prim (ListTractable _) _ f; r]l -> do
+	                                         Pu a st <- act
+						 interpretCat' r (return (Pu (f a) st))
+	     [If yes no; r]l -> do
+				Pu cond st <- act
+				let act' = return st
+				interpretCat' r (if cond then interpretCat' yes act' else interpretCat' no act')
+	     [Block thr; r]l -> do
+				st <- act
+				interpretCat' r (return (Pu (Quote thr) st))
+	     [Eval; r]l -> do
+			   Pu (Quote thr) st <- act
+			   let act' = return st
+			   interpretCat' r (interpretCat' thr act')
+    where monad ioM
+
+popMore :: Nat' n -> Stack {blow n b} -> IO (Stack b)
+popMore Z st = return st
+    where monad ioM
+popMore (S n) st = do
+		   let (Pu _ st') = st
+		   popMore n st'
+    where monad ioM
+
+##test "was not what was expected"
+  te2 = interpretCat (Cons (Push 11) te1)
+
+pushI = Push IntTractable
+pushB = Push BoolTractable
+pushC = Push CharTractable
+pushStr = Push (ListTractable CharTractable)
+
+te3 = interpretCat [pushI 23, pop]l
+te4 = interpretCat [pushI 42, pushI 11, gt, If [pushB True]l [pushB False]l, Print]l
+te5 = interpretCat [pushI 42, pushI 32, pushI 1, add, Swap, Print, Print]l
+te6 = interpretCat [pushI 42, pushI 32, pushI 1, add, Swap, Print, Dup, PopN #2]l
+te7 = interpretCat [pushStr "Fun", Push (ArrTractable CharTractable IntTractable) ord, Prim (ArrTractable (ListTractable CharTractable) (ListTractable IntTractable)) Pmap map, Print]l
+te8 = interpretCat [pushC 'Z', Prim IntTractable Pord ord, pushI 2, add, Print]l
+te9 = interpretCat [pushI 42, Block [Print]l, Eval]l
+
+optimizeCat :: Thrist Cat a b -> Thrist Cat a b
+optimizeCat (i@Cons (If yes no) r) = optimizeIf i yes no r
+optimizeCat [p@Push rep a; r]l = [p; optimizeCat r]l
+optimizeCat [p@Swap; r]l = [p; optimizeCat r]l
+optimizeCat []l = []l
+
+sameTractable :: Tractable a -> Tractable b -> Maybe (Equal a b)
+sameTractable IntTractable IntTractable = Just Eq
+
+sameValue :: Tractable a -> a -> a -> Bool
+sameValue IntTractable a b = a == b
+
+splitOff :: Thrist Cat a c -> Thrist Cat a c -> exists b . Maybe (Cat a b, Thrist Cat b c, Thrist Cat b c)
+splitOff (Cons (p1@Push rep1 a1) r1) (Cons (Push rep2 a2) r2) = case sameTractable rep1 rep2 of
+								Just Eq -> Ex (Just (p1, r1, r2))
+splitOff (Cons (s@Swap) r1) (Cons Swap r2) =  Ex (Just (s, r1, r2))
+
+
+
+optimizeIf :: Thrist Cat (PCons Bool a) b -> Thrist Cat a c -> Thrist Cat a c -> Thrist Cat c b -> Thrist Cat (PCons Bool a) b
+
+optimizeIf all (Cons (Push rep1 a1) t1) (Cons (Push rep2 a2) t2) rest = case sameTractable rep1 rep2 of
+                                                                          Just Eq -> if sameValue rep1 a1 a2 then optimizeCat $ Cons (Push rep1 a1) (Cons Swap (Cons (If t1 t2) rest)) else all
+                                                                          _ -> all
+----optimizeIf all a b rest = case splitOff a b of
+----                            Just (Ex (p, t1, t2)) -> 
+
+
+--optimizeIf all (Cons (Push rep1 a1) t1) (Cons (Push rep2 a2) t2) rest = if eqStr (show a1) (show a2) then optimizeCat $ Cons (Push rep1 a1) (Cons Swap (Cons (If t1 t2) rest)) else all
+--           where theorem splitOff
+
+optimizeIf _ []l []l rest = [pop; rest]l
+
+
+optimizeIf all _ _ _ = all
+
+to0 = optimizeCat [If [pushI 42]l [pushI 42]l, Print]l
+to1 = optimizeCat [If [pushI 42]l [pushI 43]l, Print]l
+
+
+
+compile :: Thrist Cat a b -> Code (IO (Stack a) -> IO (Stack b))
+
+compile []l = lift id
+
+compile [Push rep a; r]l = [| \act -> let monad ioM in do
+                                      st <- act
+				      $(compile r) (return (Pu a st)) |]
+
+compile [ZZ@PopN (S n); r]l = [| \act -> let monad ioM in do
+			              Pu _ st <- act
+				      $compiledRest (return st) |]
+		where compiledRest = case check n of
+				     Z -> check (compile r)
+			--	     S o -> check (compile [PopN (S o); r]l)
+
+
+
