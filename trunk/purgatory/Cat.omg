@@ -303,6 +303,12 @@ compile :: Thrist Cat a b -> Code (IO (Stack a) -> IO (Stack b))
 compile []l = lift id
 
 compile [Push rep a; r]l = [| \act -> let monad ioM in do
-                                       st <- act
-				       $(compile r) (return (Pu a st)) |]
-                    --           where compiledRest = compile r
+                                      st <- act
+				      $(compile r) (return (Pu a st)) |]
+
+compile [PopN (S (n@Z)); r]l = [| \act -> let monad ioM in do
+			              Pu _ st <- act
+				      $compiledRest (return st) |]
+		where compiledRest = case n of
+				     Z -> compile r
+			--	     _ -> compile [PopN n; r]l
