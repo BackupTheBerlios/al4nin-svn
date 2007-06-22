@@ -39,9 +39,10 @@ import "LangPrelude.prg"
   listM, (!=), (==))
 
 
-import "Thrist.omg" 
-  (Thrist, Nil, Cons, syntax List(l))
-
+data Thrist :: forall (l :: *1) . (l ~> l ~> *)  ~> l ~> l ~> * where
+  Nil :: Thrist k a a
+  Cons :: k c b -> Thrist k b a -> Thrist k c a
+ deriving List(l)
 
 data Prod:: *1 ~> *1 where
   PNil:: Prod a
