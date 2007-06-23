@@ -306,15 +306,20 @@ compile [Push rep a; r]l = [| \act -> let monad ioM in do
                                       st <- act
 				      $(compile r) (return (Pu a st)) |]
 
-compile [PopN (S (n@Z)); r]l = [| \act -> let monad ioM in do
+compile [PopN (S Z); r]l = [| \act -> let monad ioM in do
 			              Pu _ st <- act
 				      $(compile r) (return st) |]
---		where compiledRest = case n of
---				     Z -> compile r
-			--	     _ -> compile [PopN n; r]l
 
 compile [PopN (S (S n)); r]l = [| \act -> let monad ioM in do
-			              Pu _ st <- act
-				      $(compile [PopN (S n); r]l) (return st) |]
---		where compiledRest = case n of
---				     Z -> compile r
+                                          Pu _ st <- act
+				          $(compile [PopN (S n); r]l) (return st) |]
+
+compile [Print; r]l = [| \act -> let monad ioM in do
+			         Pu a st <- act
+                                 new <- putStr (show a)
+			         $(compile r) (return st) |]
+
+compile [Dup; r]l = [| \act -> let monad ioM in do
+		               Pu a st <- act
+			       $(compile r) (return (Pu a (Pu a st))) |]
+
