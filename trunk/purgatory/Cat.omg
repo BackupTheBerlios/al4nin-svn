@@ -326,8 +326,10 @@ compile [Dup; r]l = [| \act -> let monad ioM in do
 compile [Block thr; r]l = [| \act -> let monad ioM in do
 			              st <- act
 				      $(compile r) (return (Pu $quoted st)) |]
-			         where quoted = lift $ Quote thr
+			         where quoted = [| Quote thr |]
 
 compile [Apply; r]l = [| \act -> let monad ioM in do
 			         Pu (Quote thr) st <- act
 			         $(compile r) (interpretCat' thr (return st)) |]
+
+tco1 = (run (compile [Block [pushI 42]l, Apply, Print]l)) $ returnIO Empty
