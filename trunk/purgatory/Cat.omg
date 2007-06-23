@@ -308,7 +308,13 @@ compile [Push rep a; r]l = [| \act -> let monad ioM in do
 
 compile [PopN (S (n@Z)); r]l = [| \act -> let monad ioM in do
 			              Pu _ st <- act
-				      $compiledRest (return st) |]
-		where compiledRest = case n of
-				     Z -> compile r
+				      $(compile r) (return st) |]
+--		where compiledRest = case n of
+--				     Z -> compile r
 			--	     _ -> compile [PopN n; r]l
+
+compile [PopN (S (S n)); r]l = [| \act -> let monad ioM in do
+			              Pu _ st <- act
+				      $(compile [PopN (S n); r]l) (return st) |]
+--		where compiledRest = case n of
+--				     Z -> compile r
