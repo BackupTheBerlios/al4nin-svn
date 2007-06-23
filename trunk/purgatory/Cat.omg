@@ -111,7 +111,7 @@ data Cat :: (Prod *0) ~> (Prod *0) ~> *0 where
 -- Perm :: Pick Prod Nat -- TODO
   Block :: Thrist Cat b c -> Cat a (PCons (Cat b c) a)
   Quote :: Thrist Cat a b -> Cat a b
-  Eval :: Cat (PCons (Cat a b) a) b
+  Apply :: Cat (PCons (Cat a b) a) b
   If :: Thrist Cat s t ->
         Thrist Cat s t ->
         Cat (PCons Bool s) t
@@ -124,8 +124,8 @@ data ShapeTractable :: (Prod *0) ~> * where
   
 tc0 = (let a = Opaque in (CatTractable a (Ontop IntTractable a))) :: Tractable (Cat a (PCons Int a))
 tc1 = [Push tc0 (Push IntTractable 42)]l
-tc2 = [Push tc0 (Push IntTractable 42), Eval]l
-tc3 = [Push tc0 (Push IntTractable 42), Eval, Print]l
+tc2 = [Push tc0 (Push IntTractable 42), Apply]l
+tc3 = [Push tc0 (Push IntTractable 42), Apply, Print]l
 
 strTract = ListTractable CharTractable
 
@@ -227,10 +227,10 @@ interpretCat' thr act =
 	     [Block thr; r]l -> do
 				st <- act
 				interpretCat' r (return (Pu (Quote thr) st))
-	     [Eval; r]l -> do
-			   Pu (Quote thr) st <- act
-			   let act' = return st
-			   interpretCat' r (interpretCat' thr act')
+	     [Apply; r]l -> do
+			    Pu (Quote thr) st <- act
+			    let act' = return st
+			    interpretCat' r (interpretCat' thr act')
     where monad ioM
 
 popMore :: Nat' n -> Stack {blow n b} -> IO (Stack b)
@@ -242,7 +242,7 @@ popMore (S n) st = do
     where monad ioM
 
 ##test "was not what was expected"
-  te2 = interpretCat (Cons (Push 11) te1)
+  te2 = interpretCat (Cons (pushI 11) te1)
 
 pushI = Push IntTractable
 pushB = Push BoolTractable
@@ -255,7 +255,7 @@ te5 = interpretCat [pushI 42, pushI 32, pushI 1, add, Swap, Print, Print]l
 te6 = interpretCat [pushI 42, pushI 32, pushI 1, add, Swap, Print, Dup, PopN #2]l
 te7 = interpretCat [pushStr "Fun", Push (ArrTractable CharTractable IntTractable) ord, Prim (ArrTractable (ListTractable CharTractable) (ListTractable IntTractable)) Pmap map, Print]l
 te8 = interpretCat [pushC 'Z', Prim IntTractable Pord ord, pushI 2, add, Print]l
-te9 = interpretCat [pushI 42, Block [Print]l, Eval]l
+te9 = interpretCat [pushI 42, Block [Print]l, Apply]l
 
 optimizeCat :: Thrist Cat a b -> Thrist Cat a b
 optimizeCat (i@Cons (If yes no) r) = optimizeIf i yes no r
@@ -323,3 +323,11 @@ compile [Dup; r]l = [| \act -> let monad ioM in do
 		               Pu a st <- act
 			       $(compile r) (return (Pu a (Pu a st))) |]
 
+compile [Block thr; r]l = [| \act -> let monad ioM in do
+			              st <- act
+				      $(compile r) (return (Pu $quoted st)) |]
+			         where quoted = lift $ Quote thr
+
+compile [Apply; r]l = [| \act -> let monad ioM in do
+			         Pu (Quote thr) st <- act
+			         $(compile r) (interpretCat' thr (return st)) |]
