@@ -53,9 +53,9 @@ data Parse :: *0 ~> *0 ~> *0 where
   Rep :: Parse [a] (b, [a]) -> Parse [a] ([b], [a])  -- consume as many as matches, return rest
   Group :: [Parse a b] -> Parse [a] ([b], [a])       -- all must match, return rest
 -- CataStar can be implemented by Sure
-  CataStar :: ([a] -> b) -> Parse ([a], c) (b, c)    -- collapse zero or more elements
+--  CataStar :: ([a] -> b) -> Parse ([a], c) (b, c)    -- collapse zero or more elements
 -- CataPlus can be implemented by Try
-  CataPlus :: ([a] -> b) -> Parse ([a], c) (b, c)    -- collapse one or more elements
+--  CataPlus :: ([a] -> b) -> Parse ([a], c) (b, c)    -- collapse one or more elements
   Wrap :: Thrist Parse a b -> Parse a b              -- treat a chain of parses as one
   Or :: Parse a b -> Parse a b -> Parse a b          -- match first or if it doesn't, the second
   Seq :: Parse [a] (b, [a]) -> Parse [a] (c, [a]) -> Parse [a] ((b, c), [a]) -- parse front first then second
@@ -134,10 +134,10 @@ parse [Group ps; r]l as = do { bs <- parseGroup ps as; parse r bs } where
       parseGroup _ [] = Nothing            -- input too short
       parseGroup (p:ps) (a:as) = do { b <- parse [p]l a; (bs, rest) <- parseGroup ps as; return (b:bs, rest) }
 
-parse [CataStar f; r]l (a, over) = parse r ((f a), over)
+---parse [CataStar f; r]l (a, over) = parse r ((f a), over)
 
-parse [CataPlus _; _]l ([], _) = Nothing
-parse [CataPlus f; r]l (a, over) = parse r ((f a), over)
+---parse [CataPlus _; _]l ([], _) = Nothing
+---parse [CataPlus f; r]l (a, over) = parse r ((f a), over)
 
 parse [Wrap thr; r]l a = do { a' <- parse thr a; parse r a' } where monad maybeM
 
@@ -174,6 +174,16 @@ parse [u@UpTo p1 p2; r]l a = case parse' a [] of
     reverse [] acc = acc
     reverse (a:as) acc = reverse as (a:acc)
 
+
+cataPlus :: ([a] -> b) -> Parse ([a], c) (b, c)
+cataPlus f = Try inner
+         where inner ([], _) = Nothing
+               inner (as, c) = Just (f as, c)
+
+cataStar :: ([a] -> b) -> Parse ([a], c) (b, c)
+cataStar f = Sure (\(as, c) -> (f as, c))
+
+
 -- ##########################################
 -- ############ pattern compiler ############
 -- ##########################################
@@ -209,9 +219,9 @@ t0a = (run compileParse $ [Or (letter 's') (letter 'm')]l) 'm'
 t1 = parse [Seq (Wrap [Rep1 $ letter 'a', proper]l) (Seq (Rep1 $ letter 'b') (Rep1 (letter 'c')))]l "abbc"
 t1a = parse [Seq (proper' $ Rep1 $ letter 'a') (Seq (Rep1 $ letter 'b') (Rep1 (letter 'c')))]l "abbc"
 
-num = [Rep1 digit, CataPlus (base 10)]l
-hexnum = [Rep1 hexdigit, CataPlus (base 16)]l
-binnum = [Rep1 bindigit, CataPlus (base 2)]l
+num = [Rep1 digit, cataPlus (base 10)]l
+hexnum = [Rep1 hexdigit, cataPlus (base 16)]l
+binnum = [Rep1 bindigit, cataPlus (base 2)]l
 
 
 chexnum = [Seq (Seq1 (letter '0') (alts letter "xX")) (Wrap hexnum), Sure (snd . fst)]l
