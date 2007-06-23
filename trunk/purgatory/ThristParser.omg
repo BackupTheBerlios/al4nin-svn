@@ -192,6 +192,19 @@ compileParse [Atom c; r]l = [| \a -> if $ordC == ord a then $parseR a else Nothi
 
 compileParse [Pred p; r]l = [| \a -> if p a then $(compileParse r) a else Nothing |]
 
+compileParse [Sure f; r]l = [| \a -> $(compileParse r) (f a) |]
+
+compileParse [Try f; r]l = [| \a -> let monad maybeM in do { b <- f a; $(compileParse r) b } |]
+
+{- this should work, but fails: (not reported yet)
+
+Unknown Var at level 0: bind
+
+compileParse [Try f; r]l = [| \a -> do { b <- f a; $(compileParse r) b } |]
+    where monad maybeM
+-}
+
+
 compileParse [Or p1 p2; r]l = [| \a ->
 			       case $parseP1 a of
 			       Just b1 -> $parseR b1
