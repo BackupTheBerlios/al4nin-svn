@@ -223,7 +223,8 @@ than function composition, the runArrowThrist function:
 
 @ID @Haskell {
 runArrowThrist :: Thrist (->) b c -> c -> b
-(TODO)
+runArrowThrist Nil b = b
+runArrowThrist (Cons f r) a = runThrist r (f a)
 }
 
 This function now confirms the vague intuition that Nil plays the rôle of
