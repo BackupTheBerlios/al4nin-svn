@@ -13,20 +13,17 @@ def @Omega { {@Sym Omega}mega }
 @ColumnNumber { 2 } 
 @InitialFont { Helvetica Base 10p } 
 @DateLine { Yes }
-@Title {
-Thrist: Dominoes of Data
-}
+@Title { Thrists: Dominoes of Data }
 @Author { Gabor Greif }
 @AbstractDisplay { Yes }
 # @AbstractFormat { @Centre @Title @DP @Body }
 @Abstract {
-
-We develop a novel list-like datastructure (which we name Thrist),
+We develop a novel list-like datastructure (which we name @I Thrist),
 that is able to capture the typing rule of function composition.
-Indeed we show that when Thrist is parameterized with the function
-type constructor (->) we can provide an interpretation function
-which completely emulates the classical function composition (.). Additionally
-we can perform pattern matching on our Thrist elements, thus
+Indeed, we show that when Thrist is parameterized with the function
+type constructor @Haskell {(->)} we can provide an interpretation function
+which completely emulates the classical function composition @Haskell {(.)}.
+Additionally we can perform pattern matching on our Thrist elements, thus
 obtaining the ability to do analysis on them. On the practical side
 we develop two new two-parameter GADTs. The first, when accompanied
 by an appropriate interpreter, directly model the semantics of the Cat language,
@@ -35,7 +32,6 @@ The Thrist approach of exposing the intermediate types where the
 elements are joined together especially shows its potential in the ability to
 stage the interpreter in a type-safe way and only allows for type correct
 transformations.
-
 }
 //
 
@@ -74,9 +70,6 @@ whatsoever:
   { Cons 42 (Cons 33 (Cons 5 Nil)) :: List In }
 }
 
-## prompt> Cons 42 (Cons 33 (Cons 5 Nil))
-##  Cons 42 (Cons 33 (Cons 5 Nil)) :: List In
-
 Departing from single-parameter datatypes we focus on two-parameter
 datatypes from now on. The most prominent member of this class of types
 is the arrow type:
@@ -105,7 +98,7 @@ Interestingly, composition (written as (.)) is again a function:
 }
 This function signature has several interpretations, but the most common one tells us that
 the composition function @Haskell {(.)} takes a function with type @Haskell {a -> b} as its first argument, then
-a function with type c -> a as its second argument, and returns a function of type @Haskell {c -> b}.
+a function with type @Haskell {c -> a} as its second argument, and returns a function of type @Haskell {c -> b}.
 Again, a, b and c can be arbitrarily specialized or be left universal.
 We can play with our new toy in the following way:
 
@@ -393,7 +386,7 @@ interpret' [Print; rest]l st = do
 }
 In similar spirit we have to rewrite the other cases too:
 
-@ID @Haskell {
+@ID @Haskell operators {Regular} {
 interpret' [Pop; rest]l st = do
 	(a, st') <- st
 	interpret' rest $ return st'
