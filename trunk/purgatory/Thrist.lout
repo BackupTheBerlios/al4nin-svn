@@ -386,7 +386,7 @@ interpret' [Print; rest]l st = do
 }
 In similar spirit we have to rewrite the other cases too:
 
-@ID @Haskell operators {Regular} {
+@ID @Haskell operators {Base} {
 interpret' [Pop; rest]l st = do
 	(a, st') <- st
 	interpret' rest $ return st'
@@ -549,46 +549,39 @@ can be interpreted or compiled and analysed in any reasonable way.
 But first let's be clear about what we aim at. We demonstrate the process of
 parsing by the example of a lexer with semantic evaluation. Our tokens
 are the various literal numerals like they occur in the C language:
-
-0xcafeBabe 0XE0UL 123456L
-
+@ID @F {0xCafeBabe 0XE0UL 123456L}
 These are the steps we wish to proceed on the second token:
 
 0) token as read from character stream:
 
-0XE0UL
+@ID @F 0XE0UL
 
-1) We match the "0X" prefix
-
-0XE0UL
+1) We match the @F "0X" prefix:
+@ID @F {{@Box 0X}E0UL}
 --
-
-2) We expect 0 or more hexadecimal characters (we come to the explanation of 0 later)
-
-0XE0UL
---++
-
+2) We expect zero or more hexadecimal characters (we come to the explanation of why zero, later)
+@ID @F {{@Box 0X}{@Box E0}UL}
 3) We fold the hex string found to a decimal integer
-
-0XE0UL
+--++
+@ID @F {{@Box 0X}{@Box {@Box E0}}UL}
 --++
   vv
 
 4) We look for optional signedness hint
+@ID @F {{@Box 0X}{@Box {@Box E0}}{@Box U}L}
 
-0XE0UL
 --++u
   vv
 
 5) We look for optional storage size hint
 
-0XE0UL
+@ID @F {{@Box 0X}{@Box {@Box E0}}{@Box U}{@Box L}}
 --++us
   vv
 
 6) we encapsulate the distilled information into a token datatype
 
-0XE0UL
+@ID @F @Box {{@Box 0X}{@Box {@Box E0}}{@Box U}{@Box L}}
 --++us
   vv
 tttttt
@@ -650,37 +643,39 @@ How can we use our combinators to describe the parsing steps 0) to 6) above?
 
 First, we use
 
-Group [Atom '0', Atom 'X']
+@Haskell operators {Base} {Group [Atom '0', Atom 'X']}
 
-to match the prefix of the string "0XE0UL" and produce ("0X", "E0UL") :: ([Char], [Char])
+to match the prefix of the string @Haskell {"0XE0UL"} and
+produce @Haskell {("0X", "E0UL") :: ([Char], [Char])}
 
 then we can discard the prefix because we know we have to do base 16 conversion later,
 we can use
 
-Sure snd
+@Haskell {Sure snd}
 
-to do this obtaining "E0UL" :: [Char]. Then
+to do this obtaining @Haskell {"E0UL" :: [Char]}. Then
 
-Rep1 $ Try hexdigit
+@Haskell operators {Base} {Rep1 $ Try hexdigit}
 
 will split off two more characters, converting them to hex values on the way, we obtain ([0, 14], "UL") :: ([Int], [Char]). We cannot
 discard either component, so we proceed in parallel with
 
-Par (CataPlus foldHex)
+@LD @Haskell operators {Base} {Par (CataPlus foldHex)
        (Wrap [Rep1 $ Atom 'U', Par (Sure id) (Rep1 $ Atom 'L')]l)
+}
 
-the first component produces 14, the second will proceed by splutting of any 'U' and then
+the first component produces 14, the second will proceed by splitting of any 'U' and then
 splitting off any L producing a triple ("U", ("L", "")).
 
-At this stage we have (14, ("U", ("L", ""))) :: (Int, ([Char], ([Char], [Char]))).
+At this stage we have @Haskell {(14, ("U", ("L", ""))) :: (Int, ([Char], ([Char], [Char])))}.
 
 Finally we feed this into
 
-Try numberToken
+@LD @Haskell {Try numberToken}
 
 that verifies the correct usage of Us and Ls, and creates a pair
 
-(Number 14 True True, "") :: (Token, [Char])
+@LD @Haskell {(Number 14 True True, "") :: (Token, [Char])}
 
 of the parsed token and the rest of the input.
 
