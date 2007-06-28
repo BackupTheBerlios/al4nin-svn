@@ -69,7 +69,7 @@ It is enough to say that @Haskell {List} does not impose any constraints on the
 contained datatype whatsoever:
 @LD {
 {Cons 42 (Cons 33 (Cons 5 Nil))} @Prompt
-  { Cons 42 (Cons 33 (Cons 5 Nil)) :: List In }
+  { Cons 42 (Cons 33 (Cons 5 Nil)) :: List Int }
 }
 
 Departing from single-parameter datatypes we focus on two-parameter
@@ -89,10 +89,11 @@ universally qualified ones:
 {id} @Prompt
   {<fn> : forall a.a -> a}
 }
-@LD {
+@RLD {
 {ord} @Prompt
   {<primfun to1> : Char -> Int}
 }
+@LP
 Now, functions are a bit more interesting than Lists above, they can be composed!
 Interestingly, composition (written as (.)) is again a function:
 @LD {
@@ -108,11 +109,12 @@ We can play with our new toy in the following way:
 @LD {
 { let locase = chr . ("\\"x -> x + 32) . ord } @Prompt
 { locase }
-
+}
+@RLD {
 {  locase 'G' } @Prompt
 {  'g' : Char }
 }
-
+@LP
 The type of the composition function constrains the types of its arguments in
 a nontrivial way: the range of the second funtion must match with the domain
 of the first. (Universal types will always match, monotypes must be equal).
@@ -148,11 +150,11 @@ that has all properties of function composition, without being amnesiac?
 Indeed we can, and the rest of this chapter shall explain how.
 @PP
 Our crucial observation from the introduction was that the types at the ends of the function
-arrows must thread up (we turn around the arrow for this demonstration), intuitively @FootNote { we
-reconcile the conflict between the function arrow's @Haskell {(->)} direction and the customary
+arrows must thread up, intuitively @FootNote { we reconcile the conflict between
+the function arrow's @Haskell {(->)} direction and the customary
 composition @Haskell {g . f} by considering a modified @I {reverse composition} }:
 
-@ID { @Haskell {a ->} @Box @Haskell {b (.) b} @Haskell {-> c} ===  @Haskell {a -> c} }
+@ID { @Haskell {a ->} @Box @Haskell {b (.) b} @Haskell {-> c} @Sym equivalence @Haskell {a -> c} }
 
 We also observe that the intermediate types do not show up in the end result's type.
 
@@ -581,7 +583,7 @@ These are the steps we wish to proceed on the second token:
   vv
 
 4) We look for optional signedness hint
-@ID @F {{@Box 0X}{@Box {@Box E0}}{@Box U}L}
+@ID @F {{@Box 0X}{@CurveBox {@Box E0}}{@Box U}L}
 
 --++u
   vv
