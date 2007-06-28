@@ -47,7 +47,7 @@ kind Arch :: *2 where
   PPC :: Arch
   ARM :: Arch
 
-kind Regnames = R0 | R1 | R2 | R3 | CR1
+kind Regnames = R0 | R1 | R2 | R3 | CR1 | LR
 
 data Reg :: Regnames ~> *0 where
   R0 :: Reg R0
@@ -55,19 +55,18 @@ data Reg :: Regnames ~> *0 where
   R2 :: Reg R2
   R3 :: Reg R3
   CR1 :: Reg CR1
+  LR :: Reg LR
 
 kind Registers :: Arch ~> *1 where
   PPCRegs :: Regnames ~> Regnames ~> Registers PPC
-
---registers :: Arch ~> PPCRegisters
---{registers a} = Regs R0 R1 R2 R3
 
 --                         v-known-infos v-live-regs
 kind CPU (a :: Arch) = Cpu (Registers a) (Row Regnames)
 
 data PowerPC :: (CPU PPC) ~> (CPU PPC) ~> *0 where
   B :: PowerPC a b
-  ADD :: Nat' r1 -> Nat' r2 -> Reg r3 -> PowerPC (Cpu rs live) (Cpu rs' (RCons r3 live))
+  ADD :: Reg r1 -> Reg r2 -> Reg r3 -> PowerPC (Cpu rs (RCons r2 (RCons r1 live))) (Cpu rs' (RCons r3 (RCons r2 (RCons r1 live))))
+  RET :: PowerPC (Cpu rs (RCons LR live)) (Cpu rs (RCons LR live))
 
 
 
