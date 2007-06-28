@@ -61,26 +61,29 @@ data List :: * ~> * where
   Cons :: a -> List a -> List a
 }
 @PP
-We deliberately avoid the traditional syntax of defining the List datatype,
-and use a GADT-style definition, because we want to build on this fundament later.
-It is enough to say that List does not impose any constraints on the contained datatype
-whatsoever:
+We deliberately avoid the traditional syntax of defining the @Haskell {List} datatype,
+and use a @I {GADT-style} definition{@FootNote {in a @I {generalized algebraic datatype}
+the data constructor is allowed to define a more specific type than the datatype itself }},
+because we want to build on this fundament later.
+It is enough to say that @Haskell {List} does not impose any constraints on the
+contained datatype whatsoever:
 @LD {
 {Cons 42 (Cons 33 (Cons 5 Nil))} @Prompt
   { Cons 42 (Cons 33 (Cons 5 Nil)) :: List In }
 }
 
 Departing from single-parameter datatypes we focus on two-parameter
-datatypes from now on. The most prominent member of this class of types
-is the arrow type:
+datatypes from now on. These are more interesting for our purposes,
+because the two parameters can be put in relation to each other.
+The most prominent member of this class of types is the arrow type:
 
 @LD {
 { :k (->) } @Prompt
   { (->) :: *0 ~> *0 ~> *0 }
 }
 
-Fully saturated, a -> b signifies the type of all functions that take elements of a to
-elements of b. Again, a and b can be any type, concrete ones will do just like
+Fully saturated, @Haskell {a -> b} signifies the type of all functions that take elements of @Haskell {a} to
+elements of @Haskell {b}. Again, @Haskell {a} and @Haskell {b} can be any type, concrete ones will do just like
 universally qualified ones:
 @LD {
 {id} @Prompt
@@ -112,7 +115,7 @@ We can play with our new toy in the following way:
 
 The type of the composition function constrains the types of its arguments in
 a nontrivial way: the range of the second funtion must match with the domain
-of the first. (universal types will always match, monotypes must be equal).
+of the first. (Universal types will always match, monotypes must be equal).
 Violating this rule gives a type error:
 
 @LD {
@@ -141,14 +144,15 @@ There is no way (inside our system) to take them apart again. This is very much
 resembling the addition, where @Haskell { (23 + 19) } gives @Haskell {42} and this result has completely
 lost all memories of the fact how it was obtained. But can we create a datastructure
 that has all properties of function composition, without being amnesiac?
-
+@PP
 Indeed we can, and the rest of this chapter shall explain how.
-
+@PP
 Our crucial observation from the introduction was that the types at the ends of the function
-arrows must thread up (we turn around the arrow for this demonstration), intuitively:
+arrows must thread up (we turn around the arrow for this demonstration), intuitively @FootNote { we
+reconcile the conflict between the function arrow's @Haskell {(->)} direction and the customary
+composition @Haskell {g . f} by considering a modified @I {reverse composition} }:
 
-"b <- a (.) a <- c  ===  b <- c"
-"        ^^^^^"
+@ID { @Haskell {a ->} @Box @Haskell {b (.) b} @Haskell {-> c} ===  @Haskell {a -> c} }
 
 We also observe that the intermediate types do not show up in the end result's type.
 
@@ -157,31 +161,35 @@ Let's simulate these rules as a datatype:
 @ID @Haskell {
 data Thrist :: * ~> * ~> * where
   Nil :: Thrist a a
-  Cons :: (b, a) -> Thrist a c -> Thrist b c
+  Cons :: (a, b) -> Thrist b c -> Thrist a c
 }
-[here we have a proper GADT]
 
-We can now duplicate the "feeling" of function composition:
+The alert reader will have noticed that we have defined a proper GADT,
+since the @Haskell {Nil} constructor is only inhabiting the @I diagonal
+of the @I {two-dimensional} parameter space.
+@PP
+We can now duplicate the @I feeling of function composition:
 
-@Haskell { Cons ('g', 103) (Cons (103, 71) (Cons (71, 'G') Nil)) }
+@Haskell operators {Base} { Cons ('g', 103) $ Cons (103, 71) $ Cons (71, 'G') Nil }
 
 Also we have obtained a datatype that is not amnesiac, i.e. it can be
 torn apart at any place by pattern matching, though we have to pay
-the price that the intermediate types are a bit hard to deal with (we revisit this issue later).
+the price that the intermediate types are a bit hard to deal with
+(we shall revisit this issue later).
 @PP
 It appears that we have reached our goal, we can form list-like data where the intermediate
-types thread up, we are happy and name our new toy Thrist, a pormanteau of thread and list.
+types thread up, we are happy and name our new toy @I Thrist, a portmanteau of thread and list.
 @PP
-Our joy quickly fades away when we compare our thrist with our composition function.
-How can data of type Thrist a b be interpreted as an arrow type a <- b ?
-If we fail to provide this embedding, we cannot consider Thrists being a generalisation of
+Our joy, however, quickly fades away when we compare our thrist with the composition function.
+How can some data of type @Haskell {Thrist a b} be interpreted as an arrow type @Haskell {a -> b}?
+If we fail to provide this embedding, we cannot consider thrists being a generalisation of
 function composition.
-
-Not everything is lost, however. Close scrutiny reveals that our usage of (,), pronounced "pair"
-is the culprit. If we could liberate ourselves from this premature decision, we could gain back
-our hope.
+@PP
+Not everything is lost, however. Close scrutiny reveals that our usage of
+@Haskell {(,)}{@FootNote { pronounced "\"pair\""}},
+is the culprit. If we could liberate ourselves from this
+premature decision, we could gain back our hope.
 @End @SubSection
-
 
 @SubSection
 @Title { The Improved Thrist }
@@ -192,27 +200,29 @@ We try all over again, this time abstracting away the pair into an additional pa
 @ID @Haskell {
 data Thrist :: (* ~> * ~> *) ~> * ~> * ~> * where
   Nil :: Thrist p a a
-  Cons :: p b a -> Thrist p a c -> Thrist p b c
+  Cons :: p a b -> Thrist p b c -> Thrist p a c
 }
-All that remains of the pair is the bitter taste and the letter "p" in the definition of Thrist.
+All that remains of the pair is the bitter aftertaste
+and the letter @Haskell {p} in the definition of @Haskell {Thrist}.
+@PP
 It looks like we are getting closer now:
 @LD {
 { Cons chr (Cons ("\\"x -> x + 32) (Cons ord Nil)) } @Prompt
 { ... : Thrist (->) Char Char }
 }
-We have created an arrow thrist!
+We have created an @I {arrow thrist}!
 
-Immediately we can think of our previous attempt:
+Immediately we can retry our previous attempt:
 @LD {
 { Cons ('g', 103) (Cons (103, 71) (Cons (71, 'G') Nil)) } @Prompt
 {  ... : Thrist (,) Char Char }
 }
-The pair thrist that caused us some headache before!
-
+The @I {pair thrist} that caused us some headache before!
+@PP
 We shall explore some other interesting but sometimes futile
 thrists later in the discussion. But now let's put the last missing
 piece in place to show that an arrow thrist is strictly more general
-than function composition, the runArrowThrist function:
+than function composition, the @Haskell {runArrowThrist} function:
 
 @ID @Haskell {
 runArrowThrist :: Thrist (->) b c -> c -> b
@@ -220,13 +230,14 @@ runArrowThrist Nil b = b
 runArrowThrist (Cons f r) a = runThrist r (f a)
 }
 
-This function now confirms the vague intuition that Nil plays the rôle of
+This function now confirms the vague intuition that @Haskell {Nil} plays the rôle of
 the neutral element of the arrow thrist, just like the identity function
-plays the rôle of the neutal element in the monoid of composed functions.
-
+plays the rôle of the neutral element in the monoid of composed functions.
+@LP
+@Considerations {
 [Question: is every thrist a monoid? "http://en.wikipedia.org/wiki/Monoid"]
 [close with dominoes: "http://en.wikipedia.org/wiki/Dominoes"]
-
+}
 
 @End @SubSection
 
@@ -235,7 +246,7 @@ plays the rôle of the neutal element in the monoid of composed functions.
 @End @Section
 
 @Section
-@Title { Three practical Thrists }
+@Title { Three Practical Thrists }
 @Begin
 @PP
 
@@ -251,7 +262,7 @@ that may have some practical value.
 @BeginSubSections
 
 @SubSection
-@Title { Application One: the Cat Thrist }
+@Title { Application one: the Cat Thrist }
 @Begin
 @PP
 Like all stack-oriented languages Cat employs a simple idiom of
@@ -318,9 +329,9 @@ We shall write the above expression as
 { [Push 19, Push 23, Add, Pop]l :: Thrist Cat a a }
 }
 @Omega's parser and printer perform the conversion to
-the internal form when the list-like brackets [] followed
-by a l letter are encountered.
-
+the internal form when the list-like brackets @Haskell {[]} followed
+by the letter "\"l\"" are encountered.
+@PP
 We can now continue using this terser syntax:
 
 @LD {
@@ -351,20 +362,22 @@ Chars available instead.
 @PP
 Now it is time to build an interpreter for Thrist Cat, and
 thus define its big-step semantics:
-
+@ID @Haskell {
 interpret' :: Thrist Cat a b -> a -> b
 interpret' []l st = st
 interpret' [Push x; rest]l st = interpret' rest (x, st)
 interpret' [Pop; rest]l (a, st) = interpret' rest st
 interpret' [Dup; rest]l (a, st) = interpret' rest (a, a, st)
 interpret' [Add; rest]l (a, b, st) = interpret' rest (a + b, st)
-
+}
 It works:
 
-prompt> interpret' [Push 19, Push 23, Add]l ()
-  (42, ()) :: (Int, ())
+@LD {
+{ interpret' [Push 19, Push 23, Add]l () } @Prompt
+{ (42, ()) :: (Int, ()) }
+}
 
-With this basic functionality in place we get bolder and define
+With this basic functionality in place, we get bolder and define
 a primitive with side effect:
 
 @ID @Haskell {
@@ -373,8 +386,8 @@ data Cat :: * ~> * ~> * where
   ...
 }
 
-To interpret this primitive we have to restructure
-our interpret' function to wrap the stack into the IO monad:
+To interpret the @Haskell {Print} primitive we have to restructure
+our @Haskell {interpret'} function to wrap the stack into the @Haskell {IO} monad:
 
 @ID @Haskell {
 interpret' :: Thrist Cat a b -> IO a -> IO b
@@ -418,7 +431,7 @@ It is a reasonable restriction to Cat programs that they can
 be started with any stack shape and they finish with the same
 stack unchanged. We can ensure this property by writing
 a top-level interpreter function for Cat programs using
-rank-2 polymorphism:
+@I {rank-2 polymorphism}:
 
 @ID @Haskell {
 interpret :: (forall a . Thrist Cat a a) -> IO ()
@@ -636,7 +649,7 @@ So we expect that our parser that produces Tokens to have a type Thrist Parse [C
 @End @SubSubSection
 
 @SubSubSection
-@Title {  }
+@Title { Using the Combinators }
 @Begin
 @PP
 How can we use our combinators to describe the parsing steps 0) to 6) above?
