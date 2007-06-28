@@ -25,10 +25,10 @@
 import "LangPrelude.prg"
   (head,tail,lookup,member,fst,snd,map,Monad,maybeM,id,ioM,Row,HasType,RCons,RNil,Eq,Equal,(==))
 
-{-
+
 import "Thrist.omg"
   (Thrist, l, Nil, Cons)
--}
+
 
 kind TypeClass :: *2 where
   FstClass :: TypeClass
@@ -47,23 +47,29 @@ kind Type :: TypeClass ~> Returnability ~> *1 where
  LFunction :: Type FstClass Returnable ~> Type b Returnable ~> Type SndClass Nonreturnable
  LVector :: Nat ~> Type FstClass Returnable ~> Type FstClass Returnable
 
-kind HasLType :: *1 where
-  HasL :: Tag ~> Type FstClass Returnable ~> HasLType
+--kind HasLType :: *1 where
+--  HasL :: Tag ~> Type FstClass Returnable ~> HasLType
 
 --i1 :: a ~> Type FstClass Returnable
--- {i1 g} = LInt #1
+-- {i1 g} = LInt 1t
 
 kind BB = Entry | Normal
 
 kind ComesFrom :: *1 where
-  From :: Row HasLType ~> ComesFrom
+  From :: Row Tag (Type FstClass Returnable) ~> ComesFrom
 
-data Departures :: forall (c :: TypeClass) . Type FstClass Returnable ~> Type c Returnable ~> Row ComesFrom ~> * where
-  Nowhere :: Departures prodV t RNil
-  Comes :: (Value prod, BasicBlock t n' def) -> Departures prod t alts -> Departures prod t (RCons (From def) alts)
+data Prod:: *1 ~> *1 where
+  PNil:: Prod a
+  PCons:: k ~> Prod k ~> Prod k
+ deriving List(sh)
+
+
+data Departures :: forall (c :: TypeClass) . Type FstClass Returnable ~> Type c Returnable ~> Prod ComesFrom ~> * where
+  Nowhere :: Departures prodV t PNil
+  Comes :: (Value prod, BasicBlock t n' def) -> Departures prod t alts -> Departures prod t (PCons (From def) alts)
  deriving List(d)
 
-data Instr :: forall (c :: TypeClass) . Type c Returnable ~> BB ~> Row HasLType ~> * where
+data Instr :: forall (c :: TypeClass) . Type c Returnable ~> BB ~> Row Tag (Type FstClass Returnable) ~> * where
   -- Terminators
   Unwind :: Instr t n RNil
   Branch :: BasicBlock t Normal otherdefs -> Instr t n RNil
@@ -71,17 +77,17 @@ data Instr :: forall (c :: TypeClass) . Type c Returnable ~> BB ~> Row HasLType 
   Switch :: Value (LInt bits) -> BasicBlock t Normal d1 -> [(Value a, BasicBlock t Normal d2)] -> Instr t n RNil
   Unreachable :: Instr t n RNil
   -- Value generators
-  Add :: Label l -> Value (LInt bits) -> Value (LInt bits) -> Instr t n defs -> Instr t n (RCons (HasL l (LInt bits)) defs)
-  Phi :: Label l -> Departures a t deps -> Instr t n defs -> Instr t Normal (RCons (HasL l a) defs)
+  Add :: Label l -> Value (LInt bits) -> Value (LInt bits) -> Instr t n defs -> Instr t n (RCons l (LInt bits) defs)
+  Phi :: Label l -> Departures a t deps -> Instr t n defs -> Instr t Normal (RCons l a defs)
 
 
-data BasicBlock :: forall (c :: TypeClass) . Type c Returnable ~> BB ~> Row HasLType ~> * where
+data BasicBlock :: forall (c :: TypeClass) . Type c Returnable ~> BB ~> Row Tag (Type FstClass Returnable) ~> * where
   BB :: Label bl -> Instr t n defs -> BasicBlock t n defs
 
 data Value :: forall (c :: TypeClass) . Type c Returnable ~> * where
   Nada :: Value LVoid
-  LitI :: Int -> Value (LInt #32)
-  LitB :: Bool -> Value (LInt #1)
+  LitI :: Int -> Value (LInt 32v)
+  LitB :: Bool -> Value (LInt 1v)
   Ref :: Label l -> Value t
   Undef :: Value t
   P :: Value t -> Value (LPointer t)
@@ -114,20 +120,20 @@ showRef :: Label l -> String
 showRef l = '%':tail (show l)
 
 showDepartures :: Departures it ft r -> String
-showDepartures #[(v, BB l _)]d = "[ " ++ showValue v ++ ", " ++ showRef l ++ " ]"
+showDepartures [(v, BB l _)]d = "[ " ++ showValue v ++ ", " ++ showRef l ++ " ]"
 showDepartures (Comes (v, BB l _) deps) = "[ " ++ showValue v ++ ", " ++ showRef l ++ " ], " ++ showDepartures deps
 
 -- ###### TESTS #####
 
-t0 = BB `t1 (Phi `tl11 #[(lTrue, BB `other1 (Phi `tl12 #[(Ref `uff, BB `other2 (Branch (BB `other4 Unwind)))]d Unreachable))]d Unreachable)
-t1 = BB `t1 (Phi `tl11 #[(lTrue, BB `other1 (Phi `tl12 #[(Ref `uff, t1), (Ref `buff, t0)]d Unreachable))]d Unreachable)
+t0 = BB `t1 (Phi `tl11 [(lTrue, BB `other1 (Phi `tl12 [(Ref `uff, BB `other2 (Branch (BB `other4 Unwind)))]d Unreachable))]d Unreachable)
+t1 = BB `t1 (Phi `tl11 [(lTrue, BB `other1 (Phi `tl12 [(Ref `uff, t1), (Ref `buff, t0)]d Unreachable))]d Unreachable)
 t2 = BB `t1 (Branch (BB `other1 (Add `ret (LitI 42) (Ref `in) (Return (Ref `ret)))))
 t3 = BB `t3 (Branch t2)
 t4 = BB `t4 (Switch (Ref `ggg) t2 [(LitB True, t3)])
 t5 = BB `t5 (Return Nada)
 
 ##test "Phis must be of first class type"
-  p1 = Phi `tl12 #[(Nada, BB `other2 (Branch (BB `other4 Unwind)))]d Unreachable
+  p1 = Phi `tl12 [(Nada, BB `other2 (Branch (BB `other4 Unwind)))]d Unreachable
 
 lTrue = LitB True
 lF = LitB False
@@ -143,20 +149,20 @@ f5 = Function (LitI 42) t5
 
 -- Function for computing live inputs (Label, LType) sequence to a BB --
 
-intersectRows :: Row t ~> Row t ~> Row t
+intersectRows :: Row t u ~> Row t u ~> Row t u
 { intersectRows RNil rhs } = RNil
-{ intersectRows (RCons a rest) rhs }
-  = { appendRows { findInRow a rhs }
+{ intersectRows (RCons a b rest) rhs }
+  = { appendRows { findInRow a b rhs }
                       { intersectRows rest rhs } }
 
-findInRow :: t ~> Row t ~> Row t
-{ findInRow a (RCons a rest) } = RCons a { findInRow a rest }
-{ findInRow a (RCons a' rest) } = { findInRow a rest }
-{ findInRow a RNil } = RNil
+findInRow :: t ~> u ~> Row t u ~> Row t u
+{ findInRow a b (RCons a b rest) } = RCons a b { findInRow a b rest }
+{ findInRow a b (RCons a' b' rest) } = { findInRow a b rest }
+{ findInRow a b RNil } = RNil
 
-appendRows :: Row t ~> Row t ~> Row t
+appendRows :: Row t u ~> Row t u ~> Row t u
 { appendRows RNil rhs } = rhs
-{ appendRows (RCons head rest) rhs } = RCons head { appendRows rest rhs }
+{ appendRows (RCons head head' rest) rhs } = RCons head head' { appendRows rest rhs }
 
 
 prefix :: Nat ~> Nat ~> Nat
@@ -164,13 +170,13 @@ prefix :: Nat ~> Nat ~> Nat
 { prefix (S a) (S b) } = S {prefix a b}
 
 
-data Wum :: Row HasLType  ~> * where
+data Wum :: Row Tag (Type FstClass Returnable) ~> * where
  Wum :: Wum RNil
- Wum2 :: Wum (RCons (HasL `hh LFloat) RNil)
+ Wum2 :: Wum (RCons `hh LFloat RNil)
 
 --a :: Wum { intersectRows (RCons (HasL `hh LFloat) RNil) (RCons (HasL `hh LFloat) RNil) }
 --a :: Wum { intersectRows (RCons (HasL `hh LFloat) RNil) (RCons (HasL `gg LFloat) (RCons (HasL `hh LFloat) RNil)) }
-a :: Wum { intersectRows (RCons (HasL `gg LFloat) (RCons (HasL `hh LFloat) RNil)) (RCons (HasL `hh LFloat) RNil) }
+a :: Wum { intersectRows (RCons `gg LFloat (RCons `hh LFloat RNil)) (RCons `hh LFloat RNil) }
 --a :: Wum { intersectRows (RCons (HasL `hh LFloat) RNil) RNil }
 a = Wum2
 
@@ -180,12 +186,12 @@ a = Wum2
 
 
 {-
-isPermutation :: Row t ~> Row t ~> Prop
+isPermutation :: Row t u ~> Row t u ~> Prop
 { isPermutation r1 r2 } = (==) r1 { intersectRows r1 r2 }
 -}
 
 
--- experimenting with Lisead
+-- experimenting with Thrist
 
 kind Uses = Indifferent | Use Tag Uses
 
@@ -201,7 +207,7 @@ data Ins :: Uses ~> Uses ~> *0 where
 
 {- Example transcript
 prompt> Cons (Ret (Re `a)) Nil
- #[(Ret (Re `a))]l : forall (a:Uses).Lisead Ins a (Use `a a)
+ [(Ret (Re `a))]l : forall (a:Uses).Lisead Ins a (Use `a a)
 prompt> Cons (Ret (Re `a)) (Cons (Ret (Re `b)) Nil)
- #[(Ret (Re `a)),(Ret (Re `b))]l : forall (a:Uses).Lisead Ins a (Use `b (Use `a a))
+ [(Ret (Re `a)),(Ret (Re `b))]l : forall (a:Uses).Lisead Ins a (Use `b (Use `a a))
 -}
