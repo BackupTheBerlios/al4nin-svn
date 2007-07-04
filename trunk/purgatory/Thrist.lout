@@ -232,15 +232,15 @@ runArrowThrist Nil b = b
 runArrowThrist (Cons f r) a = runThrist r (f a)
 }
 
-This function now confirms the vague intuition that @Haskell {Nil} plays the r{@Sym ocircum}le of
+This function now confirms the vague intuition that @Haskell {Nil} plays the r{@Char ocircumflex}le of
 the neutral element of the arrow thrist, just like the identity function
-plays the r{@Sym ocircum}le of the neutral element in the monoid of composed functions.
+plays the r{@Char ocircumflex}le of the neutral element in the monoid of composed functions.
 We shall encounter this recurring fact as we proceed to our implementations.
 @LP The definition of @Haskell { runArrowThrist } on a @Haskell { Cons } constructor
 deserves some attention. We have not yet explicitly mentioned it, but range of
 the function @Haskell { f } is existentially qualified, because it does not
 appear in the final result of @Haskell { Cons }. This implies a minor complication
-when pattern matching: the {@I head} component{@FootNote or for symmetry reasons the {@I tail} too }
+when pattern matching: the {@I head} component{@FootNote {or for symmetry reasons the {@I tail} too} }
 of a @Haskell { Cons } cannot be
 passed to non-local functions, because the existential type would escape.
 @PP
