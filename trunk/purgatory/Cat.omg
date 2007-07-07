@@ -55,10 +55,10 @@ data Prod:: *1 ~> *1 where
 
 blow :: Nat ~> Prod *0 ~> Prod *0
 {blow Z s} = s
-{blow (S n) s} = PCons t {blow n s}
+{blow (S n) s} = [t; {blow n s}]sh
 
 blowLike :: Nat ~> *0 ~> Prod *0 ~> Prod *0
-{blowLike (S arty) (c -> d) s} = PCons c {blowLike arty d s}
+{blowLike (S arty) (c -> d) s} = [c; {blowLike arty d s}]sh
 {blowLike Z a s} = s
 
 range :: Nat ~> *0 ~> *0
@@ -101,25 +101,26 @@ data Primitive
 
 
 data Cat :: (Prod *0) ~> (Prod *0) ~> *0 where
-  Push :: Tractable a -> a -> Cat s (PCons a s)
-  Prim :: Tractable c -> Primitive -> (a -> c) -> Cat (PCons a {blowLike {countArr c} c s}) (PCons {range {countArr c} c} s)
-  Dup :: Cat (PCons t s) (PCons t (PCons t s))
+  Push :: Tractable a -> a -> Cat s [a; s]sh
+  Prim :: Tractable c -> Primitive -> (a -> c) -> Cat [a; {blowLike {countArr c} c s}]sh [{range {countArr c} c}; s]sh
+  Dup :: Cat [t; s]sh [t, t; s]sh
 --  Dig :: Pick Prod Nat -> Cat (PCons t s) (PCons t (PCons t s))
-  Print :: Cat (PCons t s) s
+  Print :: Cat [t; s]sh s
   PopN :: Nat' (S n) -> Cat {blow (S n) s} s
-  Swap :: Cat (PCons a (PCons b s)) (PCons b (PCons a s))
+  Swap :: Cat [a, b; s]sh [b, a; s]sh
 -- Perm :: Pick Prod Nat -- TODO
-  Block :: Thrist Cat b c -> Cat a (PCons (Cat b c) a)
+  Block :: Thrist Cat b c -> Cat a [Cat b c; a]sh
   Quote :: Thrist Cat a b -> Cat a b
-  Apply :: Cat (PCons (Cat a b) a) b
+  Apply :: Cat [Cat a b; a]sh b
   If :: Thrist Cat s t ->
         Thrist Cat s t ->
-        Cat (PCons Bool s) t
+        Cat [Bool; s]sh t
+  If2 :: Cat [Thrist Cat s t, Thrist Cat s t, Bool; s]sh t
 
 
 data ShapeTractable :: (Prod *0) ~> * where
   Opaque :: ShapeTractable a
-  Ontop :: Tractable b -> ShapeTractable a -> ShapeTractable (PCons b a)
+  Ontop :: Tractable b -> ShapeTractable a -> ShapeTractable [b; a]sh
  deriving List(st)
   
 tc0 = (let a = Opaque in (CatTractable a (Ontop IntTractable a))) :: Tractable (Cat a (PCons Int a))
@@ -161,7 +162,7 @@ cat' [If yes no; r]l = "If " ++ show yes ++ " ELSE " ++ show no ++ "\n" ++ cat' 
 
 data Stack :: Prod *0 ~> *0 where
   Empty :: Stack PNil
-  Pu :: a -> Stack s -> Stack (PCons a s)
+  Pu :: a -> Stack s -> Stack [a; s]sh
  deriving List(s)
 
 {-
@@ -259,6 +260,7 @@ te9 = interpretCat [pushI 42, Block [Print]l, Apply]l
 
 optimizeCat :: Thrist Cat a b -> Thrist Cat a b
 optimizeCat (i@Cons (If yes no) r) = optimizeIf i yes no r
+optimizeCat [Push rep1 yes, Push rep2 no, If2; r]l = optimizeIf [If yes no; r]l yes no r
 optimizeCat [p@Push rep a; r]l = [p; optimizeCat r]l
 optimizeCat [p@Swap; r]l = [p; optimizeCat r]l
 optimizeCat []l = []l
@@ -276,7 +278,7 @@ splitOff (Cons (s@Swap) r1) (Cons Swap r2) =  Ex (Just (s, r1, r2))
 
 
 
-optimizeIf :: Thrist Cat (PCons Bool a) b -> Thrist Cat a c -> Thrist Cat a c -> Thrist Cat c b -> Thrist Cat (PCons Bool a) b
+optimizeIf :: Thrist Cat [Bool; a]sh b -> Thrist Cat a c -> Thrist Cat a c -> Thrist Cat c b -> Thrist Cat [Bool; a]sh b
 
 optimizeIf all (Cons (Push rep1 a1) t1) (Cons (Push rep2 a2) t2) rest = case sameTractable rep1 rep2 of
                                                                           Just Eq -> if sameValue rep1 a1 a2 then optimizeCat $ Cons (Push rep1 a1) (Cons Swap (Cons (If t1 t2) rest)) else all
