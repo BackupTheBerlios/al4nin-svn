@@ -298,21 +298,28 @@ optimizeIf all _ _ _ = all
 data RevThrist :: forall (l :: *1) . (l ~> l ~> *)  ~> l ~> l ~> * where
   RevNil :: RevThrist k a a
   RevCons :: RevThrist k c b -> k b a -> RevThrist k c a
--- deriving List(rl)
 
 revThrist :: RevThrist Cat a b -> Thrist Cat b c -> RevThrist Cat a c
 revThrist acc []l = acc
---revThrist acc [a]l = RevCons acc a
 revThrist acc [a; b]l = revThrist (RevCons acc a) b
 
+revThrist' :: Thrist Cat a c -> RevThrist Cat a c
+revThrist' thr = revThrist RevNil thr
 
-tailMerge :: Thrist Cat [Bool; a]sh b -> (Thrist Cat a m, Thrist Cat m c)  -> (Thrist Cat a m, Thrist Cat m c) -> Thrist Cat c b -> Thrist Cat [Bool; a]sh b
-tailMerge all (_, []l) (_, [_]l) r = all
-tailMerge all (_, [_]l) (_, []l) r = all
+tailMerge :: Thrist Cat [Bool; a]sh b -> RevThrist Cat a c  -> RevThrist Cat a c -> Thrist Cat c b -> Thrist Cat [Bool; a]sh b
+---tailMerge all RevNil RevNil r = r
+--tailMerge all (_, [_]l) (_, []l) r = all
 
-tailMerge _ (yes, [Dup]l) (no, [Dup]l) r = [If yes no, Dup; r]l
+--tailMerge _ (yes, [Dup]l) (no, [Dup]l) r = [If yes no, Dup; r]l
 
-tm0 = tailMerge [If [Dup]l [Dup]l, Print]l ([]l, [Dup]l) ([]l, [Dup]l) [Print]l
+tailMerge _ RevNil RevNil r = [pop; r]l
+-----tailMerge _ prefix1 RevNil r = [If (forwThrist prefix1) []l, r]l
+-----tailMerge _ RevNil prefix2 r = [If []l $ forwThrist prefix2, r]l
+tailMerge all (RevCons prefix1 Dup) (RevCons prefix2 Dup) r = tailMerge all prefix1 prefix2 [Dup; r]l
+
+tailMerge all _ _ _ = all
+
+tm0 = tailMerge [If [Dup]l [Dup]l, Print]l (revThrist' [Dup]l) (revThrist' [Dup]l) [Print]l
 
 to0 = optimizeCat [If [pushI 42]l [pushI 42]l, Print]l
 to1 = optimizeCat [If [pushI 42]l [pushI 43]l, Print]l
