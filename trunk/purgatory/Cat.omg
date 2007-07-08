@@ -271,18 +271,21 @@ sameTractable IntTractable IntTractable = Just Eq
 sameValue :: Tractable a -> a -> a -> Bool
 sameValue IntTractable a b = a == b
 
+{-
 splitOff :: Thrist Cat a c -> Thrist Cat a c -> exists b . Maybe (Cat a b, Thrist Cat b c, Thrist Cat b c)
 splitOff (Cons (p1@Push rep1 a1) r1) (Cons (Push rep2 a2) r2) = case sameTractable rep1 rep2 of
 								Just Eq -> Ex (Just (p1, r1, r2))
 splitOff (Cons (s@Swap) r1) (Cons Swap r2) =  Ex (Just (s, r1, r2))
-
+-}
 
 
 optimizeIf :: Thrist Cat [Bool; a]sh b -> Thrist Cat a c -> Thrist Cat a c -> Thrist Cat c b -> Thrist Cat [Bool; a]sh b
 
-optimizeIf all (Cons (Push rep1 a1) t1) (Cons (Push rep2 a2) t2) rest = case sameTractable rep1 rep2 of
-                                                                          Just Eq -> if sameValue rep1 a1 a2 then optimizeCat $ Cons (Push rep1 a1) (Cons Swap (Cons (If t1 t2) rest)) else all
-                                                                          _ -> all
+optimizeIf all [Push rep1 a1; t1]l [Push rep2 a2; t2]l rest = case sameTractable rep1 rep2 of
+                                                              Just Eq -> if sameValue rep1 a1 a2
+                                                                         then optimizeCat $ [Push rep1 a1, Swap, If t1 t2; rest]l
+                                                                         else all
+                                                              _ -> all
 ----optimizeIf all a b rest = case splitOff a b of
 ----                            Just (Ex (p, t1, t2)) -> 
 
@@ -313,11 +316,19 @@ forwThrist (RevCons prefix a) acc = forwThrist prefix [a; acc]l
 forwThrist' :: RevThrist Cat a c -> Thrist Cat a c
 forwThrist' rthr = forwThrist rthr []l
 
+two2one :: RevThrist Cat a b -> RevThrist Cat a b -> Thrist Cat b c -> Thrist Cat a c
+--two2one (RevCons prefix1 (i@Print)) (RevCons prefix2 (j@Print)) thr = check [Push BoolTractable True, If (forwThrist' prefix1) (forwThrist' prefix2), i; thr]l
+--two2one (RevCons prefix1 (i@Print)) (RevCons prefix2 Print) thr = [Block (forwThrist' prefix2), Apply, i; thr]l
+
 
 tailMerge :: Bool -> Thrist Cat [Bool; a]sh b -> RevThrist Cat a c  -> RevThrist Cat a c -> Thrist Cat c b -> Thrist Cat [Bool; a]sh b
 
 tailMerge _ _ RevNil RevNil r = [pop; r]l
 tailMerge _ all (RevCons prefix1 Dup) (RevCons prefix2 Dup) r = tailMerge True all prefix1 prefix2 [Dup; r]l
+tailMerge _ all (RevCons prefix1 Swap) (RevCons prefix2 Swap) r = tailMerge True all prefix1 prefix2 [Swap; r]l
+-- the below two transformations are not type safe (consider if [push True, print] [push 42, print])
+--tailMerge _ all (RevCons prefix1 (i@Print)) (RevCons prefix2 Print) r = tailMerge True all prefix1 prefix2 [i; r]l
+--tailMerge _ all (RevCons prefix1 (i@PopN _)) (RevCons prefix2 (PopN _)) r = tailMerge True all prefix1 prefix2 [i; r]l
 tailMerge True _ prefix1 prefix2 r = [If (forwThrist' prefix1) (forwThrist' prefix2); r]l
 tailMerge _ all _ _ _ = all
 
