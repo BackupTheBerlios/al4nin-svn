@@ -122,7 +122,7 @@ data ShapeTractable :: (Prod *0) ~> * where
   Opaque :: ShapeTractable a
   Ontop :: Tractable b -> ShapeTractable a -> ShapeTractable [b; a]sh
  deriving List(st)
-  
+
 tc0 = (let a = Opaque in (CatTractable a (Ontop IntTractable a))) :: Tractable (Cat a (PCons Int a))
 tc1 = [Push tc0 (Push IntTractable 42)]l
 tc2 = [Push tc0 (Push IntTractable 42), Apply]l
