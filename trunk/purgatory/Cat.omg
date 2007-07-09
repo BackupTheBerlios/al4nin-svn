@@ -316,25 +316,25 @@ forwThrist (RevCons prefix a) acc = forwThrist prefix [a; acc]l
 forwThrist' :: RevThrist Cat a c -> Thrist Cat a c
 forwThrist' rthr = forwThrist rthr []l
 
-two2one :: RevThrist Cat a b -> RevThrist Cat a b -> Thrist Cat b c -> Thrist Cat a c
---two2one (RevCons prefix1 (i@Print)) (RevCons prefix2 (j@Print)) thr = check [Push BoolTractable True, If (forwThrist' prefix1) (forwThrist' prefix2), i; thr]l
---two2one (RevCons prefix1 (i@Print)) (RevCons prefix2 Print) thr = [Block (forwThrist' prefix2), Apply, i; thr]l
-
-
 tailMerge :: Bool -> Thrist Cat [Bool; a]sh b -> RevThrist Cat a c  -> RevThrist Cat a c -> Thrist Cat c b -> Thrist Cat [Bool; a]sh b
 
 tailMerge _ _ RevNil RevNil r = [pop; r]l
 tailMerge _ all (RevCons prefix1 Dup) (RevCons prefix2 Dup) r = tailMerge True all prefix1 prefix2 [Dup; r]l
 tailMerge _ all (RevCons prefix1 Swap) (RevCons prefix2 Swap) r = tailMerge True all prefix1 prefix2 [Swap; r]l
+
 -- the below two transformations are not type safe (consider if [push True, print] [push 42, print])
 --tailMerge _ all (RevCons prefix1 (i@Print)) (RevCons prefix2 Print) r = tailMerge True all prefix1 prefix2 [i; r]l
 --tailMerge _ all (RevCons prefix1 (i@PopN _)) (RevCons prefix2 (PopN _)) r = tailMerge True all prefix1 prefix2 [i; r]l
+-- we could do this by abstractly interpreting prefixN and finding the tractable that is on the
+-- stack when Print hits. If same, we can safely factor out the Print.
+
 tailMerge True _ prefix1 prefix2 r = [If (forwThrist' prefix1) (forwThrist' prefix2); r]l
 tailMerge _ all _ _ _ = all
 
 tm0 = tailMerge False [If [Dup]l [Dup]l, Print]l (revThrist' [Dup]l) (revThrist' [Dup]l) [Print]l
 tm1 = tailMerge False [If [Dup, Print, Dup]l [Dup]l, Print]l (revThrist' [Dup, Print, Dup]l) (revThrist' [Dup]l) [Print]l
 tm2 = tailMerge False [If [Dup, Dup, Print]l [Dup]l, Print]l (revThrist' [Dup, Dup, Print]l) (revThrist' [Dup]l) [Print]l
+tm3 = tailMerge False [If [Dup, Print, Dup, Swap]l [Dup]l, Print]l (revThrist' [Dup, Print, Dup, Swap]l) (revThrist' [Dup, Swap]l) [Print]l
 
 to0 = optimizeCat [If [pushI 42]l [pushI 42]l, Print]l
 to1 = optimizeCat [If [pushI 42]l [pushI 43]l, Print]l
