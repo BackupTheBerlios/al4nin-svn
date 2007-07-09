@@ -460,11 +460,122 @@ Obviously this @Haskell {interpret} function is only called for side-effects.
 @Title { Extending the Primitives }
 @Begin
 @PP
-TODO:
 
-frobbing functions from @Omega for use as primitives
+Above we have defined an arithmetic primitive in Cat, namely Add. While possible,
+it is not desired to define all (which is potentially a lot) primitives this
+way, with their own typing rules, and own clause in the interpreter. Also,
+this approach does preclude a very useful notion, called partial application. In this
+example, Add must always be applied to two elements on the stack.
+@PP What we are looking for is a more-or-less generic approach to define
+logical and arithmetic operators in Cat, say, using the @Haskell { Prim (+) }
+to frob arithmetic addition from the underlying @Omega implementation.
 
-using witnesses to describe arities
+@BeginSubSubSubSections
+
+@SubSubSubSection
+@Title { Encountering First Problems }
+@Begin
+#@PP
+We could introduce @Haskell { Prim } thus:
+@ID @Haskell {
+  Prim :: (a -> b) -> Cat (a, opaque) (b, opaque)
+  ...
+}
+While this approach can surely be made to work with unary functions,
+it is not immediately seen how binary @FootNote { or arbitrary arity functions for that matter }
+can be formalized in the type-safe way mandated by @Omega{.}
+The expectation is that a binary primitive would consume the top @Haskell { n } items from the
+stack and produce one item as the result.
+@LP We have to reformulate our typing rule to deal with the case that
+the type parameter @Haskell { b } is in turn a function arrow. Since @Omega
+allows us to decompose the arrow's structure using a type function, we try:
+@ID @Haskell {
+  Prim :: (a -> b) -> Cat {blowUpBy (a -> b) opaque} ({result b}, opaque)
+  ...
+}
+@Haskell { blowUpBy } @FootNote { see the definition of @Haskell { blowUpBy }
+and @Haskell { result } in the Appendix } creates the expected stack shape needed
+for fully saturating the primitive, while @Haskell { result } determines the
+rightmost type in the function's type.
+With these definitions we can observe the correct type inference of our @Haskell { Add }
+substitute @Haskell { Prim (+) }:
+@LD {
+{ Prim (+) } @Prompt
+{ Prim <fn> :: Cat (Int, Int, a) (Int, a) }
+}
+
+@End @SubSubSubSection
+
+@SubSubSubSection
+@Title { More Problems while Interpreting }
+@Begin
+#@PP
+Unfortunately we have not mastered everything yet. We remember that
+the semantics of our Cat combinators is defined by the interpretation
+function. So we are obliged to extend @Haskell { interpret }. We can try thus:
+
+@TODO
+
+@End @SubSubSubSection
+
+@SubSubSubSection
+@Title { Using Witnesses to Describe Arities }
+@Begin
+#@PP
+The solution is to attach a @I witness object to every @Haskell { Prim }
+combinator, to aid continued interpretation in the multi-arity case.
+@LP To this end we need a description of what types are being passed in
+stack slots. This desctiption must be a value so that it can be pattern
+matched at runtime and it has to provide a constructor for all tractable
+datatypes.
+
+@ID @Haskell {
+data Tractable :: * ~> * where
+  IntT :: Tractable Int
+  BoolT :: Tractable Bool
+  CharT :: Tractable Char
+  PairT :: Tractable a -> Tractable b -> Tractable (a, b)
+  ListT :: Tractable a -> Tractable [a]
+  ArrT :: Tractable a -> Tractable b -> Tractable (a -> b)
+}
+
+provides a way to describe some data types that are built into @Omega{.} Its
+first three constructors apply to basic datatypes, while the rest encodes
+rules, how compound datatypes can be represented, given tractable ones.
+@PP We can proceed by employing this descriptive facility into our @Haskell { Prim }
+constructor:
+
+@ID @Haskell {
+  Prim :: Tractable b -> (a -> b) -> Cat {blowUpBy (a -> b) opaque} ({result b}, opaque)
+  ...
+}
+
+The first argument to @Haskell { Prim } is called a @I witness{ @FootNote { technically
+these types are called @I { singleton types } and constitue a reflection of the structure
+of the type-level objects into the value-world. }}, becase it records the
+structure of the function's range's type{ @FootNote { It suffices to describe the range, because
+the domain's type is easily handled without a witness. } }.
+@LP We can reproduce our previous @Haskell { Add } primitive now:
+
+@LD {
+{ Prim (ArrT IntT IntT) (+) } @Prompt
+{ Prim (ArrT IntT IntT) (+) <fn> :: Cat (Int, Int, a) (Int, a) }
+}
+
+@End @SubSubSubSection
+
+@SubSubSubSection
+@Title { Interpreting Primitives }
+@Begin
+We finally have all ingredients together to embark on putting down the @Haskell { interpret }
+case on @Haskell { Prim }. The key idea is here to pattern match on the witness in order
+to incrementally saturate the @Omega function present in the primitive:
+
+@TODO
+
+@End @SubSubSubSection
+
+
 
 @End @SubSubSection
 
