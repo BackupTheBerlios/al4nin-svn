@@ -868,7 +868,7 @@ parse [Rep p; r]l as = parse r (parseRep [p]l as) where
 @Begin
 @PP
 Similarly to the Thrist Cat we can compile our parser combinators to
-a more efficient algoritm by removing the interpretative overhead.
+a more efficient algorithm by removing the interpretative overhead.
 
 @End @SubSubSection
 
@@ -908,6 +908,98 @@ the parsing process *fast*.
 
 @End @Section
 
+
+@Section
+  @Title { Exotic Uses }
+@Begin
+@PP
+We have already seen 
+@BeginSubSections
+
+@SubSection
+  @Title { Equal Thrist }
+@Begin
+@PP
+In @Omega the @Haskell { Equal } datatype has two parameters, and is used to
+track type equality internally. The @I { Curry-Howard correspondence } is employed
+to prove propositions encoded in the types of functions, and the resuling @Haskell { Equal }
+types can be introduced by @I { theorem declarations } into the type-checker's
+rewrite engine. Typical and useful instantiations of @Haskell { Equal } arise in connection
+with type fucntions, e.g. @Haskell { Equal {plus a b} {plus b a} } which is a manifestation
+of the @Haskell { plus } type function's commutativity.
+@LP When we assert @Haskell { trans :: Thrist Equal a a } and @Haskell { trans } is a non-empty
+thrist, then @Haskell { trans } can be interpreted as a transitivity proof:
+@TODO
+
+Modelling transitivity.
+
+@PP One could go a step farther and consider a (=>){@FootNote {imaginary @Omega operator} }
+relation as a binary datatype, with constructors that encode the implication.
+Then @Haskell { circ :: Thrist (=>) a a } could encode circular implications, equating
+all intermediate types (propositions).
+
+@PP On a speculative note, one could come up with a proof algebra system that has types of
+the form @Haskell { Equal (Equal a b) (Equal c d) } in which the outer @Haskell { Equal }
+would signify equivalence of propositions.
+@LP Then
+@ID @Haskell {
+data Proof
+  And :: ...
+  Impl :: ...
+  etc.
+}
+could serve as a way to formulate proofs
+
+@End @SubSection
+
+@SubSection
+  @Title { Connection to Arrows and Monads }
+@Begin
+
+@PP
+@End @SubSection
+
+
+@SubSection
+  @Title { Connection to Categories }
+@Begin
+@PP
+encoding free categories as Thrists
+@LP every Thrist gives rise to a category?
+@LP RevThrist is the opposite category?
+@LP commutative diagrams?
+@LP limits?
+@End @SubSection
+
+
+@EndSubSections
+@End @Section
+
+
+
+
+@Section
+  @Title { Conclusion and Further Work }
+@Begin
+@PP
+We have found a way to generalize function composition 
+@LP what other useful @Haskell { p }s in @Haskell { Thrist p a b } exist?
+@LP is parametricity in the first parameter useful? I.e.
+can we formulate sensible functions on @Haskell { Thrist p a b }, where
+p is left universal?
+@End @Section
+
+
+@Section
+  @Title { Thanks }
+@Begin
+@PP
+My special thanks go to Tim Sheard, whose @Omega system served as an
+excellent testbed for formulating the ideas expressed in this paper.
+The @I { HaL 2 } workshop gave me the opportunity to discuss the connection
+between categories and thrists, thanks to Heinrich-Gregor Zirnstein,
+for encouragement.
+@End @Section
 
 
 @Appendix
