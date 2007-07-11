@@ -58,6 +58,7 @@ data Parse :: *0 ~> *0 ~> *0 where
   Seq1 :: Parse a b -> Parse a c -> Parse [a] ((b, c), [a]) -- same, but with single-elem first and second
   ButNot1 :: Parse a b -> Parse a b -> Parse a b     -- match first and expect second to fail
   UpTo :: Parse [a] (b, [a]) -> Parse [a] (c, [a]) -> Parse [a] ((b, c), [a]) -- scan for c then match b
+  Par :: Parse a b -> Parse c d -> Parse (a, c) (b, d)
 
 
 --letter a = Pred (\(c :: Char) -> ord c == ord a)
@@ -165,11 +166,17 @@ parse [u@UpTo p1 p2; r]l a = case parse' a [] of
     reverse [] acc = acc
     reverse (a:as) acc = reverse as (a:acc)
 
+parse [Par fst snd; r]l (a, b) = do { a' <- parse [fst]l a; b' <- parse [snd]l b; parse r (a', b') } where monad maybeM
 
 cataPlus :: ([a] -> b) -> Parse ([a], c) (b, c)
 cataPlus f = Try inner
          where inner ([], _) = Nothing
                inner (as, c) = Just (f as, c)
+
+cataPlus' :: ([a] -> b) -> Parse [a] b
+cataPlus' f = Try inner
+         where inner [] = Nothing
+               inner as = Just $ f as
 
 cataStar :: ([a] -> b) -> Parse ([a], c) (b, c)
 cataStar f = Sure (\(as, c) -> (f as, c))
@@ -213,6 +220,14 @@ compileParse [Or p1 p2; r]l = [| \a ->
 	  parseP1 = compileParse [p1]l
 	  parseP2 = compileParse [p2]l
 
+compileParse [Wrap thr; r]l = [| \a -> do { a' <- $(compileParse thr) a; $parseR a' } |]
+    where monad maybeM
+	  parseR = compileParse r
+
+--compileParse [Par fst snd; r]l = [| \(a, b) -> $(compileParse r) (f a) |]
+--					       where monad maybeM
+
+
 -- ###############################
 -- ############ tests ############
 -- ###############################
@@ -227,6 +242,7 @@ num = [Rep1 digit, cataPlus (base 10)]l
 hexnum = [Rep1 hexdigit, cataPlus (base 16)]l
 binnum = [Rep1 bindigit, cataPlus (base 2)]l
 
+tpar0 = parse [Rep1 bindigit, Par (cataPlus' $ base 2) (Rep1 $ Atom 'a')]l "101a"
 
 chexnum = [Seq (Seq1 (letter '0') (alts letter "xX")) (Wrap hexnum), Sure (snd . fst)]l
 t2 = parse chexnum "0xFF"
