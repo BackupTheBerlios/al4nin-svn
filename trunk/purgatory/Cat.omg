@@ -302,18 +302,18 @@ data RevThrist :: forall (l :: *1) . (l ~> l ~> *)  ~> l ~> l ~> * where
   RevNil :: RevThrist k a a
   RevCons :: RevThrist k c b -> k b a -> RevThrist k c a
 
-revThrist :: RevThrist Cat a b -> Thrist Cat b c -> RevThrist Cat a c
+revThrist :: RevThrist k a b -> Thrist k b c -> RevThrist k a c
 revThrist acc []l = acc
 revThrist acc [a; b]l = revThrist (RevCons acc a) b
 
-revThrist' :: Thrist Cat a c -> RevThrist Cat a c
+revThrist' :: Thrist k a c -> RevThrist k a c
 revThrist' thr = revThrist RevNil thr
 
-forwThrist :: RevThrist Cat a b -> Thrist Cat b c -> Thrist Cat a c
+forwThrist :: RevThrist k a b -> Thrist k b c -> Thrist k a c
 forwThrist RevNil acc = acc
 forwThrist (RevCons prefix a) acc = forwThrist prefix [a; acc]l
 
-forwThrist' :: RevThrist Cat a c -> Thrist Cat a c
+forwThrist' :: RevThrist k a c -> Thrist k a c
 forwThrist' rthr = forwThrist rthr []l
 
 tailMerge :: Bool -> Thrist Cat [Bool; a]sh b -> RevThrist Cat a c  -> RevThrist Cat a c -> Thrist Cat c b -> Thrist Cat [Bool; a]sh b
