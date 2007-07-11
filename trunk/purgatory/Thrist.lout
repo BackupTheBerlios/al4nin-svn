@@ -470,11 +470,11 @@ example, Add must always be applied to two elements on the stack.
 logical and arithmetic operators in Cat, say, using the @Haskell { Prim (+) }
 to frob arithmetic addition from the underlying @Omega implementation.
 
-@BeginSubSubSubSections
+#@BeginSubSubSubSections
 
-@SubSubSubSection
-@Title { Encountering First Problems }
-@Begin
+#@SubSubSubSection
+@LD @I { Encountering First Problems }
+#@Begin
 #@PP
 We could introduce @Haskell { Prim } thus:
 @ID @Haskell {
@@ -504,11 +504,11 @@ substitute @Haskell { Prim (+) }:
 { Prim <fn> :: Cat (Int, Int, a) (Int, a) }
 }
 
-@End @SubSubSubSection
+#@End @SubSubSubSection
 
-@SubSubSubSection
-@Title { More Problems while Interpreting }
-@Begin
+#@SubSubSubSection
+@LD @I { More Problems while Interpreting }
+#@Begin
 #@PP
 Unfortunately we have not mastered everything yet. We remember that
 the semantics of our Cat combinators is defined by the interpretation
@@ -516,11 +516,11 @@ function. So we are obliged to extend @Haskell { interpret }. We can try thus:
 
 @TODO
 
-@End @SubSubSubSection
+#@End @SubSubSubSection
 
-@SubSubSubSection
-@Title { Using Witnesses to Describe Arities }
-@Begin
+#@SubSubSubSection
+@LD @I { Using Witnesses to Describe Arities }
+#@Begin
 #@PP
 The solution is to attach a @I witness object to every @Haskell { Prim }
 combinator, to aid continued interpretation in the multi-arity case.
@@ -562,18 +562,18 @@ the domain's type is easily handled without a witness. } }.
 { Prim (ArrT IntT IntT) (+) <fn> :: Cat (Int, Int, a) (Int, a) }
 }
 
-@End @SubSubSubSection
+#@End @SubSubSubSection
 
-@SubSubSubSection
-@Title { Interpreting Primitives }
-@Begin
+#@SubSubSubSection
+@LD @I { Interpreting Primitives }
+#@Begin
 We finally have all ingredients together to embark on putting down the @Haskell { interpret }
 case on @Haskell { Prim }. The key idea is here to pattern match on the witness in order
 to incrementally saturate the @Omega function present in the primitive:
 
 @TODO
 
-@End @SubSubSubSection
+#@End @SubSubSubSection
 
 
 
