@@ -203,7 +203,7 @@ compileParse [Sure f; r]l = [| \a -> $(compileParse r) (f a) |]
 
 compileParse [Try f; r]l = [| \a -> let monad maybeM in do { b <- f a; $(compileParse r) b } |]
 
-{- this should work, but fails: (not reported yet)
+{- this should work, but fails: issue20
 
 Unknown Var at level 0: bind
 
@@ -220,12 +220,9 @@ compileParse [Or p1 p2; r]l = [| \a ->
 	  parseP1 = compileParse [p1]l
 	  parseP2 = compileParse [p2]l
 
-compileParse [Wrap thr; r]l = [| \a -> do { a' <- $(compileParse thr) a; $parseR a' } |]
-    where monad maybeM
-	  parseR = compileParse r
+compileParse [Wrap thr; r]l = [| \a -> let monad maybeM in do { a' <- $(compileParse thr) a; $(compileParse r) a' } |]
 
---compileParse [Par fst snd; r]l = [| \(a, b) -> $(compileParse r) (f a) |]
---					       where monad maybeM
+compileParse [Par fst snd; r]l = [| \(a, b) -> let monad maybeM in do { a' <- $(compileParse [fst]l) a; b' <- $(compileParse [snd]l) b; $(compileParse r) (a', b') } |]
 
 
 -- ###############################
@@ -255,6 +252,8 @@ t4 = Or (word ";") Epsilon
 t4a = optional (word ";")
 
 t5 = parse [Rep1 (ButNot1 (alts letter "ab") (letter 'b'))]l "abc"
+
+Just tc0 = (run (compileParse [Par (Atom 'a') (Atom 'b')]l)) ('a', 'b')
 
 -- ############ a simple lexer ############
 
