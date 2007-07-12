@@ -1,0 +1,454 @@
+-- -*-Haskell-*-
+
+{-
+ * Copyright (c) 2007 Gabor Greif
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to deal
+ * in the Software without restriction, including without limitation the rights
+ * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies
+ * of the Software, and to permit persons to whom the Software is furnished to do
+ * so, subject to the following conditions:
+ *
+ * The above copyright notice and this permission notice shall be
+ * included in all copies or substantial portions of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
+ * EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES
+ * OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
+ * NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT
+ * HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY,
+ * WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+ * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE
+ * OR OTHER DEALINGS IN THE SOFTWARE.
+ -}
+
+-- Usage:
+--
+--  Set up the environment
+--     setenv LD_LIBRARY_PATH /opt/exp/gnu/lib:$LD_LIBRARY_PATH
+--     setenv PATH /home/ggreif/%NoBackup%/Omega1.4.2:$PATH
+--
+--  Start the omega interpreter by typing
+--     omega ThristParser.omg
+--  and run your commands on the prompt
+--
+
+import "LangPrelude.prg" 
+  (head,tail,lookup,member,fst,snd,map,Monad,maybeM,id,ioM,Eq,Equal,
+  listM, foldl, foldr)
+
+
+---import "Thrist.omg" 
+---  (Thrist, Nil, Cons, syntax List(l))
+data Thrist :: forall (l :: *1) . (l ~> l ~> *)  ~> l ~> l ~> * where
+  Nil :: Thrist k a a
+  Cons :: k c b -> Thrist k b a -> Thrist k c a
+ deriving List(l)
+
+
+data Parse :: *0 ~> *0 ~> *0 where
+  Epsilon :: Parse [a] ([b], [a])       -- always match
+  Atom :: Char -> Parse Char Char       -- exact match
+  Pred :: (a -> Bool) -> Parse a a      -- conditional match
+  Sure :: (a -> b) -> Parse a b         -- always matches and converts
+  Try :: (a -> Maybe b) -> Parse a b    -- pipeline stops if no match
+  Rep1 :: Parse a b -> Parse [a] ([b], [a])          -- consume as many as matches, return rest
+  Rep :: Parse [a] (b, [a]) -> Parse [a] ([b], [a])  -- consume as many as matches, return rest
+  Group :: [Parse a b] -> Parse [a] ([b], [a])       -- all must match, return rest
+  Wrap :: Thrist Parse a b -> Parse a b              -- treat a chain of parses as one
+  Or :: Parse a b -> Parse a b -> Parse a b          -- match first or if it doesn't, the second
+  Seq :: Parse [a] (b, [a]) -> Parse [a] (c, [a]) -> Parse [a] ((b, c), [a]) -- parse front first then second
+  Seq1 :: Parse a b -> Parse a c -> Parse [a] ((b, c), [a]) -- same, but with single-elem first and second
+  ButNot1 :: Parse a b -> Parse a b -> Parse a b     -- match first and expect second to fail
+  UpTo :: Parse [a] (b, [a]) -> Parse [a] (c, [a]) -> Parse [a] ((b, c), [a]) -- scan for c then match b
+  Par :: Parse a b -> Parse c d -> Parse (a, c) (b, d)
+
+
+--letter a = Pred (\(c :: Char) -> ord c == ord a)
+letter a = Atom a
+---char = Sure (id :: Char -> Char)
+
+digit = Try (\c -> if ord '0' <= ord c && ord c <= ord '9' then Just (ord c - ord '0') else Nothing)
+
+bindigit = Try (\c -> if ord '0' <= ord c && ord c <= ord '1' then Just (ord c - ord '0') else Nothing)
+
+hexdigit = Try (\c -> if ord '0' <= ord c && ord c <= ord '9' then Just (ord c - ord '0') else
+                      if ord 'a' <= ord c && ord c <= ord 'f' then Just (ord c - ord 'W') else
+                      if ord 'A' <= ord c && ord c <= ord 'F' then Just (ord c - ord '7') else Nothing)
+
+--crop = Try (\(good, rest) -> Just good)
+--snap = Try (\(good, rest) -> case rest of { [] -> Just good; _ -> Nothing })
+
+proper = Try (\(it, rest) -> case it of { [] -> Nothing; _ -> Just (it, rest) })
+--propersnap = Try (\a -> case a of { ([], _) -> Nothing; (_, r:rest) -> Nothing; _ -> Just a })
+
+proper' p = Wrap [p, proper]l
+--propersnap' p = Wrap [p, propersnap]l
+
+base n = foldl (\acc x -> (acc * n) + x) 0
+
+
+-- unwrap (Wrap x) = x
+
+--second = Sure (\((_, x), _) -> x)
+
+word cs = Group (map letter cs)
+
+optional p = Or p Epsilon
+
+-- ###############################
+-- ############ parse ############
+-- ###############################
+
+parse :: Thrist Parse a b -> a -> Maybe b
+
+parse []l a = Just a
+
+parse [Epsilon; r]l as = parse r ([], as)
+
+parse [Atom c; r]l a = if ord c == ord a then parse r a else Nothing
+
+parse [Pred p; r]l a = if p a then parse r a else Nothing
+
+parse [Sure f; r]l a = parse r (f a)
+
+parse [Try f; r]l a = do { b <- f a; parse r b } where monad maybeM
+
+parse [Rep1 p; r]l as = parse r (parseRep p as) where
+      parseRep :: Parse a b -> [a] -> ([b], [a])
+      parseRep _ [] = ([], [])
+      parseRep p (a:as) = case parse [p]l a of { Nothing -> ([], a:as); Just b -> (b:bs, rest) where (bs, rest) = parseRep p as }
+
+parse [Rep p; r]l as = parse r (parseRep [p]l as) where
+      parseRep :: Thrist Parse [a] (b, [a]) -> [a] -> ([b], [a])
+      parseRep _ [] = ([], [])
+      parseRep p as = case parse p as of
+                      Nothing -> ([], as)
+                      Just (b, as') -> (b:bs, rest)
+                          where (bs, rest) = parseRep p as'
+
+parse [Group ps; r]l as = do { bs <- parseGroup ps as; parse r bs } where
+      monad maybeM
+      parseGroup :: [Parse a b] -> [a] -> Maybe ([b], [a])
+      parseGroup [] rest = Just ([], rest) -- overlength input
+      parseGroup _ [] = Nothing            -- input too short
+      parseGroup (p:ps) (a:as) = do { b <- parse [p]l a; (bs, rest) <- parseGroup ps as; return (b:bs, rest) }
+
+parse [Wrap thr; r]l a = do { a' <- parse thr a; parse r a' } where monad maybeM
+
+parse [Seq1 p1 p2; r]l (a1:a2:rest) = do { b1 <- parse [p1]l a1; b2 <- parse [p2]l a2; parse r ((b1, b2), rest) } where monad maybeM
+parse [Seq1 _ _; _]l _ = Nothing
+
+parse [Seq p1 p2; r]l as = do { (b1, as') <- parse [p1]l as; (b2, rest) <- parse [p2]l as'; parse r ((b1, b2), rest) } where monad maybeM
+
+parse [Or p1 p2; r]l a = case parse [p1]l a of
+			 Just b1 -> parse r b1
+			 Nothing -> do { b2 <- parse [p2]l a; parse r b2 } where monad maybeM
+
+-- probably redundant, use Pred instead
+parse [ButNot1 p1 p2; r]l a = case parse [p1]l a of
+			      Nothing -> Nothing
+			      (Just b1) -> case parse [p2]l a of
+					   Nothing -> parse r b1
+					   _ -> Nothing
+
+parse [u@UpTo p1 p2; r]l a = case parse' a [] of
+			     Nothing -> Nothing
+			     Just (fill, (b2, rest)) -> case parse [p1]l (reverse fill []) of
+							Nothing -> Nothing
+							Just (b1, []) -> parse r ((b1, b2), rest)
+							_ -> Nothing
+    where
+    --parse' :: [a] -> [a] -> Maybe ([a], c)
+    parse' [] acc = case parse [p2]l [] of
+		    Nothing -> Nothing
+		    Just b2 -> Just (acc, b2)
+    parse' (food@(head:tail)) acc = case parse [p2]l food of
+				    Nothing -> parse' tail (head:acc)
+				    Just b2 -> Just (acc, b2)
+    reverse [] acc = acc
+    reverse (a:as) acc = reverse as (a:acc)
+
+parse [Par fst snd; r]l (a, b) = do { a' <- parse [fst]l a; b' <- parse [snd]l b; parse r (a', b') } where monad maybeM
+
+cataPlus :: ([a] -> b) -> Parse ([a], c) (b, c)
+cataPlus f = Try inner
+         where inner ([], _) = Nothing
+               inner (as, c) = Just (f as, c)
+
+cataPlus' :: ([a] -> b) -> Parse [a] b
+cataPlus' f = Try inner
+         where inner [] = Nothing
+               inner as = Just $ f as
+
+cataStar :: ([a] -> b) -> Parse ([a], c) (b, c)
+cataStar f = Sure (\(as, c) -> (f as, c))
+
+
+-- ##########################################
+-- ############ pattern compiler ############
+-- ##########################################
+
+compileParse :: Thrist Parse a b -> Code (a -> Maybe b)
+
+compileParse []l = [| Just |]
+
+compileParse [Epsilon; r]l = [| \as -> $parseR ([], as)  |]
+    where parseR = compileParse r
+
+compileParse [Atom c; r]l = [| \a -> if $ordC == ord a then $parseR a else Nothing |]
+    where parseR = compileParse r
+	  ordC = lift $ ord c
+
+compileParse [Pred p; r]l = [| \a -> if p a then $(compileParse r) a else Nothing |]
+
+compileParse [Sure f; r]l = [| \a -> $(compileParse r) (f a) |]
+
+compileParse [Try f; r]l = [| \a -> let monad maybeM in do { b <- f a; $(compileParse r) b } |]
+
+{- this should work, but fails: (not reported yet)
+
+Unknown Var at level 0: bind
+
+compileParse [Try f; r]l = [| \a -> do { b <- f a; $(compileParse r) b } |]
+    where monad maybeM
+-}
+
+
+compileParse [Or p1 p2; r]l = [| \a ->
+			       case $parseP1 a of
+			       Just b1 -> $parseR b1
+			       Nothing -> let monad maybeM in do { b2 <- $parseP2 a; $parseR b2 } |]
+    where parseR = compileParse r
+	  parseP1 = compileParse [p1]l
+	  parseP2 = compileParse [p2]l
+
+compileParse [Wrap thr; r]l = [| \a -> do { a' <- $(compileParse thr) a; $parseR a' } |]
+    where monad maybeM
+	  parseR = compileParse r
+
+--compileParse [Par fst snd; r]l = [| \(a, b) -> $(compileParse r) (f a) |]
+--					       where monad maybeM
+
+
+-- ###############################
+-- ############ tests ############
+-- ###############################
+
+t0 =  (run compileParse $ [Or (letter 's') (letter 'm')]l) 's'
+t0a = (run compileParse $ [Or (letter 's') (letter 'm')]l) 'm'
+
+t1 = parse [Seq (Wrap [Rep1 $ letter 'a', proper]l) (Seq (Rep1 $ letter 'b') (Rep1 (letter 'c')))]l "abbc"
+t1a = parse [Seq (proper' $ Rep1 $ letter 'a') (Seq (Rep1 $ letter 'b') (Rep1 (letter 'c')))]l "abbc"
+
+num = [Rep1 digit, cataPlus (base 10)]l
+hexnum = [Rep1 hexdigit, cataPlus (base 16)]l
+binnum = [Rep1 bindigit, cataPlus (base 2)]l
+
+tpar0 = parse [Rep1 bindigit, Par (cataPlus' $ base 2) (Rep1 $ Atom 'a')]l "101a"
+
+chexnum = [Seq (Seq1 (letter '0') (alts letter "xX")) (Wrap hexnum), Sure (snd . fst)]l
+t2 = parse chexnum "0xFF"
+
+
+t3 = Group [letter 'a', letter 'b', letter 'c', letter 'd']
+t3a = word "abcd"
+
+t4 = Or (word ";") Epsilon
+t4a = optional (word ";")
+
+t5 = parse [Rep1 (ButNot1 (alts letter "ab") (letter 'b'))]l "abc"
+
+-- ############ a simple lexer ############
+
+-- see: http://www.opendylan.org/books/drm/Lexical_Grammar
+
+data Reserved = Rdefine
+	      | Rend
+	      | Rhandler
+	      | Rlet
+	      | Rlocal
+	      | Rmacro
+	      | Rotherwise
+
+data HashWord = Ht
+	      | Hf
+	      | Hnext
+	      | Hrest
+	      | Hkey
+	      | Hallkeys
+	      | Hinclude
+
+data Punctuation = PparenthesisOpen | PparenthesisClose -- ( )
+		 | Pcomma                               -- ,
+		 | Pdot                                 -- .
+		 | Psemicolon                           -- ;
+		 | PbracketOpen | PbracketClose         -- [ ]
+		 | PbraceOpen | PbraceClose             -- { }
+		 | Pcoloncolon                          -- ::
+		 | Pminus                               -- -
+		 | Pequal                               -- =
+		 | Pequalequal                          -- ==
+		 | Pequalgreater                        -- =>
+		 | Phashparenthesis                     -- #(
+		 | Phashbracket                         -- #[
+		 | Phashhash                            -- ##
+		 | Pquestion                            -- ?
+		 | Pquestionquestion                    -- ??
+		 | Pquestionequal                       -- ?=
+		 | Pdotdotdot                           -- ...
+
+-- the below lists are maximum munch sorted
+punctSymbols = [ "(", ")", ",", "...", ".", ";", "[", "]", "{", "}", "::", "-"
+               , "==", "=>", "=", "#(", "#[", "##", "??", "?=", "?"]
+
+punct = [ PparenthesisOpen, PparenthesisClose, Pcomma, Pdotdotdot, Pdot, Psemicolon, PbracketOpen, PbracketClose
+        , PbraceOpen, PbraceClose, Pcoloncolon, Pminus, Pequalequal, Pequalgreater, Pequal
+        , Phashparenthesis, Phashbracket, Phashhash
+        , Pquestionquestion, Pquestionequal, Pquestion ]
+
+
+coreWords = ["define", "end", "handler", "let", "local", "macro", "otherwise"]
+core = [Rdefine, Rend, Rhandler, Rlet, Rlocal, Rmacro, Rotherwise]
+
+hashWords = ["#t", "#f", "#next", "#rest", "#key", "#all-keys", "#include"]
+hash = [Ht, Hf, Hnext, Hrest, Hkey, Hallkeys, Hinclude]
+
+bulkWords :: [String] -> [a] -> (a -> Token') -> Parse [Char] (Token', [Char])
+bulkWords syntax semantics conv = or $ drosel syntax semantics where
+				  drosel (sy:sys) (se:ses) = Wrap [word sy, Sure (\(_, rest) -> (conv se, rest))]l : drosel sys ses
+				  drosel [] [] = []
+
+data Token = R Reserved | Str String | Num Int | P Punctuation | H HashWord
+
+data Token' = Token Token | Whitespace String | Test (exists (n :: Nat) . Nat' n)
+
+whitespace = alts letter " \n\t\r"
+
+lexer :: Thrist Parse [Char] ([Token], [Char])
+
+or :: [Parse a b] -> Parse a b
+or (p:ps) = foldl Or p ps
+
+
+alts :: (a -> Parse a b) -> [a] -> Parse a b
+alts f as = or (map f as)
+
+{- not ready yet :-(
+foldThrist :: forall (a :: *1) (b :: a ~> a ~> *0) (c :: a) (d :: a) (e :: a) (f :: a) .
+	      (b c d -> Thrist b d e -> Thrist b c e) ->
+	      Thrist b e f ->
+	      Thrist b d e ->
+	      Thrist b d f
+foldThrist c n Nil     = n
+foldThrist c n (Cons x xs) = c x (foldThrist c n xs)
+-}
+
+
+extendThrist :: forall (a :: *1) (b :: a ~> a ~> *0) (c :: a) (d :: a) (e :: a) .
+		Thrist b c d ->
+		b d e ->
+		Thrist b c e
+
+extendThrist []l a = [a]l
+extendThrist [b; r]l a = [b; extendThrist r a]l
+
+
+{- not ready yet :-(
+appendThrist :: forall (a :: *1) (b :: a ~> a ~> *0) (c :: a) (d :: a) (e :: a) .
+		Thrist b c d ->
+		Thrist b d e ->
+		Thrist b c e
+
+appendThrist Nil a = [a]l
+appendThrist (Cons b r) a = Cons b (appendThrist r a)
+-}
+
+lexer' :: Thrist Parse [Char] ([Token'], [Char])
+lexer' = [Rep token']l
+
+sureFirst f = Sure (\(a, b) -> (f a, b))
+
+notEmpty ([], _) = False
+notEmpty (_, _) = True
+
+isAlpha caseinsensitive c = case (caseinsensitive, ord 'A' <= o, o <= ord 'Z') of
+                            (_, True, True) -> True
+                            (True, _, False) -> case (ord 'a' <= o, o <= ord 'z') of
+                                                (True, True) -> True
+                                                _ -> False
+                            _ -> False
+    where o = ord c
+
+token' :: Parse [Char] (Token', [Char])
+token' = or [ Wrap $ extendThrist num (sureFirst (Token . Num))
+            , Wrap [Seq1 (letter '#') (alts letter "xX")
+		   , Sure snd
+		   ; extendThrist hexnum (sureFirst (Token . Num))]l
+            , Wrap [Rep1 whitespace, Pred notEmpty, sureFirst Whitespace]l
+            , Wrap [Seq1 (letter '#') (alts letter "bB")
+		   , Sure snd
+		   ; extendThrist binnum (sureFirst (Token . Num))]l
+	    , bulkWords punctSymbols punct (Token . P)
+	    , bulkWords coreWords core (Token . R)
+	    , bulkWords hashWords hash (Token . H)
+	    , Wrap [Seq (word "//") (Rep1 $ ButNot1 (Sure id) (letter '\n')), sureFirst (\(boring, comment) -> Whitespace (boring ++ comment))]l
+	    , Wrap [Seq (word "/*") (UpTo (Rep1 $ Sure id) (word "*/")), sureFirst (\(boring1, (comment, boring2)) -> Whitespace (boring1 ++ comment ++ boring2))]l
+            , Wrap [word "!"
+		   , Sure snd
+		   ; extendThrist num (sureFirst mkTest)]l -- experiment
+            ]
+
+t6 = parse [Rep token']l "33//dsd hh \n42"
+t7 = parse [Rep token']l "33/*dsd hh */42"
+t7a = parse [Rep token']l "33/**/42"
+
+mkTest :: Int -> Token'
+mkTest i = Test (walk i (Ex Z)) where
+	   walk :: Int -> (exists (m :: Nat) . Nat' m) -> (exists (n :: Nat) . Nat' n)
+	   walk 0 n = n
+	   walk i (Ex n) = walk (i - 1) (Ex (S n))
+
+
+-- evaluator for arithmetics on Nat'
+
+isTest :: Token' -> Bool
+isTest (Test _) = True
+isTest _ = False
+
+isQuestion :: Token' -> Bool
+isQuestion (Token (P Pquestion)) = True
+isQuestion _ = False
+
+isDot :: Token' -> Bool
+isDot (Token (P Pdot)) = True
+isDot _ = False
+
+
+natuator :: Thrist Parse [Token'] (Maybe (exists (n :: Nat) . Nat' n), [Token'])
+natuator = [Or (Wrap [Group [Pred isTest, Pred isQuestion, Pred isTest], sureFirst (\ [Test a, _, Test b] -> Just $ sum a b)]l)
+	    (Wrap [Group [Pred isTest, Pred isDot, Pred isTest], sureFirst (\ [Test a, _, Test b] -> diff a b)]l)]l
+
+sum :: (exists (m :: Nat) . Nat' m) -> (exists (n :: Nat) . Nat' n) -> (exists (o :: Nat) . Nat' o)
+sum (Ex Z) rhs = rhs
+sum lhs (Ex Z) = lhs
+sum (Ex (S a)) (Ex b) = sum (Ex a) (Ex (S b))
+
+
+diff :: (exists (m :: Nat) . Nat' m) -> (exists (n :: Nat) . Nat' n) -> Maybe (exists (o :: Nat) . Nat' o)
+diff (Ex Z) (z@Ex Z) = Just z
+diff (Ex Z) _ = Nothing
+diff z (Ex Z) = Just z
+diff (Ex (S a)) (Ex (S b)) = diff (Ex a) (Ex b)
+
+(Just (natu0, [])) = parse lexer' "!23?!42"
+(Just (natu1, [])) = parse lexer' "!23.!42"
+(Just (natu2, [])) = parse lexer' "!42.!23"
+
+
+-- ############### Cat syntax ###############
+
+-- see: http://www.cat-language.com/manual.html#syntax
+
+data Catoken = Cinteger Int | Ccomment String
