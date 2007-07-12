@@ -73,21 +73,11 @@ hexdigit = Try (\c -> if ord '0' <= ord c && ord c <= ord '9' then Just (ord c -
                       if ord 'a' <= ord c && ord c <= ord 'f' then Just (ord c - ord 'W') else
                       if ord 'A' <= ord c && ord c <= ord 'F' then Just (ord c - ord '7') else Nothing)
 
---crop = Try (\(good, rest) -> Just good)
---snap = Try (\(good, rest) -> case rest of { [] -> Just good; _ -> Nothing })
-
 proper = Try (\(it, rest) -> case it of { [] -> Nothing; _ -> Just (it, rest) })
---propersnap = Try (\a -> case a of { ([], _) -> Nothing; (_, r:rest) -> Nothing; _ -> Just a })
 
 proper' p = Wrap [p, proper]l
---propersnap' p = Wrap [p, propersnap]l
 
 base n = foldl (\acc x -> (acc * n) + x) 0
-
-
--- unwrap (Wrap x) = x
-
---second = Sure (\((_, x), _) -> x)
 
 word cs = Group (map letter cs)
 
@@ -114,7 +104,7 @@ parse [Try f; r]l a = do { b <- f a; parse r b } where monad maybeM
 parse [Rep1 p; r]l as = parse r (parseRep p as) where
       parseRep :: Parse a b -> [a] -> ([b], [a])
       parseRep _ [] = ([], [])
-      parseRep p (a:as) = case parse [p]l a of { Nothing -> ([], a:as); Just b -> (b:bs, rest) where (bs, rest) = parseRep p as }
+      parseRep p (as@(a:ar)) = case parse [p]l a of { Nothing -> ([], as); Just b -> (b:bs, rest) where (bs, rest) = parseRep p ar }
 
 parse [Rep p; r]l as = parse r (parseRep [p]l as) where
       parseRep :: Thrist Parse [a] (b, [a]) -> [a] -> ([b], [a])
