@@ -212,6 +212,16 @@ compileParse [Try f; r]l = [| \a -> do { b <- f a; $(compileParse r) b } |]
 -}
 
 
+compileParse [Rep1 p; r]l = [| \as -> $(compileParse r) $ $(parseRep [p]l) as |] where
+      parseRep :: Thrist Parse a b -> Code ([a] -> ([b], [a]))
+      parseRep p = [| let work = \as -> case as of
+					[] -> ([], [])
+					(a:ar) -> case $(compileParse p) a of
+						Nothing -> ([], as)
+						Just b -> let (bs, rest) = work ar in (b:bs, rest)
+			in work |]
+
+
 compileParse [Or p1 p2; r]l = [| \a ->
 			       case $parseP1 a of
 			       Just b1 -> $parseR b1
