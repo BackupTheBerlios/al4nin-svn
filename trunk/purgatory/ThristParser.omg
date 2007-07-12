@@ -350,15 +350,14 @@ extendThrist []l a = [a]l
 extendThrist [b; r]l a = [b; extendThrist r a]l
 
 
-{- not ready yet :-(
 appendThrist :: forall (a :: *1) (b :: a ~> a ~> *0) (c :: a) (d :: a) (e :: a) .
 		Thrist b c d ->
 		Thrist b d e ->
 		Thrist b c e
 
-appendThrist Nil a = [a]l
-appendThrist (Cons b r) a = Cons b (appendThrist r a)
--}
+appendThrist []l a = a
+appendThrist [b; r]l a = [b; appendThrist r a]l
+
 
 lexer' :: Thrist Parse [Char] ([Token'], [Char])
 lexer' = [Rep token']l
