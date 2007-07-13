@@ -44,8 +44,6 @@ import "Thrist.omg"
 
 
 data Parse :: *0 ~> *0 ~> *0 where
-  -- Epsilon is: Group []
-  Epsilon :: Parse [a] ([b], [a])       -- always match
   Atom :: Char -> Parse Char Char       -- exact match
   Pred :: (a -> Bool) -> Parse a a      -- conditional match
   Sure :: (a -> b) -> Parse a b         -- always matches and converts
@@ -61,6 +59,7 @@ data Parse :: *0 ~> *0 ~> *0 where
   UpTo :: Parse [a] (b, [a]) -> Parse [a] (c, [a]) -> Parse [a] ((b, c), [a]) -- scan for c then match b
   Par :: Parse a b -> Parse c d -> Parse (a, c) (b, d)
 
+epsilon = Group []
 
 --letter a = Pred (\(c :: Char) -> ord c == ord a)
 letter a = Atom a
@@ -82,7 +81,7 @@ base n = foldl (\acc x -> (acc * n) + x) 0
 
 word cs = Group (map letter cs)
 
-optional p = Or p Epsilon
+optional p = Or p epsilon
 
 -- ###############################
 -- ############ parse ############
@@ -91,8 +90,6 @@ optional p = Or p Epsilon
 parse :: Thrist Parse a b -> a -> Maybe b
 
 parse []l a = Just a
-
-parse [Epsilon; r]l as = parse r ([], as)
 
 parse [Atom c; r]l a = if ord c == ord a then parse r a else Nothing
 
@@ -184,9 +181,6 @@ compileParse :: Thrist Parse a b -> Code (a -> Maybe b)
 
 compileParse []l = [| Just |]
 
-compileParse [Epsilon; r]l = [| \as -> $parseR ([], as)  |]
-    where parseR = compileParse r
-
 compileParse [Atom c; r]l = [| \a -> if $ordC == ord a then $parseR a else Nothing |]
     where parseR = compileParse r
 	  ordC = lift $ ord c
@@ -269,7 +263,7 @@ t2 = parse chexnum "0xFF"
 t3 = Group [letter 'a', letter 'b', letter 'c', letter 'd']
 t3a = word "abcd"
 
-t4 = Or (word ";") Epsilon
+t4 = Or (word ";") epsilon
 t4a = optional (word ";")
 
 t5 = parse [Rep1 (ButNot1 (alts letter "ab") (letter 'b'))]l "abc"
