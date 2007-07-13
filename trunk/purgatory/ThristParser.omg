@@ -44,6 +44,7 @@ import "Thrist.omg"
 
 
 data Parse :: *0 ~> *0 ~> *0 where
+  -- Epsilon is: Group []
   Epsilon :: Parse [a] ([b], [a])       -- always match
   Atom :: Char -> Parse Char Char       -- exact match
   Pred :: (a -> Bool) -> Parse a a      -- conditional match
@@ -119,7 +120,10 @@ parse [Group ps; r]l as = do { bs <- parseGroup ps as; parse r bs } where
       parseGroup :: [Parse a b] -> [a] -> Maybe ([b], [a])
       parseGroup [] rest = Just ([], rest) -- overlength input
       parseGroup _ [] = Nothing            -- input too short
-      parseGroup (p:ps) (a:as) = do { b <- parse [p]l a; (bs, rest) <- parseGroup ps as; return (b:bs, rest) }
+      parseGroup (p:ps) (a:as) = do
+				 b <- parse [p]l a
+				 (bs, rest) <- parseGroup ps as
+				 return (b:bs, rest)
 
 parse [Wrap thr; r]l a = do { a' <- parse thr a; parse r a' } where monad maybeM
 
@@ -221,6 +225,13 @@ compileParse [Rep p; r]l = [| \as -> $(compileParse r) $ $(parseRep [p]l) as |] 
                                               Just (b, as') -> let (bs, rest) = work as' in (b:bs, rest)
 			in work |]
 
+compileParse [Group []; r]l = [| \as -> $(compileParse r) ([], as) |]
+compileParse [Group (p:ps); r]l = [| \as -> case as of
+					    [] -> Nothing -- input too short
+					    a:as' -> let monad maybeM in do
+						     p' <- $(compileParse [p]l) a
+						     (ps', rest) <- $(compileParse [Group ps]l) as'
+						     $(compileParse r) (p':ps', rest) |]
 
 compileParse [Or p1 p2; r]l = [| \a ->
 			       case $parseP1 a of
