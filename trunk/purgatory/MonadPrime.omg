@@ -41,21 +41,19 @@ import "Thrist.omg"
   (Thrist, Nil, Cons, syntax List(l))
 
 data Monad' :: (* ~> *) ~> * ~> * ~> * where
---  Return :: b -> Monad' m (m a) (m b)
---  Return :: b -> Monad' m a b
   Return :: m b -> Monad' m a b
---  Bind :: Monad' m (m a) (m t) -> (t -> Monad' m (m t) (m u)) -> Monad' m (m t) (m u)
---  Bind :: Monad' m (m a) (m t) -> (t -> (m u)) -> Monad' m (m t) (m u)
---  Bind :: (t -> (m u)) -> Monad' m (m t) (m u)
+  Return' :: b -> Monad' m a b
   Bind :: (t -> (m u)) -> Monad' m t u
 
 
 t0 = let monad maybeM in [Bind (\ 5 -> return True), Return $ Just "2"]l
 t1 = [Return $ putStr "dd", Bind (\ () -> returnIO 3)]l
+t2 = let monad maybeM in [Bind (\ 5 -> return True), Return' "2"]l
 
 runMP :: Monad m -> m a -> Thrist (Monad' m) a b -> m b
 runMP _ mon []l = mon
 runMP v _ [Return m; rest]l = runMP v m rest
-runMP (v@Monad _ b _) mon [Bind f; rest]l = runMP v (b mon f) rest
+runMP (v@Monad return _ _) _ [Return' m; rest]l = runMP v (return m) rest
+runMP (v@Monad _ bind _) mon [Bind f; rest]l = runMP v (bind mon f) rest
 
 r0 = runMP ioM (returnIO 5) t1
