@@ -5,17 +5,20 @@
 @SysInclude { eq }
 @SysInclude { haskell }
 
-def @Prompt left input right output { prompt> @Haskell { input } @PP @I { output } }
+def @Prompt left input right output { { Helvetica Base } @Font { prompt> @Haskell { input } @PP @I { output } } }
 def @Omega { {@Sym Omega}mega }
 
 #@Database @Reference { refs }
 @Report
-@ColumnNumber { 2 } 
-@InitialFont { Helvetica Base 10p } 
-@DateLine { Yes }
-@Title { Thrists: Dominoes of Data }
-@Author { Gabor Greif }
-@AbstractDisplay { Yes }
+  @CoverSheet { No }
+  @ColumnNumber { 2 } 
+  @InitialFont { Palatino Base 9p } 
+  @DateLine { Yes }
+  @Title { Thrists: Dominoes of Data }
+  @Author { Gabor Greif }
+  @Institution { gabor@mac.com }
+#  @SectionHeadingFont { Helvetica Bold }
+  @AbstractDisplay { Yes }
 # @AbstractFormat { @Centre @Title @DP @Body }
 @Abstract {
 We develop a novel list-like datastructure (which we name @I Thrist),
@@ -405,7 +408,7 @@ data Cat :: * ~> * ~> * where
 To interpret the @Haskell {Print} primitive we have to restructure
 our @Haskell {interpret'} function to wrap the stack into the @Haskell {IO} monad:
 
-@ID @Haskell {
+@ID @Haskell operators {Base} {
 interpret' :: Thrist Cat a b -> IO a -> IO b
 interpret' [Print; rest]l st = do
 	(a, st') <- st
@@ -470,12 +473,7 @@ example, Add must always be applied to two elements on the stack.
 logical and arithmetic operators in Cat, say, using the @Haskell { Prim (+) }
 to frob arithmetic addition from the underlying @Omega implementation.
 
-#@BeginSubSubSubSections
-
-#@SubSubSubSection
-@LD @I { Encountering First Problems }
-#@Begin
-#@PP
+@LD @Heading { Encountering First Problems }
 We could introduce @Haskell { Prim } thus:
 @ID @Haskell {
   Prim :: (a -> b) -> Cat (a, opaque) (b, opaque)
@@ -504,24 +502,15 @@ substitute @Haskell { Prim (+) }:
 { Prim <fn> :: Cat (Int, Int, a) (Int, a) }
 }
 
-#@End @SubSubSubSection
-
-#@SubSubSubSection
-@LD @I { More Problems while Interpreting }
-#@Begin
-#@PP
+@LD @Heading { More Problems while Interpreting }
 Unfortunately we have not mastered everything yet. We remember that
 the semantics of our Cat combinators is defined by the interpretation
 function. So we are obliged to extend @Haskell { interpret }. We can try thus:
 
 @TODO
 
-#@End @SubSubSubSection
 
-#@SubSubSubSection
-@LD @I { Using Witnesses to Describe Arities }
-#@Begin
-#@PP
+@LD @Heading { Using Witnesses to Describe Arities }
 The solution is to attach a @I witness object to every @Haskell { Prim }
 combinator, to aid continued interpretation in the multi-arity case.
 @LP To this end we need a description of what types are being passed in
@@ -562,19 +551,12 @@ the domain's type is easily handled without a witness. } }.
 { Prim (ArrT IntT IntT) (+) <fn> :: Cat (Int, Int, a) (Int, a) }
 }
 
-#@End @SubSubSubSection
-
-#@SubSubSubSection
-@LD @I { Interpreting Primitives }
-#@Begin
+@LD @Heading { Interpreting Primitives }
 We finally have all ingredients together to embark on putting down the @Haskell { interpret }
 case on @Haskell { Prim }. The key idea is here to pattern match on the witness in order
 to incrementally saturate the @Omega function present in the primitive:
 
 @TODO
-
-#@End @SubSubSubSection
-
 
 
 @End @SubSubSection
@@ -593,7 +575,7 @@ overhead is already removed.
 We demonstrate the technique for a selection of the Cat primitives
 only.
 
-@ID @Haskell {
+@ID @Haskell operators {Base} {
 compile' :: Thrist Cat a b -> Code (IO a -> IO b)
 compile' [Print; rest]l = [| \st -> do
 	(a, st') <- st
@@ -821,7 +803,7 @@ of the parsed token and the rest of the input.
 
 Putting this together we can write
 
-@ID @Haskell {
+@ID @Haskell operators {Base} {
 signedSized = Wrap [Rep1 $ Atom 'U', Par (Sure id) (Rep1 $ Atom 'L')]l
 
 hexToken = Wrap [Group [Atom '0', Atom 'X']
@@ -913,7 +895,12 @@ the parsing process *fast*.
   @Title { Exotic Uses }
 @Begin
 @PP
-We have already seen 
+We have already seen @Haskell { Thrist ((,)) } and @Haskell { Thrist (->) } in the introduction.
+But several more common two-parameter datatypes exist that @Haskell { Thrist } can be parametrized with,
+e.g. @I Either{@FootNote { in @Omega named as @Haskell { (+) } }}, @Haskell { Equal } and so on.
+In this section we analyse the formal requirements for inclusion into the @Haskell { Thrist } framework,
+constructing adapters as needed, and suggest possible uses.
+
 @BeginSubSections
 
 @SubSection
@@ -922,7 +909,7 @@ We have already seen
 @PP
 In @Omega the @Haskell { Equal } datatype has two parameters, and is used to
 track type equality internally. The @I { Curry-Howard correspondence } is employed
-to prove propositions encoded in the types of functions, and the resuling @Haskell { Equal }
+to prove propositions encoded in the types of functions, and the resulting @Haskell { Equal }
 types can be introduced by @I { theorem declarations } into the type-checker's
 rewrite engine. Typical and useful instantiations of @Haskell { Equal } arise in connection
 with type fucntions, e.g. @Haskell { Equal {plus a b} {plus b a} } which is a manifestation
@@ -978,14 +965,14 @@ translation to a different programming system every function inside of @Haskell 
 constructors would need auxiliary denotation anyway, and could be optimized
 either on export or inside of the external system itself.
 @PP
-Monads can also be regarded as a specialization to arrows, so we expect that @Haskell { Thrist Monad' }
+Monads can also be regarded as a specialization to arrows, so we expect that @Haskell { Thrist (Monad' T) }
 can be canonically derived.
 @LP First we define the adapter to @Haskell { Monad }, @Haskell { Monad' } to have two parameters:
 @TODO
 @ID @Haskell {
-data Monad' a b :: * ~> * ~> * where
-  Ret :: Monad' a (Monad b)
-  Bind :: Monad' a (Monad t) -> (t -> Monad' a' (Monad u)) -> Monad' t (Monad u)
+data Monad' :: (* ~> *) ~> * ~> * ~> * where
+  Return :: m b -> Monad' m a b
+  Bind :: (t -> m u) -> Monad' m t u
 }
 
 @End @SubSection
@@ -1007,29 +994,66 @@ encoding free categories as Thrists
 @End @Section
 
 
-
+@Section
+  @Title { Other Work }
+@Begin
+@PP
+Chuan-kai Lin's @I { Unimo } framework @Cite {xxx} is an attempt to describe monads operationally
+by interpreting a datastructure that describes the monad. The fact that the interpreter
+is proven to satisfy the monadic laws, a guarantee is given that the monadic semantics
+is fulfilled, regardless what callback functions the monad's creator supplies. GADTs appear in
+his work only as the datatypes modelling the effect basis of monads, while they are not needed
+for the general case.
+@PP
+Chris Heunen and Bart Jacobs' work @Cite {xxx} on the connection of Arrows and Monads and their category theoretical
+formalisation is of relevance becuse it reveals the mathematical structure behind these constructs.
+Arrows appeared in the general mindset as a pragmatic approach to deal with a certain class of parsers
+@Cite {hughes2000} that did not fit into the monadic framework.
+Nilsson provides a method for optimizing limited cases of arrow combinator libraries using GADTs. He
+is still bound to the limitations of the amesiac nature of function composition inside the arrow
+framework for functional reactive programming, but seem to gain some noticeable gains in performance
+especially in microbenchmarks that are modelling the arrow laws.
+@End @Section
 
 @Section
   @Title { Conclusion and Further Work }
 @Begin
 @PP
-We have found a way to generalize function composition 
+We have found a way to generalize function composition by separating its
+type structure from its semantics. The data structure we suggest is a
+GADT with two constructors strongly resembling classical lists, but with a
+side-condition that the types must be threaded. The semantics is provided by
+an interpretation function that can be provided separately for each first parameter
+of the Thrist type constructor.
+
+@PP We have further provided three examples for the usefulness of the thrist data
+structure and demonstrated that the ability to take thrists apart and analyse is
+a very good arguments for their use. Also, all operations performed on thrists, such
+as subdivision, insertion and extension must be performed by algorithms that preserve
+
+We have shown that thrists generalize arrows naturally and monads with
+a shallow adaptation layer. 
 @LP what other useful @Haskell { p }s in @Haskell { Thrist p a b } exist?
 @LP is parametricity in the first parameter useful? I.e.
 can we formulate sensible functions on @Haskell { Thrist p a b }, where
 p is left universal?
+@LP Given certain callback functions, can the Thrist be accompanied with
+a generic interpretation function, in the style of @I {Unimo}? Would it be
+possible to instrument thrists with a monadic semantics this way?
 @End @Section
 
 
 @Section
-  @Title { Thanks }
+  @Title { Acknowledgements }
 @Begin
 @PP
 My special thanks go to Tim Sheard, whose @Omega system served as an
 excellent testbed for formulating the ideas expressed in this paper.
 The @I { HaL 2 } workshop gave me the opportunity to discuss the connection
 between categories and thrists, thanks to Heinrich-Gregor Zirnstein,
-for encouragement.
+for encouragement and to Johan Jeuring for constructive criticism.
+Christopher Diggins corrected some of my views on the Cat language and
+provided valuable input for the presentation.
 @End @Section
 
 
