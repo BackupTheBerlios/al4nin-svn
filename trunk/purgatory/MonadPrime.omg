@@ -43,7 +43,7 @@ import "Thrist.omg"
 data Monad' :: (* ~> *) ~> * ~> * ~> * where
   Return :: m b -> Monad' m a b
   Return' :: b -> Monad' m a b
-  Bind :: (t -> (m u)) -> Monad' m t u
+  Bind :: (t -> m u) -> Monad' m t u
   Bind' :: (t -> u) -> Monad' m t u
 
 
