@@ -256,7 +256,9 @@ dominoes ("http://en.wikipedia.org/wiki/Dominoes") could spring into our minds:
 @LP Dominoes are laid out in a valid configuration only, when the stones sharing a common
 edge possess the same number of dots next to this edge. Our @Haskell {Nil}
 corresponds to an empty board, and @Haskell { Cons } joins two stones with
-a common edge.
+a common edge. A simple, but important difference to our thrists is that the
+dominoes' face numbers do not correspond to the contained value, but to the
+@I type of the contained value.
 
 @End @SubSection
 
@@ -1030,16 +1032,46 @@ of the Thrist type constructor.
 structure and demonstrated that the ability to take thrists apart and analyse is
 a very good arguments for their use. Also, all operations performed on thrists, such
 as subdivision, insertion and extension must be performed by algorithms that preserve
-
-We have shown that thrists generalize arrows naturally and monads with
-a shallow adaptation layer. 
+the strong typing constraints that are imposed by the @Haskell { Thrist } data structure's
+typing rule. For this to work it is crucial that @Haskell { Thrist } is defined to be
+a generalized algebraic datatype (GADT).
+@PP We have further shown that thrists generalize arrows naturally and monads with
+a shallow adaptation layer. Free categories can be modelled as thrists and we conjecture
+that computationally relevant categories can be fitted into the @Haskell { Thrist }
+framework.
+@PP Last, but not least, we could successfully exploit {@Omega}'s extensible syntax
+to present thrists in a uniform and aestetical way, well alike {@I Haskell}'s syntax
+for lists, with the same ease of pattern matching and construction.
+@PP
+Although the above provides sufficient evidence of the usefullness of thrists, there
+is still plenty to find out.
 @LP what other useful @Haskell { p }s in @Haskell { Thrist p a b } exist?
+Since the @Haskell { a } and @Haskell { b } parameters can encode
+propositions, the @Haskell { Thrist } approach can convey the evolution
+of abstract properties, e.g. the adherence to the SSA form @Cite {appel}.
+Modern compiler architectures{ @FootNote { GCC @Cite {gcc} and LLVM @Cite {llvm} being notable representants } }
+tend to favor this formalism for internal representation of imperative programs.
+Explicitly tracking def-use information paired with annotation preserving
+transformations might pave the way to certified compilers, but apperars to
+be a challenging task.
 @LP is parametricity in the first parameter useful? I.e.
 can we formulate sensible functions on @Haskell { Thrist p a b }, where
 p is left universal?
 @LP Given certain callback functions, can the Thrist be accompanied with
 a generic interpretation function, in the style of @I {Unimo}? Would it be
 possible to instrument thrists with a monadic semantics this way?
+@LP Folds on thrists. Hard because types vary. Existentials? Folds are very important
+for lists, so we need them.
+@LP Syntactical questions: can "\"do\"" (monadic) or "\"proc\" ... \"do\"" (arrow{
+@FootNote { arrow syntax is available in certain Haskell implementatons, but not in @Omega}})
+syntax be used for more convenient construction of thrists then with the @Haskell { [a, b; r]l }
+notation?
+@LP More generalization, though not very important for demonstration, generalizing the
+Thrist type signature to accept the last two parameters from any level of the sort hierarchy
+seems useful. Parity in generality at least with the built-in @Haskell { Equal } type seems
+desirable{ @FootNote { in @Omega its type signature is
+@Haskell { Equal :: level b.forall (a::*(1 + b)).a ~> a ~> *0 } } }, but even
+different levels for the second and third parameters are conceivable.
 @End @Section
 
 
@@ -1058,9 +1090,19 @@ provided valuable input for the presentation.
 
 
 @Appendix
-@Title { App 1 }
+@Title { Useful Functions on Thrists }
 @Begin
 @PP
 
+#@SubAppendix
+extend, append, instrument (e.g. with tracepoints)
+
+
+
 @End @Appendix
 
+@Appendix
+@Title { App2 }
+@Begin
+@PP
+@End @Appendix
