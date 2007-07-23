@@ -40,6 +40,8 @@ import "LangPrelude.prg"
 import "Thrist.omg" 
   (Thrist, Nil, Cons, syntax List(l))
 
+-- #################################################
+
 data Monad' :: (* ~> *) ~> * ~> * ~> * where
   Return :: m b -> Monad' m a b
   Return' :: b -> Monad' m a b
@@ -61,3 +63,32 @@ runMP (v@Monad return bind _) mon [Bind' f; rest]l = runMP v (bind mon (return .
 
 r0 = runMP ioM (returnIO 5) t1
 
+-- #################################################
+
+-- Thrist extending
+
+extendThrist :: forall (a :: *1) (b :: a ~> a ~> *0) (c :: a) (d :: a) (e :: a) .
+		Thrist b c d ->
+		b d e ->
+		Thrist b c e
+
+extendThrist []l a = [a]l
+extendThrist [b; r]l a = [b; extendThrist r a]l
+
+
+-- Thrist appending
+
+appendThrist :: forall (a :: *1) (b :: a ~> a ~> *0) (c :: a) (d :: a) (e :: a) .
+		Thrist b c d ->
+		Thrist b d e ->
+		Thrist b c e
+
+appendThrist []l a = a
+appendThrist [b; r]l a = [b; appendThrist r a]l
+
+-- Thrist flattening
+
+flattenThrist :: Thrist (Thrist k) a b -> Thrist k a b
+
+flattenThrist []l = []l
+flattenThrist [a; as]l = appendThrist a $ flattenThrist as
