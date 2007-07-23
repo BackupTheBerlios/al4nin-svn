@@ -6,7 +6,7 @@
 @SysInclude { haskell }
 
 def @Prompt left input right output { { Helvetica Base } @Font { prompt> @Haskell { input } @PP @I { output } } }
-def @Omega { {@Sym Omega}mega }
+def @Omega { {@I {@Sym Omega}}mega }
 
 #@Database @Reference { refs }
 @Report
@@ -509,11 +509,11 @@ function. So we are obliged to extend @Haskell { interpret }. We can try thus:
 @TODO
 
 
-@LD @Heading { Using Witnesses to Describe Arities }
-The solution is to attach a @I witness object to every @Haskell { Prim }
+@LD @Heading { Using Representation Types to Describe Arities }
+The solution is to attach an object of @I {representation type} to every @Haskell { Prim }
 combinator, to aid continued interpretation in the multi-arity case.
 @LP To this end we need a description of what types are being passed in
-stack slots. This desctiption must be a value so that it can be pattern
+stack slots. This description must be a value so that it can be pattern
 matched at runtime and it has to provide a constructor for all tractable
 datatypes.
 
@@ -538,11 +538,11 @@ constructor:
   ...
 }
 
-The first argument to @Haskell { Prim } is called a @I witness{ @FootNote { technically
+The first argument to @Haskell { Prim } is called a @I representation{ @FootNote { technically
 these types are called @I { singleton types } and constitue a reflection of the structure
 of the type-level objects into the value-world. }}, becase it records the
 structure of the function's range's type{ @FootNote { It suffices to describe the range, because
-the domain's type is easily handled without a witness. } }.
+the domain's type is easily handled without a representation. } }.
 @LP We can reproduce our previous @Haskell { Add } primitive now:
 
 @LD {
@@ -552,7 +552,7 @@ the domain's type is easily handled without a witness. } }.
 
 @LD @Heading { Interpreting Primitives }
 We finally have all ingredients together to embark on putting down the @Haskell { interpret }
-case on @Haskell { Prim }. The key idea is here to pattern match on the witness in order
+case on @Haskell { Prim }. The key idea is here to pattern match on the representation value in order
 to incrementally saturate the @Omega function present in the primitive:
 
 @TODO
