@@ -1,0 +1,82 @@
+-- -*-Haskell-*-
+
+{-
+ * Copyright (c) 2007 Gabor Greif
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to deal
+ * in the Software without restriction, including without limitation the rights
+ * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies
+ * of the Software, and to permit persons to whom the Software is furnished to do
+ * so, subject to the following conditions:
+ *
+ * The above copyright notice and this permission notice shall be
+ * included in all copies or substantial portions of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
+ * EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES
+ * OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
+ * NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT
+ * HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY,
+ * WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+ * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE
+ * OR OTHER DEALINGS IN THE SOFTWARE.
+ -}
+
+
+import "LangPrelude.prg" 
+
+import "Thrist.omg" 
+  (Thrist, Nil, Cons, syntax List(l))
+
+data CoThrist :: forall (l :: *1) . (l ~> l ~> *)  ~> l ~> l ~> * where
+  Lin :: CoThrist k a a
+  Snoc :: CoThrist k c b -> k b a -> CoThrist k c a
+
+revThrist :: CoThrist k a b -> Thrist k b c -> CoThrist k a c
+revThrist acc []l = acc
+revThrist acc [a; b]l = revThrist (Snoc acc a) b
+
+revThrist' :: Thrist k a c -> CoThrist k a c
+revThrist' thr = revThrist Lin thr
+
+
+plus:: Nat ~> Nat ~> Nat
+{plus Z m} = m
+{plus (S n) m} = S {plus n m}
+
+mul :: Nat ~> Nat ~> Nat
+{mul Z m} = Z
+{mul (S n) m} = {plus m {mul n m}}
+
+
+data DivBy :: Nat ~> Nat ~> * where
+  Mul :: Nat' a -> Nat' b -> Nat' {mul a b} -> DivBy {mul a b} a
+
+
+--data Divide :: Nat ~> Nat ~> * where
+--  Mul :: Nat' a -> Nat' b -> Nat' {mul a b} -> DivBy {mul a b} a
+
+
+--data Co :: forall (l :: *1) . (l ~> l ~> *)  ~> (l ~> l ~> *) where
+--  Co :: (r a b -> r b a) -> Co r
+
+
+plus':: Nat' a -> Nat' b -> Nat' {plus a b}
+plus' Z m = m
+plus' (S n) m = S (plus' n m)
+
+mul' :: Nat' a -> Nat' b -> Nat' {mul a b}
+mul' Z m = Z
+mul' (S n) m = plus' m $ mul' n m
+
+collapse :: Thrist DivBy a b -> DivBy a b
+collapse [a]l = a
+collapse [Mul a b ab, Mul a' b' a; bs]l = check (collapse [Mul a' (mul' b b') ab; bs]l)
+
+
+
+t1 = [Mul 2v 5v 10v, Mul 1v 2v 2v]l
+t1' = revThrist' t1
+
+--t1c = collapse t1
