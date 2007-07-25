@@ -1,0 +1,121 @@
+-- -*-Haskell-*-
+
+{-
+ * Copyright (c) 2007 Gabor Greif
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to deal
+ * in the Software without restriction, including without limitation the rights
+ * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies
+ * of the Software, and to permit persons to whom the Software is furnished to do
+ * so, subject to the following conditions:
+ *
+ * The above copyright notice and this permission notice shall be
+ * included in all copies or substantial portions of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
+ * EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES
+ * OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
+ * NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT
+ * HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY,
+ * WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+ * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE
+ * OR OTHER DEALINGS IN THE SOFTWARE.
+ -}
+
+-- Usage:
+--
+--  Set up the environment
+--     setenv LD_LIBRARY_PATH /opt/exp/gnu/lib:$LD_LIBRARY_PATH
+--     setenv PATH /home/ggreif/%NoBackup%/Omega1.4.2:$PATH
+--
+--  Start the omega interpreter by typing
+--     omega MonadPrime.omg
+--  and run your commands on the prompt
+--
+
+import "LangPrelude.prg" 
+  (head,tail,lookup,member,fst,snd,map,Monad,maybeM,id,ioM,Row,RCons,RNil,Eq,Equal,listM)
+
+--import "Thrist.omg" 
+--  (Thrist, Nil, Cons, syntax List(l))
+data Thrist :: forall (l :: *1) . (l ~> l ~> *)  ~> l ~> l ~> * where
+  Nil :: Thrist k a a
+  Cons :: k c b -> Thrist k b a -> Thrist k c a
+ deriving List(l)
+
+-- #################################################
+
+data Monad' :: (* ~> *) ~> * ~> * ~> * where
+  Return :: m b -> Monad' m a b
+  Return' :: b -> Monad' m a b
+  Bind :: (t -> m u) -> Monad' m t u
+  Bind' :: (t -> u) -> Monad' m t u
+
+
+t0 = let monad maybeM in [Bind (\5 -> return True), Return $ Just "2"]l
+t1 = [Return $ putStr "dd", Bind (\ () -> returnIO 3)]l
+t2 = let monad maybeM in [Bind (\5 -> return True), Return' "2"]l
+t3 = [Bind' (\5 -> True), Return' "2"]l
+
+runMP :: Monad m -> m a -> Thrist (Monad' m) a b -> m b
+runMP _ mon []l = mon
+runMP v _ [Return m; rest]l = runMP v m rest
+runMP (v@Monad return _ _) _ [Return' m; rest]l = runMP v (return m) rest
+runMP (v@Monad _ bind _) mon [Bind f; rest]l = runMP v (bind mon f) rest
+runMP (v@Monad return bind _) mon [Bind' f; rest]l = runMP v (bind mon (return . f)) rest
+
+r0 = runMP ioM (returnIO 5) t1
+
+-- #################################################
+
+-- Thrist extending
+
+extendThrist :: forall (a :: *1) (b :: a ~> a ~> *0) (c :: a) (d :: a) (e :: a) .
+		Thrist b c d ->
+		b d e ->
+		Thrist b c e
+
+extendThrist []l a = [a]l
+extendThrist [b; r]l a = [b; extendThrist r a]l
+
+
+-- Thrist appending
+
+appendThrist :: forall (a :: *1) (b :: a ~> a ~> *0) (c :: a) (d :: a) (e :: a) .
+		Thrist b c d ->
+		Thrist b d e ->
+		Thrist b c e
+
+appendThrist []l a = a
+appendThrist [b; r]l a = [b; appendThrist r a]l
+
+-- Thrist flattening
+
+flattenThrist :: Thrist (Thrist k) a b -> Thrist k a b
+
+flattenThrist []l = []l
+flattenThrist [a; as]l = appendThrist a $ flattenThrist as
+
+-- Thrist instrumenting
+
+intersperseThrist :: (forall (x :: *). k x x) -> Thrist k a b -> Thrist k a b
+
+intersperseThrist i []l = [i]l
+intersperseThrist i [a; as]l = [i, a; intersperseThrist i as]l
+
+
+
+-- Pushing down a function into a specific tuple level
+
+dig :: Nat ~> * ~> *
+{dig Z a} = a
+{dig (S n) (a, b)} = (a, {dig n b})
+
+exch :: Nat ~> * ~> * ~> *
+{exch Z b a} = b
+{exch (S n) b (a, c)} = (a, {exch n b c})
+
+nest :: Nat' n -> ({dig n a} -> b) -> a -> {exch n b a}
+nest Z f a = check (f a)
+nest (S n) f (a, c) = (a, nest n f c)
