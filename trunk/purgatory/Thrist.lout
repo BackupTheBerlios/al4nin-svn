@@ -258,7 +258,7 @@ edge possess the same number of dots next to this edge. Our @Haskell {Nil}
 corresponds to an empty board, and @Haskell { Cons } joins two stones with
 a common edge. A simple, but important difference to our thrists is that the
 dominoes' face numbers do not correspond to the contained value, but to the
-@I type of the contained value.
+@I type of the contained value: we are playing dominoes at the type level.
 
 @End @SubSection
 
@@ -1072,19 +1072,75 @@ provided valuable input for the presentation.
 
 
 @Appendix
-@Title { Useful Functions on Thrists }
+  @Title { Useful Functions on Thrists }
 @Begin
 @PP
+Following functions are parametric in the thrist type, i.e.
+in the first type parameter to the thrist. Thus they are universal.
 
-#@SubAppendix
-extend, append, instrument (e.g. with tracepoints)
+@BeginSubAppendices
 
+@SubAppendix
+  @Title { Extending Thrists }
+@Begin
+@LD @Haskell {
+extendThrist :: forall (a :: *1) (b :: a ~> a ~> *0) (c :: a) (d :: a) (e :: a).
+		Thrist b c d ->
+		b d e ->
+		Thrist b c e
+
+extendThrist []l a = [a]l
+extendThrist [b; r]l a = [b; extendThrist r a]l
+}
+@End @SubAppendix
+
+@SubAppendix
+  @Title { Appending Thrists }
+@Begin
+@LD @Haskell {
+appendThrist :: forall (a :: *1) (b :: a ~> a ~> *0) (c :: a) (d :: a) (e :: a).
+		Thrist b c d ->
+		Thrist b d e ->
+		Thrist b c e
+
+appendThrist []l a = a
+appendThrist [b; r]l a = [b; appendThrist r a]l
+}
+@End @SubAppendix
+
+@SubAppendix
+  @Title { Flattening Thrists }
+@Begin
+@LD @Haskell {
+flattenThrist :: Thrist (Thrist k) a b -> Thrist k a b
+
+flattenThrist []l = []l
+flattenThrist [a; as]l = appendThrist a $ flattenThrist as
+}
+@End @SubAppendix
+
+@SubAppendix
+  @Title { Instrumenting Thrists }
+@Begin
+It might be useful to wrap each thrist member with
+a special instrumentation, e.g. for tracing (tracepoints)
+or other ways of debugging.
+@LP Following function (using rank-2 polymorphism) accomplishes this.
+@LD @Haskell {
+intersperseThrist :: (forall (x :: *). k x x) -> Thrist k a b -> Thrist k a b
+
+intersperseThrist i []l = [i]l
+intersperseThrist i [a; as]l = [i, a; intersperseThrist i as]l
+}
+@End @SubAppendix
+
+@EndSubAppendices
 
 
 @End @Appendix
 
 @Appendix
-@Title { App2 }
+  @Title { A Complete Cat Example: @I fak }
 @Begin
 @PP
 @End @Appendix

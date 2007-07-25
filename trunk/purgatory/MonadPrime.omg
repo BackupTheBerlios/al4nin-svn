@@ -92,3 +92,11 @@ flattenThrist :: Thrist (Thrist k) a b -> Thrist k a b
 
 flattenThrist []l = []l
 flattenThrist [a; as]l = appendThrist a $ flattenThrist as
+
+-- Thrist instrumenting
+
+intersperseThrist :: (forall (x :: *). k x x) -> Thrist k a b -> Thrist k a b
+
+intersperseThrist i []l = [i]l
+intersperseThrist i [a; as]l = [i, a; intersperseThrist i as]l
+
