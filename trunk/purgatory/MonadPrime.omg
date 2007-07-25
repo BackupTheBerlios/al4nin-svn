@@ -100,3 +100,19 @@ intersperseThrist :: (forall (x :: *). k x x) -> Thrist k a b -> Thrist k a b
 intersperseThrist i []l = [i]l
 intersperseThrist i [a; as]l = [i, a; intersperseThrist i as]l
 
+
+
+-- Pushing down a function into a specific tuple level
+
+dig :: Nat ~> * ~> *
+{dig Z a} = a
+{dig (S n) (a, b)} = (a, {dig n b})
+
+exch :: Nat ~> * ~> * ~> *
+{exch Z b a} = b
+{exch (S n) b (a, c)} = (a, {exch n b c})
+
+nest :: Nat' n -> ({dig n a} -> b) -> a -> {exch n b a}
+-- does not typecheck, issue23:
+--nest Z f a = check (f a)
+--nest (S n) f (a, c) = (a, nest n f c)
