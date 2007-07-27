@@ -4,6 +4,7 @@
 @SysInclude { graph }
 @SysInclude { eq }
 @SysInclude { haskell }
+@Database @FontDef {lm}
 
 def @Prompt left input right output { { Helvetica Base } @Font { prompt> @Haskell { input } @PP @I { output } } }
 def @Omega { {@I {@Sym Omega}}mega }
@@ -11,8 +12,8 @@ def @Omega { {@I {@Sym Omega}}mega }
 #@Database @Reference { refs }
 @Report
   @CoverSheet { No }
-  @ColumnNumber { 2 } 
-  @InitialFont { Palatino Base 9p } 
+  @ColumnNumber { 2 }
+  @InitialFont { LMten Base 9p }
   @DateLine { Yes }
   @Title { Thrists: Dominoes of Data }
   @Author { Gabor Greif }
