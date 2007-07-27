@@ -1,12 +1,47 @@
-{ @FontDef
-    @Tag { ATvantGarde-Bold }
-    @Family { ATvantGarde }
-    @Face { Bold }
-    @Name { AvantGarde-Bold }
-    @Metrics { AG-Bd }
-    @Mapping { LtLatin1.LCM }
+########
+# LMnine
+{
+@FontDef
+     @Tag { LMnine-Base }
+     @Family { LMnine }
+     @Face { Base }
+     @Name { LMRoman9-Regular }
+     @Metrics { lmr9.afm }
+     @Mapping { LtLatin1.LCM }
 }
 
+{
+@FontDef
+     @Tag { LMnine-Bold }
+     @Family { LMnine }
+     @Face { Bold }
+     @Name { LMRoman9-Bold }
+     @Metrics { lmbx9.afm }
+     @Mapping { LtLatin1.LCM }
+}
+
+{
+@FontDef
+     @Tag { LMnine-Slope }
+     @Family { LMnine }
+     @Face { Slope }
+     @Name { LMRoman9-Italic }
+     @Metrics { lmri9.afm }
+     @Mapping { LtLatin1.LCM }
+}
+
+{
+@FontDef
+     @Tag { LMnine-BoldSlope }
+     @Family { LMnine }
+     @Face { BoldSlope }
+     @Name { LMRoman9-BoldItalic }
+     @Metrics { lmbxi9.afm }
+     @Mapping { LtLatin1.LCM }
+}
+
+#######
+# LMten
 {
 @FontDef
      @Tag { LMten-Base }

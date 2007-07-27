@@ -13,7 +13,7 @@ def @Omega { {@I {@Sym Omega}}mega }
 @Report
   @CoverSheet { No }
   @ColumnNumber { 2 }
-  @InitialFont { LMten Base 9p }
+  @InitialFont { LMnine Base 9p }
   @DateLine { Yes }
   @Title { Thrists: Dominoes of Data }
   @Author { Gabor Greif }
@@ -1123,6 +1123,7 @@ flattenThrist [a; as]l = appendThrist a $ flattenThrist as
 @SubAppendix
   @Title { Instrumenting Thrists }
 @Begin
+@PP
 It might be useful to wrap each thrist member with
 a special instrumentation, e.g. for tracing (tracepoints)
 or other ways of debugging.
