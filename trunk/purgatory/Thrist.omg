@@ -35,7 +35,7 @@
 --
 
 import "LangPrelude.prg" 
-  (head,tail,lookup,member,fst,snd,map,Monad,maybeM,id,ioM,Row,HasType,RCons,RNil,Eq,Equal,
+  (head,tail,lookup,member,fst,snd,map,Monad,maybeM,id,ioM,Row,RCons,RNil,Eq,Equal,
   listM, (!=), (==))
 
 kind Doe = Wi | So
