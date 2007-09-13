@@ -937,6 +937,7 @@ guarantees the arrow laws {@Cite { hughes19xx } }. On the other hand thrists are
 easily fitted in an arrow. It is the @Haskell { arr } instance method that is problematic
 to provide. Thrists just serve as a container and do not carry a semantics, while @Haskell { arr }
 mandates a function argument for the method @Haskell { arr }.
+@Considerations { a value of type @Haskell { Thrist Arrow } corresponds to the @F { do ... proc ... } syntactic sugar expression in Haskell }
 @PP
 Nilsson @Cite { nilsson2005 } embarks on optimization of a GADT-based @Haskell { Arrow } library, but he only
 considers the identity function as a special case. He observes a substantial
@@ -951,17 +952,21 @@ constructors would need auxiliary denotation anyway, and could be optimized
 either on export or inside of the external system itself.
 @PP
 Monads can also be regarded as a specialization to arrows, so we expect that @Haskell { Thrist (Monad' T) }
-can be canonically derived.
-@LP First we define the adapter to @Haskell { Monad }, @Haskell { Monad' } to have two parameters:
+can be canonically derived. Here @Haskell { Monad' T a b } represents the type of a monadic actions
+either starting afresh and resulting a monadic value @Haskell { T b } or representing a Kleisli arrow
+@Haskell { a -> T b }.
+@LP We can define the adapter @Haskell { Monad' } to have three parameters, the first fixing the @Haskell { Monad }
+and the last two to accomodate for the @Haskell { Thrist } interface:
 @TODO
 @ID @Haskell {
 data Monad' :: (* ~> *) ~> * ~> * ~> * where
-  Return :: m b -> Monad' m a b
-  Bind :: (t -> m u) -> Monad' m t u
+  Feed :: m b -> Monad' m a b
+  Digest :: (a -> m b) -> Monad' m a b
 }
 @PP
+@Considerations { a value of type @Haskell { Thrist (Monad' T) } corresponds to the @F { do ... } syntactic sugar expression in Haskell }
 @Considerations { Unimo? for ensuring that the interpreter obeys monadic semantics,
- in an Appendix: use Unimo to constuct an @Omega Monad' -> Monad function } 
+ in an Appendix: use Unimo to constuct an @Omega Monad' -> Monad function, hmm this is not correct, unimo :: ??? -> Monad } 
 @Considerations { Comonads?, see paper @Cite {heunenJacobs},
 Uustalu"&"Vene:The Essence of Dataflow Programming }
 
