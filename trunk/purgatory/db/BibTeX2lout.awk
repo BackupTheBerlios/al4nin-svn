@@ -53,7 +53,7 @@
 /url.*=.*/ {print "   @URL { " cont " }"; next}
 /volume.*=.*/ {print "   @Volume { " cont " }"; next}
 /year.*=.*/ {print "   @Year { " cont " }"; next}
-/isbn.*=.*/ {print "   @ISBN { " cont " }"; next}
+/isbn.*=.*/ {print "   # @ISBN { " cont " }"; next}
 
 ## close the record
 {if (have) print "}\n\n"; have = 0; next}
