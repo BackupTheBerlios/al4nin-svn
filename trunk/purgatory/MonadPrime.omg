@@ -125,21 +125,51 @@ nest :: Nat' n -> ({dig n a} -> b) -> a -> {exch n b a}
 -- #################################################
 -- see Uustalu
 
-data Comonad d :: (* ~> *) ~> * where
-  Counit :: d a -> a
-  Cobind :: (d a -> b) -> (d a -> d b)
+data Comonad :: (*0 ~> *0) ~> *0 where
+  Comonad :: forall (m :: *0 ~> *0) .
+                    ((forall a . m a -> a)) ->
+                    ((forall a b . (m a -> b) -> m a -> m b)) ->
+--                  ((forall a . String -> m a)) ->
+                    Comonad m
 
 
 data Comonad' :: (* ~> *) ~> * ~> * ~> * where
-  Peel :: m b -> Monad' m a b
-  Peel' :: b -> Monad' m a b
-  Bind :: (t -> m u) -> Monad' m t u
-  Bind' :: (t -> u) -> Monad' m t u
+  Peel :: m b -> Comonad' m a b
+  Peek :: (m t -> u) -> Comonad' m t u
 
+data Stream a = Then a (Stream a) -- coinductive
+
+streamCM = Comonad counit
+                   coextend
+           where
+             counit (Then a _) = a
+             coextend k (af@Then a as) = Then (k af) (lazy (coextend k as))
+
+ones = Then 1 ones
+twos = Then 2 twos
+
+first3 (Then a (Then b (Then c _))) = (a, b + a + c, c)
+
+add3 (Then (a, b, c) _) = a + b + c
+fut (Then _ (Then b _)) = b
+
+c1 = [Peel ones, Peek first3]l
+c2 = [Peel ones, Peek first3, Peek add3]l
+c3 = [Peel ones, Peek first3, Peek add3, Peek fut]l
+
+runCMP :: Comonad c -> c a -> Thrist (Comonad' c) a b -> c b
+runCMP _ ca []l = ca
+runCMP (com@Comonad _ coextend) ca [Peek comp; rest]l = runCMP com (coextend comp ca) rest
+runCMP com _ [Peel new; rest]l = runCMP com new rest
+
+runCMP' :: Comonad c -> c a -> Thrist (Comonad' c) a b -> b
+runCMP' (com@Comonad counit _) sta thr = counit (runCMP com sta thr)
 
 -- #################################################
 -- see Unimo paper
 -- construct monadic law preserving interpreter for
 -- Monad'
+-- 1) operationally defined Thrist interpreters
+-- 2) use Unimo framework to create Omega Monads (Comonads?)
 
 
