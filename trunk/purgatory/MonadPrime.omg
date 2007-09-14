@@ -129,7 +129,6 @@ data Comonad :: (*0 ~> *0) ~> *0 where
   Comonad :: forall (m :: *0 ~> *0) .
                     ((forall a . m a -> a)) ->
                     ((forall a b . (m a -> b) -> m a -> m b)) ->
---                  ((forall a . String -> m a)) ->
                     Comonad m
 
 
@@ -139,8 +138,7 @@ data Comonad' :: (* ~> *) ~> * ~> * ~> * where
 
 data Stream a = Then a (Stream a) -- coinductive
 
-streamCM = Comonad counit
-                   coextend
+streamCM = Comonad counit coextend
            where
              counit (Then a _) = a
              coextend k (af@Then a as) = Then (k af) (lazy (coextend k as))
