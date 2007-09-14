@@ -29,15 +29,15 @@ import "LangPrelude.prg"
 import "Thrist.omg" 
   (Thrist, Nil, Cons, syntax List(l))
 
-data CoThrist :: forall (l :: *1) . (l ~> l ~> *)  ~> l ~> l ~> * where
-  Lin :: CoThrist k a a
-  Snoc :: CoThrist k c b -> k b a -> CoThrist k c a
+data RightThrist :: forall (l :: *1) . (l ~> l ~> *)  ~> l ~> l ~> * where
+  Lin :: RightThrist k a a
+  Snoc :: RightThrist k c b -> k b a -> RightThrist k c a
 
-revThrist :: CoThrist k a b -> Thrist k b c -> CoThrist k a c
+revThrist :: RightThrist k a b -> Thrist k b c -> RightThrist k a c
 revThrist acc []l = acc
 revThrist acc [a; b]l = revThrist (Snoc acc a) b
 
-revThrist' :: Thrist k a c -> CoThrist k a c
+revThrist' :: Thrist k a c -> RightThrist k a c
 revThrist' thr = revThrist Lin thr
 
 
@@ -72,7 +72,7 @@ mul' (S n) m = plus' m $ mul' n m
 
 collapse :: Thrist DivBy a b -> DivBy a b
 collapse [a]l = a
-collapse [Mul a b ab, Mul a' b' a; bs]l = check (collapse [Mul a' (mul' b b') ab; bs]l)
+--collapse [Mul a b ab, Mul a' b' a; bs]l = check (collapse [Mul a' (mul' b b') ab; bs]l)
 
 
 
@@ -80,3 +80,13 @@ t1 = [Mul 2v 5v 10v, Mul 1v 2v 2v]l
 t1' = revThrist' t1
 
 --t1c = collapse t1
+
+
+grrr :: Nat ~> Nat ~> *
+{grrr a b} = Int
+
+ff :: {grrr 1t 1t}
+ff = 42
+
+ff1 :: Thrist grrr 1t 1t
+ff1 = [ff]l -- where theorem because = (Eq :: Equal {grrr 1t 1t} Int)
