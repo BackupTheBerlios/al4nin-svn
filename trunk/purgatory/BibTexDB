@@ -1,4 +1,5 @@
 @inproceedings{1086374,
+ tag = {nilsson05.frp},
  author = {Henrik Nilsson},
  title = {Dynamic optimization for functional reactive programming using generalized algebraic data types},
  booktitle = {ICFP '05: Proceedings of the tenth ACM SIGPLAN international conference on Functional programming},
@@ -13,6 +14,7 @@
 
 
 @inproceedings{1159840,
+ tag = {lin06.unimo},
  author = {Chuan-kai Lin},
  title = {Programming monads operationally with Unimo},
  booktitle = {ICFP '06: Proceedings of the eleventh ACM SIGPLAN international conference on Functional programming},
@@ -27,6 +29,7 @@
 
 
 @inproceedings{581699,
+ tag = {okasaki02.potfix},
  author = {Chris Okasaki},
  title = {Techniques for embedding postfix languages in Haskell},
  booktitle = {Haskell '02: Proceedings of the 2002 ACM SIGPLAN workshop on Haskell},
