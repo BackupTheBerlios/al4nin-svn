@@ -1,3 +1,8 @@
+# Here is the complete set of values that you may give to the @Type option:
+# Book TechReport Article InBook
+# Proceedings MastersThesis InProceedings
+# PhDThesis MiscP
+
 # /Book.*=.*/ {print "Book { " $4 " }"; next}
 # /Booklet.*=.*/ {print "Book { " $4 " }"; next}
 # /Proceedings.*=.*/ {print "Proceedings { " $4 " }"; next}

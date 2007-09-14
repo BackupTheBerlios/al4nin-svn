@@ -29,7 +29,7 @@
 
 
 @inproceedings{581699,
- tag = {okasaki02.potfix},
+ tag = {okasaki02.postfix},
  author = {Chris Okasaki},
  title = {Techniques for embedding postfix languages in Haskell},
  booktitle = {Haskell '02: Proceedings of the 2002 ACM SIGPLAN workshop on Haskell},
