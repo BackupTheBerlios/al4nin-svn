@@ -28,15 +28,27 @@
 
 import "LangPrelude.prg" 
 
-
+{-
 data Unimo r a 
   = Unit a 
   | Effect (r (Unimo r) a) 
-  | forall b. Bind (Unimo r b) (b -> Unimo r a) 
+  | ex b. Bind (Unimo r b) (b -> Unimo r a) 
+-}
 
-instance Monad (Unimo r) where 
-  return = Unit 
-  (>==) = Bind 
+data Unimo :: ((* ~> *) ~> * ~> *) ~> * ~> * where
+  Unit :: a -> Unimo r a
+  Effect :: (r (Unimo r) a) -> Unimo r a
+  Bind :: (Unimo r b) -> (b -> Unimo r a) -> Unimo r a
+
+
+--instance Monad (Unimo r) where 
+--  return = Unit 
+--  (>==) = Bind 
+
+unimo :: Monad (Unimo a)
+unimo = Monad Unit Bind undefined
+
+{-
 
 type BindOp r a v = forall b. 
   r (Unimo r) b 
@@ -46,10 +58,10 @@ type BindOp r a v = forall b.
 type Observer r a v = (a -> v) -> BindOp r a v -> Unimo r a -> v 
 
 observe monad :: Observer r a v 
-observe monad unit op bind op = eval where 
-  eval (Unit v) = unit op v 
-  eval (Effect e) = e `bind op` Unit 
-  eval (Bind (Effect e) k) = e `bind op` k 
+observe monad unit_op bind_op = eval where 
+  eval (Unit v) = unit_op v 
+  eval (Effect e) = e `bind_op` Unit 
+  eval (Bind (Effect e) k) = e `bind_op` k 
   eval (Bind (Unit v) k) = eval (k v) 
   eval (Bind (Bind m k) g) = eval (Bind m cont) 
   where cont v = Bind (k v) g 
@@ -62,9 +74,10 @@ data StateE s (m :: * -> *) a where
 type State s = Unimo (StateE s) 
 
 run state :: forall a s. State s a -> s -> (a, s) 
-run state m s = observe monad unit op bind op m where 
-  unit op v = (v, s) 
-  bind op :: BindOp (StateE s) a (a, s) 
-  bind op Get k = run state (k s) s 
-  bind op (Put s1) k = run state (k ()) s1 
+run state m s = observe monad unit_op bind_op m where 
+  unit_op v = (v, s) 
+  bind_op :: BindOp (StateE s) a (a, s) 
+  bind_op Get k = run state (k s) s 
+  bind_op (Put s1) k = run state (k ()) s1 
 
+-}
