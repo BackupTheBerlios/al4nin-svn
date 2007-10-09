@@ -1,0 +1,28 @@
+
+import "LangPrelude.prg"
+
+m n = if n > 100 then n - 10 else m(m(n + 11))
+
+pow :: (* ~> *) ~> Nat ~> * ~> *
+{pow f Z t} = t
+{pow f (S n) t} = f {pow f n t}
+
+data M :: * ~> * where
+  M :: Nat' n -> {pow M n Int} -> M {pow M n Int}
+
+data U :: * where
+  U :: M x -> U
+
+
+ntoi :: Nat' x -> Int
+ntoi Z = 0
+ntoi (S n) = 1 + ntoi n
+
+unpack :: U -> (exists n m . (Nat' m, Nat' n))
+unpack (U (M 0v 0)) = Ex (0v, 0v)
+
+m' :: Nat' x -> U
+m' (101 + n)v = U (M 0v (101 - 10 + ntoi n))
+--m' (100 + n)v = m' (unpack (m' (111 + n)v))
+m' (100 + n)v = let Ex (d, x) = unpack (m' (111 + n)v) in m' x
+    where (Ex (d, x)) = unpack (m' (111 + n)v)
