@@ -259,7 +259,7 @@ dominoes ("http://en.wikipedia.org/wiki/Dominoes") could spring into our minds:
 edge possess the same number of dots next to this edge. Our @Haskell {Nil}
 corresponds to an empty board, and @Haskell { Cons } joins two stones with
 a common edge. A simple, but important difference to our thrists is that the
-dominoes' face numbers do not correspond to the contained value, but to the
+dominoes' face numbers do not correspond to the contained @I {value}, but to the
 @I type of the contained value: we are playing dominoes at the type level.
 
 @End @SubSection
