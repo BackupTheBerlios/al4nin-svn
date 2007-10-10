@@ -948,13 +948,13 @@ Figure @NumberOf { machine } depicts a fragment of a state machine intended to h
 @I request"/"acknowledge type handshake with an identical remote instance
 of itself. The two instances are communicating solely by message passing
 and originally both inhabit the @I North state. The intention is that the
-two machines control the two ends of a unidirectional communication channel
-that is	@I protected, i.e. two wires exist, carrying a data stream A on the
-first wire{ @FootNote {the second wire can either carry the same data as A (to increase redundancy)
+two machines control the ends of a unidirectional communication channel
+that is {@I protected}, i.e. two wires exist, carrying a data stream A on the
+first wire{ @FootNote {the second wire can either carry the same data as A (to increase redundancy),
 or the two wires could jointly carry stream A (to increase bandwidth)} },
 and when the first wire does not carry data, the second wire can
 be utilized to carry a lower-priority data stream B. The typical use-case
-is the premium customer paying for A and the bulk customer paying significanly
+is the premium customer paying for A and the bulk customer paying significantly
 less for B. There is an extra twist however: it is forbidden for the data stream A
 to reach the sink of data stream B, even for very short time periods. This invariant
 calls for the request"/"acknowledge handshake, and the transient states on the way to
