@@ -1,0 +1,57 @@
+import "LangPrelude.prg"
+
+
+data Climber :: *1 where
+  Spine :: Nat ~> Climber
+  Binder :: Nat ~> Nat ~> Climber
+
+
+diff :: Nat ~> Nat ~> Nat
+{diff a Z} = a
+{diff (S a) (S b)} = {diff a b}
+
+-- determine the binding discipline
+discipline :: Climber ~> Climber ~> Climber
+{discipline (Spine a) (Spine b)} = Binder (S {diff a b}) b
+
+data Henk :: Climber ~> * where
+  Lit :: Henk (Spine 0t)
+  Bind :: Henk a -> Henk b -> Henk {discipline a b}
+  Type :: Henk (Spine 1t)
+
+climb :: Climber ~> Climber
+{climb (Spine n)} = Spine (S n)
+{climb (Binder (S Z) st)} = Spine (S st)
+{climb (Binder (S (S b)) st)} = Binder (S b) (S st)
+--{climb (Binder (2 + b)t st)} = Binder (S b) (S st)
+-- -> results in bug: The type: (2+b)t is not appropriate for the LHS of a type fun.
+
+
+tau :: Henk c -> Henk {climb c}
+tau Lit = Type
+tau (Bind Type Lit) = Bind Type Type
+--- tau (Bind Type Type) = Star
+-- need lemma: tau (Bind Type b) = Bind Type (tau b)
+-- need lemma: tau (Bind a b) = Bind a (tau b)
+
+
+{-
+data Henk :: (* ~> *) ~> Nat ~> Nat ~> * where
+  Lit :: Henk upstrat 0t 0t
+  Bind :: Henk trans b st' -> Henk trans' b st -> Henk redu b st
+  Type :: Henk upstrat 0t 1t
+
+
+upstrat :: * ~> *
+--{upstrat (Henk trans 0t st)} = Henk upstrat 0t (S st)
+{upstrat (Henk trans a st)} = Henk trans a (S st)
+
+redu :: * ~> *
+{redu (Henk trans (S b) st)} = Henk upstrat b (S st)
+
+--tau :: Henk trans b st -> {trans (Henk trans b st)}
+tau :: Henk trans b st -> {upstrat (Henk trans b st)}
+tau Lit = Type
+-}
+
+
