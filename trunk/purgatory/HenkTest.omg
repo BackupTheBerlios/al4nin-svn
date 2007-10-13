@@ -69,6 +69,7 @@ int = Lit (Spine' 1v)
 constfive :: Henk (Binder 2t 0t)
 constfive = Bind (Binder' 2t 0t) int five
 
+tau_constfive = Bind (Binder' 1t 1t) int int
 
 climb :: Climber ~> Climber
 {climb (Spine n)} = Spine (S n)
@@ -77,6 +78,13 @@ climb :: Climber ~> Climber
 
 tau :: Henk c -> Henk {climb c}
 tau (Lit cl) = Lit (UP cl)
+tau Value = Lit (Spine' 1v)
+--tau (Bind cl (a@Lit _) b) = Bind (NW cl) a (tau b)
+--tau (Bind (cl@Binder' 2v 0v) (a@Lit _) b) = Bind (NW cl) a (tau b)
+--tau (Bind (cl@Binder' 2v 0v) (a@Lit (Spine' 1v)) b) = Bind (NW cl) a (tau b)
+tau (Bind (cl@Binder' 2v 0v) (a@Lit (Spine' 1v)) (b@Value)) = Bind (NW cl) a (tau b)
+
+
 --tau (Bind (a@Lit _) (Lit b)) = Bind a (Lit (UP b))
 --- tau (Bind Type Type) = Star
 --needs lemma: 
