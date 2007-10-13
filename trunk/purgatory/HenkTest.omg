@@ -81,8 +81,11 @@ tau Value = Lit (Spine' 1v)
 --tau (Bind cl (a@Lit _) b) = Bind (NW cl) a (tau b)
 --tau (Bind (cl@Binder' 2v 0v) (a@Lit _) b) = Bind (NW cl) a (tau b)
 --tau (Bind (cl@Binder' 2v 0v) (a@Lit (Spine' 1v)) b) = Bind (NW cl) a (tau b)
-tau (Bind (LV cl) (a@Lit (Spine' 1v)) (b@Value)) = Bind cl a (tau b)
+tau (Bind (LV cl) (a@Lit (Spine' 1v)) (b@Lit (Spine' 1v))) = Lit cl
 
+--Equal {discipline (Spine 1t) {climb (Binder 1t 0t)}} (Spine 1t)
+-- = Equal {discipline (Spine 1t) (Spine 1t)} (Spine 1t)
+tau (Bind (SE cl) (a@Lit (Spine' 1v)) (b@Value)) = Bind cl a (tau b)
 
 --tau (Bind (a@Lit _) (Lit b)) = Bind a (Lit (UP b))
 --- tau (Bind Type Type) = Star
