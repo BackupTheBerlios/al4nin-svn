@@ -37,11 +37,11 @@ data Climber :: *1 where
 
 prop Climber' :: Climber ~> *0 where
   Spine' :: Nat' (S st) -> Climber' (Spine (S st))
-  Binder' :: Nat' b -> Nat' st -> Climber' (Binder b st)
-  -- We can go northwest, but must not hit the spine
-  NW :: Climber' (Binder (S (S b)) st) -> Climber' (Binder (S b) (S st))
-  -- We can enter the spine
-  SP :: Climber' (Binder 1t st) -> Climber' (Spine (S st))
+--  Binder' :: Nat' b -> Nat' st -> Climber' (Binder b st)
+  -- We can go southeast, even hitting the ground
+  SE :: Climber' (Binder (S b) (S st)) -> Climber' (Binder (S (S b)) st)
+  -- We can leave the spine
+  LV :: Climber' (Spine (S st)) -> Climber' (Binder 1t st)
   -- We can walk up the spine
   UP :: Climber' (Spine st) -> Climber' (Spine (S st))
 
@@ -67,9 +67,9 @@ int :: Henk (Spine 1t)
 int = Lit (Spine' 1v)
 
 constfive :: Henk (Binder 2t 0t)
-constfive = Bind (Binder' 2t 0t) int five
+constfive = Bind (SE $ LV $ Spine' 2v) int five
 
-tau_constfive = Bind (Binder' 1t 1t) int int
+tau_constfive = Bind (LV $ Spine' 2v) int int
 
 climb :: Climber ~> Climber
 {climb (Spine n)} = Spine (S n)
@@ -82,7 +82,7 @@ tau Value = Lit (Spine' 1v)
 --tau (Bind cl (a@Lit _) b) = Bind (NW cl) a (tau b)
 --tau (Bind (cl@Binder' 2v 0v) (a@Lit _) b) = Bind (NW cl) a (tau b)
 --tau (Bind (cl@Binder' 2v 0v) (a@Lit (Spine' 1v)) b) = Bind (NW cl) a (tau b)
-tau (Bind (cl@Binder' 2v 0v) (a@Lit (Spine' 1v)) (b@Value)) = Bind (NW cl) a (tau b)
+tau (Bind (LV cl) (a@Lit (Spine' 1v)) (b@Value)) = Bind cl a (tau b)
 
 
 --tau (Bind (a@Lit _) (Lit b)) = Bind a (Lit (UP b))
