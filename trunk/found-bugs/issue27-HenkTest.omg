@@ -1,0 +1,108 @@
+import "LangPrelude.prg"
+
+
+prop LE :: Nat ~> Nat ~> *0 where
+  Base:: LE Z a
+  Step:: LE a b -> LE (S a) (S b)
+
+data LE':: Nat ~> Nat ~> *0 where
+  LE:: LE x y => LE' x y  
+
+plus :: Nat ~> Nat ~> Nat
+{plus Z x} = x
+{plus (S y) x} = S {plus y x}
+
+
+data Climber :: *1 where
+  Spine :: Nat ~> Climber
+  Binder :: Nat ~> Nat ~> Climber
+
+
+{- climbing rules
+.
+.
+.
+^       UP
+^       UP
+|\      SP
+| \     NW
+|  \    NW
+|   \   NW
+|    \  NW
+|     * Binder'
+|
++-------------
+
+-}
+
+prop Climber' :: Climber ~> *0 where
+  Spine' :: Nat' (S st) -> Climber' (Spine (S st))
+--  Binder' :: Nat' b -> Nat' st -> Climber' (Binder b st)
+  -- We can go southeast, even hitting the ground
+  SE :: Climber' (Binder (S b) (S st)) -> Climber' (Binder (S (S b)) st)
+  -- We can leave the spine
+  LV :: Climber' (Spine (S st)) -> Climber' (Binder 1t st)
+  -- We can walk up the spine
+  UP :: Climber' (Spine st) -> Climber' (Spine (S st))
+
+
+diff :: Nat ~> Nat ~> Nat
+{diff a Z} = a
+{diff (S a) (S b)} = {diff a b}
+
+-- determine the binding discipline
+discipline :: Climber ~> Climber ~> Climber
+{discipline (Spine a) (Spine b)} = Binder (S {diff a b}) b
+{discipline (Spine a) (Binder (S Z) Z)} = Binder (S a) Z
+
+data Henk :: Climber ~> * where
+  Lit :: Climber' (Spine st) -> Henk (Spine st)
+  Bind :: Climber' {discipline a b} -> Henk a -> Henk b -> Henk {discipline a b}
+  Value :: Henk (Binder 1t 0t)
+
+five :: Henk (Binder 1t 0t)
+five = Value
+
+int :: Henk (Spine 1t)
+int = Lit (Spine' 1v)
+
+constfive :: Henk (Binder 2t 0t)
+constfive = Bind (SE $ LV $ Spine' 2v) int five
+
+tau_constfive = Bind (LV $ Spine' 2v) int int
+
+climb :: Climber ~> Climber
+{climb (Spine n)} = Spine (S n)
+{climb (Binder (S Z) st)} = Spine (S st)
+{climb (Binder (S (S b)) st)} = Binder (S b) (S st)
+
+tau :: Henk c -> Henk {climb c}
+tau (Lit cl) = Lit (UP cl)
+tau Value = Lit (Spine' 1v)
+--tau (Bind cl (a@Lit _) b) = Bind (NW cl) a (tau b)
+--tau (Bind (cl@Binder' 2v 0v) (a@Lit _) b) = Bind (NW cl) a (tau b)
+--tau (Bind (cl@Binder' 2v 0v) (a@Lit (Spine' 1v)) b) = Bind (NW cl) a (tau b)
+tau (Bind (LV cl) (a@Lit (Spine' 1v)) (b@Value)) = Bind cl a (tau b)
+
+
+--tau (Bind (a@Lit _) (Lit b)) = Bind a (Lit (UP b))
+--- tau (Bind Type Type) = Star
+--needs lemma: 
+--tau (Bind Type b) = Bind Type (tau b)
+{- zu zeigen:
+Henk {discipline (Spine 1t) a} -> Henk {climb {discipline (Spine 1t) a}}
+
+Idee:
+Equal {climb {discipline (Spine 1t) a}} {discipline (Spine 1t) {climb a}}
+-}
+
+diffRule :: Nat' b -> Equal {diff 1t b} (S {diff 0t b})
+diffRule Z = Eq
+--diffRule (S n) = Eq
+--    where theorem hyp = diffRule n
+
+pushClimbIn :: Climber' a -> Equal {climb {discipline (Spine 1t) a}} {discipline (Spine 1t) {climb a}}
+--pushClimbIn (Spine' b) = check Eq
+
+-- need lemma: tau (Bind a b) = Bind a (tau b)
+
