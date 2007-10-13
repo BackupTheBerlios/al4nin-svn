@@ -1,6 +1,13 @@
 import "LangPrelude.prg"
 
 
+prop LE :: Nat ~> Nat ~> *0 where
+  Base:: LE Z a
+  Step:: LE a b -> LE (S a) (S b)
+
+data LE':: Nat ~> Nat ~> *0 where
+  LE:: LE x y => LE' x y
+
 data Climber :: *1 where
   Spine :: Nat ~> Climber
   Binder :: Nat ~> Nat ~> Climber
@@ -45,10 +52,10 @@ Idee:
 Equal {climb {discipline (Spine 1t) a}} {discipline (Spine 1t) {climb a}}
 -}
 
-diffRule :: Nat' b -> Equal {diff 1t _b} (S {diff 0t _b})
+diffRule :: Nat' b -> Equal {diff 1t b} (S {diff 0t b})
 diffRule Z = Eq
-diffRule (S n) = Eq
-    -- where theorem hyp = diffRule n
+--diffRule (S n) = Eq
+--    where theorem hyp = diffRule n
 
 pushClimbIn :: Climber' a -> Equal {climb {discipline (Spine 1t) a}} {discipline (Spine 1t) {climb a}}
 --pushClimbIn (Spine' b) = check Eq
