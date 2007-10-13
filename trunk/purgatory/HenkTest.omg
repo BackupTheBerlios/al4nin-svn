@@ -21,15 +21,15 @@ data Climber :: *1 where
 {- climbing rules
 .
 .
-.
-^       UP
-^       UP
-|\      SP
-| \     NW
-|  \    NW
-|   \   NW
-|    \  NW
-|     * Binder'
+^       up
+^       up
+*       Spine' (start)
+|\      LV
+| \     SE
+|  \    SE
+|   \   SE
+|    \  SE
+|     + SE (target)
 |
 +-------------
 
@@ -37,12 +37,11 @@ data Climber :: *1 where
 
 prop Climber' :: Climber ~> *0 where
   Spine' :: Nat' (S st) -> Climber' (Spine (S st))
---  Binder' :: Nat' b -> Nat' st -> Climber' (Binder b st)
   -- We can go southeast, even hitting the ground
   SE :: Climber' (Binder (S b) (S st)) -> Climber' (Binder (S (S b)) st)
   -- We can leave the spine
   LV :: Climber' (Spine (S st)) -> Climber' (Binder 1t st)
-  -- We can walk up the spine
+  -- We can walk up the spine (use up function)
   UP :: Climber' (Spine st) -> Climber' (Spine (S st))
 
 
