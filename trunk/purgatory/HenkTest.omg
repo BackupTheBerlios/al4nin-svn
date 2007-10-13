@@ -6,16 +6,44 @@ prop LE :: Nat ~> Nat ~> *0 where
   Step:: LE a b -> LE (S a) (S b)
 
 data LE':: Nat ~> Nat ~> *0 where
-  LE:: LE x y => LE' x y
+  LE:: LE x y => LE' x y  
+
+plus :: Nat ~> Nat ~> Nat
+{plus Z x} = x
+{plus (S y) x} = S {plus y x}
+
 
 data Climber :: *1 where
   Spine :: Nat ~> Climber
   Binder :: Nat ~> Nat ~> Climber
 
 
-data Climber' :: Climber ~> *0 where
-  Spine' :: Nat' st -> Climber' (Spine st)
+{- climbing rules
+.
+.
+.
+^       UP
+^       UP
+|\      SP
+| \     NW
+|  \    NW
+|   \   NW
+|    \  NW
+|     * Binder'
+|
++-------------
+
+-}
+
+prop Climber' :: Climber ~> *0 where
+  Spine' :: Nat' (S st) -> Climber' (Spine (S st))
   Binder' :: Nat' b -> Nat' st -> Climber' (Binder b st)
+  -- We can go northwet, but must not hit the spine
+  NW :: Climber' (Binder (S (S b)) st) -> Climber' (Binder (S b) (S st))
+  -- We can enter the spine
+  SP :: Climber' (Binder 1t st) -> Climber' (Spine (S st))
+  -- We can walk up the spine
+  UP :: Climber' (Spine st) -> Climber' (Spine (S st))
 
 
 diff :: Nat ~> Nat ~> Nat
