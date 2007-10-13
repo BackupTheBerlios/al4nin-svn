@@ -1,0 +1,58 @@
+import "LangPrelude.prg"
+
+
+data Climber :: *1 where
+  Spine :: Nat ~> Climber
+  Binder :: Nat ~> Nat ~> Climber
+
+
+data Climber' :: Climber ~> *0 where
+  Spine' :: Nat' st -> Climber' (Spine st)
+  Binder' :: Nat' b -> Nat' st -> Climber' (Binder b st)
+
+
+diff :: Nat ~> Nat ~> Nat
+{diff a Z} = a
+{diff (S a) (S b)} = {diff a b}
+
+-- determine the binding discipline
+discipline :: Climber ~> Climber ~> Climber
+{discipline (Spine a) (Spine b)} = Binder (S {diff a b}) b
+
+data Henk :: Climber ~> * where
+  Lit :: Henk (Spine 0t)
+  Bind :: Henk a -> Henk b -> Henk {discipline a b}
+  Type :: Henk (Spine 1t)
+
+climb :: Climber ~> Climber
+{climb (Spine n)} = Spine (S n)
+{climb (Binder (S Z) st)} = Spine (S st)
+{climb (Binder (S (S b)) st)} = Binder (S b) (S st)
+--{climb (Binder (2 + b)t st)} = Binder (S b) (S st)
+-- -> results in bug: The type: (2+b)t is not appropriate for the LHS of a type fun.
+
+
+tau :: Henk c -> Henk {climb c}
+tau Lit = Type
+tau (Bind Type Lit) = Bind Type Type
+--- tau (Bind Type Type) = Star
+--needs lemma: 
+--tau (Bind Type b) = Bind Type (tau b)
+{- zu zeigen:
+Henk {discipline (Spine 1t) a} -> Henk {climb {discipline (Spine 1t) a}}
+
+Idee:
+Equal {climb {discipline (Spine 1t) a}} {discipline (Spine 1t) {climb a}}
+-}
+
+diffRule :: Nat' b -> Equal {diff 1t _b} (S {diff 0t b})
+---diffRule :: Nat' b -> Equal 1t {diff 1t _b} -- -> Equal {diff 1t _b} (S {diff 0t _b})
+diffRule Z = Eq
+--diffRule (S n) = Eq
+--    where theorem hyp = diffRule n
+
+pushClimbIn :: Climber' a -> Equal {climb {discipline (Spine 1t) a}} {discipline (Spine 1t) {climb a}}
+--pushClimbIn (Spine' b) = check Eq
+
+-- need lemma: tau (Bind a b) = Bind a (tau b)
+
