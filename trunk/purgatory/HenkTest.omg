@@ -41,8 +41,6 @@ prop Climber' :: Climber ~> *0 where
   SE :: Climber' (Binder (S b) (S st)) -> Climber' (Binder (S (S b)) st)
   -- We can leave the spine
   LV :: Climber' (Spine (S st)) -> Climber' (Binder 1t st)
-  -- We can walk up the spine (use up function)
-  UP :: Climber' (Spine st) -> Climber' (Spine (S st))
 
 
 diff :: Nat ~> Nat ~> Nat
@@ -75,8 +73,11 @@ climb :: Climber ~> Climber
 {climb (Binder (S Z) st)} = Spine (S st)
 {climb (Binder (S (S b)) st)} = Binder (S b) (S st)
 
+up :: Climber' (Spine st) -> Climber' (Spine (S st))
+up (Spine' n) = Spine' (S n)
+
 tau :: Henk c -> Henk {climb c}
-tau (Lit cl) = Lit (UP cl)
+tau (Lit cl) = Lit (up cl)
 tau Value = Lit (Spine' 1v)
 --tau (Bind cl (a@Lit _) b) = Bind (NW cl) a (tau b)
 --tau (Bind (cl@Binder' 2v 0v) (a@Lit _) b) = Bind (NW cl) a (tau b)
