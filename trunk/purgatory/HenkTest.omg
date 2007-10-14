@@ -48,13 +48,19 @@ diff :: Nat ~> Nat ~> Nat
 {diff (S a) (S b)} = {diff a b}
 
 -- determine the binding discipline
-discipline :: Climber ~> Climber ~> Climber
-{discipline (Spine a) (Spine b)} = Binder (S {diff a b}) b
-{discipline (Spine a) (Binder (S Z) Z)} = Binder (S a) Z
+discipline :: Nat ~> Climber ~> Climber
+--{discipline a (Spine b)} = Binder (S {diff a b}) b
+--{discipline a (Binder (S Z) Z)} = Binder (S a) Z
+{discipline a b} = Binder (S {diff a {strat b}}) {strat b}
+
+-- strat: get the stratum
+strat :: Climber ~> Nat
+{strat (Spine b)} = b
+{strat (Binder a b)} = b
 
 data Henk :: Climber ~> * where
   Lit :: Climber' (Spine st) -> Henk (Spine st)
-  Bind :: Climber' {discipline a b} -> Henk a -> Henk b -> Henk {discipline a b}
+  Bind :: LE {strat b} a => Climber' {discipline a b} -> Henk (Spine a) -> Henk b -> Henk {discipline a b}
   Value :: Henk (Binder 1t 0t)
 
 five :: Henk (Binder 1t 0t)
@@ -76,6 +82,10 @@ climb :: Climber ~> Climber
 up :: Climber' (Spine st) -> Climber' (Spine (S st))
 up (Spine' n) = Spine' (S n)
 
+
+climbNonPI :: Climber' e -> Climber' {climb e} -> Equal {discipline 1t {climb e}} {climb {discipline 1t e}}
+climbNonPI (Spine' m) (Spine' n) = Eq
+
 tau :: Henk c -> Henk {climb c}
 tau (Lit cl) = Lit (up cl)
 tau Value = Lit (Spine' 1v)
@@ -86,7 +96,7 @@ tau (Bind (LV cl) (a@Lit (Spine' 1v)) (b@Lit (Spine' 1v))) = Lit cl
 
 --Equal {discipline (Spine 1t) {climb (Binder 1t 0t)}} (Spine 1t)
 -- = Equal {discipline (Spine 1t) (Spine 1t)} (Spine 1t)
-tau (Bind (SE cl) (a@Lit (Spine' 1v)) (b@Value)) = Bind cl a (tau b)
+tau (Bind (SE cl) (a@Lit (Spine' 1v)) b) = check (Bind cl a (tau b))
 
 --tau (Bind (a@Lit _) (Lit b)) = Bind a (Lit (UP b))
 --- tau (Bind Type Type) = Star
