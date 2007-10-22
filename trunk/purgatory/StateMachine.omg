@@ -5,10 +5,6 @@ import "Thrist.omg"
   (Thrist, Nil, Cons, syntax List(l))
 
 
---data Pair :: level c . *(1+c) ~> *(1+c) ~> *1 where
---  P :: level c . forall (a :: *(1+c)) (b :: *(1+c)) . a ~> b ~> Pair a b
--- deriving Pair(p)
-
 data Pair :: *1 ~> *1 ~> *1 where
   P :: forall (a :: *1) (b :: *1) . a ~> b ~> Pair a b
  deriving Pair(p)
@@ -23,10 +19,14 @@ data State :: Gate ~> Secondary ~> Handshake ~> * where
 
 
 data Transition :: Gate ~> Secondary ~> Handshake ~> * where
-  Transit :: State g' s' h' -> Thrist Action (g', s', h')p (g, s, h)p -> Transition g s h
+  Transit :: State g' s' h'
+	  -> Thrist Obligation (g', s', h')p (g'', s'', h'')p
+	  -> Thrist Action (g'', s'', h'')p (g, s, h)p
+	  -> Transition g s h
 
---data Action :: Gate ~> Secondary ~> Handshake ~> * where
---data Action :: (Gate, Secondary, Handshake)p ~> (Gate, Secondary, Handshake)p ~> * where
+data Obligation :: Pair Gate (Pair Secondary Handshake) ~> Pair Gate (Pair Secondary Handshake) ~> * where
+  ExclusiveRequested :: Obligation (a, b, Idle)p (a, b, Requested)p
+
 data Action :: Pair Gate (Pair Secondary Handshake) ~> Pair Gate (Pair Secondary Handshake) ~> * where
   RequestExclusive :: Action (a, b, Idle)p (a, b, NeedAck)p
   AckExclusive :: Action (a, b, Requested)p (a, b, Idle)p
