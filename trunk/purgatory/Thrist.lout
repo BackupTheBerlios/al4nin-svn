@@ -687,17 +687,17 @@ These are the steps we wish to proceed on the second token:
 @ID @F {{@Box 0X}{@Box E0}UL}
 }
 @ListItem { We fold the hex string found to a decimal integer
-@ID @F {{@Box 0X}{@Box {@Box E0}}UL}
+@ID @F {{@Box 0X}{@CurveBox {@Box E0}}UL}
 (at this step we would fail if the string had been empty)
 }
 @ListItem { We look for an optional signedness hint
 @ID @F {{@Box 0X}{@CurveBox {@Box E0}}{@Box U}L}
 }
 @ListItem { We look for an optional storage size hint
-@ID @F {{@Box 0X}{@Box {@Box E0}}{@Box U}{@Box L}}
+@ID @F {{@Box 0X}{@CurveBox {@Box E0}}{@Box U}{@Box L}}
 }
 @ListItem { We encapsulate the distilled information into a token datatype
-@ID @F @Box {{@Box 0X}{@Box {@Box E0}}{@Box U}{@Box L}}
+@ID @F @Box {{@Box 0X}{@CurveBox {@Box E0}}{@Box U}{@Box L}}
 }
 @EndList
 @End @SubSubSection
@@ -728,15 +728,15 @@ and if a match is found produces data of type @Haskell { b }.
 
 @DashList
 @ListItem {  @Haskell {(Atom 'X')} matches only the capital @Haskell {'X'} character }
-@ListItem {  @Haskell {Epsilon} matches a zero-size prefix of a list of as and returns an empty list of bs along with the unconsumed rest of as }
+@ListItem {  @Haskell {Epsilon} matches a zero-size prefix of a list of @Haskell {as} and returns an empty list of @Haskell {bs} along with the unconsumed rest of @Haskell {as} }
 @ListItem {  @Haskell {(Sure ord)} alway matches, consuming a @Haskell {Char} and returning its @Haskell {Int} ASCII value }
-@ListItem {  @Haskell {(Try hexdigit)} matches only if a characker is a hexadecimal one and returns its hex value, fails otherwise }
+@ListItem {  @Haskell {(Try hexdigit)} matches only if a character is a hexadecimal one and returns its hex value, fails otherwise }
 @ListItem {  @Haskell {(Rep1 (Atom 'X'))} matches as many capital @Haskell {'X'}s as possible and returns a pair consisting the matched and unconsumed portions }
-@ListItem {  @Haskell {(Group [Atom 'a', Atom 'b'])} matches only a prefix @Haskell {"ab"} in the input, returning it in a pair along with the unmatched portion or fails otherwise }
+@ListItem {  @Haskell {(Group [Atom 'a', Atom 'b'])} matches only a prefix @Haskell {"\"ab\""} in the input, returning it in a pair along with the unconsumed portion or fails otherwise }
 @ListItem {  @Haskell {(CataPlus foldDec)} consumes a pair of a list of digits and some other data, if the list is empty it fails, otherwise it folds the sequence to a number, then returns the pair of this number and the other data, which remains unchanged }
 @EndList
 
-In the above descriptions we only suggest a possible semantics, the data of type Parse does not mandate it in any way. So when we talked about "returns soandso" then this is just an intention.
+In the above descriptions we only suggest a possible semantics, the data of type Parse does not mandate it in any way. So when we talked about "\"returns such-and-such\"" then this is just an intention.
 
 The end result of parsing a token will amount to
 
@@ -844,11 +844,11 @@ Of course there are some pitfalls here but the principle is clear:
 @Rowa
     A { @Haskell { West :: State GateClosed SecondaryBlocked NeedAck } }
 @Rowa
-    A { @Haskell { East :: State GateClosed SecondaryBlocked Requested } }
-@Rowa
-    A { @Haskell { South :: State GateOpen SecondaryBlocked Idle } }
+    A { @Haskell { East :: State GateClosed SecondaryBlocked Idle } }
 @Rowa
     A { @Haskell { Southeast :: State GateClosed SecondaryBlocked NeedAck } }
+@Rowa
+    A { @Haskell { South :: State GateOpen SecondaryBlocked Idle } }
 }
 
 
