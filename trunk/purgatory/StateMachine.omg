@@ -78,10 +78,6 @@ midwest = State [From northwest [AckReceived]l [BlockSecondary]l]
 east :: State GateClosed SecondaryEnabled (H Idle Idle')
 east = State [From north [ExclusiveRequested]l [AckExclusive]l]
 
--- southeast :: State GateClosed SecondaryBlocked (H Idle NeedAck)
--- southeast = State [From east [Plugged]l [RequestExclusive]l]
-
 south :: State GateOpen SecondaryBlocked (H Idle Idle')
-south = State [ -- From southeast [AckReceived]l [OpenGate]l
-	       From west [AckReceived]l [OpenGate]l
+south = State [ From west [AckReceived]l [OpenGate]l
 	      , From midwest [ExclusiveRequested]l [AckExclusive, OpenGate]l]
