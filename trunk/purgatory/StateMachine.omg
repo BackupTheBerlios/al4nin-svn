@@ -36,8 +36,9 @@ data Pair :: *1 ~> *1 ~> *1 where
 
 kind Gate = GateClosed | GateOpen
 kind Secondary = SecondaryEnabled | SecondaryBlocked
-kind Handshake = Idle | NeedAck | Requested
-
+kind HandshakeIn = Idle | Requested
+kind HandshakeOut = Idle' | NeedAck
+kind Handshake = H HandshakeIn HandshakeOut
 
 data State :: Gate ~> Secondary ~> Handshake ~> * where
   State :: [Transition g s h] -> State g s h
@@ -50,27 +51,32 @@ data Transition :: Gate ~> Secondary ~> Handshake ~> * where
 	  -> Transition g s h
 
 data Obligation :: Pair Gate (Pair Secondary Handshake) ~> Pair Gate (Pair Secondary Handshake) ~> * where
-  ExclusiveRequested :: Obligation (a, b, Idle)p (a, b, Requested)p
-  AckReceived :: Obligation (a, b, NeedAck)p (a, b, Idle)p
+  ExclusiveRequested :: Obligation (a, b, H Idle c)p (a, b, H Requested c)p
+  AckReceived :: Obligation (a, b, H c NeedAck)p (a, b, H c Idle')p
+  Plugged :: Obligation (GateClosed, b, H Idle c)p (GateClosed, b, H Idle c)p
 
 data Action :: Pair Gate (Pair Secondary Handshake) ~> Pair Gate (Pair Secondary Handshake) ~> * where
-  RequestExclusive :: Action (a, b, Idle)p (a, b, NeedAck)p
-  AckExclusive :: Action (a, b, Requested)p (a, b, Idle)p
+  RequestExclusive :: Action (a, b, H c Idle')p (a, b, H c NeedAck)p
+  AckExclusive :: Action (a, b, H Requested c)p (a, b, H Idle c)p
   OpenGate :: Action (GateClosed, SecondaryBlocked, c)p (GateOpen, SecondaryBlocked, c)p
   BlockSecondary :: Action (a, SecondaryEnabled, c)p (a, SecondaryBlocked, c)p
   -- ...
 
-north :: State GateClosed SecondaryEnabled Idle
+north :: State GateClosed SecondaryEnabled (H Idle Idle')
 north = State []
 
-west :: State GateClosed SecondaryBlocked NeedAck
-west = State [Transit north []l [BlockSecondary, RequestExclusive]l]
+northwest :: State GateClosed SecondaryBlocked (H Idle NeedAck)
+northwest = State [Transit north [Plugged]l [BlockSecondary, RequestExclusive]l]
 
-east :: State GateClosed SecondaryBlocked Idle
+west :: State GateClosed SecondaryBlocked (H Idle NeedAck)
+west = State [Transit northwest [ExclusiveRequested]l [AckExclusive]l]
+
+east :: State GateClosed SecondaryBlocked (H Idle Idle')
 east = State [Transit north [ExclusiveRequested]l [BlockSecondary, AckExclusive]l]
 
-southeast :: State GateClosed SecondaryBlocked NeedAck
-southeast = State [Transit east []l [RequestExclusive]l]
+southeast :: State GateClosed SecondaryBlocked (H Idle NeedAck)
+southeast = State [Transit east [Plugged]l [RequestExclusive]l]
 
-south :: State GateOpen SecondaryBlocked Idle
-south = State [Transit southeast [AckReceived]l [OpenGate]l]
+south :: State GateOpen SecondaryBlocked (H Idle Idle')
+south = State [ Transit southeast [AckReceived]l [OpenGate]l
+	      , Transit west [AckReceived]l [OpenGate]l]
