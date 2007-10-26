@@ -835,35 +835,36 @@ Of course there are some pitfalls here but the principle is clear:
     A { W:: @Node West }
     B { M:: @Node Mid }
 @Rowb
-    B { SW:: @Node SouthWest }
+    B { S:: @Node South }
     C { SE:: @Node SouthEast }
 }
 
-|1fx @Tbl
-    #height { 0.7c }
-    aformat { @Cell height { 1c } A }
+|1fx { Base -2p } @Font @Tbl
+    aformat { @Cell A }
 {
 @Rowa
-    A { @Haskell { North :: State GateClosed SecondaryEnabled Idle } }
+    A { @Haskell { NorthWest :: State GateClosed SecondaryEnabled (H Idle Idle') } }
 @Rowa
-    A { @Haskell { West :: State GateClosed SecondaryBlocked NeedAck } }
+    A { @Haskell { North :: State GateClosed SecondaryEnabled (H Idle Idle') } }
 @Rowa
-    A { @Haskell { East :: State GateClosed SecondaryBlocked Idle } }
+    A { @Haskell { West :: State GateClosed SecondaryEnabled (H Idle NeedAck) } }
 @Rowa
-    A { @Haskell { SouthEast :: State GateClosed SecondaryBlocked NeedAck } }
+    A { @Haskell { Mid :: State GateClosed SecondaryBlocked (H Idle NeedAck) } }
 @Rowa
-    A { @Haskell { South :: State GateOpen SecondaryBlocked Idle } }
+    A { @Haskell { South :: State GateClosed SecondaryBlocked (H Idle Idle') } }
+@Rowa
+    A { @Haskell { SouthEast :: State GateOpen SecondaryBlocked (H Idle Idle') } }
 }
 
 
 //
-@Arrow from { NW } to { N } ylabel { req }
+@Arrow from { NW } to { N } ylabel { req } ylabelctr { no }
 @Arrow from { N } to { M } ylabel { plug } ylabelctr { no }
 @Arrow from { NW } to { W } ylabel { plug } ylabelctr { no }
 @Arrow from { W } to { M } ylabel { req } ylabelctr { no }
-@Arrow from { W } to { SW } ylabel { ack }
+@Arrow from { W } to { S } ylabel { ack }
 @Arrow from { M } to { SE } ylabel { ack }
-@Arrow from { SW } to { SE } ylabel { req } ylabelctr { no }
+@Arrow from { S } to { SE } ylabel { req } ylabelctr { no }
 }
 
 

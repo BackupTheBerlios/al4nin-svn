@@ -62,22 +62,22 @@ data Action :: Pair Gate (Pair Secondary Handshake) ~> Pair Gate (Pair Secondary
   BlockSecondary :: Action (a, SecondaryEnabled, c)p (a, SecondaryBlocked, c)p
   -- ...
 
+northWest :: State GateClosed SecondaryEnabled (H Idle Idle')
+northWest = State []
+
 north :: State GateClosed SecondaryEnabled (H Idle Idle')
-north = State []
+north = State [From northWest ExclusiveRequested [AckExclusive]l]
 
-northwest :: State GateClosed SecondaryEnabled (H Idle NeedAck)
-northwest = State [From north Plugged [RequestExclusive]l]
+west :: State GateClosed SecondaryEnabled (H Idle NeedAck)
+west = State [From northWest Plugged [RequestExclusive]l]
 
-west :: State GateClosed SecondaryBlocked (H Idle NeedAck)
-west = State [ From northwest ExclusiveRequested [AckExclusive, BlockSecondary]l
-	     , From east Plugged [RequestExclusive, BlockSecondary]l]
+mid :: State GateClosed SecondaryBlocked (H Idle NeedAck)
+mid = State [ From west ExclusiveRequested [AckExclusive, BlockSecondary]l
+	    , From north Plugged [RequestExclusive, BlockSecondary]l]
 
-midwest :: State GateClosed SecondaryBlocked (H Idle Idle')
-midwest = State [From northwest AckReceived [BlockSecondary]l]
+south :: State GateClosed SecondaryBlocked (H Idle Idle')
+south = State [From west AckReceived [BlockSecondary]l]
 
-east :: State GateClosed SecondaryEnabled (H Idle Idle')
-east = State [From north ExclusiveRequested [AckExclusive]l]
-
-south :: State GateOpen SecondaryBlocked (H Idle Idle')
-south = State [ From west AckReceived [OpenGate]l
-	      , From midwest ExclusiveRequested [AckExclusive, OpenGate]l]
+southEast :: State GateOpen SecondaryBlocked (H Idle Idle')
+southEast = State [ From mid AckReceived [OpenGate]l
+		  , From south ExclusiveRequested [AckExclusive, OpenGate]l]
