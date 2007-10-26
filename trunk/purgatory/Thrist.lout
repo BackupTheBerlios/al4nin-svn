@@ -814,6 +814,8 @@ Of course there are some pitfalls here but the principle is clear:
     @Caption { State machine fragment }
 @Diag # vstrut { yes } treehsep { 1c }
       outline { curvebox }
+      nodelabelfont { Slope -2p }
+      linklabelformat { "/"@Body"/" } 
 {
 
 
@@ -821,18 +823,20 @@ Of course there are some pitfalls here but the principle is clear:
     # @HTree { @Box Lout @FirstSub arrow { yes } @Box PostScript }
 
 @Tbl
-    aformat { @Cell A | @Cell B | @Cell C }
+    aformat { @Cell indent { ctr } iv { ctr } A | @Cell indent { ctr } iv { ctr } B }
+    bformat { @Cell indent { ctr } width { 3c } height { 1c } A | @Cell indent { ctr } height { 1c } B | @Cell indent { ctr } height { 1c } C }
     marginhorizontal { 0.5c }
     marginvertical { 0.25c }
 {
 @Rowa
+    A { NW:: @Node NorthWest }
     B { N:: @Node North }
 @Rowa
     A { W:: @Node West }
-    C { E:: @Node East }
-@Rowa
-    B { S:: @Node South }
-    C { SE:: @Node Southeast }
+    B { M:: @Node Mid }
+@Rowb
+    B { SW:: @Node SouthWest }
+    C { SE:: @Node SouthEast }
 }
 
 |1fx @Tbl
@@ -846,18 +850,20 @@ Of course there are some pitfalls here but the principle is clear:
 @Rowa
     A { @Haskell { East :: State GateClosed SecondaryBlocked Idle } }
 @Rowa
-    A { @Haskell { Southeast :: State GateClosed SecondaryBlocked NeedAck } }
+    A { @Haskell { SouthEast :: State GateClosed SecondaryBlocked NeedAck } }
 @Rowa
     A { @Haskell { South :: State GateOpen SecondaryBlocked Idle } }
 }
 
 
 //
-@Arrow from { N } to { W }
-@Arrow from { N } to { E }
-@Arrow from { W } to { S }
-@Arrow from { E } to { SE }
-@Arrow from { SE } to { S }
+@Arrow from { NW } to { N } ylabel { req }
+@Arrow from { N } to { M } ylabel { plug } ylabelctr { no }
+@Arrow from { NW } to { W } ylabel { plug } ylabelctr { no }
+@Arrow from { W } to { M } ylabel { req } ylabelctr { no }
+@Arrow from { W } to { SW } ylabel { ack }
+@Arrow from { M } to { SE } ylabel { ack }
+@Arrow from { SW } to { SE } ylabel { req } ylabelctr { no }
 }
 
 
