@@ -1,3 +1,6 @@
+# Usage : awk -f BibTeX2lout.awk < BibTexDB > acmrefs.ld
+#
+
 # Here is the complete set of values that you may give to the @Type option:
 # Book TechReport Article InBook
 # Proceedings MastersThesis InProceedings
@@ -14,6 +17,7 @@
 # /Misc.*=.*/ {print "Misc { " $4 " }"; next}
 # /Unpublished.*=.*/ {print "Misc { " $4 " }"; next}
 # /Article.*=.*/ {print "Article { " $4 " }"; next}
+/@article[ \t]*{.*/ {print "{ @Reference\n   @Type { Article }"; have = 1; next}
 # /InBook.*=.*/ {print "InBook { " $4 " }"; next}
 # /InCollection.*=.*/ {print "InBook { " $4 " }"; next}
 /@inproceedings[ \t]*{.*/ {print "{ @Reference\n   @Type { InProceedings }"; have = 1; next}

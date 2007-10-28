@@ -46,3 +46,30 @@
 }
 
 
+{ @Reference
+   @Type { Article }
+   @Title { Generalising Monads to Arrows }
+   @Author { John Hughes }
+   @Journal { Science of Computer Programming }
+   @URL { http://www.cs.chalmers.se/~rjmh/Papers/arrows.ps }
+   @Volume { 37 }
+   @Pages { 67-111 }
+   @Month { May }
+   @Year { 2000 }
+}
+
+
+{ @Reference
+   @Type { InProceedings }
+   @Title { A New Notation for Arrows }
+   @Author { Ross Paterson }
+   @InTitle { International Conference on Functional Programming }
+   # @Location { Firenze, Italy }
+   @URL { http://www.soi.city.ac.uk/~ross/papers/notation.html }
+   @Publisher { ACM Press }
+   @Pages { 229-240 }
+   @Month { Sep }
+   @Year { 2001 }
+}
+
+
