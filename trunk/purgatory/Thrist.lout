@@ -839,7 +839,7 @@ Of course there are some pitfalls here but the principle is clear:
     C { SE:: @Node SouthEast }
 }
 
-|1fx { Base -2p } @Font @Tbl
+||1fx { Base -2p } @Font @Tbl
     aformat { @Cell A }
 {
 @Rowa
@@ -952,9 +952,9 @@ that is feasible for the target system.
 @Begin
 @PP
 Figure @NumberOf { machine } depicts a fragment of a state machine intended to handle
-@I request"/"acknowledge type handshake with an identical remote instance
+@I { request"/"acknowledge } type handshake with an identical remote instance
 of itself. The two instances are communicating solely by message passing
-and originally both inhabit the @I North state. The intention is that the
+and originally both inhabit the @I NorthWest state. The intention is that the
 two machines control the ends of a unidirectional communication channel
 that is {@I protected}, i.e. two wires exist, carrying a data stream A on the
 first wire{ @FootNote {the second wire can either carry the same data as A (to increase redundancy),
@@ -965,7 +965,7 @@ is the premium customer paying for A and the bulk customer paying significantly
 less for B. There is an extra twist however: it is forbidden for the data stream A
 to reach the sink of data stream B, even for very short time periods. This invariant
 calls for the request"/"acknowledge handshake, and the transient states on the way to
-the @I South state mirror this protocol.
+the @I SouthEast state mirror this protocol.
 
 @End @SubSubSection
 
@@ -1016,18 +1016,22 @@ Then state transitions would correspond to @Haskell { Thrist Action }s.
 @PP
 What do we gain with such a declarative description of the state machine at
 hand?
-- First, given a fine-grained encoding of the protocol's and business logic's
+@LP
+@DashList
+   @ListItem { First, given a fine-grained encoding of the protocol's and business logic's
 encoding in the state facets, the type system will take care of checking that
 all necessary elementary actions are mentioned in the transition's action thrist.
 This can be an important assurance in case of great statemachines with a complicated
 semantic model. Especially for communicating state machines, as in our example,
 the administrative states arising as a result of the handshaking protocol
 can be daunting. Getting the transition actions right between all these states
-is an error prone task and help from the type system highly welcome.
-- Second, the possibility to pattern-match on the actions that form transitions
+is an error prone task and help from the type system highly welcome. }
+   @ListItem { Second, the possibility to pattern-match on the actions that form transitions
 it is possible to enumerate all possible admissible configurations of the communicating
 state machines and use proof techniques to ensure that the principal invariant of
-the system is met{@FootNote { Highlighting this verification aspect is beyond the scope ot this paper } }.
+the system is met{@FootNote { Highlighting this verification aspect is beyond the scope ot this paper } }. }
+@EndList
+
 @End @SubSubSection
 
 
@@ -1102,14 +1106,14 @@ composition it is helpful to give a comparison of the @Haskell { Arrow } @I { ty
 our Thrist datastructure. Obviously any instance of the Haskell type class @Haskell { Arrow } can
 be expressed as a thrist. We have to accompany the @Haskell { Thrist Arrow } with an interpretation
 function that is rather canonic, and will be given in the Appendix. This semantics obviously
-guarantees the arrow laws {@Cite { hughes19xx } }. On the other hand thrists are not always
+guarantees the arrow laws @Cite { $hughes00.arrows }. On the other hand thrists are not always
 easily fitted in an arrow. It is the @Haskell { arr } instance method that is problematic
 to provide. Thrists just serve as a container and do not carry a semantics, while @Haskell { arr }
 mandates a function argument for the method @Haskell { arr }.
-@Considerations { a value of type @Haskell { Thrist Arrow } corresponds to the @F { do ... proc ... } syntactic sugar expression in Haskell }
+@Considerations { a value of type @Haskell { Thrist Arrow } corresponds to the @F { do ... proc ... } syntactic sugar expression in Haskell @Cite { $paterson01.notation }}
 @PP
-Nilsson @Cite { $nilsson05.frp } embarks on optimization of a GADT-based @Haskell { Arrow } library, but he only
-considers the identity function as a special case. He observes a substantial
+Nilsson @Cite { $nilsson05.frp } embarks on optimization of a GADT-based @Haskell { Arrow } library,
+but he only considers the identity function as a special case. He observes a substantial
 speedup in microbenchmarks when the optimizer is able to discover and short-circuit
 the identity arrow. In @Haskell { ParseThrist } the identity can be written in several ways,
 e.g. as @Haskell { Wrap Nil } or as @Haskell { Sure id }. When interpreting, there is probably no

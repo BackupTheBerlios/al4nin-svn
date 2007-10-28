@@ -44,6 +44,7 @@
 
 
 @article{hughes:arrows,
+ tag = {hughes00.arrows},
  title = {Generalising Monads to Arrows},
  author = {John Hughes},
  journal = {Science of Computer Programming},
@@ -55,6 +56,7 @@
 }
 
 @inproceedings{PatersonRA:notation,
+ tag = {paterson01.notation},
  title = {A New Notation for Arrows},
  author = {Ross Paterson},
  booktitle = {International Conference on Functional Programming},
