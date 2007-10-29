@@ -46,7 +46,7 @@
 @inproceedings{conf/cefp/UustaluV05,
  title = {The Essence of Dataflow Programming},
  author = {Tarmo Uustalu and Varmo Vene},
- booktitle = {CEFP},
+ edition = {CEFP},
  editor = {Zolta'n Horva'th},
  pages = {135-167},
  publisher = {Springer},

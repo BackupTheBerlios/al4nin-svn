@@ -50,7 +50,7 @@
    @Type { InProceedings }
    @Title { The Essence of Dataflow Programming }
    @Author { Tarmo Uustalu and Varmo Vene }
-   @InTitle { CEFP }
+   @Edition { CEFP }
    @InAuthor { Zolta'n Horva'th }
    @Pages { 135-167 }
    @Publisher { Springer }
