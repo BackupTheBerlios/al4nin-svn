@@ -44,6 +44,7 @@
 
 
 @inproceedings{conf/cefp/UustaluV05,
+ tag = {uustaluvene05.dataflow},
  title = {The Essence of Dataflow Programming},
  author = {Tarmo Uustalu and Varmo Vene},
  edition = {CEFP},

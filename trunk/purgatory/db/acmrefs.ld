@@ -48,6 +48,7 @@
 
 { @Reference
    @Type { InProceedings }
+   @Tag { uustaluvene05.dataflow }
    @Title { The Essence of Dataflow Programming }
    @Author { Tarmo Uustalu and Varmo Vene }
    @Edition { CEFP }
