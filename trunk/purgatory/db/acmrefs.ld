@@ -47,6 +47,25 @@
 
 
 { @Reference
+   @Type { InProceedings }
+   @Title { The Essence of Dataflow Programming }
+   @Author { Tarmo Uustalu and Varmo Vene }
+   @InTitle { CEFP }
+   @InAuthor { Zolta'n Horva'th }
+   @Pages { 135-167 }
+   @Publisher { Springer }
+   @InTitle { Lecture Notes in Computer Science }
+   @URL { http://dblp.uni-trier.de/db/conf/cefp/cefp2005.html#UustaluV05 }
+   @Volume { 4164 }
+   @Year { 2005 }
+   # @Doi { http://dx.doi.org/10.1007/11894100_5 }
+   # @ISBN { 3-540-46843-9 }
+   @Day { 2006-12-14 }
+   @Keywords { dblp }
+}
+
+
+{ @Reference
    @Type { Article }
    @Tag { hughes00.arrows }
    @Title { Generalising Monads to Arrows }
