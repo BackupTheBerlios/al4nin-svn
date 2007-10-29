@@ -28,6 +28,21 @@
  }
 
 
+@inproceedings{1291206,
+ tag = {swierstra07.beast},
+ author = {Wouter Swierstra and Thorsten Altenkirch},
+ title = {Beauty in the beast},
+ booktitle = {Haskell '07: Proceedings of the ACM SIGPLAN workshop on Haskell workshop},
+ year = {2007},
+ isbn = {978-1-59593-674-5},
+ pages = {25--36},
+ location = {Freiburg, Germany},
+ doi = {http://doi.acm.org/10.1145/1291201.1291206},
+ publisher = {ACM},
+ address = {New York, NY, USA},
+ }
+
+
 @inproceedings{581699,
  tag = {okasaki02.postfix},
  author = {Chris Okasaki},

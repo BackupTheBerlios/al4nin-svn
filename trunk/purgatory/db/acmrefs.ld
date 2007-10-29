@@ -32,6 +32,22 @@
 
 { @Reference
    @Type { InProceedings }
+   @Tag { swierstra07.beast }
+   @Author { Wouter Swierstra and Thorsten Altenkirch }
+   @Title { Beauty in the beast }
+   @InTitle { Haskell '07: Proceedings of the ACM SIGPLAN workshop on Haskell workshop }
+   @Year { 2007 }
+   # @ISBN { 978-1-59593-674-5 }
+   @Pages { 25--36 }
+   # @Location { Freiburg, Germany }
+   # @Doi { http://doi.acm.org/10.1145/1291201.1291206 }
+   @Publisher { ACM }
+   @Address { New York, NY, USA }
+}
+
+
+{ @Reference
+   @Type { InProceedings }
    @Tag { okasaki02.postfix }
    @Author { Chris Okasaki }
    @Title { Techniques for embedding postfix languages in Haskell }
