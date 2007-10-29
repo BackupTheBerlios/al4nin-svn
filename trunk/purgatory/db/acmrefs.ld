@@ -52,11 +52,10 @@
    @Title { The Essence of Dataflow Programming }
    @Author { Tarmo Uustalu and Varmo Vene }
    @Edition { CEFP }
-   @InAuthor { Zolta'n Horva'th }
+   @InAuthor { Zoltán Horváth }
    @Pages { 135-167 }
    @Publisher { Springer }
    @InTitle { Lecture Notes in Computer Science }
-   @URL { http://dblp.uni-trier.de/db/conf/cefp/cefp2005.html#UustaluV05 }
    @Volume { 4164 }
    @Year { 2005 }
    # @Doi { http://dx.doi.org/10.1007/11894100_5 }
@@ -68,11 +67,24 @@
 
 { @Reference
    @Type { Article }
+   @Tag { heunenjacobs.monoid }
+   @Author { Chris Heunen and Bart Jacobs }
+   @Title { Arrows, like Monads, are Monoids }
+   @Journal { Electr. Notes Theor. Comput. Sci. }
+   @Volume { 158 }
+   @Year { 2006 }
+   @Pages { 219-236 }
+   # @Doi { http://dx.doi.org/10.1016/j.entcs.2006.04.012 }
+}
+
+
+{ @Reference
+   @Type { Article }
    @Tag { hughes00.arrows }
    @Title { Generalising Monads to Arrows }
    @Author { John Hughes }
    @Journal { Science of Computer Programming }
-   @URL { http://www.cs.chalmers.se/~rjmh/Papers/arrows.ps }
+   @URL { "http://www.cs.chalmers.se/~rjmh/Papers/arrows.ps" }
    @Volume { 37 }
    @Pages { 67-111 }
    @Month { May }
@@ -87,7 +99,7 @@
    @Author { Ross Paterson }
    @InTitle { International Conference on Functional Programming }
    # @Location { Firenze, Italy }
-   @URL { http://www.soi.city.ac.uk/~ross/papers/notation.html }
+   @URL { "http://www.soi.city.ac.uk/~ross/papers/notation.html" }
    @Publisher { ACM Press }
    @Pages { 229-240 }
    @Month { Sep }
