@@ -839,7 +839,7 @@ Of course there are some pitfalls here but the principle is clear:
     C { SE:: @Node SouthEast }
 }
 
-||1fx { Base -2p } @Font @Tbl
+||1f { Base -2p } @Font @Tbl
     aformat { @Cell A }
 {
 @Rowa
@@ -1143,8 +1143,8 @@ data Monad' :: (* ~> *) ~> * ~> * ~> * where
 @Considerations { a word about Unimo: does compilation of the unimo value (staging) give the performance back? probably not,
 the values are included into the data structure, each monadic "do{}" needs to be compiled. In our context the thrists (Parser)
 do not contain "external" values, so no recompilation is necessary. }
-@Considerations { Comonads?, see paper @Cite {heunenJacobs},
-Uustalu"&"Vene:The Essence of Dataflow Programming }
+@Considerations { Comonads?, see paper @Cite { $heunenjacobs.monoid },
+Uustalu"&"Vene:The Essence of Dataflow Programming @Cite { $uustaluvene05.dataflow } }
 
 @End @SubSection
 
@@ -1176,10 +1176,10 @@ is fulfilled, regardless what callback functions the monad's creator supplies. G
 his work only as the datatypes modelling the @I { effect basis } of monads, while they are not needed
 for the general case.
 @PP
-Chris Heunen and Bart Jacobs' work @Cite {heunenJacobs} on the connection of Arrows and Monads and their category theoretical
+Chris Heunen and Bart Jacobs' work @Cite { $heunenjacobs.monoid } on the connection of Arrows and Monads and their category theoretical
 formalisation is of relevance because it reveals the mathematical structure behind these constructs.
 Arrows appeared in the general mindset as a pragmatic approach to deal with a certain class of parsers
-@Cite {hughes2000} that did not fit into the monadic framework.
+@Cite { $hughes00.arrows } that did not fit into the monadic framework.
 Nilsson provides a method for optimizing limited cases of arrow combinator libraries using GADTs. He
 is still bound to the limitations of the amesiac nature of function composition inside the arrow
 framework for functional reactive programming, but seem to gain some noticeable gains in performance
