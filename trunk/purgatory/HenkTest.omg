@@ -87,12 +87,6 @@ up (Spine' n) = Spine' (S n)
 --climbNonPI :: Climber' e -> Climber' {climb e} -> Equal {discipline 1t {climb e}} {climb {discipline 1t e}}
 --climbNonPI (Spine' m) (Spine' n) = Eq
 
-{-
-restoreLV :: Climber' (Binder {diff a {strat b}} {strat a})
-	  -> Climber' {climb {discipline b a}}
-	  -> Eq {climb {discipline b a}} (Binder 1t {strat a})
--}
-
 restoreLV :: Climber' (Binder 1t {strat b})
 	  -> Climber' {discipline a b}
 	  -> Equal (Binder 1t {strat b}) {discipline a b}
@@ -103,9 +97,6 @@ restoreLV (a@LV (Spine' _)) (b@LV (Spine' _)) Eq = check Eq
 tau :: Henk c -> Henk {climb c}
 tau (Lit cl) = Lit (up cl)
 tau Value = Lit (Spine' 1v)
---tau (Bind cl (a@Lit _) b) = Bind (NW cl) a (tau b)
---tau (Bind (cl@Binder' 2v 0v) (a@Lit _) b) = Bind (NW cl) a (tau b)
---tau (Bind (cl@Binder' 2v 0v) (a@Lit (Spine' 1v)) b) = Bind (NW cl) a (tau b)
 --DONE--tau (Bind (LV cl) (a@Lit (Spine' 1v)) (b@Lit (Spine' 1v))) = Lit cl
 
 
@@ -113,13 +104,6 @@ tau Value = Lit (Spine' 1v)
 --tau (Bind (LV cl) (a@Lit _) _) = check(Lit cl)
 tau (Bind (LV cl) (a@Lit _) _) = Lit cl
     where theorem hyp = restoreLV (LV cl) (LV cl) Eq
-
-
-
-
--- theo1
------theo1 :: LE a b -> Nat' {diff b a} -> Nat' a -> Equal b {plus {}}
-
 
 
 --Equal {discipline (Spine 1t) {climb (Binder 1t 0t)}} (Spine 1t)
