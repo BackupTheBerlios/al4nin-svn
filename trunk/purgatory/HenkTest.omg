@@ -93,11 +93,12 @@ restoreLV :: Climber' (Binder {diff a {strat b}} {strat a})
 	  -> Eq {climb {discipline b a}} (Binder 1t {strat a})
 -}
 
-restoreLV :: Nat' a
-	  -> Climber' (Binder 1t {strat b})
+restoreLV :: Climber' (Binder 1t {strat b})
 	  -> Climber' {discipline a b}
 	  -> Equal (Binder 1t {strat b}) {discipline a b}
 	  -> Equal (Spine (S {strat b})) {climb {discipline a b}}
+restoreLV (a@LV (Spine' _)) (b@LV (Spine' _)) Eq = check Eq
+
 
 tau :: Henk c -> Henk {climb c}
 tau (Lit cl) = Lit (up cl)
@@ -109,7 +110,9 @@ tau Value = Lit (Spine' 1v)
 
 
 
-tau (Bind (LV cl) (a@Lit _) _) = check(Lit cl)
+--tau (Bind (LV cl) (a@Lit _) _) = check(Lit cl)
+tau (Bind (LV cl) (a@Lit _) _) = Lit cl
+    where theorem hyp = restoreLV (LV cl) (LV cl) Eq
 
 
 
