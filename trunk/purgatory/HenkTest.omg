@@ -36,11 +36,12 @@ data Climber :: *1 where
 -}
 
 prop Climber' :: Climber ~> *0 where
+  -- The spine starts one above ground
   Spine' :: Nat' (S st) -> Climber' (Spine (S st))
-  -- We can go southeast, even hitting the ground
-  SE :: Climber' (Binder (S b) (S st)) -> Climber' (Binder (S (S b)) st)
   -- We can leave the spine
   LV :: Climber' (Spine (S st)) -> Climber' (Binder 1t st)
+  -- We can go southeast, even hitting the ground
+  SE :: Climber' (Binder (S b) (S st)) -> Climber' (Binder (S (S b)) st)
 
 
 diff :: Nat ~> Nat ~> Nat
@@ -83,8 +84,20 @@ up :: Climber' (Spine st) -> Climber' (Spine (S st))
 up (Spine' n) = Spine' (S n)
 
 
-climbNonPI :: Climber' e -> Climber' {climb e} -> Equal {discipline 1t {climb e}} {climb {discipline 1t e}}
-climbNonPI (Spine' m) (Spine' n) = Eq
+--climbNonPI :: Climber' e -> Climber' {climb e} -> Equal {discipline 1t {climb e}} {climb {discipline 1t e}}
+--climbNonPI (Spine' m) (Spine' n) = Eq
+
+{-
+restoreLV :: Climber' (Binder {diff a {strat b}} {strat a})
+	  -> Climber' {climb {discipline b a}}
+	  -> Eq {climb {discipline b a}} (Binder 1t {strat a})
+-}
+
+restoreLV :: Nat' a
+	  -> Climber' (Binder 1t {strat b})
+	  -> Climber' {discipline a b}
+	  -> Equal (Binder 1t {strat b}) {discipline a b}
+	  -> Equal (Spine (S {strat b})) {climb {discipline a b}}
 
 tau :: Henk c -> Henk {climb c}
 tau (Lit cl) = Lit (up cl)
@@ -92,11 +105,25 @@ tau Value = Lit (Spine' 1v)
 --tau (Bind cl (a@Lit _) b) = Bind (NW cl) a (tau b)
 --tau (Bind (cl@Binder' 2v 0v) (a@Lit _) b) = Bind (NW cl) a (tau b)
 --tau (Bind (cl@Binder' 2v 0v) (a@Lit (Spine' 1v)) b) = Bind (NW cl) a (tau b)
-tau (Bind (LV cl) (a@Lit (Spine' 1v)) (b@Lit (Spine' 1v))) = Lit cl
+--DONE--tau (Bind (LV cl) (a@Lit (Spine' 1v)) (b@Lit (Spine' 1v))) = Lit cl
+
+
+
+tau (Bind (LV cl) (a@Lit _) _) = check(Lit cl)
+
+
+
+
+-- theo1
+-----theo1 :: LE a b -> Nat' {diff b a} -> Nat' a -> Equal b {plus {}}
+
+
 
 --Equal {discipline (Spine 1t) {climb (Binder 1t 0t)}} (Spine 1t)
 -- = Equal {discipline (Spine 1t) (Spine 1t)} (Spine 1t)
-tau (Bind (SE cl) (a@Lit (Spine' 1v)) b) = check (Bind cl a (tau b))
+--TODO-tau (Bind (SE cl) (a@Lit qf) b) = check (Bind cl a (tau b))
+
+--TODO----tau (Bind (SE (LV cl)) (a@Lit qf) b) = check (Bind (LV cl) a (tau b))
 
 --tau (Bind (a@Lit _) (Lit b)) = Bind a (Lit (UP b))
 --- tau (Bind Type Type) = Star
