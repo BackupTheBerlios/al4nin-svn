@@ -56,12 +56,12 @@ discipline :: Nat ~> Climber ~> Climber
 
 -- strat: get the stratum
 strat :: Climber ~> Nat
-{strat (Spine b)} = b
+{strat (Spine (S b))} = (S b)
 {strat (Binder a b)} = b
 
 data Henk :: Climber ~> * where
-  Lit :: Climber' (Spine st) -> Henk (Spine st)
-  Bind :: LE {strat b} a => Climber' {discipline a b} -> Henk (Spine a) -> Henk b -> Henk {discipline a b}
+  Lit :: Climber' (Spine (S st)) -> Henk (Spine (S st))
+  Bind :: LE {strat b} (S a) => Climber' {discipline (S a) b} -> Henk (Spine (S a)) -> Henk b -> Henk {discipline (S a) b}
   Value :: Henk (Binder 1t 0t)
 
 five :: Henk (Binder 1t 0t)
@@ -76,11 +76,11 @@ constfive = Bind (SE $ LV $ Spine' 2v) int five
 tau_constfive = Bind (LV $ Spine' 2v) int int
 
 climb :: Climber ~> Climber
-{climb (Spine n)} = Spine (S n)
+{climb (Spine (S n))} = Spine (S (S n))
 {climb (Binder (S Z) st)} = Spine (S st)
 {climb (Binder (S (S b)) st)} = Binder (S b) (S st)
 
-up :: Climber' (Spine st) -> Climber' (Spine (S st))
+up :: Climber' (Spine (S st)) -> Climber' (Spine (S (S st)))
 up (Spine' n) = Spine' (S n)
 
 
