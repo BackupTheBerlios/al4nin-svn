@@ -117,31 +117,14 @@ plusLemma (S n) = Eq
     where theorem hyp = plusLemma n
 
 
----restoreSE :: Climber' {discipline a b}
----	  -> Climber' (Binder (S (S c)) {strat b})
----	  -> Equal {discipline a b} (Binder (S (S c)) {strat b})
----	  -> Equal {discipline a {climb b}} (Binder (S c) (S {strat b}))
----restoreSE :: Climber' {discipline a b}
----	  -> Climber' (Binder (S (S {diff a {strat b}})) {strat b})
----	  -> Equal {discipline a b} (Binder (S (S {diff a {strat b}})) {strat b})
----	  -> Equal {discipline a {climb b}} (Binder (S {diff a {strat b}}) (S {strat b}))
----restoreSE :: Climber' (Binder (S (S {diff a {strat b}})) {strat b})
----	  -> Climber' {discipline a b}
----	  -> Equal (Binder (S (S {diff a {strat b}})) {strat b}) {discipline a b}
----	  -> Equal (Binder (S {diff a {strat b}}) (S {strat b})) {discipline a {climb b}}
----restoreSE :: Climber' (Binder (S (S c)) {strat b})
----	  -> Climber' {discipline {plus (S c) {strat b}} b}
----	  -> Equal (Binder (S (S c)) {strat b}) {discipline {plus (S c) {strat b}} b}
----	  -> Equal (Binder (S c) (S {strat b})) {discipline {plus (S c) {strat b}} {climb b}}
 restoreSE :: Climber' (Binder (S (S c)) {strat b})
 	  -> Climber' {discipline {plus {strat b} (S c)} b}
 	  -> Equal (Binder (S (S c)) {strat b}) {discipline {plus {strat b} (S c)} b}
 	  -> Equal (Binder (S c) (S {strat b})) {discipline {plus {strat b} (S c)} {climb b}}
 restoreSE (SE a) (SE b)  (c@Eq) = Eq
-    where theorem hypSE = climbLemma (undefined :: Climber' a),
+    where theorem hypClimb = climbLemma (undefined :: Climber' a),
 		  hypDiff = diffLemma undefined,
 		  hypPlus = plusLemma undefined
---    where theorem hypSE = climbLemma (SE a)
 
 
 tau :: Henk c -> Henk {climb c}
@@ -151,22 +134,14 @@ tau Value = Lit (Spine' 1v)
 
 
 
---tau (Bind (LV cl) (a@Lit _) _) = check(Lit cl)
 tau (Bind (LV cl) _ _) = Lit cl
     where theorem hyp = restoreLV (LV cl) (LV cl) Eq
 
 
 --Equal {discipline (Spine 1t) {climb (Binder 1t 0t)}} (Spine 1t)
 -- = Equal {discipline (Spine 1t) (Spine 1t)} (Spine 1t)
-##test "infinite recursion?"
-  tau (Bind (SE cl) (a@Lit qf) b) = check (Bind cl a (tau b))
+tau (Bind (SE cl) (a@Lit qf) b) = check (Bind cl a (tau b))
     where theorem hyp = restoreSE (SE cl) (SE cl) Eq
-{-
-Only when we can solve
-  LE {strat {climb _i}} _g
-  Equal {discipline _g {climb _i}} (Binder (1+_h)t (1+{strat _i})t)
-  Equal {discipline _g {climb _i}} {climb {discipline _g _i}}
--}
 
 
 
