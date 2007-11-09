@@ -140,18 +140,19 @@ tau (Bind (LV cl) _ _) = Lit cl
 
 --Equal {discipline (Spine 1t) {climb (Binder 1t 0t)}} (Spine 1t)
 -- = Equal {discipline (Spine 1t) (Spine 1t)} (Spine 1t)
-tau (Bind (SE cl) (a@Lit qf) b) = check (Bind cl a (tau b))
-    where theorem hyp = restoreSE (SE cl) (SE cl) Eq
+--TODO-tau (Bind (SE cl) (a@Lit qf) b) = check (Bind cl a (tau b))
+--TODO-    where theorem hyp = restoreSE (SE cl) (SE cl) Eq
 
 
 
 
 
 --TODO-tau (Bind (SE (LV cl)) (a@Lit qf) b) = check (Bind (LV cl) a (tau b))
+--TODO-    where theorem hyp = restoreLV (LV cl) (LV cl) Eq
+--    where theorem hyp = restoreSE (SE cl) (SE cl) Eq
 
-
-
-
+tau (Bind (SE (LV cl)) (a@Lit qf) (b@Lit (Spine' 1v))) = check (Bind (LV cl) a (tau b))
+    where theorem hyp = restoreLV (LV cl) (LV cl) Eq
 
 
 
