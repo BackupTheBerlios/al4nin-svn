@@ -320,7 +320,7 @@ bulkWords syntax semantics conv = or $ drosel syntax semantics where
 				  drosel (sy:sys) (se:ses) = Wrap [word sy, Sure (\(_, rest) -> (conv se, rest))]l : drosel sys ses
 				  drosel [] [] = []
 
-data Token = R Reserved | Str String | Num Int | P Punctuation | H HashWord
+data Token = Resv Reserved | Str String | Num Int | P Punctuation | H HashWord
 
 data Token' = Token Token | Whitespace String | Test (exists (n :: Nat) . Nat' n)
 
@@ -391,7 +391,7 @@ token' = or [ Wrap $ extendThrist num (sureFirst (Token . Num))
 		   , Sure snd
 		   ; extendThrist binnum (sureFirst (Token . Num))]l
 	    , bulkWords punctSymbols punct (Token . P)
-	    , bulkWords coreWords core (Token . R)
+	    , bulkWords coreWords core (Token . Resv)
 	    , bulkWords hashWords hash (Token . H)
 	    , Wrap [Seq (word "//") (Rep1 $ ButNot1 (Sure id) (letter '\n')), sureFirst (\(boring, comment) -> Whitespace (boring ++ comment))]l
 	    , Wrap [Seq (word "/*") (UpTo (Rep1 $ Sure id) (word "*/")), sureFirst (\(boring1, (comment, boring2)) -> Whitespace (boring1 ++ comment ++ boring2))]l
