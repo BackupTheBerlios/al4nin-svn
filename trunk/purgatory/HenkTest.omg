@@ -112,6 +112,40 @@ restoreSE Eq = Eq
     where theorem hypClimb = climbLemma (undefined :: Climber' a),
 		  plusLemma
 
+{-
+sameNat :: Nat' n -> Nat' m -> Maybe (Equal n m) 
+sameNat Z Z = Just Eq
+sameNat (S n) (S m) = case sameNat n m of
+                      Just Eq -> Just Eq
+                      Nothing -> Nothing
+sameNat _ _ = Nothing
+-}
+sameNat :: LE m n -> Nat' n -> Nat' m -> exists (o :: Nat) . (Equal n m + (Equal {diff n m} (S o), Nat' (S o)))
+--sameNat Base Z Z = L Eq
+sameNat Base Z Z = let res = L Eq in Ex res
+sameNat Base Z (S _) = unreachable
+sameNat Base (S o) Z = Ex (R (Eq, S o))
+sameNat (Step pred) (S n) (S m) = case sameNat pred n m of
+                                  Ex (L Eq) -> Ex (L Eq)
+                                  Ex (R (Eq, o)) -> Ex (R (Eq, o))
+--sameNat _ _ = Nothing
+
+tautEqual :: Equal a b -> Equal a c -> Equal b c
+tautEqual Eq Eq = Eq
+
+diffLemma :: LE m n -> Nat' n -> Nat' m -> Equal {diff n m} Z -> (Equal n m, Equal n m)
+diffLemma Base Z Z Eq = (Eq, Eq)
+diffLemma Base _ (S m) Eq = unreachable
+diffLemma (Step _) _ Z Eq = unreachable
+diffLemma (Step _) Z (S _) Eq = unreachable
+diffLemma (a@Step pred) (S n) (b@S m) (w@Eq) = case (w, sameNat pred n m) of
+                                               (_, Ex (L Eq)) -> (Eq, Eq)
+                                               (w, Ex (R (v@Eq, o))) -> unreachable
+                                                                            where theorem contradict = tautEqual w v
+--diffLemma (a@Step pred) (S n) (b@S m) (w@Eq) = case diffLemma pred n m w of
+--                                               (Eq, Eq) -> check (Eq, Eq)
+--    where theorem ind = diffLemma pred m
+--    where theorem ind = diffLemma pred m
 
 
 incDiffLemma :: LE m n -> Nat' m -> Equal {diff (S n) m} (S {diff n m})
@@ -154,6 +188,8 @@ tau (Bind (SE (SE cl)) (a@Lit qf) b) = check (Bind (SE cl) a (tau b))
 --    where theorem hyp = restoreSE (SE cl) (SE cl) Eq
 
 -- issue35:
---TODO-tau (Bind (SE (LV cl)) (a@Lit qf) (b@Lit (Spine' 1v))) = check (Bind (LV cl) a (tau b))
---TODO-    where theorem hyp = restoreLV Eq
+{-
+tau (Bind (SE (LV cl)) (a@Lit qf) (b@Lit (Spine' 1v))) = check (Bind (LV cl) a (tau b))
+    where theorem hyp = restoreLV Eq
+-}
 
