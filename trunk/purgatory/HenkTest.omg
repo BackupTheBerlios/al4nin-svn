@@ -92,10 +92,13 @@ climbLemma (Spine' _) = Eq
 climbLemma (LV _) = Eq
 climbLemma (SE _) = Eq
 
-diffLemma :: Nat' a -> Equal {diff {plus a b} a} b
-diffLemma Z = Eq
-diffLemma (S n) = Eq
-    where theorem hyp = diffLemma n
+diffPlusLemma :: Nat' n -> Equal {diff {plus n m} n} m
+diffPlusLemma Z = Eq
+diffPlusLemma (S n) = Eq
+    where theorem ind = diffPlusLemma n
+
+theorem diffPlusLemma
+
 
 plusLemma :: Nat' a -> Equal {plus a (S b)} {plus (S a) b}
 plusLemma Z = Eq
@@ -103,23 +106,12 @@ plusLemma (S n) = Eq
     where theorem hyp = plusLemma n
 
 
-restoreSE :: Climber' (Binder (S (S c)) {strat b}) -- not needed
-	  -> Climber' {discipline {plus {strat b} (S c)} b} -- not needed
-	  -> Equal (Binder (S (S c)) {strat b}) {discipline {plus {strat b} (S c)} b}
+restoreSE :: Equal (Binder (S (S c)) {strat b}) {discipline {plus {strat b} (S c)} b}
 	  -> Equal (Binder (S c) (S {strat b})) {discipline {plus {strat b} (S c)} {climb b}}
-restoreSE (SE a) (SE b)  (c@Eq) = Eq
+restoreSE Eq = Eq
     where theorem hypClimb = climbLemma (undefined :: Climber' a),
-		  hypDiff = diffLemma undefined,
-		  hypPlus = plusLemma undefined
+		  plusLemma
 
-
-
-diffPlusLemma :: Nat' n -> Equal {diff {plus n m} n} m -- see diffLemma
-diffPlusLemma Z = Eq
-diffPlusLemma (S n) = Eq
-    where theorem ind = diffPlusLemma n
-
-theorem obv = diffPlusLemma undefined
 
 
 incDiffLemma :: LE m n -> Nat' m -> Equal {diff (S n) m} (S {diff n m})
@@ -129,9 +121,10 @@ incDiffLemma (Step pred) (S m) = Eq
     where theorem ind = incDiffLemma pred m
 
 
-climbRule :: Equal {climb (Binder (S {diff (S n) st}) st)} (Binder (S {diff n st}) (S st))
-climbRule = Eq
-   where theorem help = incDiffLemma undefined -- fishy!
+climbRule :: LE st n -> Equal {climb (Binder (S {diff (S n) st}) st)} (Binder (S {diff n st}) (S st))
+climbRule Base = Eq
+climbRule (Step pred) = Eq
+   where theorem help = incDiffLemma pred
 
 tau :: Henk c -> Henk {climb c}
 tau (Lit cl) = Lit (up cl)
@@ -152,9 +145,8 @@ tau (Bind (LV cl) _ _) = Lit cl
 tau (Bind (SE (SE cl)) (a@Lit qf) b) = check (Bind (SE cl) a (tau b))
     where theorem hypClimb = climbLemma (undefined :: Climber' a),
                   cli = climbRule,
-                  help = incDiffLemma, --undefined, -- fishy!
-                  hyp = restoreSE (SE (SE cl)) (SE (SE cl)) Eq --,
-                  --obv = diffPlusLemma 3v
+                  help = incDiffLemma,
+                  hyp = restoreSE (SE (SE cl)) (SE (SE cl)) Eq
 -}
 
 --TODO-tau (Bind (SE (LV cl)) (a@Lit qf) b) = check (Bind (LV cl) a (tau b))
