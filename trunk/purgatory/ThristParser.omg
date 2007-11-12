@@ -547,12 +547,16 @@ parseBinaryOperand = Try look2
           look2 _ = Nothing
 
 parseExpr :: Parse [Token] (Phrase PHexpression, [Token])
-parseExpr = or [ Wrap $ [Seq parseBinaryOperand
-                             (Rep $ Seq parseBinOp parseBinaryOperand)
-                        , sureFirst (Expression . thristize)]l]
+parseExpr = Wrap $ [Seq parseBinaryOperand
+                        (Rep $ Seq parseBinOp parseBinaryOperand)
+                   , sureFirst (Expression . thristize)]l
     where thristize (operand1, ((op, operand2):rest)) = [operand1, BinaryOperandOperator op; thristize (operand2, rest)]l
           thristize (operand, []) = [operand]l
 
+
+tExpr = [Num 42, B Bplus, Num 42]
+
+tExpr0 = parse [parseExpr]l tExpr
 
 -- ############### Cat syntax ###############
 
