@@ -497,7 +497,6 @@ diff (Ex (S a)) (Ex (S b)) = diff (Ex a) (Ex b)
 -- Dylan phrase syntax: http://www.opendylan.org/books/drm/Phrase_Grammar
 
 kind Dphrase = PHexpression
-             | PHexpression_no_symbol
              | PHbinary_operand
              | PHoperand
              | PHleaf
@@ -534,7 +533,25 @@ data Phrase :: Dphrase ~> * where
   ConstantLit :: Phrase PHliteral -> Phrase PHconstant
   ConstantSymbol :: Token -> Phrase PHconstant
 
+parseBinOp :: Parse [Token] (Token, [Token])
+parseBinOp = Try one
+    where one (h:t) = do
+                      b <- isBinop h
+                      return (b, t)
+              where monad maybeM
+          one _ = Nothing
 
+parseBinaryOperand :: Parse [Token] (DExpr PHbinary_operand PHbinary_operator, [Token])
+parseBinaryOperand = Try look2
+    where look2 (h:t) = Just (BinaryOperandUnary Nothing ((OperandLeaf . LeafLit . LitNum . Num) 42), t)
+          look2 _ = Nothing
+
+parseExpr :: Parse [Token] (Phrase PHexpression, [Token])
+parseExpr = or [ Wrap $ [Seq parseBinaryOperand
+                             (Rep $ Seq parseBinOp parseBinaryOperand)
+                        , sureFirst (Expression . thristize)]l]
+    where thristize (operand1, ((op, operand2):rest)) = [operand1, BinaryOperandOperator op; thristize (operand2, rest)]l
+          thristize (operand, []) = [operand]l
 
 
 -- ############### Cat syntax ###############
