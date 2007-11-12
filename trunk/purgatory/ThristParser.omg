@@ -356,6 +356,18 @@ data Token = Resv Reserved
 	   | B Binop
 	   | U Unop
 
+isBinop :: Token -> Maybe Token
+isBinop (b@B _) = Just b
+isBinop (b@P Pminus) = Just b
+isBinop (b@P Pequal) = Just b
+isBinop (b@P Pequalequal) = Just b
+isBinop _ = Nothing
+
+isUnop :: Token -> Maybe Token
+isUnop (b@U _) = Just b
+isUnop (b@P Pminus) = Just b
+isUnop _ = Nothing
+
 data Token' = Token Token | Whitespace String | Test (exists (n :: Nat) . Nat' n)
 
 whitespace = alts letter " \n\t\r"
