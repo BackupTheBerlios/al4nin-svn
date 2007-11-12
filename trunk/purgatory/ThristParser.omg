@@ -310,9 +310,12 @@ data Punctuation = PparenthesisOpen | PparenthesisClose -- ( )
 		 | Pdotdotdot                           -- ...
 
 
--- binary operators. some already occur as Punctuation (- = ==)
+-- binary operators. some already occur as Punctuation (- = ==), these are not listed
 data Binop = Bplus | Bstar | Bdiv | Braise | Bnequiv | Bneqal
 	   | Ble | Blt | Bge | Bgt | Band | Bor | Bassign
+
+-- unary operators. some already occur as Punctuation (-), these are not listed
+data Unop = Unot
 
 -- the below lists are maximum munch sorted
 punctSymbols = [ "(", ")", ",", "...", ".", ";", "[", "]", "{", "}", "::", "-"
@@ -330,6 +333,10 @@ binOpSymbols = [ "+", {-"-"-}
 
 binop = [ Bplus, Bstar, Bdiv, Braise, Bnequiv, Bneqal, Ble, Blt, Bge, Bgt, Band, Bor, Bassign ]
 
+unaryOpSymbols = [ "~" {-"-"-} ]
+
+unop = [ Unot ]
+
 coreWords = ["define", "end", "handler", "let", "local", "macro", "otherwise"]
 core = [Rdefine, Rend, Rhandler, Rlet, Rlocal, Rmacro, Rotherwise]
 
@@ -341,7 +348,13 @@ bulkWords syntax semantics conv = or $ drosel syntax semantics where
 				  drosel (sy:sys) (se:ses) = Wrap [word sy, Sure (\(_, rest) -> (conv se, rest))]l : drosel sys ses
 				  drosel [] [] = []
 
-data Token = Resv Reserved | Str String | Num Int | P Punctuation | H HashWord
+data Token = Resv Reserved
+	   | Str String
+	   | Num Int
+	   | P Punctuation
+	   | H HashWord
+	   | B Binop
+	   | U Unop
 
 data Token' = Token Token | Whitespace String | Test (exists (n :: Nat) . Nat' n)
 
@@ -411,6 +424,8 @@ token' = or [ Wrap $ extendThrist num (sureFirst (Token . Num))
 		   , Sure snd
 		   ; extendThrist binnum (sureFirst (Token . Num))]l
 	    , bulkWords punctSymbols punct (Token . P)
+	    , bulkWords binOpSymbols binop (Token . B)
+	    , bulkWords unaryOpSymbols unop (Token . U)
 	    , bulkWords coreWords core (Token . Resv)
 	    , bulkWords hashWords hash (Token . H)
 	    , Wrap [Seq (word "//") (Rep1 $ ButNot1 (Sure id) (letter '\n')), sureFirst (\(boring, comment) -> Whitespace (boring ++ comment))]l
