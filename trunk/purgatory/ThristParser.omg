@@ -494,6 +494,49 @@ diff (Ex (S a)) (Ex (S b)) = diff (Ex a) (Ex b)
 (Just (natu2, [])) = parse lexer' "!42.!23"
 
 
+-- Dylan phrase syntax: http://www.opendylan.org/books/drm/Phrase_Grammar
+
+kind Dphrase = PHexpression
+             | PHexpression_no_symbol
+             | PHbinary_operand
+             | PHoperand
+             | PHleaf
+             | PHargument
+             | PHliteral
+             | PHconstant
+             | PHbinary_operator -- only for DExpr
+
+data DExpr :: Dphrase ~> Dphrase ~> * where
+  BinaryOperandSymbol :: Token -> DExpr PHbinary_operand PHbinary_operator
+  BinaryOperandUnary :: Maybe Token ->  Phrase PHoperand -> DExpr PHbinary_operand PHbinary_operator
+  BinaryOperandOperator :: Token -> DExpr PHbinary_operator PHbinary_operand
+
+data Phrase :: Dphrase ~> * where
+  Expression :: Thrist DExpr PHbinary_operand PHbinary_operator -> Phrase PHexpression
+  OperandCall :: Phrase PHoperand -> [Phrase PHargument] -> Phrase PHoperand
+  OperandRef :: Phrase PHoperand -> [Phrase PHargument] -> Phrase PHoperand
+  OperandAccess :: Token -> Phrase PHoperand -> Phrase PHoperand
+  OperandLeaf :: Phrase PHleaf -> Phrase PHoperand
+  LeafLit :: Phrase PHliteral -> Phrase PHleaf
+  LeafVar :: Token -> Phrase PHleaf
+  LeafParen :: Phrase PHexpression -> Phrase PHleaf
+  ArgumentKeyword :: Token -> Phrase PHexpression -> Phrase PHargument
+  ArgumentExpression :: Phrase PHexpression -> Phrase PHargument -- expression-no-symbol
+  ArgumentSymbol :: Token -> Phrase PHargument
+  LitNum :: Token -> Phrase PHliteral
+  LitChar :: Token -> Phrase PHliteral
+  LitString :: [Token] -> Phrase PHliteral
+  LitTrue :: Phrase PHliteral
+  LitFalse :: Phrase PHliteral
+  LitPair :: [Phrase PHconstant] -> Phrase PHconstant -> Phrase PHliteral
+  LitList :: [Phrase PHconstant] -> Phrase PHliteral
+  LitVector :: [Phrase PHconstant] -> Phrase PHliteral
+  ConstantLit :: Phrase PHliteral -> Phrase PHconstant
+  ConstantSymbol :: Token -> Phrase PHconstant
+
+
+
+
 -- ############### Cat syntax ###############
 
 -- see: http://www.cat-language.com/manual.html#syntax
