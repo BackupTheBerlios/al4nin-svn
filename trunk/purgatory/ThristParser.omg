@@ -542,8 +542,12 @@ parseBinOp = Try one
           one _ = Nothing
 
 parseBinaryOperand :: Parse [Token] (DExpr PHbinary_operand PHbinary_operator, [Token])
+
 parseBinaryOperand = Try look2
-    where look2 (h:t) = Just (BinaryOperandUnary Nothing ((OperandLeaf . LeafLit . LitNum . Num) 42), t)
+    where look2 ((h@Num _):t) = Just (BinaryOperandUnary Nothing ((OperandLeaf . LeafLit . LitNum) h), t)
+          look2 ((h@Str _):t) = Just (BinaryOperandUnary Nothing ((OperandLeaf . LeafLit . LitString) [h]), t)
+          look2 (H Ht:t) = Just (BinaryOperandUnary Nothing ((OperandLeaf . LeafLit) LitTrue), t)
+          look2 (H Hf:t) = Just (BinaryOperandUnary Nothing ((OperandLeaf . LeafLit) LitFalse), t)
           look2 _ = Nothing
 
 parseExpr :: Parse [Token] (Phrase PHexpression, [Token])
@@ -554,7 +558,7 @@ parseExpr = Wrap $ [Seq parseBinaryOperand
           thristize (operand, []) = [operand]l
 
 
-tExpr = [Num 42, B Bplus, Num 42]
+tExpr = [Num 42, B Bplus, Num 25, B Band, H Ht]
 
 tExpr0 = parse [parseExpr]l tExpr
 
