@@ -309,6 +309,11 @@ data Punctuation = PparenthesisOpen | PparenthesisClose -- ( )
 		 | Pquestionequal                       -- ?=
 		 | Pdotdotdot                           -- ...
 
+
+-- binary operators. some already occur as Punctuation (- = ==)
+data Binop = Bplus | Bstar | Bdiv | Braise | Bnequiv | Bneqal
+	   | Ble | Blt | Bge | Bgt | Band | Bor | Bassign
+
 -- the below lists are maximum munch sorted
 punctSymbols = [ "(", ")", ",", "...", ".", ";", "[", "]", "{", "}", "::", "-"
                , "==", "=>", "=", "#(", "#[", "##", "??", "?=", "?"]
@@ -318,6 +323,12 @@ punct = [ PparenthesisOpen, PparenthesisClose, Pcomma, Pdotdotdot, Pdot, Psemico
         , Phashparenthesis, Phashbracket, Phashhash
         , Pquestionquestion, Pquestionequal, Pquestion ]
 
+binOpSymbols = [ "+", {-"-"-}
+		 "*", "/", "^", {-"=" "=="-}
+		 "~==", "~=", "<=", "<", ">=", ">",
+		 "&", "|", ":="]
+
+binop = [ Bplus, Bstar, Bdiv, Braise, Bnequiv, Bneqal, Ble, Blt, Bge, Bgt, Band, Bor, Bassign ]
 
 coreWords = ["define", "end", "handler", "let", "local", "macro", "otherwise"]
 core = [Rdefine, Rend, Rhandler, Rlet, Rlocal, Rmacro, Rotherwise]
