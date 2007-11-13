@@ -350,6 +350,7 @@ bulkWords syntax semantics conv = or $ drosel syntax semantics where
 
 data Token = Resv Reserved
 	   | Str String
+           | Sy String
 	   | Num Int
 	   | P Punctuation
 	   | H HashWord
@@ -541,12 +542,31 @@ parseBinOp = Try one
               where monad maybeM
           one _ = Nothing
 
+--optionally :: ([a] -> Maybe b) -> Parse [a] (Maybe b, [a])
+--optionally p = Or (Try p
+
+parseArgument :: Parse [Token] (Phrase PHargument, [Token])
+parseArgument = or [ Wrap [ Seq (Try symbol) (Or (Wrap [parseExpression, sureFirst Just]l)
+                                                 (Wrap [epsilon, sureFirst (\_ -> Nothing)]l))
+                          , sureFirst buildSymExpr
+                          ]l
+                   , Wrap [ parseExpression, sureFirst buildExpr ]l
+                   ]
+    where buildSymExpr (sym, Just expr) = ArgumentKeyword sym expr
+          buildSymExpr (sym, Nothing) = ArgumentSymbol sym
+          buildExpr expr = ArgumentExpression expr
+          symbol ((h@Sy _):t) = Just (h, t)
+          symbol _ = Nothing
+
 parseArguments :: Parse [Token] ([Phrase PHargument], [Token])
 parseArguments = Or
 		 (Wrap [Seq parseArgument (Rep $ Seq (Try isComma) parseArgument), sureFirst flat]l)
-		 (Sure (always [])
+		 (Sure none)
     where isComma (P Pcomma:t) = Just ((), t)
 	  isComma _ = Nothing
+          flat (arg1, []) = [arg1]
+          flat (arg1, args) = arg1 : map snd args
+          none t = ([], t)
 
 parseOperand :: Parse [Token] (Phrase PHoperand, [Token])
 parseOperand = or [ Wrap [Try isLit, sureFirst (OperandLeaf . LeafLit)]l
@@ -555,7 +575,7 @@ parseOperand = or [ Wrap [Try isLit, sureFirst (OperandLeaf . LeafLit)]l
 				     , sureFirst (\n o -> OperandAccess o n)
 				     ]l
 			      , Wrap [Try isParen, Sure snd, parseArguments --- Try isClosingParen
-				     , sureFirst (\args o -> OperandCall o n)
+				     , sureFirst (\args o -> OperandCall o args)
 				     ]l
 			      ])
 			 , sureFirst (\ (o, builder) -> builder o)]l
@@ -567,6 +587,10 @@ parseOperand = or [ Wrap [Try isLit, sureFirst (OperandLeaf . LeafLit)]l
 	  isLit _ = Nothing
 	  isDot (P Pdot:t) = Just ((), t)
 	  isDot _ = Nothing
+	  isParen (P PparenthesisOpen:t) = Just ((), t)
+	  isParen _ = Nothing
+	  isClosingParen (P PparenthesisOpen:t) = Just ((), t)
+	  isClosingParen _ = Nothing
 	  isName ((h@Resv _):t) = Just (h, t)
 	  isName _ = Nothing
 
@@ -577,17 +601,19 @@ parseBinaryOperand = Wrap [ Seq (Sure detectUnary) parseOperand
     where detectUnary ((h@U _):t) = (Just h, t)
 	  detectUnary t = (Nothing, t)
 
-parseExpr :: Parse [Token] (Phrase PHexpression, [Token])
-parseExpr = Wrap $ [Seq parseBinaryOperand
-                        (Rep $ Seq parseBinOp parseBinaryOperand)
-                   , sureFirst (Expression . thristize)]l
+parseExpression :: Parse [Token] (Phrase PHexpression, [Token])
+parseExpression = Wrap $ [Seq parseBinaryOperand
+                              (Rep $ Seq parseBinOp parseBinaryOperand)
+                              , sureFirst (Expression . thristize)]l
     where thristize (operand1, ((op, operand2):rest)) = [operand1, BinaryOperandOperator op; thristize (operand2, rest)]l
           thristize (operand, []) = [operand]l
 
 
 tExpr = [U Unot, Num 42, B Bplus, Num 25, B Band, H Ht]
 
-tExpr0 = parse [parseExpr]l tExpr
+tExpr0 = parse [parseExpression]l tExpr
+
+tExprParens = [U Unot, Num 42, B Bplus, P PparenthesisOpen, Num 25, B Band, H Ht]
 
 -- ############### Cat syntax ###############
 
