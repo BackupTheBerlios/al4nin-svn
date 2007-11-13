@@ -167,7 +167,7 @@ data Stream a = Then a (Stream a) -- coinductive
 streamCM = Comonad counit coextend
            where
              counit (Then a _) = a
-             coextend k (af@Then a as) = Then (k af) (lazy (coextend k as))
+             coextend k (af@Then _ as) = Then (k af) (lazy (coextend k as))
 
 ones = Then 1 ones
 twos = Then 2 twos
