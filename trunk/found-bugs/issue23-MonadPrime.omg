@@ -39,7 +39,7 @@ import "LangPrelude.prg"
 
 --import "Thrist.omg" 
 --  (Thrist, Nil, Cons, syntax List(l))
-data Thrist :: forall (l :: *1) . (l ~> l ~> *)  ~> l ~> l ~> * where
+data Thrist :: level st . forall (l :: *(1+st)) . (l ~> l ~> *)  ~> l ~> l ~> * where
   Nil :: Thrist k a a
   Cons :: k c b -> Thrist k b a -> Thrist k c a
  deriving List(l)
@@ -92,7 +92,7 @@ appendThrist [b; r]l a = [b; appendThrist r a]l
 
 -- Thrist flattening
 
-flattenThrist :: Thrist (Thrist k) a b -> Thrist k a b
+flattenThrist :: forall (l :: *1) (k :: l ~> l ~> *) (a :: l) (b :: l) . Thrist (Thrist k) a b -> Thrist k a b
 
 flattenThrist []l = []l
 flattenThrist [a; as]l = appendThrist a $ flattenThrist as
