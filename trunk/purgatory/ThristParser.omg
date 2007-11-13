@@ -514,7 +514,7 @@ data Phrase :: Dphrase ~> * where
   Expression :: Thrist DExpr PHbinary_operand PHbinary_operator -> Phrase PHexpression
   OperandCall :: Phrase PHoperand -> [Phrase PHargument] -> Phrase PHoperand
   OperandRef :: Phrase PHoperand -> [Phrase PHargument] -> Phrase PHoperand
-  OperandAccess :: Token -> Phrase PHoperand -> Phrase PHoperand
+  OperandAccess :: Phrase PHoperand -> Token -> Phrase PHoperand
   OperandLeaf :: Phrase PHleaf -> Phrase PHoperand
   LeafLit :: Phrase PHliteral -> Phrase PHleaf
   LeafVar :: Token -> Phrase PHleaf
@@ -541,15 +541,47 @@ parseBinOp = Try one
               where monad maybeM
           one _ = Nothing
 
-parseBinaryOperand :: Parse [Token] (DExpr PHbinary_operand PHbinary_operator, [Token])
-parseBinaryOperand = or [
-			 Wrap [Try isLit, {-sureFirst LeafLit,-} sureFirst OperandLeaf, sureFirst (BinaryOperandUnary Nothing)]l
-			]
-    where isLit ((h@Num _):t) = Just (LeafLit $ LitNum h, t)
-	  isLit ((h@Str _):t) = Just (LeafLit $ LitString [h], t)
-	  isLit (H Ht:t) = Just (LeafLit LitTrue, t)
-	  isLit (H Hf:t) = Just (LeafLit LitFalse, t)
+parseOperand :: Parse [Token] (Phrase PHoperand, [Token])
+--parseOperand = undefined -- for now
+parseOperand = or [ Wrap [Try isLit, sureFirst (OperandLeaf . LeafLit)]l
+		  , Wrap [Seq parseOperand
+			  (or [
+			       Wrap [Try isDot, Sure snd, Try isName
+				     , sureFirst (\n o -> OperandAccess o n)
+				    ]l
+			      ])
+			 , sureFirst (\ (o, builder) -> builder o)]l
+	       ]
+    where isLit ((h@Num _):t) = Just (LitNum h, t)
+	  isLit ((h@Str _):t) = Just (LitString [h], t)
+	  isLit (H Ht:t) = Just (LitTrue, t)
+	  isLit (H Hf:t) = Just (LitFalse, t)
 	  isLit _ = Nothing
+	  isDot (P Pdot:t) = Just ((), t)
+	  isDot _ = Nothing
+	  isName ((h@Resv _):t) = Just (h, t)
+	  isName _ = Nothing
+
+parseBinaryOperand :: Parse [Token] (DExpr PHbinary_operand PHbinary_operator, [Token])
+parseBinaryOperand = or [ Wrap [Try isLit, sureFirst (BinaryOperandUnary Nothing . OperandLeaf . LeafLit)]l
+			{-, Wrap [Seq parseOperand
+				(or [
+				     Wrap [Try isDot, Sure snd, Try isName
+					   , sureFirst (\n o -> OperandAccess o n)]l
+				    ])
+			       , sureFirst (\ (o, builder) -> builder o)
+			       , sureFirst (BinaryOperandUnary Nothing)]l-}
+			]
+    where isLit ((h@Num _):t) = Just (LitNum h, t)
+	  isLit ((h@Str _):t) = Just (LitString [h], t)
+	  isLit (H Ht:t) = Just (LitTrue, t)
+	  isLit (H Hf:t) = Just (LitFalse, t)
+	  isLit _ = Nothing
+	  isDot (P Pdot:t) = Just ()
+	  isDot _ = Nothing
+	  isName ((h@Resv _):t) = Just (h, t)
+	  isName _ = Nothing
+
 {-
 parseBinaryOperand = Try look2
     where look2 ((h@Num _):t) = Just (BinaryOperandUnary Nothing ((OperandLeaf . LeafLit . LitNum) h), t)
