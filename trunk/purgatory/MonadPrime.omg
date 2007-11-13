@@ -67,6 +67,32 @@ r0 = runMP ioM (returnIO 5) t1
 -- fmap' -- ???? does this make sense?
 fmap'  :: (m -> n) -> Thrist (Monad' m) a b -> Thrist (Monad' n) a b
 
+
+{-
+-- ##### using "do" syntax for building thrists
+
+
+data Thrimo :: ((* ~> *) ~> * ~> *) ~> * ~> * where
+  Unit :: a -> Thrimo r a
+--  Effect :: (r (Thrimo r) a) -> Thrimo r a
+  Bind :: (Thrimo r b) -> (b -> Thrimo r a) -> Thrimo r a
+  Fail :: String -> Thrimo r a
+
+
+
+--thristM :: Monad (Thrist (Monad' m) a)
+--thristM = Monad Unit undefined undefined
+
+thristM :: Monad (Thrimo r)
+thristM = Monad Unit Bind Fail
+
+mthrist = do { Just a <- Just 5; return a } where monad thristM
+
+--thristize :: Thrimo r -> Thrist (Monad' m) ??????
+
+-}
+
+
 -- #################################################
 
 -- Thrist extending
@@ -92,7 +118,7 @@ appendThrist [b; r]l a = [b; appendThrist r a]l
 
 -- Thrist flattening
 
-flattenThrist :: Thrist (Thrist k) a b -> Thrist k a b
+flattenThrist :: forall (l :: *1) (k :: l ~> l ~> *) (a :: l) (b :: l) . Thrist (Thrist k) a b -> Thrist k a b
 
 flattenThrist []l = []l
 flattenThrist [a; as]l = appendThrist a $ flattenThrist as
