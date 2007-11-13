@@ -1,0 +1,16 @@
+import "LangPrelude.prg"
+
+--import "Thrist.omg" 
+--  (Thrist, Nil, Cons, syntax List(l))
+data Thrist :: level st su . forall (l :: *(1+st)) (m :: *(1+su)) . (l ~> m ~> *)  ~> l ~> m ~> * where
+  Nil :: Thrist k a a
+  Cons :: k a b -> Thrist k b c -> Thrist k a c
+  --Cons :: level st su sv . forall (l :: *(1+st)) (m :: *(1+su)) (n :: *(1+sv)) (a :: l) (b :: m) (c :: n) . k a b -> Thrist k b c -> Thrist k a c
+ deriving List(l)
+
+--  Cons :: level st su sv. forall (l :: *(1+st)) (m :: *(1+su)) (n :: *(1+sv)) (k :: l ~> m ~> *) (a :: l) (b :: m) (c :: n) . k a b -> Thrist k b c -> Thrist k a c
+
+
+data Lev :: level n . forall (a :: *(1+n)) (b :: *(2+n)) . a ~> b ~> * where
+  Tau :: level n . forall (a :: *(1+n)) . Lev a *(1+n)
+  Int :: Lev Int *
