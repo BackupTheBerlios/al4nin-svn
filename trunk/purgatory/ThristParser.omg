@@ -506,7 +506,7 @@ kind Dphrase = PHexpression
              | PHbinary_operator -- only for DExpr
 
 data DExpr :: Dphrase ~> Dphrase ~> * where
-  BinaryOperandSymbol :: Token -> DExpr PHbinary_operand PHbinary_operator
+  --BinaryOperandSymbol :: Token -> DExpr PHbinary_operand PHbinary_operator
   BinaryOperandUnary :: Maybe Token ->  Phrase PHoperand -> DExpr PHbinary_operand PHbinary_operator
   BinaryOperandOperator :: Token -> DExpr PHbinary_operator PHbinary_operand
 
@@ -542,7 +542,6 @@ parseBinOp = Try one
           one _ = Nothing
 
 parseOperand :: Parse [Token] (Phrase PHoperand, [Token])
---parseOperand = undefined -- for now
 parseOperand = or [ Wrap [Try isLit, sureFirst (OperandLeaf . LeafLit)]l
 		  , Wrap [Seq parseOperand
 			  (or [
@@ -563,24 +562,12 @@ parseOperand = or [ Wrap [Try isLit, sureFirst (OperandLeaf . LeafLit)]l
 	  isName _ = Nothing
 
 parseBinaryOperand :: Parse [Token] (DExpr PHbinary_operand PHbinary_operator, [Token])
-parseBinaryOperand = or [ Wrap [Try isLit, sureFirst (BinaryOperandUnary Nothing . OperandLeaf . LeafLit)]l
-			{-, Wrap [Seq parseOperand
-				(or [
-				     Wrap [Try isDot, Sure snd, Try isName
-					   , sureFirst (\n o -> OperandAccess o n)]l
-				    ])
-			       , sureFirst (\ (o, builder) -> builder o)
-			       , sureFirst (BinaryOperandUnary Nothing)]l-}
+parseBinaryOperand = or [ Wrap [ Seq (Sure detectUnary) parseOperand
+			       , sureFirst (\ (unary, operand) -> BinaryOperandUnary unary operand)
+			       ]l
 			]
-    where isLit ((h@Num _):t) = Just (LitNum h, t)
-	  isLit ((h@Str _):t) = Just (LitString [h], t)
-	  isLit (H Ht:t) = Just (LitTrue, t)
-	  isLit (H Hf:t) = Just (LitFalse, t)
-	  isLit _ = Nothing
-	  isDot (P Pdot:t) = Just ()
-	  isDot _ = Nothing
-	  isName ((h@Resv _):t) = Just (h, t)
-	  isName _ = Nothing
+    where detectUnary ((h@U _):t) = (Just h, t)
+	  detectUnary t = (Nothing, t)
 
 {-
 parseBinaryOperand = Try look2
