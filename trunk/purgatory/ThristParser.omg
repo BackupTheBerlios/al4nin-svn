@@ -227,6 +227,11 @@ compileParse [Group (p:ps); r]l = [| \as -> case as of
 						     (ps', rest) <- $(compileParse [Group ps]l) as'
 						     $(compileParse r) (p':ps', rest) |]
 
+compileParse [Seq p1 p2; r]l = [| \as -> let monad maybeM in do
+                                                             (b1, as') <- $(compileParse [p1]l) as
+                                                             (b2, rest) <- $(compileParse [p2]l) as'
+                                                             $(compileParse r) ((b1, b2), rest) |]
+
 compileParse [Or p1 p2; r]l = [| \a ->
 			       case $parseP1 a of
 			       Just b1 -> $parseR b1
@@ -587,7 +592,7 @@ parseOperand = or [ Wrap [Try isLit, sureFirst (OperandLeaf . LeafLit)]l
 	  isLit _ = Nothing
 	  isDot (P Pdot:t) = Just ((), t)
 	  isDot _ = Nothing
-	  isParen (P PparenthesisOpen:t) = Just ((), t)
+	  isParen (P PparenthesisOpen:t) = Just ((), trace (show t) t)
 	  isParen _ = Nothing
 	  isClosingParen (P PparenthesisOpen:t) = Just ((), t)
 	  isClosingParen _ = Nothing
@@ -613,7 +618,7 @@ tExpr = [U Unot, Num 42, B Bplus, Num 25, B Band, H Ht]
 
 tExpr0 = parse [parseExpression]l tExpr
 
-tExprParens = [U Unot, Num 42, B Bplus, P PparenthesisOpen, Num 25, B Band, H Ht]
+tExprParens = [U Unot, Num 42, B Bplus, P PparenthesisOpen, Num 25, B Band, H Ht, P PparenthesisClose]
 
 -- ############### Cat syntax ###############
 
