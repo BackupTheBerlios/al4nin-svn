@@ -562,21 +562,12 @@ parseOperand = or [ Wrap [Try isLit, sureFirst (OperandLeaf . LeafLit)]l
 	  isName _ = Nothing
 
 parseBinaryOperand :: Parse [Token] (DExpr PHbinary_operand PHbinary_operator, [Token])
-parseBinaryOperand = or [ Wrap [ Seq (Sure detectUnary) parseOperand
-			       , sureFirst (\ (unary, operand) -> BinaryOperandUnary unary operand)
-			       ]l
-			]
+parseBinaryOperand = Wrap [ Seq (Sure detectUnary) parseOperand
+			  , sureFirst (\ (unary, operand) -> BinaryOperandUnary unary operand)
+			  ]l
     where detectUnary ((h@U _):t) = (Just h, t)
 	  detectUnary t = (Nothing, t)
 
-{-
-parseBinaryOperand = Try look2
-    where look2 ((h@Num _):t) = Just (BinaryOperandUnary Nothing ((OperandLeaf . LeafLit . LitNum) h), t)
-          look2 ((h@Str _):t) = Just (BinaryOperandUnary Nothing ((OperandLeaf . LeafLit . LitString) [h]), t)
-          look2 (H Ht:t) = Just (BinaryOperandUnary Nothing ((OperandLeaf . LeafLit) LitTrue), t)
-          look2 (H Hf:t) = Just (BinaryOperandUnary Nothing ((OperandLeaf . LeafLit) LitFalse), t)
-          look2 _ = Nothing
--}
 parseExpr :: Parse [Token] (Phrase PHexpression, [Token])
 parseExpr = Wrap $ [Seq parseBinaryOperand
                         (Rep $ Seq parseBinOp parseBinaryOperand)
@@ -585,7 +576,7 @@ parseExpr = Wrap $ [Seq parseBinaryOperand
           thristize (operand, []) = [operand]l
 
 
-tExpr = [Num 42, B Bplus, Num 25, B Band, H Ht]
+tExpr = [U Unot, Num 42, B Bplus, Num 25, B Band, H Ht]
 
 tExpr0 = parse [parseExpr]l tExpr
 
