@@ -23,3 +23,4 @@ data Lev :: level n . forall (a :: *(1+n)) (b :: *(2+n)) . a ~> b ~> * where
 -- 2) how to express that Cons can accept level-hopping k ?
 -- 3) [Int]l causes looping in type checker (:set X for investigation?)
 -- 4) Equal k k' as a => constraint?
+-- 5) level st su sv cannot establish a third level binding ("unknown level sv")
