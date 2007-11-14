@@ -1,0 +1,51 @@
+import "LangPrelude.prg"
+
+{-
+-- unexpected "*" at: "(1+s)) . k..."
+data Test :: level s . forall (k::*(1+s)) . k ~> * where
+  T :: Test a
+-}
+
+{-
+-- this works
+data Test :: level s . forall (k:: *(1+s)) . k ~> * where
+  T :: Test a
+-}
+
+
+{-
+-- unexpected " +s)) . k ~> * where...
+data Test :: level s . forall (k:: *(1 +s)) . k ~> * where
+  T :: Test a
+-}
+
+
+{-
+-- this works
+data Test :: level s . forall (k:: *(1+ s)) . k ~> * where
+  T :: Test a
+-}
+
+
+-- line: 33 column: 1
+-- Unknown level: sv
+
+data Thrist :: level st su . forall (l :: *(1+st)) (m :: *(1+su)) . (l ~> m ~> *)  ~> l ~> m ~> * where
+  Nil :: Thrist k a a
+  Cons :: level st su sv. forall (l :: *(1+st)) (m :: *(1+su)) (n :: *(1+sv)) (k :: l ~> m ~> *) (a :: l) (b :: m) (c :: n) . k a b -> Thrist k b c -> Thrist k a c
+
+
+-- writing "data Thrist :: level st su sv .  ..."
+-- gives:
+--    While checking the type of the constructor: Cons
+--    we checked the well-formedness of:
+--      forall (g:*(1+b)) (h:*(1+a)) (i:*(1+j)) (k:g ~> h ~> *0) (l:g:*(1+b)) (_m:h:*(1+a)) (n:i:*(1+j)).k l _m -> Thrist k _m n -> Thrist k l n :: *0
+--    An error was found.
+--    
+--    while checking the kind of (Thrist f d)
+--    we expected (d::  e:: *(1+b)) but
+--    we inferred (d::  c)
+--    Levels don't match b =/= a
+--      internal info _Levelx37295 =/= _Levelx37296
+
+-- so maybe the levels in the "data" decl and its constructors interact in some strange way?
