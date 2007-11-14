@@ -53,15 +53,15 @@ data DejaVu :: * ~> * ~> * where
   Cff1 :: DejaVu (Test a) (Test a)
   Dee0 :: DejaVu (Test a) (Test (a, b))
   Dee1 :: DejaVu (Test b) (Test (a, b))
-  Stop :: DejaVu () a
+  Stop :: a -> DejaVu () a
 
 -- 1st order dejavu of test1:
 
-sind1st = [[Stop, Dee0]l, [Stop, Dee1]l]
+--sind1st = [[Stop, Dee0]l, [Stop, Dee1]l]
 
 -- 2nd order dejavu of test1:
 
-sind2st = [[Stop, Cff0, Dee0]l, [Stop, Cff1, Dee0]l, [Stop, Bgg0, Dee1]l]
+--sind2st = [[Stop, Cff0, Dee0]l, [Stop, Cff1, Dee0]l, [Stop, Bgg0, Dee1]l]
 
 --data Rup :: * 
 
@@ -78,7 +78,7 @@ observer a f d = (d, a)
 
 deja :: Test a -> [Thrist DejaVu () (Test a)]
 deja Ahh = []
-deja (Bgg _) = [[Stop, Bgg0]l]
-deja (Cff _ _) = [[Stop, Cff0]l, [Stop, Cff1]l]
-deja (Dee _ _) = [[Stop, Dee0]l, [Stop, Dee0]l]
+deja (Bgg b) = [[Stop b, Bgg0]l]
+deja (Cff o t) = [[Stop o, Cff0]l, [Stop t, Cff1]l]
+deja (Dee o t) = [[Stop o, Dee0]l, [Stop t, Dee1]l]
 
