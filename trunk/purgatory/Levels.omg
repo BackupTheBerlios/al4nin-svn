@@ -2,10 +2,10 @@ import "LangPrelude.prg"
 
 --import "Thrist.omg" 
 --  (Thrist, Nil, Cons, syntax List(l))
-data Thrist :: level st su . forall (l :: *(1+st)) (m :: *(1+su)) . (l ~> m ~> *)  ~> l ~> m ~> * where
+data Thrist :: level st su sv . forall (l :: *(1+st)) (m :: *(1+su)) . (l ~> m ~> *)  ~> l ~> m ~> * where
   Nil :: Thrist k a a
 
-  Cons :: level st . forall (l:: *(1+st)) (k::l ~> l ~> *0) (a::l) (b::l) (c::l).k a b -> Thrist k b c -> Thrist k a c
+  Cons :: forall (l :: *(1+st)) (m :: *(1+su)) (n :: *(1+sv)) (k::l ~> m ~> *0) (k'::m ~> n ~> *0) (k''::l ~> n ~> *0) (a :: l) (b :: m) (c :: n) . k a b -> Thrist k' b c -> Thrist k'' a c
   --Cons :: k a b -> Thrist k b c -> Thrist k a c
   --Cons :: level st su sv . forall (l :: *(1+st)) (m :: *(1+su)) (n :: *(1+sv)) (a :: l) (b :: m) (c :: n) . k a b -> Thrist k b c -> Thrist k a c
  deriving List(l)
@@ -14,7 +14,7 @@ data Thrist :: level st su . forall (l :: *(1+st)) (m :: *(1+su)) . (l ~> m ~> *
 
 
 data Lev :: level n . forall (a :: *(1+n)) (b :: *(2+n)) . a ~> b ~> * where
-  Tau :: level n . forall (a :: *(1+n)) . Lev a *(1+n)
+  Tau :: {-level n . -}forall (a :: *(1+n)) . Lev a *(1+n)
   Int :: Lev Int *
 
 
@@ -23,4 +23,4 @@ data Lev :: level n . forall (a :: *(1+n)) (b :: *(2+n)) . a ~> b ~> * where
 -- 2) how to express that Cons can accept level-hopping k ?
 -- 3) [Int]l causes looping in type checker (:set X for investigation?)
 -- 4) Equal k k' as a => constraint?
--- 5) level st su sv cannot establish a third level binding ("unknown level sv")
+-- 5) level st su sv cannot establish a third level binding ("unknown level sv") -- issue37
