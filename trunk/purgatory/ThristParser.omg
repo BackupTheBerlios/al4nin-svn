@@ -52,6 +52,7 @@ data Parse :: *0 ~> *0 ~> *0 where
   Rep :: Parse [a] (b, [a]) -> Parse [a] ([b], [a])  -- consume as many as matches, return rest
   Group :: [Parse a b] -> Parse [a] ([b], [a])       -- all must match, return rest
   Wrap :: Thrist Parse a b -> Parse a b              -- treat a chain of parses as one
+  Meander :: Label l -> Thrist Parse a b -> Parse a b-- observable point to break cycles
   Or :: Parse a b -> Parse a b -> Parse a b          -- match first or if it doesn't, the second
   Seq :: Parse [a] (b, [a]) -> Parse [a] (c, [a]) -> Parse [a] ((b, c), [a]) -- parse front first then second
   Seq1 :: Parse a b -> Parse a c -> Parse [a] ((b, c), [a]) -- same, but with single-elem first and second
@@ -123,6 +124,11 @@ parse [Group ps; r]l as = do { bs <- parseGroup ps as; parse r bs } where
 				 return (b:bs, rest)
 
 parse [Wrap thr; r]l a = do { a' <- parse thr a; parse r a' } where monad maybeM
+parse [Meander l thr; r]l a = do
+			      let i = trace ("\nentering: " ++ show l ++ "\nwith: " ++ show r ++ "\nto parse: " ++ show a)
+			      a' <- parse thr a
+			      parse r a'
+			     where monad maybeM
 
 parse [Seq1 p1 p2; r]l (a1:a2:rest) = do { b1 <- parse [p1]l a1; b2 <- parse [p2]l a2; parse r ((b1, b2), rest) } where monad maybeM
 parse [Seq1 _ _; _]l _ = Nothing
@@ -547,9 +553,6 @@ parseBinOp = Try one
               where monad maybeM
           one _ = Nothing
 
---optionally :: ([a] -> Maybe b) -> Parse [a] (Maybe b, [a])
---optionally p = Or (Try p
-
 parseArgument :: Parse [Token] (Phrase PHargument, [Token])
 parseArgument = or [ Wrap [ Seq (Try symbol) (Or (Wrap [parseExpression, sureFirst Just]l)
                                                  (Wrap [epsilon, sureFirst (\_ -> Nothing)]l))
@@ -573,28 +576,37 @@ parseArguments = Or
           flat (arg1, args) = arg1 : map snd args
           none t = ([], t)
 
-parseOperand :: Parse [Token] (Phrase PHoperand, [Token])
-parseOperand = or [ Wrap [Try isLit, sureFirst (OperandLeaf . LeafLit)]l
-		  , Wrap [Seq parseOperand
-			  (or [ Wrap [Try isDot, Sure snd, Try isName
-				     , sureFirst (\n o -> OperandAccess o n)
-				     ]l
-			      , Wrap [Try isParen, Sure snd, parseArguments --- Try isClosingParen
-				     , sureFirst (\args o -> OperandCall o args)
-				     ]l
-			      ])
-			 , sureFirst (\ (o, builder) -> builder o)]l
+parseLeaf :: Parse [Token] (Phrase PHleaf, [Token])
+parseLeaf = or [ Wrap [Try isLit, sureFirst LeafLit]l
+	       , Wrap [Try isParen, parseExpression, Try isClosingParen, sureFirst LeafParen]l
 	       ]
     where isLit ((h@Num _):t) = Just (LitNum h, t)
 	  isLit ((h@Str _):t) = Just (LitString [h], t)
 	  isLit (H Ht:t) = Just (LitTrue, t)
 	  isLit (H Hf:t) = Just (LitFalse, t)
 	  isLit _ = Nothing
-	  isDot (P Pdot:t) = Just ((), t)
-	  isDot _ = Nothing
-	  isParen (P PparenthesisOpen:t) = Just ((), trace (show t) t)
+	  isParen (P PparenthesisOpen:t) = Just t
 	  isParen _ = Nothing
-	  isClosingParen (P PparenthesisOpen:t) = Just ((), t)
+	  isClosingParen (exp, P PparenthesisClose:t) = Just (exp, t)
+	  isClosingParen _ = Nothing
+
+parseOperand :: Parse [Token] (Phrase PHoperand, [Token])
+parseOperand = or [ Wrap [parseLeaf, sureFirst OperandLeaf]l
+		  , Meander `Operand [Seq parseOperand
+			  (or [ Wrap [Try isDot, Try isName
+				     , sureFirst (\n o -> OperandAccess o n)
+				     ]l
+			      , Meander `OperandP [Try isParen, parseArguments, Try isClosingParen
+				     , sureFirst (\args o -> OperandCall o args)
+				     ]l
+			      ])
+			 , sureFirst (\ (o, builder) -> builder o)]l
+	       ]
+    where isDot (P Pdot:t) = Just t
+	  isDot _ = Nothing
+	  isParen (P PparenthesisOpen:t) = Just t
+	  isParen _ = Nothing
+	  isClosingParen (args, P PparenthesisClose:t) = Just (args, t)
 	  isClosingParen _ = Nothing
 	  isName ((h@Resv _):t) = Just (h, t)
 	  isName _ = Nothing
@@ -607,7 +619,8 @@ parseBinaryOperand = Wrap [ Seq (Sure detectUnary) parseOperand
 	  detectUnary t = (Nothing, t)
 
 parseExpression :: Parse [Token] (Phrase PHexpression, [Token])
-parseExpression = Wrap $ [Seq parseBinaryOperand
+--parseExpression = Wrap $ [Seq parseBinaryOperand
+parseExpression = Meander `Expression $ [Seq parseBinaryOperand
                               (Rep $ Seq parseBinOp parseBinaryOperand)
                               , sureFirst (Expression . thristize)]l
     where thristize (operand1, ((op, operand2):rest)) = [operand1, BinaryOperandOperator op; thristize (operand2, rest)]l
@@ -615,10 +628,10 @@ parseExpression = Wrap $ [Seq parseBinaryOperand
 
 
 tExpr = [U Unot, Num 42, B Bplus, Num 25, B Band, H Ht]
-
 tExpr0 = parse [parseExpression]l tExpr
 
 tExprParens = [U Unot, Num 42, B Bplus, P PparenthesisOpen, Num 25, B Band, H Ht, P PparenthesisClose]
+tExprParens0 = parse [parseExpression]l tExprParens
 
 -- ############### Cat syntax ###############
 
