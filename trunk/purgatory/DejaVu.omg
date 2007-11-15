@@ -76,9 +76,11 @@ ult :: * ~> *
 observer :: Nat' n -> (a -> b) -> DejaVu {nth n (a -> b)} {ult b} -> (DejaVu {nth n (a -> b)} {ult b}, Nat' n)
 observer a f d = (d, a)
 
-deja :: Test a -> [Thrist DejaVu () (Test a)]
-deja Ahh = []
-deja (Bgg b) = [[Stop b, Bgg0]l]
-deja (Cff o t) = [[Stop o, Cff0]l, [Stop t, Cff1]l]
-deja (Dee o t) = [[Stop o, Dee0]l, [Stop t, Dee1]l]
+deja :: [Thrist DejaVu () (Test a)] -> [Thrist DejaVu () (Test a)]
+--deja [] = []
+--deja ((t@(Cons (Stop Ahh) _)):r) = t:(deja r)
+deja ((t@[Stop Ahh; _]l):r) = t : deja r -- bug: Non type constructor: _b as range of constructor: Ahh
+deja ([Stop (Bgg b)]l:r) = [Stop b, Bgg0; more]l : deja r
+--deja (Cff o t) = [[Stop o, Cff0]l, [Stop t, Cff1]l]
+--deja (Dee o t) = [[Stop o, Dee0]l, [Stop t, Dee1]l]
 
