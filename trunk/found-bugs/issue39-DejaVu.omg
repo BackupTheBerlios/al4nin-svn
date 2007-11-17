@@ -28,8 +28,10 @@ import "LangPrelude.prg"
   listM, foldl, foldr)
 
 
-import "Thrist.omg" 
-  (Thrist, Nil, Cons, syntax List(l))
+data Thrist :: forall (l :: *1) . (l ~> l ~> *)  ~> l ~> l ~> * where
+  Nil :: Thrist k a a
+  Cons :: k a b -> Thrist k b c -> Thrist k a c
+ deriving List(l)
 
 
 data Test :: * ~> * where
