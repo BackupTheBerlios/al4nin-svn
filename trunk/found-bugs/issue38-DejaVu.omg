@@ -1,0 +1,91 @@
+-- -*-Haskell-*-
+
+{-
+ * Copyright (c) 2007 Gabor Greif
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to deal
+ * in the Software without restriction, including without limitation the rights
+ * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies
+ * of the Software, and to permit persons to whom the Software is furnished to do
+ * so, subject to the following conditions:
+ *
+ * The above copyright notice and this permission notice shall be
+ * included in all copies or substantial portions of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
+ * EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES
+ * OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
+ * NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT
+ * HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY,
+ * WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+ * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE
+ * OR OTHER DEALINGS IN THE SOFTWARE.
+ -}
+
+import "LangPrelude.prg" 
+  (head,tail,lookup,member,fst,snd,map,Monad,maybeM,id,ioM,Eq,Equal,
+  listM, foldl, foldr)
+
+
+import "Thrist.omg" 
+  (Thrist, Nil, Cons, syntax List(l))
+
+
+data Test :: * ~> * where
+  Ahh :: Test Int
+  Bgg :: Bool -> Test Bool
+  Cff :: a -> Test a -> Test a
+  Dee :: Test a -> Test b -> Test (a, b)
+
+
+test1 :: Test (Int, Bool)
+test1 = Dee (Cff 42 test8) (Bgg True)
+
+test8 :: Test Int
+test8 = Cff 25 test8
+
+
+
+data DejaVu :: * ~> * ~> * where
+  Bgg0 :: DejaVu Bool (Test Bool)
+  Cff0 :: DejaVu a (Test a)
+  Cff1 :: DejaVu (Test a) (Test a)
+  Dee0 :: DejaVu (Test a) (Test (a, b))
+  Dee1 :: DejaVu (Test b) (Test (a, b))
+  Stop :: a -> DejaVu () a
+
+-- 1st order dejavu of test1:
+
+--sind1st = [[Stop, Dee0]l, [Stop, Dee1]l]
+
+-- 2nd order dejavu of test1:
+
+--sind2st = [[Stop, Cff0, Dee0]l, [Stop, Cff1, Dee0]l, [Stop, Bgg0, Dee1]l]
+
+--data Rup :: * 
+
+nth :: Nat ~> * ~> *
+{nth Z (a->b)} = a
+{nth (S n) (a->b)} = {nth n b}
+
+ult :: * ~> *
+{ult (a->b)} = {ult b}
+{ult (Test a)} = Test a
+
+observer :: Nat' n -> (a -> b) -> DejaVu {nth n (a -> b)} {ult b} -> (DejaVu {nth n (a -> b)} {ult b}, Nat' n)
+observer a f d = (d, a)
+
+deja' :: Thrist DejaVu () (Test a) -> Thrist DejaVu () (Test a)
+deja' (t@(Cons (Stop Ahh) Nil)) = t
+
+
+{-
+deja :: [Thrist DejaVu () (Test a)] -> [Thrist DejaVu () (Test a)]
+--deja [] = []
+--deja ((t@(Cons (Stop Ahh) _)):r) = t:(deja r)
+deja ((t@[Stop Ahh; _]l):r) = t : deja r -- bug: Non type constructor: _b as range of constructor: Ahh
+deja ([Stop (Bgg b)]l:r) = [Stop b, Bgg0; more]l : deja r
+--deja (Cff o t) = [[Stop o, Cff0]l, [Stop t, Cff1]l]
+--deja (Dee o t) = [[Stop o, Dee0]l, [Stop t, Dee1]l]
+-}
