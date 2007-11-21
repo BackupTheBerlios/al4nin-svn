@@ -3,9 +3,16 @@
 
 
 ### USAGE:
-#   rm ./Version.o makefile ; make EXEC=omega
-#        GHC="ghc -O -pgmc clear-c -pgmm clear-c -pgma clear-c -pgml clear-c"
+#   ln -s /home/ggreif/aL4nin/purgatory/clear-c DIR/clear-c
+#   ln -s /home/ggreif/aL4nin/purgatory/clear-c DIR/clear-m
+#   ln -s /home/ggreif/aL4nin/purgatory/clear-c DIR/clear-a
+#   ln -s /home/ggreif/aL4nin/purgatory/clear-c DIR/clear-l
+#   rm ./Version.o makefile ; gmake -f Makefile EXEC=omega \
+#        GHC="ghc -O -pgmc clear-c -pgmm clear-m -pgma clear-a -pgml clear-l"
 
+## SEE: http://www.haskell.org/ghc/docs/latest/html/users_guide/options-phases.html
+
+puts "\#\#\# argv0 = $argv0"
 
 proc find-o { } {
     global argv
@@ -43,5 +50,6 @@ puts $mak "$argv"
 puts $mak "OUTFILE is [find-o]"
 close $mak
 
-exec touch ./Version.o
+exec touch ./Version.hs
+exec touch ./Toplevel.hs
 
