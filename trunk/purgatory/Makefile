@@ -1,7 +1,8 @@
 PLATFORM = $(shell uname)
 
 ifeq (Darwin,$(PLATFORM))
-LOUT = lout -F /gdm/psres
+PSRES = /Users/ggreif/psres
+LOUT = lout -F $(PSRES)
 DISTILL = pstopdf
 VIEWER = open
 endif
