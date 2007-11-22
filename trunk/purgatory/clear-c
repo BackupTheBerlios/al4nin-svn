@@ -47,6 +47,20 @@ proc find-o { } {
     return $out
 }
 
+proc findObjects { } {
+    global argv
+    set objs {}
+
+    foreach i $argv {
+	switch -glob -- $i {
+	    "*\\.o" {lappend objs "$i"}
+	    default {}
+	}
+    }
+
+    return $objs
+}
+
 global tmpdir
 set tmpdir "/home/ggreif/.UCSITmpDir/clear-tmp"
 
@@ -57,40 +71,62 @@ switch -glob "$argv0" {
 	set outF "[find-o]"
 	set inF "[lindex $argv 2]"
 	puts "===========$outF   $inF"
-	set subst1 "[regsub -all $inF $argv ${tmpdir}/x.hc]"
-	set subst2 "[regsub -all $outF $subst1 ${tmpdir}/x.raw_s]"
+	set subst1 "[regsub -all $inF $argv \$^]"
+	set subst2 "[regsub -all $outF $subst1 \$@]"
 	puts "===========>>>>>> gcc $subst2"
 	exec rm -f "${tmpdir}/x.hc"
 	exec mv "$inF" "${tmpdir}/x.hc"
-	exit 0
+	set rul [open "${tmpdir}/x.hc.rule" w]
+	puts $rul "\tgcc $subst2"
+	close $rul
+	exit
     }
     *clear-m {
 	puts "=====clear-m======"
 	set outF "[lindex $argv 0]"
 	set inF "[lindex $argv 1]"
 	puts "===========$outF   $inF"
-	exit 0
+	exit
     }
     *clear-a {
 	puts "=====clear-a======"
 	set outF "[find-o]"
 	set subst1 "[regsub \\.o $outF .hc]"
+	set subst2 "[regsub \\.o $outF .raw_s]"
+	set subst3 "[regsub \\.o $outF .s]"
+
+	set inF "[lindex $argv 2]"
+	set substArgv "[regsub -all $inF $argv \$^]"
+
 	exec rm -f "$subst1"
 	exec mv ${tmpdir}/x.hc "$subst1"
 	#set inF "[lindex $argv 1]"
 	puts "===========$outF $subst1  $argv"
 	set mak [open "makefile" a]
-	puts $mak "%.raw_s: %.hs\n\tgcc"
-	puts $mak "%.s: %.raw_s:\n\t$mangler"
+	puts $mak "$subst2: $subst1\n[exec cat ${tmpdir}/x.hc.rule]"
+	
+	puts $mak "%.s: %.raw_s\n\t$mangler $^ $@"
+	puts $mak "$outF: $subst3\n\tgcc $substArgv"
 	close $mak
-	exit 0
+	exit
     }
+    *clear-l {
+	puts "=====clear-l======"
+	set mak [open "makefile" a]
+	puts $mak "[find-o]: [findObjects]"
+	puts $mak "\tgcc $argv"
+	# puts $mak "OUTFILE is [find-o]"
+	close $mak
+	exit
+    }
+
+    * {puts "\#\#\# argv0 = $argv0 -------------------------------------------------------TOUCHING!!!"}
 }
 
-set mak [open "makefile" a]
-puts $mak "$argv"
-puts $mak "OUTFILE is [find-o]"
-close $mak
+#set mak [open "makefile" a]
+#puts $mak "$argv"
+#puts $mak "OUTFILE is [find-o]"
+#close $mak
 
 exec touch ./Version.hs
 exec touch ./Toplevel.hs
