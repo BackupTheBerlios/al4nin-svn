@@ -14,6 +14,8 @@
 
 puts "\#\#\# argv0 = $argv0"
 
+set mangler "/home/ggreif/lib/ghc-6.4.1/ghc-asm"
+
 proc find-o { } {
     global argv
 
@@ -43,6 +45,46 @@ proc find-o { } {
 
 	puts stderr "OUT: $out\n"
     return $out
+}
+
+global tmpdir
+set tmpdir "/home/ggreif/.UCSITmpDir/clear-tmp"
+
+switch -glob "$argv0" {
+    *clear-c {
+	puts "==========="
+	exec mkdir -p $tmpdir
+	set outF "[find-o]"
+	set inF "[lindex $argv 2]"
+	puts "===========$outF   $inF"
+	set subst1 "[regsub -all $inF $argv ${tmpdir}/x.hc]"
+	set subst2 "[regsub -all $outF $subst1 ${tmpdir}/x.raw_s]"
+	puts "===========>>>>>> gcc $subst2"
+	exec rm -f "${tmpdir}/x.hc"
+	exec mv "$inF" "${tmpdir}/x.hc"
+	exit 0
+    }
+    *clear-m {
+	puts "=====clear-m======"
+	set outF "[lindex $argv 0]"
+	set inF "[lindex $argv 1]"
+	puts "===========$outF   $inF"
+	exit 0
+    }
+    *clear-a {
+	puts "=====clear-a======"
+	set outF "[find-o]"
+	set subst1 "[regsub \\.o $outF .hc]"
+	exec rm -f "$subst1"
+	exec mv ${tmpdir}/x.hc "$subst1"
+	#set inF "[lindex $argv 1]"
+	puts "===========$outF $subst1  $argv"
+	set mak [open "makefile" a]
+	puts $mak "%.raw_s: %.hs\n\tgcc"
+	puts $mak "%.s: %.raw_s:\n\t$mangler"
+	close $mak
+	exit 0
+    }
 }
 
 set mak [open "makefile" a]
