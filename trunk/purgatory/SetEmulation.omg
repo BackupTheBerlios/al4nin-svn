@@ -28,12 +28,16 @@ import "LangPrelude.prg"
 
 exclude :: Row Tag * ~> Tag ~> Row Tag *
 {exclude RNil o} = RNil
-{exclude (RCons a v r) `a} = {exclude r a}
-----{exclude (RCons `a v r) `a} = {exclude r a} -- BUG
-
---{exclude (RCons (Label `b) v r) (Label `b)} = {exclude r a}
---{exclude (RCons (Label `c) v r) (Label `c)} = {exclude r a}
--- {exclude (RCons l v r) o} = RCons l v {exclude r o}
+--{exclude (RCons a v r) `a} = {exclude r a}
+{exclude (RCons `a v r) `a} = {exclude r `a} -- BUG (issue41)
+{exclude (RCons `b v r) `b} = {exclude r `b}
+{exclude (RCons `c v r) `c} = {exclude r `c}
+{exclude (RCons `a v r) `b} = RCons `a v {exclude r `b}
+{exclude (RCons `a v r) `c} = RCons `a v {exclude r `c}
+{exclude (RCons `b v r) `a} = RCons `b v {exclude r `a}
+{exclude (RCons `b v r) `c} = RCons `b v {exclude r `c}
+{exclude (RCons `c v r) `a} = RCons `c v {exclude r `a}
+{exclude (RCons `c v r) `b} = RCons `c v {exclude r `b}
 
 {-
 
