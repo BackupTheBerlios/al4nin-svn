@@ -29,5 +29,5 @@ import "LangPrelude.prg"
 exclude :: Row Tag * ~> Tag ~> Row Tag *
 {exclude RNil o} = RNil
 -- WORKS: {exclude (RCons a v r) `a} = {exclude r a}
-{exclude (RCons `a v r) `a} = {exclude r a}
+{exclude (RCons `b v r) `a} = {exclude r a}
 
