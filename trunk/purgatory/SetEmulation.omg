@@ -27,9 +27,13 @@ import "LangPrelude.prg"
 
 
 exclude :: Row Tag * ~> Tag ~> Row Tag *
-{exclude RNil n} = RNil
-{exclude (RCons (Label l) v (Label l)} = {exclude r a}
-{exclude (RCons Z m r) (S n)} = RCons a m {strip Z r {plus a (S n)}}
+{exclude RNil o} = RNil
+{exclude (RCons a v r) `a} = {exclude r a}
+----{exclude (RCons `a v r) `a} = {exclude r a} -- BUG
+
+--{exclude (RCons (Label `b) v r) (Label `b)} = {exclude r a}
+--{exclude (RCons (Label `c) v r) (Label `c)} = {exclude r a}
+-- {exclude (RCons l v r) o} = RCons l v {exclude r o}
 
 {-
 
@@ -45,5 +49,14 @@ strip :: Nat ~> Row Nat Nat ~> Nat ~> Row Nat Nat
 
 data SingleLabel :: Row Tag * ~> * where
   None :: SingleLabel RNil
-  More :: Label l -> t -> SingleLabel rest -> SingleLabel {l=t;rest}r
+  More :: Equal {exclude rest l} rest => Label l -> t -> SingleLabel rest -> SingleLabel {l=t;rest}r
  deriving Record(s)
+
+{-
+t1 :: SingleLabel {`a=Int}r
+t1 = {`a=42}s
+t2 = {`a=25,`b=42}s
+
+##test "duplicate tags"
+ t3 = {`a=25,`a=25}s
+-}
