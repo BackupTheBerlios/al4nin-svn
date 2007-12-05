@@ -26,6 +26,23 @@
 import "LangPrelude.prg"
 
 
+exclude :: Row Tag * ~> Tag ~> Row Tag *
+{exclude RNil n} = RNil
+{exclude (RCons (Label l) v (Label l)} = {exclude r a}
+{exclude (RCons Z m r) (S n)} = RCons a m {strip Z r {plus a (S n)}}
+
+{-
+
+strip :: Nat ~> Row Nat Nat ~> Nat ~> Row Nat Nat
+{strip a RNil n} = RNil
+{strip a (RCons Z m r) Z} = {strip Z r a}
+{strip a (RCons Z m r) (S n)} = RCons a m {strip Z r {plus a (S n)}}
+{strip a (RCons (S n) m r) Z} = RCons {plus a (S n)} m {strip Z r a}
+{strip a (RCons (S n) m r) (S n')} = {strip (S a) (RCons n m r) n'}
+
+-}
+
+
 data SingleLabel :: Row Tag * ~> * where
   None :: SingleLabel RNil
   More :: Label l -> t -> SingleLabel rest -> SingleLabel {l=t;rest}r
