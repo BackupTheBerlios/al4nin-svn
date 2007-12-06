@@ -28,6 +28,16 @@ import "LangPrelude.prg"
 
 exclude :: Row Tag * ~> Tag ~> Row Tag *
 {exclude RNil o} = RNil
--- WORKS: {exclude (RCons a v r) `a} = {exclude r a}
-{exclude (RCons `b v r) `a} = {exclude r a}
+-- WORKS: {exclude (RCons a v r) `a} = {exclude r `a}
+{exclude (RCons `b v r) `a} = {exclude r `a}
+
+
+{-
+-- the below decl should give an error, Z is not a Tag!
+##test "unification failure"
+ {exclude (RCons Z v r) `b} = {exclude r `b}
+-}
+
+foo :: Row Nat * ~> Nat ~> Row Nat *
+{foo (RCons Z v r) Z} = {foo r Z}
 
