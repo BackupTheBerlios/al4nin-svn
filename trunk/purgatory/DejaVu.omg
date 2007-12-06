@@ -25,7 +25,7 @@
 
 import "LangPrelude.prg" 
   (head,tail,lookup,member,fst,snd,map,Monad,maybeM,id,ioM,Eq,Equal,
-  listM, foldl, foldr)
+  listM, foldl, foldr, len)
 
 
 import "Thrist.omg" 
@@ -44,6 +44,9 @@ test1 = Dee (Cff 42 test8) (Bgg True)
 
 test8 :: Test Int
 test8 = Cff 25 test8
+
+test9 :: Test Bool
+test9 = Cff False test9
 
 
 
@@ -77,10 +80,11 @@ observer :: Nat' n -> (a -> b) -> DejaVu {nth n (a -> b)} {ult b} -> (DejaVu {nt
 observer a f d = (d, a)
 
 deja :: [Thrist DejaVu () (Test a)] -> [Thrist DejaVu () (Test a)]
---deja [] = []
---deja ((t@(Cons (Stop Ahh) _)):r) = t:(deja r)
-deja ((t@[Stop Ahh; _]l):r) = t : deja r -- bug: Non type constructor: _b as range of constructor: Ahh
-deja ([Stop (Bgg b)]l:r) = [Stop b, Bgg0; more]l : deja r
---deja (Cff o t) = [[Stop o, Cff0]l, [Stop t, Cff1]l]
---deja (Dee o t) = [[Stop o, Dee0]l, [Stop t, Dee1]l]
+deja [] = []
+deja ([Stop (Bgg b); more]l:r) = [Stop b, Bgg0; more]l : deja r
+deja ([Stop (Cff o t); more]l:r) = [[Stop o, Cff0; more]l, [Stop t, Cff1; more]l] ++ deja r
+deja ([Stop (Dee o t); more]l:r) = [[Stop o, Dee0; more]l, [Stop t, Dee1; more]l] ++ deja r
+deja ((t@[Stop _; _]l):r) = t : deja r -- bug: Non type constructor: _b as range of constructor: Ahh (issue39)
+
+test100 = deja $ deja $ deja $ deja [[Stop (Bgg True)]l, [Stop test9]l]
 
