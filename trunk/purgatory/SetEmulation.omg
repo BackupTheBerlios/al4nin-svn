@@ -53,12 +53,15 @@ strip :: Nat ~> Row Nat Nat ~> Nat ~> Row Nat Nat
 
 data SingleLabel :: Row Tag * ~> * where
   None :: SingleLabel RNil
+  More :: forall (l::Tag) (t :: *) (rest::Row Tag *) . Equal {exclude rest l} rest => Label l -> t -> SingleLabel rest -> SingleLabel {l=t;rest}r
+  --More :: forall (rest::Row Tag * ~> *) . ({exclude rest l} == rest) => Label l -> t -> SingleLabel rest -> SingleLabel {l=t;rest}r
   --More :: Equal {exclude rest l} rest => Label l -> t -> SingleLabel rest -> SingleLabel {l=t;rest}r
-  More ::  Label l -> Equal {exclude rest l} rest -> SingleLabel rest -> SingleLabel {l=t;rest}r
+  --More ::  Label l -> Equal {exclude rest l} rest -> SingleLabel rest -> SingleLabel {l=t;rest}r
  deriving Record(s)
 
 t1 :: SingleLabel {`a=Int}r
-t1 = {`a=Eq}s
+t1 = check {`a=25}s
+--t1 = {`a=Eq}s
 {-
 t2 = {`a=25,`b=42}s
 
