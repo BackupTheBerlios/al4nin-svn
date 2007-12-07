@@ -51,10 +51,8 @@ strip :: Nat ~> Row Nat Nat ~> Nat ~> Row Nat Nat
 
 data SingleLabel :: Row Tag * ~> * where
   None :: SingleLabel RNil
-  --More :: forall (l::Tag) (t :: *) (rest::Row Tag *) . Equal {exclude l rest} rest => Label l -> t -> SingleLabel rest -> SingleLabel {l=t;rest}r
-  --More :: forall (rest::Row Tag * ~> *) . ({exclude rest l} == rest) => Label l -> t -> SingleLabel rest -> SingleLabel {l=t;rest}r
+  -- {- "not prop" -}More :: ({exclude rest l} == rest) => Label l -> t -> SingleLabel rest -> SingleLabel {l=t;rest}r
   More :: Equal {exclude l rest} rest => Label l -> t -> SingleLabel rest -> SingleLabel {l=t;rest}r
-  --More ::  Label l -> Equal {exclude rest l} rest -> SingleLabel rest -> SingleLabel {l=t;rest}r
  deriving Record(s)
 
 t1 :: SingleLabel {`a=Int}r
@@ -68,3 +66,14 @@ t3 = {`a=25,`b=42}s
 ##test "duplicate tags"
  t4 = {`a=25,`a=25}s
 
+
+data SingleLabel' :: Row Tag * ~> * where
+  None' :: SingleLabel' RNil
+  More' ::  Label l -> Equal {exclude l rest} rest -> SingleLabel rest -> SingleLabel' {l=t;rest}r
+ deriving Record(sl)
+
+
+-- this is not understood yet
+--
+##test "occurs check"
+  t100 = {`hh=Eq}sl
