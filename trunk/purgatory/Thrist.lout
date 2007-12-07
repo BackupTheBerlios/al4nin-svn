@@ -56,9 +56,9 @@ up possible future directions and summarizes open problems. Section five conclud
 @Begin
 @PP
 We are well acquainted with data structures that are parameterized over
-data types, they are the bread-and-butter tool of functional programmers.
-For example the List datatype could be introduced in Haskell with the following
-definition:
+data types, as they are a bread-and-butter tool for functional programmers.
+For example the @Haskell {List} datatype could be introduced in Haskell
+with the following definition:
 @PP
 @ID @Haskell {
 data List :: * ~> * where
@@ -1153,6 +1153,11 @@ Uustalu"&"Vene:The Essence of Dataflow Programming @Cite { $uustaluvene05.datafl
   @Title { Connection to Categories }
 @Begin
 @PP
+The type-threaded nature of the Thrist datatype is the distinguishing feature of @I { free categories } too. In the Appendix
+we supply an @Haskell { appendThrist } function that can be regarded as the inner multiplication (concatenation)
+operation in the free category. {@Omega}'s user-defined kind definition allows for defining categories (with countable
+object set) as non-inhabited types.
+
 encoding free categories as Thrists
 @LP every Thrist gives rise to a category?
 @LP RevThrist is the opposite category?
@@ -1176,8 +1181,14 @@ is fulfilled, regardless what callback functions the monad's creator supplies. G
 his work only as the datatypes modelling the @I { effect basis } of monads, while they are not needed
 for the general case.
 @PP
-Chris Heunen and Bart Jacobs' work @Cite { $heunenjacobs.monoid } on the connection of Arrows and Monads and their category theoretical
-formalisation is of relevance because it reveals the mathematical structure behind these constructs.
+Another example of the rekindled interest in modelling side-effecting computations in a purely functional
+manner is given by the Haskell Workshop paper of Swierstra et al. @Cite { $swierstra07.beast }, which demonstrates
+another use of the @I { free monad }, a data structure built up as an ADT. The result can be examined intensionally
+by pattern matching, in a similar fashion like our thrists can be taken apart by the semantics functions.
+@PP
+Chris Heunen and Bart Jacobs' work @Cite { $heunenjacobs.monoid } on the connection of Arrows and Monads
+and their category theoretical formalisation is of relevance because it reveals the mathematical
+structure behind these constructs.
 Arrows appeared in the general mindset as a pragmatic approach to deal with a certain class of parsers
 @Cite { $hughes00.arrows } that did not fit into the monadic framework.
 Nilsson provides a method for optimizing limited cases of arrow combinator libraries using GADTs. He
