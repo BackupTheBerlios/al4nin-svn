@@ -69,7 +69,7 @@ t3 = {`a=25,`b=42}s
 
 data SingleLabel' :: Row Tag * ~> * where
   None' :: SingleLabel' RNil
-  More' ::  Label l -> Equal {exclude l rest} rest -> SingleLabel rest -> SingleLabel' {l=t;rest}r
+  More' ::  Label l -> Equal {exclude l rest} rest -> SingleLabel' rest -> SingleLabel' {l=t;rest}r
  deriving Record(sl)
 
 
