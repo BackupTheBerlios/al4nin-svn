@@ -1,0 +1,70 @@
+-- -*-Haskell-*-
+
+{-
+ * Copyright (c) 2007 Gabor Greif
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to deal
+ * in the Software without restriction, including without limitation the rights
+ * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies
+ * of the Software, and to permit persons to whom the Software is furnished to do
+ * so, subject to the following conditions:
+ *
+ * The above copyright notice and this permission notice shall be
+ * included in all copies or substantial portions of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
+ * EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES
+ * OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
+ * NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT
+ * HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY,
+ * WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+ * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE
+ * OR OTHER DEALINGS IN THE SOFTWARE.
+ -}
+
+import "LangPrelude.prg"
+
+
+exclude :: Row Tag * ~> Tag ~> Row Tag *
+{exclude RNil o} = RNil
+--{exclude (RCons a v r) `a} = {exclude r a}
+{exclude (RCons `a v r) `a} = {exclude r `a} -- BUG (issue41)
+{exclude (RCons `b v r) `b} = {exclude r `b}
+{exclude (RCons `c v r) `c} = {exclude r `c}
+{exclude (RCons `a v r) `b} = RCons `a v {exclude r `b}
+{exclude (RCons `a v r) `c} = RCons `a v {exclude r `c}
+{exclude (RCons `b v r) `a} = RCons `b v {exclude r `a}
+{exclude (RCons `b v r) `c} = RCons `b v {exclude r `c}
+{exclude (RCons `c v r) `a} = RCons `c v {exclude r `a}
+{exclude (RCons `c v r) `b} = RCons `c v {exclude r `b}
+
+{-
+
+strip :: Nat ~> Row Nat Nat ~> Nat ~> Row Nat Nat
+{strip a RNil n} = RNil
+{strip a (RCons Z m r) Z} = {strip Z r a}
+{strip a (RCons Z m r) (S n)} = RCons a m {strip Z r {plus a (S n)}}
+{strip a (RCons (S n) m r) Z} = RCons {plus a (S n)} m {strip Z r a}
+{strip a (RCons (S n) m r) (S n')} = {strip (S a) (RCons n m r) n'}
+
+-}
+
+
+data SingleLabel :: Row Tag * ~> * where
+  None :: SingleLabel RNil
+  More :: forall (l::Tag) (t :: *) (rest::Row Tag *) . Equal {exclude rest l} rest => Label l -> t -> SingleLabel rest -> SingleLabel {l=t;rest}r
+  --More :: forall (rest::Row Tag * ~> *) . ({exclude rest l} == rest) => Label l -> t -> SingleLabel rest -> SingleLabel {l=t;rest}r
+  --More :: Equal {exclude rest l} rest => Label l -> t -> SingleLabel rest -> SingleLabel {l=t;rest}r
+  --More ::  Label l -> Equal {exclude rest l} rest -> SingleLabel rest -> SingleLabel {l=t;rest}r
+ deriving Record(s)
+
+t1 :: SingleLabel {`a=Int}r
+t1 = check {`a=25}s
+--t1 = {`a=Eq}s
+{-
+t2 = {`a=25,`b=42}s
+
+##test "duplicate tags"
+ t3 = {`a=25,`a=25}s
+-}
