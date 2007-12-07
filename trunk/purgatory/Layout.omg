@@ -25,16 +25,31 @@
 
 import "LangPrelude.prg"
 
+import "Thrist.omg" 
+  (Thrist, Nil, Cons, syntax List(l))
+
 plus:: Nat ~> Nat ~> Nat
 {plus Z m} = m
 {plus (S n) m} = S {plus n m}
 
+{-
+canGround :: Nat' n -> Divsbl 0t n
+canGround n = Ground
+
+theorem canGround
+-}
+
 prop Divsbl :: Nat ~> Nat ~> * where
   Ground :: Divsbl 0t b
+  -- Ground :: Nat' b -> Divsbl 0t (S b)
   Leap :: Divsbl a b -> Divsbl {plus a b} b
  deriving Nat(d)
 
 data Layout :: Nat ~> Nat ~> * where
   Int :: Divsbl n 4t => Layout n (4+n)t
+  Bool :: Layout n (S n)
   Pad :: Nat' p -> Layout n {plus n p}
+
+t1 :: Thrist Layout 0t 8t
+--t1 = [Pad 4v, Int]l
 
