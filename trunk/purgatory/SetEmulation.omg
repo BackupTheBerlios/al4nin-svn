@@ -49,28 +49,22 @@ strip :: Nat ~> Row Nat Nat ~> Nat ~> Row Nat Nat
 
 -}
 
---exclude' :: Tag ~> Row Tag * ~> Row Tag *
---{exclude' `b l} = l
-
 data SingleLabel :: Row Tag * ~> * where
   None :: SingleLabel RNil
-  --More :: forall (l::Tag) (t :: *) (rest::Row Tag *) . Equal rest {exclude' l rest} => Label l -> t -> SingleLabel rest -> SingleLabel {l=t;rest}r
-  More :: forall (l::Tag) (t :: *) (rest::Row Tag *) . Equal {exclude l rest} rest => Label l -> t -> SingleLabel rest -> SingleLabel {l=t;rest}r
+  --More :: forall (l::Tag) (t :: *) (rest::Row Tag *) . Equal {exclude l rest} rest => Label l -> t -> SingleLabel rest -> SingleLabel {l=t;rest}r
   --More :: forall (rest::Row Tag * ~> *) . ({exclude rest l} == rest) => Label l -> t -> SingleLabel rest -> SingleLabel {l=t;rest}r
-  --More :: Equal {exclude rest l} rest => Label l -> t -> SingleLabel rest -> SingleLabel {l=t;rest}r
+  More :: Equal {exclude l rest} rest => Label l -> t -> SingleLabel rest -> SingleLabel {l=t;rest}r
   --More ::  Label l -> Equal {exclude rest l} rest -> SingleLabel rest -> SingleLabel {l=t;rest}r
  deriving Record(s)
 
 t1 :: SingleLabel {`a=Int}r
 t1 = {`a=25}s
---t1 = {`a=Eq}s
 
--- t1a = {`a=25;undefined}s
----> UHU: polyk: (level  . forall (dge:Row Tag *0).SingleLabel {`a=Int; {exclude `a dge}}r)
------ omega.exe: ./Value.hs:(222,0)-(225,47): Non-exhaustive patterns in function showVcon
+##test "not solvable"
+ t2 = {`a=25;undefined}s
 
-t2 = {`a=25,`b=42}s
+t3 = {`a=25,`b=42}s
 
 ##test "duplicate tags"
- t3 = {`a=25,`a=25}s
+ t4 = {`a=25,`a=25}s
 
