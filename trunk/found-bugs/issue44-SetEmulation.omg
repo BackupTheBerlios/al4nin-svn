@@ -91,24 +91,14 @@ toFront a (e@{}s) = R e
 toFront a (got@{f=v; rest}s) = case labelEq a f of
 			       Nothing -> case toFront a rest of
 					  R free -> R {f=v; free}s
-					  L {a'=v; rest'}s -> L {a'=v', f=v; rest'}s
+					  L {a'=v; rest'}s -> L {a'=v, f=v; rest'}s
 			       Just Eq -> L got
 -}
-
-extendLemma :: Label l -> Equal a b -> Equal {exclude l a} {exclude l b}
-extendLemma l Eq = Eq
-
--- unsound:
---contractLemma :: Label l -> Equal {exclude l a} {exclude l b} -> Equal a b
---contractLemma l Eq = Eq
-
-idempotenceLemma :: Label l -> Equal {exclude l a} b -> Equal {exclude l {exclude l a}} b
-idempotenceLemma l Eq = Eq
-
-toFront :: Label a -> SingleLabel row -> (SingleLabel {a=v; {exclude a row}}r + (SingleLabel {exclude a row}, Equal {exclude a row} row))
+--toFront :: Label a -> SingleLabel row -> (SingleLabel {a=v; {exclude a row}}r + (SingleLabel {exclude a row}, Equal row {exclude a row}))
+toFront :: Label a -> SingleLabel row -> (SingleLabel {a=v; {exclude a row}}r + (SingleLabel {exclude a row}, Equal row {exclude a row}))
 toFront a (e@{}s) = R (e, Eq)
 toFront a (got@{f=v; rest}s) = case labelEq a f of
 			       Nothing -> case toFront a rest of
-					  R (free, (t@Eq)) -> R (check {f=v; free}s, Eq) where theorem t
-					  L {a'=v'; rest'}s -> L {a'=v', f=v; rest'}s
+					  R (free, (t@Eq)) -> R ({f=v; free}s, Eq) where theorem t
+					  L {a'=v; rest'}s -> L {a'=v, f=v; rest'}s
 			       Just Eq -> L got
