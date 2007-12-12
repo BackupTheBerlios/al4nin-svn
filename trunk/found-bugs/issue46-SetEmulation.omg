@@ -38,46 +38,11 @@ exclude :: Tag ~> Row Tag * ~> Row Tag *
 {exclude `a (RCons `c v r)} = RCons `c v {exclude `a r}
 {exclude `b (RCons `c v r)} = RCons `c v {exclude `b r}
 
-{-
-
-strip :: Nat ~> Row Nat Nat ~> Nat ~> Row Nat Nat
-{strip a RNil n} = RNil
-{strip a (RCons Z m r) Z} = {strip Z r a}
-{strip a (RCons Z m r) (S n)} = RCons a m {strip Z r {plus a (S n)}}
-{strip a (RCons (S n) m r) Z} = RCons {plus a (S n)} m {strip Z r a}
-{strip a (RCons (S n) m r) (S n')} = {strip (S a) (RCons n m r) n'}
-
--}
 
 data SingleLabel :: Row Tag * ~> * where
   None :: SingleLabel RNil
-  -- {- "not prop" -}More :: ({exclude rest l} == rest) => Label l -> t -> SingleLabel rest -> SingleLabel {l=t;rest}r
   More :: Equal {exclude l rest} rest => Label l -> t -> SingleLabel rest -> SingleLabel {l=t;rest}r
  deriving Record(s)
-
-t1 :: SingleLabel {`a=Int}r
-t1 = {`a=25}s
-
-##test "not solvable"
- t2 = {`a=25;undefined}s
-
-t3 = {`a=25,`b=42}s
-
-##test "duplicate tags"
- t4 = {`a=25,`a=25}s
-
-
-data SingleLabel' :: Row Tag * ~> * where
-  None' :: SingleLabel' RNil
-  More' ::  Label l -> Equal {exclude l rest} rest -> SingleLabel' rest -> SingleLabel' {l=t;rest}r
- deriving Record(sl)
-
-
--- this is not understood yet
---
-##test "occurs check"
-  t100 = {`hh=Eq}sl
-
 
 -- Some basic operations on SingleLabel records:
 ------------------------------------------------
@@ -85,54 +50,7 @@ data SingleLabel' :: Row Tag * ~> * where
 --- separate the head of the record and assemble it again after that.
 
 
-apart :: SingleLabel row -> exists a v . Maybe (Label a, v, SingleLabel tail{-, Equal {a=v; tail}r row-})
+apart :: SingleLabel row -> exists a v . Maybe (Label a, v, SingleLabel tail)
 apart {}s = Ex Nothing
-apart {l=v; rest}s = Ex (check (Just (l, v, rest{-, Eq-})))
+apart {l=v; rest}s = Ex (check (Just (l, v, rest)))
 
-
-
-{- STILL TOO HARD FOR ME
--- pulling stuff to front
-
-{-
-toFront :: Label a -> SingleLabel row -> (SingleLabel {a=v; {exclude a row}}r + SingleLabel {exclude a row})
-toFront a (e@{}s) = R e
-toFront a (got@{f=v; rest}s) = case labelEq a f of
-			       Nothing -> case toFront a rest of
-					  R free -> R {f=v; free}s
-					  L {a'=v; rest'}s -> L {a'=v', f=v; rest'}s
-			       Just Eq -> L got
--}
-
-extendLemma :: Label l -> Equal a b -> Equal {exclude l a} {exclude l b}
-extendLemma l Eq = Eq
-
--- unsound:
---contractLemma :: Label l -> Equal {exclude l a} {exclude l b} -> Equal a b
---contractLemma l Eq = Eq
-
-idempotenceLemma :: Label l -> Equal {exclude l a} b -> Equal {exclude l {exclude l a}} b
-idempotenceLemma l Eq = undefined -- Eq CHEAT
-
-idempotenceLemma' :: Label l -> SingleLabel {exclude l a} -> SingleLabel b -> Equal {exclude l a} b -> Equal {exclude l {exclude l a}} b
-idempotenceLemma' l s sb Eq = undefined -- Eq CHEAT
-
-
-------but, the current refinement fails because _c != {exclude _b _c}   vvvvvvvvvvvv
---peel :: Label a -> Equal row {exclude a row} -> SingleLabel {exclude a row} -> SingleLabel row
---peel a Eq s = s
-
-peel :: Label a -> Equal {exclude a row} b -> SingleLabel {exclude a row} -> SingleLabel b
-peel a Eq s = s
-
-toFront :: Label a -> SingleLabel row -> (SingleLabel {a=v; {exclude a row}}r + (SingleLabel {exclude a row}, Equal {exclude a row} row))
-toFront a (e@{}s) = R (e, Eq)
-toFront a (got@{f=v; rest}s) = case labelEq a f of
-			       Nothing -> case toFront a rest of
-					  --R (free, (t@Eq)) -> R (check {f=v; free}s, Eq) where theorem t, idem = idempotenceLemma' f
-                                          --R (free, (t@Eq)) -> R (got, Eq)
-                                          R (free, (t@Eq)) -> R (peel f t got, Eq)
-					  L {a'=v'; rest'}s -> L {a'=v', f=v; rest'}s
-			       Just Eq -> L got
-
--}
