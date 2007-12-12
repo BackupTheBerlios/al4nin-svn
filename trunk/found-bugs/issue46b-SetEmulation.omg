@@ -50,12 +50,12 @@ data SingleLabel :: Row Tag * ~> * where
 --- separate the head of the record and its tail, and return evidence that they fit together
 
 
-apart :: SingleLabel row -> exists a v tail . Maybe (Label a, v, SingleLabel tail, Equal {exclude a tail} tail)
+apart :: SingleLabel row -> exists a v tail . Maybe (Label a, v, SingleLabel tail, Equal {exclude a tail} tail, Equal {a=v; tail}r row)
 apart {}s = Ex Nothing
-apart {l=v; rest}s = Ex (Just (l, v, rest, Eq))
+apart {l=v; rest}s = Ex (Just (l, v, rest, Eq, Eq))
 
 
 apartAndTogether :: SingleLabel row -> SingleLabel row
 apartAndTogether s = case apart s of
 		     --Ex Nothing -> {}s
-		     Ex (Just (l, v, r, eq)) -> check {l=v; r}s where theorem eq
+		     Ex (Just (l, v, r, eq, entire)) -> check {l=v; r}s where theorem eq, entire
