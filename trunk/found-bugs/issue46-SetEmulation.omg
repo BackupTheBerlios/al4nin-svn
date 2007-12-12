@@ -47,10 +47,10 @@ data SingleLabel :: Row Tag * ~> * where
 -- Some basic operations on SingleLabel records:
 ------------------------------------------------
 
---- separate the head of the record and assemble it again after that.
+--- separate the head of the record and its tail, and return evidence that they fit together
 
 
-apart :: SingleLabel row -> exists a v . Maybe (Label a, v, SingleLabel tail)
+apart :: SingleLabel row -> exists a v tail . Maybe (Label a, v, SingleLabel tail, Equal {exclude a tail} tail)
 apart {}s = Ex Nothing
-apart {l=v; rest}s = Ex (check (Just (l, v, rest)))
+apart {l=v; rest}s = Ex (check (Just (l, v, rest, Eq)))
 
