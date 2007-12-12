@@ -82,7 +82,20 @@ data SingleLabel' :: Row Tag * ~> * where
 -- Some basic operations on SingleLabel records:
 ------------------------------------------------
 
+--- separate the head of the record and assemble it again after that.
 
+-- SEE: issue46
+--apart :: SingleLabel row -> exists a v tail . Maybe ((Label a, v, SingleLabel tail), Equal {a=v; tail}r row, Equal {exclude a tail} tail)
+--apart {}s = Ex Nothing
+--apart {l=v; rest}s = Ex (Just ((l, v, rest), Eq, check Eq))
+
+-- SEE: issue47
+join :: Label a -> v -> SingleLabel tail -> Equal {exclude a tail} tail -> SingleLabel row
+join a v t Eq = {a=v; t}s
+
+
+
+{- STILL TOO HARD FOR ME
 -- pulling stuff to front
 
 {-
@@ -103,12 +116,27 @@ extendLemma l Eq = Eq
 --contractLemma l Eq = Eq
 
 idempotenceLemma :: Label l -> Equal {exclude l a} b -> Equal {exclude l {exclude l a}} b
-idempotenceLemma l Eq = Eq
+idempotenceLemma l Eq = undefined -- Eq CHEAT
+
+idempotenceLemma' :: Label l -> SingleLabel {exclude l a} -> SingleLabel b -> Equal {exclude l a} b -> Equal {exclude l {exclude l a}} b
+idempotenceLemma' l s sb Eq = undefined -- Eq CHEAT
+
+
+------but, the current refinement fails because _c != {exclude _b _c}   vvvvvvvvvvvv
+--peel :: Label a -> Equal row {exclude a row} -> SingleLabel {exclude a row} -> SingleLabel row
+--peel a Eq s = s
+
+peel :: Label a -> Equal {exclude a row} b -> SingleLabel {exclude a row} -> SingleLabel b
+peel a Eq s = s
 
 toFront :: Label a -> SingleLabel row -> (SingleLabel {a=v; {exclude a row}}r + (SingleLabel {exclude a row}, Equal {exclude a row} row))
 toFront a (e@{}s) = R (e, Eq)
 toFront a (got@{f=v; rest}s) = case labelEq a f of
 			       Nothing -> case toFront a rest of
-					  R (free, (t@Eq)) -> R (check {f=v; free}s, Eq) where theorem t
+					  --R (free, (t@Eq)) -> R (check {f=v; free}s, Eq) where theorem t, idem = idempotenceLemma' f
+                                          --R (free, (t@Eq)) -> R (got, Eq)
+                                          R (free, (t@Eq)) -> R (peel f t got, Eq)
 					  L {a'=v'; rest'}s -> L {a'=v', f=v; rest'}s
 			       Just Eq -> L got
+
+-}
