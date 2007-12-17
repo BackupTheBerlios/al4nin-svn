@@ -1,0 +1,20 @@
+-- -*-Haskell-*-
+
+
+data List :: a ~> *1 where
+  Nil :: List a
+  Cons :: a ~> List a ~> List a
+ deriving List(t)
+
+
+data List' :: a ~> Nat ~> List a ~> *0 where
+  Nil :: List' a 0t Nil
+  Cons :: a -> List' a n l -> List' a (S n) (Cons a l)
+ deriving List(v)
+
+
+len' :: List' a n l -> Nat' n
+len' Nil = 0v
+
+
+
