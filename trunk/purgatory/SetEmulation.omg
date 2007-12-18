@@ -89,12 +89,16 @@ data SingleLabel' :: Row Tag * ~> * where
 --apart {}s = Ex Nothing
 --apart {l=v; rest}s = Ex (Just ((l, v, rest), Eq, check Eq))
 
--- SEE: issue47
+-- SEE: issue48
 --join :: Label a -> v -> SingleLabel tail -> Equal {a=v; tail}r row -> Equal {exclude a tail} tail -> SingleLabel row
 join :: Label a -> v -> SingleLabel tail -> Equal {exclude a tail} tail -> SingleLabel {a=v; tail}r
-join a v t Eq Eq = {a=v; t}s
+join a v t Eq = {a=v; t}s
 
+##test "duplicate labels"
+  t5 = join `a 42 {`a="GGG"}s Eq
 
+-- this should be accepted
+t6 = join `a 42 {`b="GGG"}s Eq
 
 {- STILL TOO HARD FOR ME
 -- pulling stuff to front
