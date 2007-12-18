@@ -85,12 +85,11 @@ data SingleLabel' :: Row Tag * ~> * where
 --- separate the head of the record and assemble it again after that.
 
 -- SEE: issue46
---apart :: SingleLabel row -> exists a v tail . Maybe ((Label a, v, SingleLabel tail), Equal {a=v; tail}r row, Equal {exclude a tail} tail)
---apart {}s = Ex Nothing
---apart {l=v; rest}s = Ex (Just ((l, v, rest), Eq, check Eq))
+apart :: SingleLabel row -> exists a v tail . Maybe ((Label a, v, SingleLabel tail), Equal {a=v; tail}r row, Equal {exclude a tail} tail)
+apart {}s = Ex Nothing
+apart {l=v; rest}s = Ex (Just ((l, v, rest), Eq, Eq))
 
 -- SEE: issue48
---join :: Label a -> v -> SingleLabel tail -> Equal {a=v; tail}r row -> Equal {exclude a tail} tail -> SingleLabel row
 join :: Label a -> v -> SingleLabel tail -> Equal {exclude a tail} tail -> SingleLabel {a=v; tail}r
 join a v t Eq = {a=v; t}s
 
