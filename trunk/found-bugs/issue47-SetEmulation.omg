@@ -57,5 +57,5 @@ apart {l=v; rest}s = Ex (Just (l, v, rest, Eq, Eq))
 
 apartAndTogether :: SingleLabel row -> SingleLabel row
 apartAndTogether s = case apart s of
-		     --Ex Nothing -> {}s
+		     Ex Nothing -> s
 		     Ex (Just (l, v, r, eq, entire)) -> check {l=v; r}s where theorem eq, entire
