@@ -67,17 +67,6 @@ t3 = {`a=25,`b=42}s
  t4 = {`a=25,`a=25}s
 
 
-data SingleLabel' :: Row Tag * ~> * where
-  None' :: SingleLabel' RNil
-  More' ::  Label l -> Equal {exclude l rest} rest -> SingleLabel' rest -> SingleLabel' {l=t;rest}r
- deriving Record(sl)
-
-
--- this is not understood yet
---
-##test "occurs check"
-  t100 = {`hh=Eq}sl
-
 
 -- Some basic operations on SingleLabel records:
 ------------------------------------------------
