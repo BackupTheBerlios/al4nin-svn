@@ -88,6 +88,17 @@ join a v t Eq = {a=v; t}s
 -- this should be accepted
 t6 = join `a 42 {`b="GGG"}s Eq
 
+
+-- deriving evidence
+
+free :: Label a -> SingleLabel r -> Maybe (Equal {exclude a r} r)
+free _ {}s = Just Eq
+free a {head=v;tail}s = case labelEq a head of
+                        Just Eq -> Nothing
+                        Nothing -> case free a tail of
+                                   Just ev -> check (Just Eq) where theorem ev
+                                   Nothing -> Nothing
+
 {- STILL TOO HARD FOR ME
 -- pulling stuff to front
 
