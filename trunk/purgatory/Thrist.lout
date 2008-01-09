@@ -8,6 +8,8 @@
 @Database @FontDef {"db/lm"}
 @Database @Reference {"db/acmrefs"}
 
+def @TargetForExtract right output {}
+
 def @Prompt left input right output { { Helvetica Base } @Font { prompt> @Haskell { input } @PP @I { output } } }
 def @Omega { {@I {@Sym Omega}}mega }
 
@@ -60,11 +62,12 @@ data types, as they are a bread-and-butter tool for functional programmers.
 For example the @Haskell {List} datatype could be introduced in Haskell
 with the following definition:
 @PP
-@ID @Haskell {
+@TargetForExtract "check/List"
+@ID @Haskell @Begin
 data List :: * ~> * where
   Nil :: List a
   Cons :: a -> List a -> List a
-}
+@End @Haskell
 @PP
 We deliberately avoid the traditional syntax of defining the @Haskell {List} datatype,
 and use a @I {GADT-style} definition{@FootNote {in a @I {generalized algebraic datatype}
