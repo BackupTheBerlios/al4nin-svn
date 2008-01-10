@@ -102,7 +102,7 @@ universally qualified ones:
   {<primfun to1> : Char -> Int}
 }
 @LP
-Now, functions are a bit more interesting than Lists above, they can be composed!
+Now, functions are a bit more interesting than @Haskell {List}s above, they can be composed!
 Interestingly, composition (written as (.)) is again a function:
 @LD {
 {(.)} @Prompt
@@ -111,7 +111,7 @@ Interestingly, composition (written as (.)) is again a function:
 This function signature has several interpretations, but the most common one tells us that
 the composition function @Haskell {(.)} takes a function with type @Haskell {a -> b} as its first argument, then
 a function with type @Haskell {c -> a} as its second argument, and returns a function of type @Haskell {c -> b}.
-Again, a, b and c can be arbitrarily specialized or be left universal.
+Again, @Haskell {a}, @Haskell {b} and @Haskell {c} can be arbitrarily specialized or be left universal.
 We can play with our new toy in the following way:
 
 @LD {
@@ -168,11 +168,12 @@ We also observe that the intermediate types do not show up in the end result's t
 
 Let's simulate these rules as a datatype:
 
-@ID @Haskell {
+@TargetForExtract "check/Thrist1"
+@ID @Haskell @Begin
 data Thrist :: * ~> * ~> * where
   Nil :: Thrist a a
   Cons :: (a, b) -> Thrist b c -> Thrist a c
-}
+@End @Haskell
 
 The alert reader will have noticed that we have defined a proper GADT,
 since the @Haskell {Nil} constructor is only inhabiting the @I diagonal
@@ -207,11 +208,13 @@ premature decision, we could gain back our hope.
 @PP
 We try all over again, this time abstracting away the pair into an additional parameter:
 
-@ID @Haskell {
+@TargetForExtract "check/Thrist"
+@ID @Haskell @Begin
 data Thrist :: (* ~> * ~> *) ~> * ~> * ~> * where
   Nil :: Thrist p a a
   Cons :: p a b -> Thrist p b c -> Thrist p a c
-}
+@End @Haskell
+
 All that remains of the pair is the bitter aftertaste
 and the letter @Haskell {p} in the definition of @Haskell {Thrist}.
 @PP
@@ -234,11 +237,12 @@ thrists later in the discussion. But now let's put the last missing
 piece in place to show that an arrow thrist is strictly more general
 than function composition, the @Haskell {runArrowThrist} function:
 
-@ID @Haskell {
+@ID @Haskell @Begin
 runArrowThrist :: Thrist (->) b c -> c -> b
 runArrowThrist Nil b = b
 runArrowThrist (Cons f r) a = runThrist r (f a)
-}
+@End @Haskell
+
 
 This function now confirms the vague intuition that @Haskell {Nil} plays the r{@Char ocircumflex}le of
 the neutral element of the arrow thrist, just like the identity function
@@ -812,6 +816,7 @@ Of course there are some pitfalls here but the principle is clear:
    @ListItem { As the execution of the trist proceeds the incrementally more of the token are analysed, condensed and converted. }
 @EndList
 
+@TargetForExtract "check/Machine"
 @Figure
     @Tag { machine }
     @Caption { State machine fragment }
@@ -846,17 +851,29 @@ Of course there are some pitfalls here but the principle is clear:
     aformat { @Cell A }
 {
 @Rowa
-    A { @Haskell { NorthWest :: State GateClosed SecondaryEnabled (H Idle Idle') } }
+    A { @Haskell @Begin
+NorthWest :: State GateClosed SecondaryEnabled (H Idle Idle')
+	@End @Haskell }
 @Rowa
-    A { @Haskell { North :: State GateClosed SecondaryEnabled (H Idle Idle') } }
+    A { @Haskell @Begin
+North :: State GateClosed SecondaryEnabled (H Idle Idle')
+	@End @Haskell }
 @Rowa
-    A { @Haskell { West :: State GateClosed SecondaryEnabled (H Idle NeedAck) } }
+    A { @Haskell @Begin
+West :: State GateClosed SecondaryEnabled (H Idle NeedAck)
+	@End @Haskell }
 @Rowa
-    A { @Haskell { Mid :: State GateClosed SecondaryBlocked (H Idle NeedAck) } }
+    A { @Haskell @Begin
+Mid :: State GateClosed SecondaryBlocked (H Idle NeedAck)
+	@End @Haskell }
 @Rowa
-    A { @Haskell { South :: State GateClosed SecondaryBlocked (H Idle Idle') } }
+    A { @Haskell @Begin
+South :: State GateClosed SecondaryBlocked (H Idle Idle')
+	@End @Haskell }
 @Rowa
-    A { @Haskell { SouthEast :: State GateOpen SecondaryBlocked (H Idle Idle') } }
+    A { @Haskell @Begin
+SouthEast :: State GateOpen SecondaryBlocked (H Idle Idle')
+	@End @Haskell }
 }
 
 
@@ -985,14 +1002,14 @@ of facets each.
 To formally introduce the facets, we employ another @Omega feature,
 namely @I { user-defined kinds }, whose alternatives can be used to
 parameterise the @Haskell { State } datatype:
-@ID @Haskell {
+@ID @Haskell @Begin
 kind Gate = GateClosed | GateOpen
 kind Secondary = SecondaryEnabled | SecondaryBlocked
 kind Handshake = Idle | NeedAck | Requested
 
 data State :: Gate ~> Secondary ~> Handshake ~> * where
   State :: [Transition g s h] -> State g s h
-}
+@End @Haskell
 
 On its right side, figure @NumberOf { machine } shows
 the states along with the facets and
@@ -1006,16 +1023,27 @@ to ensure the working of the handshaking protocol.
 @PP
 We can implement the elementary actions as a GADT:
 
-@ID @Haskell {
+@ID @Haskell @Begin
 data Action :: Gate ~> Secondary ~> Handshake ~> * where
   RequestExclusive :: Action (a, b, Idle) (a, b, NeedAck)
   AckExclusive :: Action (a, b, Requested) (a, b, Idle)
   OpenGate :: Action (GateClosed, SecondaryBlocked, c) (GateOpen, SecondaryBlocked, c)
   BlockSecondary :: Action (a, SecondaryEnabled, c) (a, SecondaryBlocked, c)
-  ...
-}
+  -- ...
+@End @Haskell
 
-Then state transitions would correspond to @Haskell { Thrist Action }s.
+Then state transitions would correspond to @Haskell { Thrist Action }s that
+originate from a state:
+@ID @Haskell @Begin
+data Transition :: Gate ~> Secondary ~> Handshake ~> * where
+  From :: State g' s' h' -> Thrist Action (g', s', h') (g, s, h) -> Transition g s h
+@End @Haskell
+
+For instance the @Haskell { South } state could be defined thus:
+@ID @Haskell @Begin
+South = State [From West [OpenGate]l]
+@End @Haskell
+
 @PP
 What do we gain with such a declarative description of the state machine at
 hand?
