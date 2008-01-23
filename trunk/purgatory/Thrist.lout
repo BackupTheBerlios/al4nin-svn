@@ -311,13 +311,14 @@ first type parameter to describe the shape of the stack before
 and the second parameter after the Cat primitive has been
 executed.
 
-@ID @Haskell {
+@TargetForExtract "check/Cat"
+@ID @Haskell @Begin
 data Cat :: * ~> * ~> * where
   Push :: a -> Cat opaque (a, opaque)
   Pop :: Cat (a, opaque) opaque
   Dup :: Cat (a, opaque) (a, (a, opaque))
   Add :: Cat (Int, (Int, opaque)) (Int, opaque)
-}
+@End @Haskell
 
 @BeginSubSubSections
 
@@ -385,14 +386,14 @@ expects two integers on the stack, but there are two @Haskell { Char }s availabl
 @PP
 Now it is time to build an interpreter for Thrist Cat, and
 thus define its big-step semantics:
-@ID @Haskell {
+@ID @Haskell @Begin
 interpret' :: Thrist Cat a b -> a -> b
 interpret' []l st = st
 interpret' [Push x; rest]l st = interpret' rest (x, st)
 interpret' [Pop; rest]l (a, st) = interpret' rest st
 interpret' [Dup; rest]l (a, st) = interpret' rest (a, a, st)
 interpret' [Add; rest]l (a, b, st) = interpret' rest (a + b, st)
-}
+@End @Haskell
 It works:
 
 @LD {
@@ -426,7 +427,7 @@ for the { @I do-notation }'s perusal{ @FootNote { @Omega's (current) lack of @I 
 necessitates the explicit passing of @Haskell { Monad :: (* ~> *) ~> * } values } }.
 In similar spirit we have to rewrite the other cases too:
 
-@ID @Haskell operators {Base} {
+@ID @Haskell operators {Base} @Begin
 interpret' [Pop; rest]l st = do
 	(a, st') <- st
 	interpret' rest $ return st'
@@ -445,7 +446,8 @@ interpret' [Add; rest]l st = do
 	(a, b, st') <- st
 	interpret' rest $ return (a + b, st')
   where monad ioM
-}
+@End @Haskell
+
 Trying out this monadic interpreter gives us:
 @LD {
 { interpret' [Push 21, Dup, Add, Print]l (returnIO ()) } @Prompt
@@ -460,10 +462,11 @@ stack unchanged. We can ensure this property by writing
 a top-level interpreter function for Cat programs using
 @I {rank-2 polymorphism}:
 
-@ID @Haskell operators {Base} {
+@ID @Haskell operators {Base} @Begin
 interpret :: (forall a. Thrist Cat a a) -> IO ()
 interpret program = interpret' program $ returnIO ()
-}
+@End @Haskell
+
 Obviously this @Haskell {interpret} function is only called for side-effects.
 @End @SubSubSection
 
@@ -1176,7 +1179,9 @@ the values are included into the data structure, each monadic "do{}" needs to be
 do not contain "external" values, so no recompilation is necessary. }
 @Considerations { Comonads?, see paper @Cite { $heunenjacobs.monoid },
 Uustalu"&"Vene:The Essence of Dataflow Programming @Cite { $uustaluvene05.dataflow } }
-
+@Considerations { since thrists do not provide a binding construct like the do-notation
+one has to resort to point-free passing of intermediate values (i.e. returning tuples) }
+@Considerations { Control.Applicative ? }
 @End @SubSection
 
 
