@@ -37,7 +37,7 @@ data Thrist :: (* -> * -> *) -> * -> * -> * where
 
 -- Embedding of Arrows
 -- see also http://en.wikibooks.org/wiki/Haskell/Understanding_arrows
-
+{-
 data Arrow' :: (* -> * -> *) -> * -> * -> * where
   Arr :: Arrow a => (b -> c) -> Arrow' a b c
   First :: Arrow' a b c -> Arrow' a (b, d) (c, d)
@@ -45,10 +45,36 @@ data Arrow' :: (* -> * -> *) -> * -> * -> * where
 t0 :: (->) Char Char
 t0 = ord >>> chr
 
+
+t2 :: Arrow' (->) Char Int
+t2 = Arr ord
+--arr ord >>> \a -> (a,42) >>> first chr
+-}
+
+data Arrow' :: (* -> * -> *) -> * -> * -> * where
+  Arr :: Arrow a => a b c -> Arrow' a b c
+  First :: Arrow a => Arrow' a b c -> Arrow' a (b, d) (c, d)
+
 t1 :: Thrist (->) Char Char
 t1 = Cons ord (Cons chr Nil)
 
 t2 :: Arrow' (->) Char Int
 t2 = Arr ord
---arr ord >>> \a -> (a,42) >>> first chr
+
+t3 :: Thrist (Arrow' (->)) Char Int
+t3 = Cons t2 Nil
+
+t4 :: Arrow' (->) Char (Char, Int)
+t4 = Arr (\a -> (a,42))
+
+t5 :: Thrist (Arrow' (->)) Int (Int, Int)
+t5 = Cons (Arr chr) (Cons t4 (Cons (First t2) Nil))
+
+
+-- semantics
+
+recover :: Arrow a => Thrist (Arrow' a) b c -> a b c
+recover Nil = arr id
+recover (Cons (Arr f) r) = f >>> recover r
+recover (Cons (First a) r) = first (recover $ Cons a Nil) >>> recover r
 
