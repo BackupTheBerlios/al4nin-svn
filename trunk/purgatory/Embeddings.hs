@@ -34,22 +34,7 @@ data Thrist :: (* -> * -> *) -> * -> * -> * where
   Cons :: p a b -> Thrist p b c -> Thrist p a c
 
 
-
--- Embedding of Arrows
--- see also http://en.wikibooks.org/wiki/Haskell/Understanding_arrows
-{-
-data Arrow' :: (* -> * -> *) -> * -> * -> * where
-  Arr :: Arrow a => (b -> c) -> Arrow' a b c
-  First :: Arrow' a b c -> Arrow' a (b, d) (c, d)
-
-t0 :: (->) Char Char
-t0 = ord >>> chr
-
-
-t2 :: Arrow' (->) Char Int
-t2 = Arr ord
---arr ord >>> \a -> (a,42) >>> first chr
--}
+-- embedding
 
 data Arrow' :: (* -> * -> *) -> * -> * -> * where
   Arr :: Arrow a => a b c -> Arrow' a b c
@@ -64,8 +49,8 @@ t2 = Arr ord
 t3 :: Thrist (Arrow' (->)) Char Int
 t3 = Cons t2 Nil
 
-t4 :: Arrow' (->) Char (Char, Int)
-t4 = Arr (\a -> (a,42))
+t4 :: Arrow' (->) a (a, Int)
+t4 = Arr (\a -> (a, 42))
 
 t5 :: Thrist (Arrow' (->)) Int (Int, Int)
 t5 = Cons (Arr chr) (Cons t4 (Cons (First t2) Nil))
