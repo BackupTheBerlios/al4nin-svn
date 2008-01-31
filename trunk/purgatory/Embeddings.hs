@@ -1,0 +1,54 @@
+{-
+ * Copyright (c) 2007 Gabor Greif
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to deal
+ * in the Software without restriction, including without limitation the rights
+ * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies
+ * of the Software, and to permit persons to whom the Software is furnished to do
+ * so, subject to the following conditions:
+ *
+ * The above copyright notice and this permission notice shall be
+ * included in all copies or substantial portions of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
+ * EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES
+ * OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
+ * NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT
+ * HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY,
+ * WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+ * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE
+ * OR OTHER DEALINGS IN THE SOFTWARE.
+ -}
+
+
+module Embeddings where
+
+import Prelude
+import Control.Arrow
+import Char
+
+
+data Thrist :: (* -> * -> *) -> * -> * -> * where
+  Nil :: Thrist p a a
+  Cons :: p a b -> Thrist p b c -> Thrist p a c
+
+
+
+-- Embedding of Arrows
+-- see also http://en.wikibooks.org/wiki/Haskell/Understanding_arrows
+
+data Arrow' :: (* -> * -> *) -> * -> * -> * where
+  Arr :: Arrow a => (b -> c) -> Arrow' a b c
+  First :: Arrow' a b c -> Arrow' a (b, d) (c, d)
+
+t0 :: (->) Char Char
+t0 = ord >>> chr
+
+t1 :: Thrist (->) Char Char
+t1 = Cons ord (Cons chr Nil)
+
+t2 :: Arrow' (->) Char Int
+t2 = Arr ord
+--arr ord >>> \a -> (a,42) >>> first chr
+
