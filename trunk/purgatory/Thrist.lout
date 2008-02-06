@@ -1259,7 +1259,7 @@ framework.
 to present thrists in a uniform and aestetical way, well alike {@I Haskell}'s syntax
 for lists, with the same ease of pattern matching and construction.
 @PP
-Although the above provides sufficient evidence of the usefullness of thrists, there
+Although the above provides sufficient evidence of the usefulness of thrists, there
 is still plenty to find out.
 @LP what other useful @Haskell { p }s in @Haskell { Thrist p a b } exist?
 Since the @Haskell { a } and @Haskell { b } parameters can encode
@@ -1270,6 +1270,13 @@ tend to favor this formalism for internal representation of imperative programs.
 Explicitly tracking def-use information paired with annotation preserving
 transformations might pave the way to certified compilers, but apperars to
 be a challenging task.
+@LP LLVM has a @I getelementpointer instruction, which allows to do offset calculations
+into deeply nested data structures. The decent from the encompassing pointer, array or
+structure type can be conveniently encoded as a thrist, where the underlying GADT
+provides constructors for dereferencing of pointers, picking of array elements
+and skipping over (resp. selecting) of structure members. This thrist can then
+easily converted into the sequence of integers that represents the intended
+datastructure part in the getelementpointer instruction.
 @LP is parametricity in the first parameter useful? I.e.
 can we formulate sensible functions on @Haskell { Thrist p a b }, where
 p is left universal?
