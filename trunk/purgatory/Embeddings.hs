@@ -63,3 +63,20 @@ recover Nil = arr id
 recover (Cons (Arr f) r) = f >>> recover r
 recover (Cons (First a) r) = first (recover $ Cons a Nil) >>> recover r
 
+
+--------------------------------
+
+-- embedding monads
+
+data Monad' :: (* -> *) -> * -> * -> * where
+  Feed :: Monad m => m b -> Monad' m a b
+  Digest :: Monad m => (a -> m b) -> Monad' m a b
+
+-- semantics
+
+recoverM :: Monad m => m a -> Thrist (Monad' m) a b -> m b
+recoverM mon Nil = mon
+recoverM mon (Cons (Feed m) rest) = recoverM (mon >> m) rest
+recoverM mon (Cons (Digest f) rest) = recoverM (mon >>= f) rest
+
+
