@@ -1385,4 +1385,52 @@ intersperseThrist i [a; as]l = [i, a; intersperseThrist i as]l
   @Title { A Complete Cat Example: @I fak }
 @Begin
 @PP
+@TargetForExtract "check/CatFak"
+@ID @Haskell @Begin
+-- type functions for creating universals
+blow :: Nat ~> Prod *0 ~> Prod *0
+{blow Z s} = s
+{blow (S n) s} = [t; {blow n s}]sh
+
+blowLike :: Nat ~> *0 ~> Prod *0 ~> Prod *0
+{blowLike (S arty) (c -> d) s} = [c; {blowLike arty d s}]sh
+{blowLike Z a s} = s
+
+-- type functions for analysing function arrows
+range :: Nat ~> *0 ~> *0
+{range (S arty) (c -> d)} = {range arty d}
+{range Z a} = a
+
+countArr :: *0 ~> Nat
+{countArr Int} = 0t
+{countArr Bool} = 0t
+{countArr Char} = 0t
+{countArr (a, b)} = 0t
+{countArr [a]} = 0t
+{countArr (a->b)} = S {countArr b}
+
+-- the type universe a Cat program can operate on
+
+data Tractable :: * ~> * where
+  IntT :: Tractable Int
+  BoolT :: Tractable Bool
+  CharT :: Tractable Char
+  PairT :: Tractable a -> Tractable b -> Tractable (a, b)
+  ListT :: Tractable a -> Tractable [a]
+  ArrT :: Tractable a -> Tractable b -> Tractable (a -> b)
+
+
+-- the Cat datatype, language primitives and typing rules
+data Cat :: * ~> * ~> * where
+  Push :: a -> Cat opaque (a, opaque)
+  Pop :: Cat (a, opaque) opaque
+  Dup :: Cat (a, opaque) (a, (a, opaque))
+  Add :: Cat (Int, (Int, opaque)) (Int, opaque)
+  Prim :: Tractable b -> (a -> b) -> Cat {blowUpBy (a -> b) opaque} ({result b}, opaque)
+  Block :: Thrist Cat b c -> Cat a (Cat b c, opaque)
+  If :: Cat (Cat s t, Cat s t, Bool, opaque) t
+
+
+
+@End @Haskell
 @End @Appendix
