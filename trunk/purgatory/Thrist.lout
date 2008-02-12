@@ -1388,13 +1388,11 @@ intersperseThrist i [a; as]l = [i, a; intersperseThrist i as]l
 @TargetForExtract "check/CatFak"
 @ID @Haskell @Begin
 -- type functions for creating universals
-blow :: Nat ~> Prod *0 ~> Prod *0
-{blow Z s} = s
-{blow (S n) s} = [t; {blow n s}]sh
+blowUpBy :: * ~> * ~> *
+{blowUpBy (a -> b) s} = (a, {blowUpBy b s})
+{blowUpBy Int s} = s
+{blowUpBy Bool s} = s
 
-blowLike :: Nat ~> *0 ~> Prod *0 ~> Prod *0
-{blowLike (S arty) (c -> d) s} = [c; {blowLike arty d s}]sh
-{blowLike Z a s} = s
 
 -- type functions for analysing function arrows
 range :: Nat ~> *0 ~> *0
@@ -1404,9 +1402,7 @@ range :: Nat ~> *0 ~> *0
 countArr :: *0 ~> Nat
 {countArr Int} = 0t
 {countArr Bool} = 0t
-{countArr Char} = 0t
-{countArr (a, b)} = 0t
-{countArr [a]} = 0t
+--{countArr [a]} = 0t
 {countArr (a->b)} = S {countArr b}
 
 -- the type universe a Cat program can operate on
@@ -1414,9 +1410,6 @@ countArr :: *0 ~> Nat
 data Tractable :: * ~> * where
   IntT :: Tractable Int
   BoolT :: Tractable Bool
-  CharT :: Tractable Char
-  PairT :: Tractable a -> Tractable b -> Tractable (a, b)
-  ListT :: Tractable a -> Tractable [a]
   ArrT :: Tractable a -> Tractable b -> Tractable (a -> b)
 
 
@@ -1426,7 +1419,7 @@ data Cat :: * ~> * ~> * where
   Pop :: Cat (a, opaque) opaque
   Dup :: Cat (a, opaque) (a, (a, opaque))
   Add :: Cat (Int, (Int, opaque)) (Int, opaque)
-  Prim :: Tractable b -> (a -> b) -> Cat {blowUpBy (a -> b) opaque} ({result b}, opaque)
+  Prim :: Tractable b -> (a -> b) -> Cat {blowUpBy (a -> b) opaque} (b, opaque)
   Block :: Thrist Cat b c -> Cat a (Cat b c, opaque)
   If :: Cat (Cat s t, Cat s t, Bool, opaque) t
 
