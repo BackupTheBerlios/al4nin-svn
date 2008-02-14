@@ -419,9 +419,9 @@ our @Haskell {interpret'} function to wrap the stack into the @Haskell {IO} mona
 @ID @Haskell operators {Base} {
 interpret' :: Thrist Cat a b -> IO a -> IO b
 interpret' [Print; rest]l st = do
-	(a, st') <- st
-	putStr $ show a
-	interpret' rest st'
+        (a, st') <- st
+        putStr $ show a
+        interpret' rest st'
   where monad ioM
 }
 In this function @Haskell { ioM } is globally bound to a value of type @Haskell { Monad Maybe }
@@ -432,22 +432,22 @@ In similar spirit we have to rewrite the other cases too:
 
 @ID @Haskell operators {Base} @Begin
 interpret' [Pop; rest]l st = do
-	(a, st') <- st
-	interpret' rest $ return st'
+        (a, st') <- st
+        interpret' rest $ return st'
   where monad ioM
 
 interpret' [Push x; rest]l st = do
-	interpret' rest $ return (x, st)
+        interpret' rest $ return (x, st)
   where monad ioM
 
 interpret' [Dup; rest]l st = do
-	(a, st') <- st
-	interpret' rest $ return (a, a, st')
+        (a, st') <- st
+        interpret' rest $ return (a, a, st')
   where monad ioM
 
 interpret' [Add; rest]l st = do
-	(a, b, st') <- st
-	interpret' rest $ return (a + b, st')
+        (a, b, st') <- st
+        interpret' rest $ return (a + b, st')
   where monad ioM
 @End @Haskell
 
@@ -592,9 +592,9 @@ only.
 @ID @Haskell operators {Base} {
 compile' :: Thrist Cat a b -> Code (IO a -> IO b)
 compile' [Print; rest]l = [| \st -> do
-	(a, st') <- st
-	putStr $ show a
-	$compiledRest st'
+        (a, st') <- st
+        putStr $ show a
+        $compiledRest st'
     where monad ioM |]
   where compiledRest = compile' rest
 }
@@ -649,10 +649,10 @@ The interpreter can be written thus:
 
 @ID @Haskell {
 interpret [PopN (S n); rest]l st -> do
-	(_, st') <- st
-	case n of
-	0v -> interpret' rest st'
-	_ -> interpret' [PopN n; rest]l st'
+        (_, st') <- st
+        case n of
+        0v -> interpret' rest st'
+        _ -> interpret' [PopN n; rest]l st'
 }
 
 @End @SubSubSection
@@ -859,27 +859,27 @@ Of course there are some pitfalls here but the principle is clear:
 @Rowa
     A { @Haskell @Begin
 NorthWest :: State GateClosed SecondaryEnabled (H Idle Idle')
-	@End @Haskell }
+        @End @Haskell }
 @Rowa
     A { @Haskell @Begin
 North :: State GateClosed SecondaryEnabled (H Idle Idle')
-	@End @Haskell }
+        @End @Haskell }
 @Rowa
     A { @Haskell @Begin
 West :: State GateClosed SecondaryEnabled (H Idle NeedAck)
-	@End @Haskell }
+        @End @Haskell }
 @Rowa
     A { @Haskell @Begin
 Mid :: State GateClosed SecondaryBlocked (H Idle NeedAck)
-	@End @Haskell }
+        @End @Haskell }
 @Rowa
     A { @Haskell @Begin
 South :: State GateClosed SecondaryBlocked (H Idle Idle')
-	@End @Haskell }
+        @End @Haskell }
 @Rowa
     A { @Haskell @Begin
 SouthEast :: State GateOpen SecondaryBlocked (H Idle Idle')
-	@End @Haskell }
+        @End @Haskell }
 }
 
 
@@ -1329,9 +1329,9 @@ in the first type parameter to the thrist. Thus they are universal.
 @Begin
 @LD @Haskell {
 extendThrist :: forall (a :: *1) (b :: a ~> a ~> *0) (c :: a) (d :: a) (e :: a).
-		Thrist b c d ->
-		b d e ->
-		Thrist b c e
+                Thrist b c d ->
+                b d e ->
+                Thrist b c e
 
 extendThrist []l a = [a]l
 extendThrist [b; r]l a = [b; extendThrist r a]l
@@ -1343,9 +1343,9 @@ extendThrist [b; r]l a = [b; extendThrist r a]l
 @Begin
 @LD @Haskell {
 appendThrist :: forall (a :: *1) (b :: a ~> a ~> *0) (c :: a) (d :: a) (e :: a).
-		Thrist b c d ->
-		Thrist b d e ->
-		Thrist b c e
+                Thrist b c d ->
+                Thrist b d e ->
+                Thrist b c e
 
 appendThrist []l a = a
 appendThrist [b; r]l a = [b; appendThrist r a]l
@@ -1390,6 +1390,7 @@ intersperseThrist i [a; as]l = [i, a; intersperseThrist i as]l
 @PP
 @TargetForExtract "check/CatFak"
 @IgnoreForOutput @Haskell @Begin
+import "LangPrelude.prg"
 data Thrist :: (* ~> * ~> *) ~> * ~> * ~> * where
   Nil :: Thrist p a a
   Cons :: p a b -> Thrist p b c -> Thrist p a c
@@ -1424,6 +1425,7 @@ data Cat :: * ~> * ~> * where
   Block :: Thrist Cat b c -> Cat a (Cat b c, opaque)
   Apply :: Cat (Cat b c, b) c
   If :: Cat (Cat s t, Cat s t, Bool, s) t
+  Print :: Cat (a, opaque) opaque
 
 -- some abbreviations
 intint = ArrT IntT IntT
@@ -1433,11 +1435,22 @@ minus = Prim intint (-)
 times = Prim intint (*)
 equals = Prim intbool (==)
 
-catFac :: Thrist Cat (Int, a) (Int, a)
-catFac = [Dup, Push 0, equals,
-                Block [Pop, Push 1]l,
-                Block [Dup, Dup, Push 1, minus, Block catFac, Apply, times]l,
-          If]l
+-- the fak program
+fak :: Thrist Cat (Int, opaque) (Int, opaque)
+fak = [Dup, Push 0, equals,
+              Block [Pop, Push 1]l,
+              Block [Dup, Dup, Push 1, minus, Block fak, Apply, times]l,
+            If]l
+
+usecase = [Push 42, Block fak, Apply, Print]l
+
+compile' :: Thrist Cat a b -> Code (IO a -> IO b)
+compile' [Print; rest]l =
+   [| \st -> let monad ioM in do {
+        (a, st') <- st
+        ; putStr $ show a
+        ; $(compile' rest) (return st') } |]
+
 
 @End @Haskell
 @End @Appendix
