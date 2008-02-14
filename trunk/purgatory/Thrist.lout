@@ -215,6 +215,7 @@ We try all over again, this time abstracting away the pair into an additional pa
 data Thrist :: (* ~> * ~> *) ~> * ~> * ~> * where
   Nil :: Thrist p a a
   Cons :: p a b -> Thrist p b c -> Thrist p a c
+ deriving List(l)
 @End @Haskell
 
 All that remains of the pair is the bitter aftertaste
@@ -1392,6 +1393,7 @@ intersperseThrist i [a; as]l = [i, a; intersperseThrist i as]l
 data Thrist :: (* ~> * ~> *) ~> * ~> * ~> * where
   Nil :: Thrist p a a
   Cons :: p a b -> Thrist p b c -> Thrist p a c
+ deriving List(l) 
 @End @Haskell
 
 @LD @Haskell @Begin
@@ -1418,15 +1420,24 @@ data Cat :: * ~> * ~> * where
   Push :: a -> Cat opaque (a, opaque)
   Pop :: Cat (a, opaque) opaque
   Dup :: Cat (a, opaque) (a, (a, opaque))
-  Add :: Cat (Int, (Int, opaque)) (Int, opaque)
   Prim :: Tractable b -> (a -> b) -> Cat {blowUpBy (a -> b) opaque} ({range b}, opaque)
   Block :: Thrist Cat b c -> Cat a (Cat b c, opaque)
-  If :: Cat (Cat s t, Cat s t, Bool, opaque) t
+  Apply :: Cat (Cat b c, b) c
+  If :: Cat (Cat s t, Cat s t, Bool, s) t
 
 -- some abbreviations
 intint = ArrT IntT IntT
+intbool = ArrT IntT BoolT
+
 minus = Prim intint (-)
 times = Prim intint (*)
+equals = Prim intbool (==)
+
+catFac :: Thrist Cat (Int, a) (Int, a)
+catFac = [Dup, Push 0, equals,
+                Block [Pop, Push 1]l,
+                Block [Dup, Dup, Push 1, minus, Block catFac, Apply, times]l,
+          If]l
 
 @End @Haskell
 @End @Appendix
