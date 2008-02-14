@@ -589,15 +589,14 @@ overhead is already removed.
 We demonstrate the technique for a selection of the Cat primitives
 only.
 
-@ID @Haskell operators {Base} {
+@ID @Haskell operators {Base} @Begin
 compile' :: Thrist Cat a b -> Code (IO a -> IO b)
 compile' [Print; rest]l = [| \st -> do
         (a, st') <- st
         putStr $ show a
-        $compiledRest st'
+        $(compile' rest) $ return st'
     where monad ioM |]
-  where compiledRest = compile' rest
-}
+@End @Haskell
 
 [TODO: Push, etc.]
 
@@ -1446,11 +1445,15 @@ usecase = [Push 42, Block fak, Apply, Print]l
 
 compile' :: Thrist Cat a b -> Code (IO a -> IO b)
 compile' [Print; rest]l =
-   [| \st -> let monad ioM in do {
+   [| \st -> let monad ioM in do
         (a, st') <- st
-        ; putStr $ show a
-        ; $(compile' rest) (return st') } |]
+        putStr $ show a
+        $(compile' rest) $ return st' |]
 
+compile' [Pop; rest]l =
+   [| \st -> let monad ioM in do
+        (_, st') <- st
+        $(compile' rest) $ return st' |]
 
 @End @Haskell
 @End @Appendix
