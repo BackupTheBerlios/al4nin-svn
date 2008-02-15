@@ -1425,6 +1425,7 @@ data Cat :: * ~> * ~> * where
   Apply :: Cat (Cat b c, b) c
   If :: Cat (Cat s t, Cat s t, Bool, s) t
   Print :: Cat (a, opaque) opaque
+  Label :: String -> Cat opaque opaque
 
 -- some abbreviations
 intint = ArrT IntT IntT
@@ -1436,24 +1437,39 @@ equals = Prim intbool (==)
 
 -- the fak program
 fak :: Thrist Cat (Int, opaque) (Int, opaque)
-fak = [Dup, Push 0, equals,
+fak = [Label "fak", Dup, Push 0, equals,
               Block [Pop, Push 1]l,
               Block [Dup, Dup, Push 1, minus, Block fak, Apply, times]l,
             If]l
 
 usecase = [Push 42, Block fak, Apply, Print]l
 
-compile' :: Thrist Cat a b -> Code (IO a -> IO b)
-compile' [Print; rest]l =
+compile :: Thrist Cat a b -> Code (IO a -> IO b)
+compile [Print; rest]l =
    [| \st -> let monad ioM in do
         (a, st') <- st
         putStr $ show a
-        $(compile' rest) $ return st' |]
+        $(compile rest) $ return st' |]
 
-compile' [Pop; rest]l =
+compile [Pop; rest]l =
    [| \st -> let monad ioM in do
         (_, st') <- st
-        $(compile' rest) $ return st' |]
+        $(compile rest) $ return st' |]
 
+compile [Dup; rest]l =
+   [| \st -> let monad ioM in do
+        (st'@(a, _)) <- st
+        $(compile rest) $ return (a, st') |]
+
+compile [Push a; rest]l =
+   [| \st -> let monad ioM in do
+        st' <- st
+        $(compile rest) $ return (a, st') |]
+
+{-compile [Apply; rest]l =
+   [| \act -> let monad ioM in do
+	(Quote thr) st <- act
+	$(compile r) (interpretCat' thr (return st)) |]
+-}
 @End @Haskell
 @End @Appendix
