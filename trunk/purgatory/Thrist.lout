@@ -1473,3 +1473,36 @@ compile [Push a; rest]l =
 -}
 @End @Haskell
 @End @Appendix
+
+@Appendix
+  @Title { Parsing C Literals }
+@Begin
+@PP
+@TargetForExtract "check/ParseC"
+@IgnoreForOutput @Haskell @Begin
+import "LangPrelude.prg"
+data Thrist :: (* ~> * ~> *) ~> * ~> * ~> * where
+  Nil :: Thrist p a a
+  Cons :: p a b -> Thrist p b c -> Thrist p a c
+ deriving List(l) 
+@End @Haskell
+
+@LD @Haskell @Begin
+data Parse :: * ~> * ~> * where
+  Epsilon :: Parse [a] ([b], [a])
+  Atom :: Char -> Parse Char Char
+  Sure :: (a -> b) -> Parse a b
+  Try :: (a -> Maybe b) -> Parse a b
+  Rep1 :: Parse a b -> Parse [a] ([b], [a])
+  Rep :: Parse [a] (b, [a]) -> Parse [a] ([b], [a])
+  Group :: [Parse a b] -> Parse [a] ([b], [a])
+  CataPlus :: ([a] -> b) -> Parse ([a], c) (b, c)
+  Par :: Parse a b -> Parse c d -> Parse (a, c) (b, d)
+  Wrap :: Thrist Parse a b -> Parse a b
+}
+
+
+
+
+@End @Haskell
+@End @Appendix
