@@ -12,7 +12,7 @@ def @TargetForExtract right output {}
 
 def @IgnoreForOutput right stuff {}
 
-def @Prompt left input right output { { Helvetica Base } @Font { prompt> @Haskell { input } @PP @I { output } } }
+def @Prompt left input right output { { Helvetica Base -1p } @Font { prompt> @Haskell { input } @PP @I { output } } }
 def @Omega { {@I {@Sym Omega}}mega }
 
 @Report
@@ -49,8 +49,8 @@ transformations.
 @Title { Structure of the Paper }
 @Begin
 @PP
-In the first section we motivate our later introduction of Thrist with well known
-examples. In the third section we develop three practial applications of Thrists.
+In the first section we motivate our later introduction of @Haskell {Thrist} with well known
+examples. In the third section we develop three practial applications of @Haskell {Thrist}s.
 We also present some less useful but entertaining uses. Section four shows
 up possible future directions and summarizes open problems. Section five concludes.
 @End @Section
@@ -191,7 +191,7 @@ the price that the intermediate types are a bit hard to deal with
 (we shall revisit this issue later).
 @PP
 It appears that we have reached our goal, we can form list-like data where the intermediate
-types thread up, we are happy and name our new toy @I Thrist, a portmanteau of thread and list.
+types thread up, we are happy and name our new toy @Haskell {Thrist}, a portmanteau of thread and list.
 @PP
 Our joy, however, quickly fades away when we compare our thrist with the composition function.
 How can some data of type @Haskell {Thrist a b} be interpreted as an arrow type @Haskell {a -> b}?
@@ -211,7 +211,7 @@ premature decision, we could gain back our hope.
 We try all over again, this time abstracting away the pair into an additional parameter:
 
 @TargetForExtract "check/Thrist"
-@ID @Haskell @Begin
+@LD @Haskell @Begin
 data Thrist :: (* ~> * ~> *) ~> * ~> * ~> * where
   Nil :: Thrist p a a
   Cons :: p a b -> Thrist p b c -> Thrist p a c
@@ -1167,7 +1167,7 @@ either starting afresh and resulting a monadic value @Haskell { T b } or represe
 @LP We can define the adapter @Haskell { Monad' } to have three parameters, the first fixing the @Haskell { Monad }
 and the last two to accomodate for the @Haskell { Thrist } interface:
 @TODO
-@ID @Haskell {
+@LD @Haskell {
 data Monad' :: (* ~> *) ~> * ~> * ~> * where
   Feed :: m b -> Monad' m a b
   Digest :: (a -> m b) -> Monad' m a b
