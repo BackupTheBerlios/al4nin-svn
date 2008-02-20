@@ -1434,11 +1434,12 @@ data Cat :: * ~> * ~> * where
   Pop :: Cat (a, opaque) opaque
   Dup :: Cat (a, opaque) (a, (a, opaque))
   Prim :: Tractable b -> (a -> b) -> Cat {blowUpBy (a -> b) opaque} ({range b}, opaque)
-  Block :: Thrist Cat b c -> Cat a (Cat b c, opaque)
-  Apply :: Cat (Cat b c, b) c
+  Block :: Thrist Cat b c -> Cat opaque (Cat b c, opaque)
+  Apply :: Tractable (b -> c) -> Cat (Cat (b, opaque) (c, opaque), b, opaque) (c, opaque)
   If :: Cat (Cat s t, Cat s t, Bool, s) t
   Print :: Cat (a, opaque) opaque
-  Label :: String -> Cat opaque opaque
+  Label :: String -> Tractable (b -> c) -> Cat (b, opaque) (b, opaque)
+  Call :: Code (IO (b, opaque) -> IO (c, opaque)) -> Cat (b, opaque') (c, opaque')
 
 -- some abbreviations
 intint = ArrT IntT IntT
@@ -1450,14 +1451,25 @@ equals = Prim intbool (==)
 
 -- the fak program
 fak :: Thrist Cat (Int, opaque) (Int, opaque)
-fak = [Label "fak", Dup, Push 0, equals,
+fak = [Label "fak" intint, Dup, Push 0, equals,
               Block [Pop, Push 1]l,
-              Block [Dup, Dup, Push 1, minus, Block fak, Apply, times]l,
+              Block [Dup, Push 1, minus, Block fak, Apply intint, times]l,
             If]l
 
-usecase = [Push 42, Block fak, Apply, Print]l
+usecase = [Push 42, Block fak, Apply intint, Print]l
+
+sameRep :: Tractable a -> Tractable b -> Maybe (Equal a b)
+sameRep IntT IntT = Just Eq
+sameRep BoolT BoolT = Just Eq
+sameRep (ArrT a b) (ArrT c d) = let monad maybeM in do
+    Eq <- sameRep a c
+    Eq <- sameRep b d
+    return Eq
+sameRep _ _ = Nothing
 
 compile :: Thrist Cat a b -> Code (IO a -> IO b)
+compile []l = [| id |]
+
 compile [Print; rest]l =
    [| \st -> let monad ioM in do
         (a, st') <- st
@@ -1482,8 +1494,28 @@ compile [Push a; rest]l =
 {-compile [Apply; rest]l =
    [| \act -> let monad ioM in do
 	(Quote thr) st <- act
-	$(compile r) (interpretCat' thr (return st)) |]
+	$(compile rest) (interpretCat' thr (return st)) |]
 -}
+
+--compile [Label n t; rest]l = let compiled = lazy (compile $ subst n t compiled rest) in compiled
+compile [Label n t; rest]l =
+    let ((compiled, t', r) :: (Code (IO (f, opaque) -> IO b), Tractable (f -> t), Thrist Cat (f, opaque) b)) = (lazy (check (compile $ subst n t compiled rest)), t, rest) in compiled
+--    let ((compiled, t') :: (Code (IO (f, opaque) -> IO (t, opaque)), Tractable (f -> t))) = (lazy (compile $ (check (subst' n t compiled rest))), t) in compiled
+
+subst' :: String -> Tractable (f -> t) -> Code (IO (f, opaque) -> IO (t, opaque)) -> Thrist Cat (f, opaque) (t, opaque) -> Thrist Cat (f, opaque) (t, opaque)
+subst' n t c thr = subst n t c thr
+
+subst :: String -> Tractable (f -> t) -> Code (IO (f, opaque) -> IO (t, opaque)) -> Thrist Cat a b -> Thrist Cat a b
+subst _ _ _ []l = []l
+
+subst n t c [(b@Block [Label n' t'; _]l), (a@Apply t''); rest]l = case (sameRep t t', sameRep t t'', eqStr n n') of
+    (Just Eq, Just Eq, True) -> [Call c; subst n t c rest]l
+    _ -> [b, a; rest]l
+
+subst n t c [Block b; rest]l = [Block (subst n t c b); subst n t c rest]l
+
+subst n t c [head; tail]l = [head; subst n t c tail]l
+
 @End @Haskell
 @End @Appendix
 
