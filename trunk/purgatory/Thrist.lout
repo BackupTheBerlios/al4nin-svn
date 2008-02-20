@@ -49,10 +49,11 @@ transformations.
 @Title { Structure of the Paper }
 @Begin
 @PP
-In the first section we motivate our later introduction of @Haskell {Thrist} with well known
-examples. In the third section we develop three practial applications of @Haskell {Thrist}s.
-We also present some less useful but entertaining uses. Section four shows
-up possible future directions and summarizes open problems. Section five concludes.
+In the following section we motivate our later introduction of @Haskell {Thrist}
+with well known examples. The third section is devoted to the development of
+three practial applications of @Haskell {Thrist}s. Next we present some less useful
+but entertaining uses. Section five examines other work, while section six concludes,
+pointing out open problems and showing up possible future directions.
 @End @Section
 
 @Section
@@ -1211,6 +1212,18 @@ encoding free categories as Thrists
 @Section
   @Title { Other Work }
 @Begin
+@PP
+David Roundy's @I { Darcs } system @Cite { $roundy.darcs2 } is a version control system
+which builds upon a theory of patches, defining the evolution of data repositories (and
+documents therein) as a gradual application of individual changes. The recent adoption
+of GADTs into the system has lead to a two-parameter @Haskell {Patch} datatype and
+@Haskell {FL}, @Haskell {RL} GADTs which are used for sequencing these (among others).
+The definition of @Haskell {FL} is identical to how our @Haskell {Thrist} would be
+defined in Haskell! Being hidden in a utility module, @Haskell {FL} entered the @I { Darcs }
+codebase in the year 2007 but its origins can be traced back to a brain-storming session at
+Haskell'05 workshop in Tallinn.
+@PP
+Conor McBride: R*
 @PP
 Chuan-kai Lin's @I { Unimo } framework @Cite { $lin06.unimo } is an attempt to describe monads operationally
 by interpreting a datastructure that describes the monad. By the fact that the interpreter
