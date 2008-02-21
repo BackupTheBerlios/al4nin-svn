@@ -1439,7 +1439,7 @@ data Cat :: * ~> * ~> * where
   If :: Cat (Cat s t, Cat s t, Bool, s) t
   Print :: Cat (a, opaque) opaque
   Label :: String -> Tractable b -> Cat (b, opaque) (b, opaque)
-  Call :: Code (IO (b, opaque) -> IO opaque') -> Cat (b, opaque'') opaque'''
+  Call :: Code (IO (b, opaque) -> IO opaque') -> Cat (b, opaque) opaque'
 
 -- some abbreviations
 intint = ArrT IntT IntT
