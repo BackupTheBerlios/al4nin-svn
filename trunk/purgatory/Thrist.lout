@@ -1428,6 +1428,13 @@ data Tractable :: * ~> * where
   BoolT :: Tractable Bool
   ArrT :: Tractable a -> Tractable b -> Tractable (a -> b)
 
+-- evidence about type safe-ness of Cats
+data Sound :: * ~> * ~> * where
+  Nop :: Sound (Cat opaque opaque) (Cat opaque opaque)
+  In :: Tractable new -> Sound (Cat a b) (Cat (new, a) b)
+  Out :: Tractable new -> Sound (Cat a b) (Cat a (new, b))
+  Rev :: Sound from to -> Sound to from
+
 -- the Cat datatype, language primitives and typing rules
 data Cat :: * ~> * ~> * where
   Push :: a -> Cat opaque (a, opaque)
@@ -1439,7 +1446,7 @@ data Cat :: * ~> * ~> * where
   If :: Cat (Cat s t, Cat s t, Bool, s) t
   Print :: Cat (a, opaque) opaque
   Label :: String -> Tractable b -> Cat (b, opaque) (b, opaque)
-  Call :: Code (IO (b, opaque) -> IO opaque') -> Cat (b, opaque) opaque'
+  Call :: Code (IO (b, opaque) -> IO opaque') -> Cat (b, opaque'') opaque'''
 
 -- some abbreviations
 intint = ArrT IntT IntT
@@ -1448,6 +1455,8 @@ intbool = ArrT IntT BoolT
 minus = Prim intint (-)
 times = Prim intint (*)
 equals = Prim intbool (==)
+
+data Function a b = String (Thrist Cat a b)
 
 -- the fak program
 fak :: Thrist Cat (Int, opaque) (Int, opaque)
