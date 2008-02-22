@@ -1446,7 +1446,7 @@ data Cat :: * ~> * ~> * where
   Apply :: Cat (Cat b c, b) c
   If :: Cat (Cat s t, Cat s t, Bool, s) t
   Print :: Cat (a, opaque) opaque
-  Call :: Code (IO (b, opaque) -> IO opaque') -> Cat (b, opaque'') opaque'''
+  Call :: Code (IO b -> IO c) -> Cat b c
 
 -- some abbreviations
 intint = ArrT IntT IntT
@@ -1524,15 +1524,29 @@ subst' n t c thr = subst n t c thr
 subst :: Function xx f t -> Code (IO f -> IO t) -> Thrist Cat a b -> Thrist Cat a b
 subst _ _ []l = []l
 
-subst (Function _ _ _) c [(b@Fun (Function n' t' c')), (a@Apply); rest]l = [b, a; rest]l
-
---case (sameRep t t', sameRep t t'', eqStr n n') of
---    (Just Eq, Just Eq, True) -> [Call c; subst n t c rest]l
---    _ -> [b, a; rest]l
+subst (f@Function n t _) c [(b@Fun (Function n' t' _)), (a@Apply); rest]l =
+    case (sameSound t t', eqStr n n') of
+        (Just (Eq,Eq), True) -> [Call c; subst f c rest]l
+        _ -> [b, a; rest]l
 
 subst f c [Block b; rest]l = [Block (subst f c b); subst f c rest]l
-
 subst f c [head; tail]l = [head; subst f c tail]l
+
+sameSound :: Thrist Sound a b -> Thrist Sound a' b' -> Maybe (Equal a a', Equal b b')
+sameSound [Nop; rest]l [Nop; rest']l = sameSound rest rest'
+sameSound [In a; rest]l [In a'; rest']l = let monad maybeM in do
+    Eq <- sameRep a a'
+    (Eq, Eq) <- sameSound rest rest'
+    return (Eq, Eq)
+sameSound [Out a; rest]l [Out a'; rest']l = let monad maybeM in do
+    Eq <- sameRep a a'
+    (Eq, Eq) <- sameSound rest rest'
+    return (Eq, Eq)
+--sameSound [Out a]l [Out a']l = let monad maybeM in do
+--    Eq <- sameRep a a'
+--    return (Eq, Eq)
+-- GRRRR!! sameSound []l []l = Just (Eq, Eq)
+sameSound _ _ = Nothing
 
 @End @Haskell
 @End @Appendix
