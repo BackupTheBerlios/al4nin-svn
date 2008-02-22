@@ -1442,10 +1442,10 @@ data Cat :: * ~> * ~> * where
   Dup :: Cat (a, opaque) (a, (a, opaque))
   Prim :: Tractable b -> (a -> b) -> Cat {blowUpBy (a -> b) opaque} ({range b}, opaque)
   Block :: Thrist Cat b c -> Cat opaque (Cat b c, opaque)
-  Apply :: Tractable b -> Cat (Cat (b, opaque) opaque', b, opaque) opaque'
+  Fun :: Function opa b c -> Cat opaque (Cat b c, opaque)
+  Apply :: Cat (Cat b c, b) c
   If :: Cat (Cat s t, Cat s t, Bool, s) t
   Print :: Cat (a, opaque) opaque
-  Label :: String -> Tractable b -> Cat (b, opaque) (b, opaque)
   Call :: Code (IO (b, opaque) -> IO opaque') -> Cat (b, opaque'') opaque'''
 
 -- some abbreviations
@@ -1456,16 +1456,21 @@ minus = Prim intint (-)
 times = Prim intint (*)
 equals = Prim intbool (==)
 
-data Function a b = String (Thrist Cat a b)
+data Function opaque a b = Function String (Thrist Sound (Cat opaque opaque) (Cat a b)) (Thrist Cat a b)
+
+-- infer :: Thrist Cat a b -> Thrist Sound (Cat opaque opaque) (Cat a b)
+-- infer [Push a]l = 
 
 -- the fak program
 fak :: Thrist Cat (Int, opaque) (Int, opaque)
-fak = [Label "fak" IntT, Dup, Push 0, equals,
+fak = [Dup, Push 0, equals,
               Block [Pop, Push 1]l,
-              Block [Dup, Push 1, minus, Block fak, Apply IntT, times]l,
+              Block [Dup, Push 1, minus, Fun fakFunc, Apply, times]l,
             If]l
 
-usecase = [Push 42, Block fak, Apply IntT, Print]l
+fakFunc = Function "fak" [Nop, In IntT, Out IntT]l fak
+
+usecase = [Push 42, Block fak, Apply, Print]l
 
 sameRep :: Tractable a -> Tractable b -> Maybe (Equal a b)
 sameRep IntT IntT = Just Eq
@@ -1506,6 +1511,7 @@ compile [Push a; rest]l =
 	$(compile rest) (interpretCat' thr (return st)) |]
 -}
 
+{-
 compile [Label n t; rest]l = let compiled = lazy (compile $ subst' n t compiled rest) in compiled
 --compile [Label n t; rest]l =
 --    let ((compiled, t', r) :: (Code (IO (f, opaque) -> IO b), Tractable (f -> t), Thrist Cat (f, opaque) b)) = (lazy (check (compile $ subst n t compiled rest)), t, rest) in compiled
@@ -1513,17 +1519,20 @@ compile [Label n t; rest]l = let compiled = lazy (compile $ subst' n t compiled 
 
 subst' :: String -> Tractable f -> Code (IO (f, opaque) -> IO opaque') -> Thrist Cat (f, opaque) opaque' -> Thrist Cat (f, opaque) opaque'
 subst' n t c thr = subst n t c thr
+-}
 
-subst :: String -> Tractable f -> Code (IO (f, opaque) -> IO opaque') -> Thrist Cat a b -> Thrist Cat a b
-subst _ _ _ []l = []l
+subst :: Function xx f t -> Code (IO f -> IO t) -> Thrist Cat a b -> Thrist Cat a b
+subst _ _ []l = []l
 
-subst n t c [(b@Block [Label n' t'; _]l), (a@Apply t''); rest]l = case (sameRep t t', sameRep t t'', eqStr n n') of
-    (Just Eq, Just Eq, True) -> [Call c; subst n t c rest]l
-    _ -> [b, a; rest]l
+subst (Function _ _ _) c [(b@Fun (Function n' t' c')), (a@Apply); rest]l = [b, a; rest]l
 
-subst n t c [Block b; rest]l = [Block (subst n t c b); subst n t c rest]l
+--case (sameRep t t', sameRep t t'', eqStr n n') of
+--    (Just Eq, Just Eq, True) -> [Call c; subst n t c rest]l
+--    _ -> [b, a; rest]l
 
-subst n t c [head; tail]l = [head; subst n t c tail]l
+subst f c [Block b; rest]l = [Block (subst f c b); subst f c rest]l
+
+subst f c [head; tail]l = [head; subst f c tail]l
 
 @End @Haskell
 @End @Appendix
