@@ -1548,6 +1548,19 @@ sameSound [Out a; rest]l [Out a'; rest']l = let monad maybeM in do
 -- GRRRR!! sameSound []l []l = Just (Eq, Eq)
 sameSound _ _ = Nothing
 
+sameSound2 :: Equal a a' -> Thrist Sound a b -> Thrist Sound a' b' -> Maybe (Equal b b')
+sameSound2 Eq [Nop; rest]l [Nop; rest']l = sameSound2 Eq rest rest'
+sameSound2 Eq [In a; rest]l [In a'; rest']l = let monad maybeM in do
+    Eq <- sameRep a a'
+    Eq <- sameSound2 Eq rest rest'
+    return Eq
+sameSound2 Eq [Out a; rest]l [Out a'; rest']l = let monad maybeM in do
+    Eq <- sameRep a a'
+    Eq <- sameSound2 Eq rest rest'
+    return Eq
+sameSound2 Eq []l []l = Just Eq
+sameSound2 _ _ _ = Nothing
+
 @End @Haskell
 @End @Appendix
 
