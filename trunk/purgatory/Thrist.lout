@@ -1526,27 +1526,12 @@ subst _ _ []l = []l
 
 subst (f@Function n t _) c [(b@Fun (Function n' t' _)), (a@Apply); rest]l =
     case (sameSound t t', eqStr n n') of
-        (Just (Eq,Eq), True) -> [Call c; subst f c rest]l
+        (Just Eq, True) -> [Call c; subst f c rest]l
         _ -> [b, a; rest]l
 
 subst f c [Block b; rest]l = [Block (subst f c b); subst f c rest]l
 subst f c [head; tail]l = [head; subst f c tail]l
 
-sameSound :: Thrist Sound a b -> Thrist Sound a' b' -> Maybe (Equal a a', Equal b b')
-sameSound [Nop; rest]l [Nop; rest']l = sameSound rest rest'
-sameSound [In a; rest]l [In a'; rest']l = let monad maybeM in do
-    Eq <- sameRep a a'
-    (Eq, Eq) <- sameSound rest rest'
-    return (Eq, Eq)
-sameSound [Out a; rest]l [Out a'; rest']l = let monad maybeM in do
-    Eq <- sameRep a a'
-    (Eq, Eq) <- sameSound rest rest'
-    return (Eq, Eq)
---sameSound [Out a]l [Out a']l = let monad maybeM in do
---    Eq <- sameRep a a'
---    return (Eq, Eq)
--- GRRRR!! sameSound []l []l = Just (Eq, Eq)
-sameSound _ _ = Nothing
 
 sameSound2 :: Equal a a' -> Thrist Sound a b -> Thrist Sound a' b' -> Maybe (Equal b b')
 sameSound2 Eq [Nop; rest]l [Nop; rest']l = sameSound2 Eq rest rest'
@@ -1560,6 +1545,8 @@ sameSound2 Eq [Out a; rest]l [Out a'; rest']l = let monad maybeM in do
     return Eq
 sameSound2 Eq []l []l = Just Eq
 sameSound2 _ _ _ = Nothing
+
+sameSound = sameSound2 Eq
 
 @End @Haskell
 @End @Appendix
