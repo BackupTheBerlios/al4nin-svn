@@ -1430,7 +1430,8 @@ data Tractable :: * ~> * where
 
 -- evidence about type safe-ness of Cats
 data Sound :: * ~> * ~> * where
-  Nop :: Sound (Cat opaque opaque) (Cat opaque opaque)
+  --Lab :: Label l -> Sound (Cat opaque opaque) (Cat opaque opaque)
+  Nop :: Atom opaque -> Sound (Cat () ()) (Cat opaque opaque)
   In :: Tractable new -> Sound (Cat a b) (Cat (new, a) b)
   Out :: Tractable new -> Sound (Cat a b) (Cat a (new, b))
   Rev :: Sound from to -> Sound to from
@@ -1442,7 +1443,7 @@ data Cat :: * ~> * ~> * where
   Dup :: Cat (a, opaque) (a, (a, opaque))
   Prim :: Tractable b -> (a -> b) -> Cat {blowUpBy (a -> b) opaque} ({range b}, opaque)
   Block :: Thrist Cat b c -> Cat opaque (Cat b c, opaque)
-  Fun :: Function opa b c -> Cat opaque (Cat b c, opaque)
+  Fun :: Function b c -> Cat opaque (Cat b c, opaque)
   Apply :: Cat (Cat b c, b) c
   If :: Cat (Cat s t, Cat s t, Bool, s) t
   Print :: Cat (a, opaque) opaque
@@ -1456,19 +1457,34 @@ minus = Prim intint (-)
 times = Prim intint (*)
 equals = Prim intbool (==)
 
-data Function opaque a b = Function String (Thrist Sound (Cat opaque opaque) (Cat a b)) (Thrist Cat a b)
+data Function :: * ~> * ~> * where
+  Function :: String
+             -> Thrist Sound (Cat () ()) (Cat a b)
+             -- -> ((forall opaque . Thrist Sound (Cat opaque opaque) (Cat a b)) -> Thrist Sound (Cat () ()) (Cat a b))
+             -> Thrist Cat a b
+             -> Function a b
 
 -- infer :: Thrist Cat a b -> Thrist Sound (Cat opaque opaque) (Cat a b)
 -- infer [Push a]l = 
+
+-- non-working hack
+peelIO :: IO a -> a
+peelIO _ = undefined
 
 -- the fak program
 fak :: Thrist Cat (Int, opaque) (Int, opaque)
 fak = [Dup, Push 0, equals,
               Block [Pop, Push 1]l,
-              Block [Dup, Push 1, minus, Fun fakFunc, Apply, times]l,
+              Block [Dup, Push 1, minus, Fun (peelIO fakFunc), Apply, times]l,
             If]l
 
-fakFunc = Function "fak" [Nop, In IntT, Out IntT]l fak
+--canonicalize :: (forall opaque . Thrist Sound (Cat opaque opaque) (Cat a b)) -> Thrist Sound (Cat () ()) (Cat a b)
+--canonicalize thr = [(Nop :: Sound (Cat () ()) (Cat () ())); thr]l
+
+fakFunc :: IO (Function (Int, op) (Int, op))
+fakFunc = let monad ioM in do
+    a <- freshAtom
+    return (Function "fak" [Nop a, In IntT, Out IntT]l {-canonicalize-} fak)
 
 usecase = [Push 42, Block fak, Apply, Print]l
 
@@ -1521,7 +1537,7 @@ subst' :: String -> Tractable f -> Code (IO (f, opaque) -> IO opaque') -> Thrist
 subst' n t c thr = subst n t c thr
 -}
 
-subst :: Function xx f t -> Code (IO f -> IO t) -> Thrist Cat a b -> Thrist Cat a b
+subst :: Function f t -> Code (IO f -> IO t) -> Thrist Cat a b -> Thrist Cat a b
 subst _ _ []l = []l
 
 subst (f@Function n t _) c [(b@Fun (Function n' t' _)), (a@Apply); rest]l =
@@ -1534,7 +1550,10 @@ subst f c [head; tail]l = [head; subst f c tail]l
 
 
 sameSound2 :: Equal a a' -> Thrist Sound a b -> Thrist Sound a' b' -> Maybe (Equal b b')
-sameSound2 Eq [Nop; rest]l [Nop; rest']l = sameSound2 Eq rest rest'
+sameSound2 Eq [Nop a; rest]l [Nop a'; rest']l = let monad maybeM in do
+    Eq <- same a a'
+    Eq <- sameSound2 Eq rest rest'
+    return Eq
 sameSound2 Eq [In a; rest]l [In a'; rest']l = let monad maybeM in do
     Eq <- sameRep a a'
     Eq <- sameSound2 Eq rest rest'
