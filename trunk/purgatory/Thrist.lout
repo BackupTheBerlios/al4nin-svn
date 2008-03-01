@@ -1466,28 +1466,19 @@ data Function :: * ~> * ~> * where
 -- infer :: Thrist Cat a b -> Thrist Sound (Cat opaque opaque) (Cat a b)
 -- infer [Push a]l = 
 
--- non-working hack
-peelIO :: IO a -> a
-peelIO _ = undefined
-
-fixIO :: (a -> IO a) -> IO a
-fixIO f = undefined -- another ugly placeholder
-
 fakFunc :: IO (Function (Int, op) (Int, op))
-fakFunc = fixIO fix
-    where
-     fix :: Function (Int, op) (Int, op) -> IO (Function (Int, op) (Int, op))
-     fix f = let monad ioM in do
+fakFunc = let monad ioM in do
+      a <- freshAtom
       let fak = [Dup, Push 0, equals,
                    Block [Pop, Push 1]l,
                    Block [Dup, Push 1, minus, Fun (unsafeCast f), Apply, times]l,
                  If]l
-      a <- freshAtom
-      return $ Function "fak" [Nop a, In IntT, Out IntT]l fak
+          f = Function "fak" [Nop a, In IntT, Out IntT]l fak
+      return f
 
 usecase = let monad ioM in do
     fak <- fakFunc
-    return [Push 42, Fun fak, Apply, Print]l
+    return ([Push 42, Fun fak, Apply, Print]l, fak)
 
 sameRep :: Tractable a -> Tractable b -> Maybe (Equal a b)
 sameRep IntT IntT = Just Eq
