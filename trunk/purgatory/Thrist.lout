@@ -1460,7 +1460,6 @@ equals = Prim intbool (==)
 data Function :: * ~> * ~> * where
   Function :: String
              -> Thrist Sound (Cat () ()) (Cat a b)
-             -- -> ((forall opaque . Thrist Sound (Cat opaque opaque) (Cat a b)) -> Thrist Sound (Cat () ()) (Cat a b))
              -> Thrist Cat a b
              -> Function a b
 
@@ -1471,28 +1470,24 @@ data Function :: * ~> * ~> * where
 peelIO :: IO a -> a
 peelIO _ = undefined
 
-{-- the fak program
-fak :: Thrist Cat (Int, opaque) (Int, opaque)
-fak = [Dup, Push 0, equals,
-              Block [Pop, Push 1]l,
-              Block [Dup, Push 1, minus, Fun (peelIO fakFunc), Apply, times]l,
-            If]l
--}
-
 fixIO :: (a -> IO a) -> IO a
 fixIO f = undefined -- another ugly placeholder
 
 fakFunc :: IO (Function (Int, op) (Int, op))
-fakFunc = let monad ioM in fixIO (\f -> do
-    a <- freshAtom
-    let fak = [Dup, Push 0, equals,
-                Block [Pop, Push 1]l,
-                Block [Dup, Push 1, minus, Fun f, Apply, times]l,
-              If]l
-    return $ Function "fak" [Nop a, In IntT, Out IntT]l fak)
+fakFunc = fixIO fix
+    where
+     fix :: Function (Int, op) (Int, op) -> IO (Function (Int, op) (Int, op))
+     fix f = let monad ioM in do
+      let fak = [Dup, Push 0, equals,
+                   Block [Pop, Push 1]l,
+                   Block [Dup, Push 1, minus, Fun (unsafeCast f), Apply, times]l,
+                 If]l
+      a <- freshAtom
+      return $ Function "fak" [Nop a, In IntT, Out IntT]l fak
 
-usecase = [Push 42, Fun (peelIO fakFunc), Apply, Print]l
---usecase = [Push 42, Block fak, Apply, Print]l
+usecase = let monad ioM in do
+    fak <- fakFunc
+    return [Push 42, Fun fak, Apply, Print]l
 
 sameRep :: Tractable a -> Tractable b -> Maybe (Equal a b)
 sameRep IntT IntT = Just Eq
