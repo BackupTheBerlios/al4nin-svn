@@ -1471,22 +1471,34 @@ data Function :: * ~> * ~> * where
 peelIO :: IO a -> a
 peelIO _ = undefined
 
--- the fak program
+{-- the fak program
 fak :: Thrist Cat (Int, opaque) (Int, opaque)
 fak = [Dup, Push 0, equals,
               Block [Pop, Push 1]l,
               Block [Dup, Push 1, minus, Fun (peelIO fakFunc), Apply, times]l,
             If]l
-
---canonicalize :: (forall opaque . Thrist Sound (Cat opaque opaque) (Cat a b)) -> Thrist Sound (Cat () ()) (Cat a b)
---canonicalize thr = [(Nop :: Sound (Cat () ()) (Cat () ())); thr]l
+-}
 
 fakFunc :: IO (Function (Int, op) (Int, op))
 fakFunc = let monad ioM in do
     a <- freshAtom
-    return (Function "fak" [Nop a, In IntT, Out IntT]l {-canonicalize-} fak)
+    let fak = [Dup, Push 0, equals,
+                Block [Pop, Push 1]l,
+                Block [Dup, Push 1, minus, Fun (peelIO fakFunc), Apply, times]l,
+              If]l
+        result = Function "fak" [Nop a, In IntT, Out IntT]l fak
+    return result
 
-usecase = [Push 42, Block fak, Apply, Print]l
+{-
+fakFunc :: IO (Function (Int, op) (Int, op))
+fakFunc = let monad ioM in do
+    a <- freshAtom
+    let fak = [Pop, Push 0, Fun result, Apply]l
+        result = Function "fak" [Nop a, In IntT, Out IntT]l fak
+    return result
+-}
+usecase = [Push 42, Fun (peelIO fakFunc), Apply, Print]l
+--usecase = [Push 42, Block fak, Apply, Print]l
 
 sameRep :: Tractable a -> Tractable b -> Maybe (Equal a b)
 sameRep IntT IntT = Just Eq
@@ -1532,9 +1544,6 @@ compile [Label n t; rest]l = let compiled = lazy (compile $ subst' n t compiled 
 --compile [Label n t; rest]l =
 --    let ((compiled, t', r) :: (Code (IO (f, opaque) -> IO b), Tractable (f -> t), Thrist Cat (f, opaque) b)) = (lazy (check (compile $ subst n t compiled rest)), t, rest) in compiled
 --    let ((compiled, t') :: (Code (IO (f, opaque) -> IO (t, opaque)), Tractable (f -> t))) = (lazy (compile $ (check (subst' n t compiled rest))), t) in compiled
-
-subst' :: String -> Tractable f -> Code (IO (f, opaque) -> IO opaque') -> Thrist Cat (f, opaque) opaque' -> Thrist Cat (f, opaque) opaque'
-subst' n t c thr = subst n t c thr
 -}
 
 subst :: Function f t -> Code (IO f -> IO t) -> Thrist Cat a b -> Thrist Cat a b
