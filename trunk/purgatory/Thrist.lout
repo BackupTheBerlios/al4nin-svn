@@ -1479,24 +1479,18 @@ fak = [Dup, Push 0, equals,
             If]l
 -}
 
+fixIO :: (a -> IO a) -> IO a
+fixIO f = undefined -- another ugly placeholder
+
 fakFunc :: IO (Function (Int, op) (Int, op))
-fakFunc = let monad ioM in do
+fakFunc = let monad ioM in fixIO (\f -> do
     a <- freshAtom
     let fak = [Dup, Push 0, equals,
                 Block [Pop, Push 1]l,
-                Block [Dup, Push 1, minus, Fun (peelIO fakFunc), Apply, times]l,
+                Block [Dup, Push 1, minus, Fun f, Apply, times]l,
               If]l
-        result = Function "fak" [Nop a, In IntT, Out IntT]l fak
-    return result
+    return $ Function "fak" [Nop a, In IntT, Out IntT]l fak)
 
-{-
-fakFunc :: IO (Function (Int, op) (Int, op))
-fakFunc = let monad ioM in do
-    a <- freshAtom
-    let fak = [Pop, Push 0, Fun result, Apply]l
-        result = Function "fak" [Nop a, In IntT, Out IntT]l fak
-    return result
--}
 usecase = [Push 42, Fun (peelIO fakFunc), Apply, Print]l
 --usecase = [Push 42, Block fak, Apply, Print]l
 
