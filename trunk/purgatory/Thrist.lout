@@ -1466,12 +1466,15 @@ data Function :: * ~> * ~> * where
 -- infer :: Thrist Cat a b -> Thrist Sound (Cat opaque opaque) (Cat a b)
 -- infer [Push a]l = 
 
+
 fakFunc :: IO (Function (Int, op) (Int, op))
 fakFunc = let monad ioM in do
       a <- freshAtom
+      let loosen :: Function (Int, op) (Int, op) -> Function (Int, op') (Int, op')
+          loosen = unsafeCast
       let fak = [Dup, Push 0, equals,
                    Block [Pop, Push 1]l,
-                   Block [Dup, Push 1, minus, Fun (unsafeCast f), Apply, times]l,
+                   Block [Dup, Push 1, minus, Fun $ loosen f, Apply, times]l,
                  If]l
           f = Function "fak" [Nop a, In IntT, Out IntT]l fak
       return f
@@ -1519,12 +1522,8 @@ compile [Push a; rest]l =
 	$(compile rest) (interpretCat' thr (return st)) |]
 -}
 
-{-
-compile [Label n t; rest]l = let compiled = lazy (compile $ subst' n t compiled rest) in compiled
---compile [Label n t; rest]l =
---    let ((compiled, t', r) :: (Code (IO (f, opaque) -> IO b), Tractable (f -> t), Thrist Cat (f, opaque) b)) = (lazy (check (compile $ subst n t compiled rest)), t, rest) in compiled
---    let ((compiled, t') :: (Code (IO (f, opaque) -> IO (t, opaque)), Tractable (f -> t))) = (lazy (compile $ (check (subst' n t compiled rest))), t) in compiled
--}
+
+compileFun (f@(Function n t c)) = let compiled = lazy (compile $ subst f compiled c) in compiled
 
 subst :: Function f t -> Code (IO f -> IO t) -> Thrist Cat a b -> Thrist Cat a b
 subst _ _ []l = []l
