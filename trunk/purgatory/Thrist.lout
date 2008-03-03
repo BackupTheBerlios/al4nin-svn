@@ -1527,6 +1527,9 @@ compile [Prim tr f; rest]l =
 	$(compile rest) (interpretCat' thr (return st)) |]
 -}
 
+compile [Call c; rest]l =
+   [| \st -> let monad ioM in do
+        $(compile rest) $ (run c) st |]
 
 deepApply :: (f -> g) -> Tractable g -> {blowUpBy g u} -> (f -> {range g}, u)
 deepApply f (arr@ArrT from to) (a, st) = deepApply (f a) to st
