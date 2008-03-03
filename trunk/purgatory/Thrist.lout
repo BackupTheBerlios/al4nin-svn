@@ -1430,7 +1430,6 @@ data Tractable :: * ~> * where
 
 -- evidence about type safe-ness of Cats
 data Sound :: * ~> * ~> * where
-  --Lab :: Label l -> Sound (Cat opaque opaque) (Cat opaque opaque)
   Nop :: Atom opaque -> Sound (Cat () ()) (Cat opaque opaque)
   In :: Tractable new -> Sound (Cat a b) (Cat (new, a) b)
   Out :: Tractable new -> Sound (Cat a b) (Cat a (new, b))
@@ -1521,11 +1520,31 @@ compile [Prim IntT f; rest]l =
         (a, st') <- st
         $(compile rest) $ return (f a, st') |]
 
+compile [Prim (arr@ArrT _ to) f; rest]l =
+   [| \st -> let monad ioM in do
+        (a, st') <- st
+        undefined |]
+
 {-compile [Apply; rest]l =
    [| \act -> let monad ioM in do
 	(Quote thr) st <- act
 	$(compile rest) (interpretCat' thr (return st)) |]
 -}
+
+--deepApply :: (f -> g) -> Tractable g -> {blowUpBy (f -> g) u} -> (f -> {range g}, u)
+--deepApply f (arr@ArrT from to) (a, st) = (f' a, st')
+--    where (f', st') = deepApply f to st
+
+--deepApply f IntT st = (f, st)
+
+
+--   ### Bool -> Char -> Int -> ()
+
+deepApply :: (f -> g) -> Tractable g -> {blowUpBy (f -> g) u} -> (f -> {range g}, u)
+deepApply f (arr@ArrT from to) (a, st) = (f', st')
+    where (f', st') = deepApply (f a) to st
+
+deepApply f IntT (a, st) = (f, st)
 
 
 compileFun (f@(Function n t c)) = let compiled = lazy (compile $ subst f compiled c) in compiled
