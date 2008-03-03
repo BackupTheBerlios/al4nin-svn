@@ -1523,7 +1523,8 @@ compile [Prim IntT f; rest]l =
 compile [Prim (arr@ArrT _ to) f; rest]l =
    [| \st -> let monad ioM in do
         (a, st') <- st
-        undefined |]
+        let (f', st'') = (deepApply f arr st')
+        $(compile rest) $ return (f' a, st'')|]
 
 {-compile [Apply; rest]l =
    [| \act -> let monad ioM in do
@@ -1531,14 +1532,6 @@ compile [Prim (arr@ArrT _ to) f; rest]l =
 	$(compile rest) (interpretCat' thr (return st)) |]
 -}
 
---deepApply :: (f -> g) -> Tractable g -> {blowUpBy (f -> g) u} -> (f -> {range g}, u)
---deepApply f (arr@ArrT from to) (a, st) = (f' a, st')
---    where (f', st') = deepApply f to st
-
---deepApply f IntT st = (f, st)
-
-
---   ### Bool -> Char -> Int -> ()
 
 deepApply :: (f -> g) -> Tractable g -> {blowUpBy (f -> g) u} -> (f -> {range g}, u)
 deepApply f (arr@ArrT from to) (a, st) = (f', st')
