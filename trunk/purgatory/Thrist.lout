@@ -1516,6 +1516,11 @@ compile [Push a; rest]l =
         st' <- st
         $(compile rest) $ return (a, st') |]
 
+compile [Prim IntT f; rest]l =
+   [| \st -> let monad ioM in do
+        (a, st') <- st
+        $(compile rest) $ return (f a, st') |]
+
 {-compile [Apply; rest]l =
    [| \act -> let monad ioM in do
 	(Quote thr) st <- act
