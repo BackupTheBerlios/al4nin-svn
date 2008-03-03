@@ -1412,7 +1412,7 @@ data Thrist :: (* ~> * ~> *) ~> * ~> * ~> * where
 @LD @Haskell @Begin
 -- type functions for creating universals
 blowUpBy :: * ~> * ~> *
-{blowUpBy (a -> b) s} = {blowUpBy b (a, s)}
+{blowUpBy (a -> b) s} = (a, {blowUpBy b s})
 {blowUpBy Int s} = s
 {blowUpBy Bool s} = s
 
@@ -1535,11 +1535,11 @@ compile [Prim (arr@ArrT _ _) f; rest]l =
 
 
 deepApply :: (f -> g) -> Tractable g -> {blowUpBy g u} -> (f -> {range g}, u)
---deepApply f (arr@ArrT from to) (a, st) = (f' a, st')
---    where (f', st') = deepApply f to st
-deepApply f (arr@ArrT from to) (b, st) = (f', st')
-    where (f', st') = deepApply saturate to st
-          saturate a = f a b
+deepApply f (arr@ArrT from to) (a, st) = (f', st')
+    where (f', st') = deepApply (f a) to st
+--deepApply f (arr@ArrT from to) (b, st) = (f', st')
+--    where (f', st') = deepApply saturate to st
+--          saturate a = f a b
 
 deepApply f IntT st = (f, st)
 
