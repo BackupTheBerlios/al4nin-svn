@@ -1412,7 +1412,7 @@ data Thrist :: (* ~> * ~> *) ~> * ~> * ~> * where
 @LD @Haskell @Begin
 -- type functions for creating universals
 blowUpBy :: * ~> * ~> *
-{blowUpBy (a -> b) s} = (a, {blowUpBy b s})
+{blowUpBy (a -> b) s} = {blowUpBy b (a, s)}
 {blowUpBy Int s} = s
 {blowUpBy Bool s} = s
 
@@ -1518,12 +1518,13 @@ compile [Push a; rest]l =
 compile [Prim IntT f; rest]l =
    [| \st -> let monad ioM in do
         (a, st') <- st
-        $(compile rest) $ return (f a, st') |]
+        let (f', st'') = deepApply f IntT st'
+        $(compile rest) $ return (f' a, st') |]
 
-compile [Prim (arr@ArrT _ to) f; rest]l =
+compile [Prim (arr@ArrT _ _) f; rest]l =
    [| \st -> let monad ioM in do
         (a, st') <- st
-        let (f', st'') = (deepApply f arr st')
+        let (f', st'') = deepApply f arr st'
         $(compile rest) $ return (f' a, st'')|]
 
 {-compile [Apply; rest]l =
@@ -1533,11 +1534,14 @@ compile [Prim (arr@ArrT _ to) f; rest]l =
 -}
 
 
-deepApply :: (f -> g) -> Tractable g -> {blowUpBy (f -> g) u} -> (f -> {range g}, u)
-deepApply f (arr@ArrT from to) (a, st) = (f', st')
-    where (f', st') = deepApply (f a) to st
+deepApply :: (f -> g) -> Tractable g -> {blowUpBy g u} -> (f -> {range g}, u)
+--deepApply f (arr@ArrT from to) (a, st) = (f' a, st')
+--    where (f', st') = deepApply f to st
+deepApply f (arr@ArrT from to) (b, st) = (f', st')
+    where (f', st') = deepApply saturate to st
+          saturate a = f a b
 
-deepApply f IntT (a, st) = (f, st)
+deepApply f IntT st = (f, st)
 
 
 compileFun (f@(Function n t c)) = let compiled = lazy (compile $ subst f compiled c) in compiled
