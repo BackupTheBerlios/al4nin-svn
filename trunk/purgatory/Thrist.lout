@@ -1441,10 +1441,10 @@ data Cat :: * ~> * ~> * where
   Pop :: Cat (a, opaque) opaque
   Dup :: Cat (a, opaque) (a, (a, opaque))
   Prim :: Tractable b -> (a -> b) -> Cat {blowUpBy (a -> b) opaque} ({range b}, opaque)
-  Block :: Thrist Cat b c -> Cat opaque (Cat b c, opaque)
-  Fun :: Function b c -> Cat opaque (Cat b c, opaque)
-  Apply :: Cat (Cat b c, b) c
-  If :: Cat (Cat s t, Cat s t, Bool, s) t
+  Block :: Thrist Cat b c -> Cat opaque (Thrist Cat b c, opaque)
+  Fun :: Function b c -> Cat opaque (Thrist Cat b c, opaque)
+  Apply :: Cat (Thrist Cat b c, b) c
+  If :: Cat (Thrist Cat s t, Thrist Cat s t, Bool, s) t
   Print :: Cat (a, opaque) opaque
   Call :: Code (IO b -> IO c) -> Cat b c
 
@@ -1521,6 +1521,11 @@ compile [Prim tr f; rest]l =
         let (f', st'') = deepApply f tr st'
         $(compile rest) $ return (f' a, st'') |]
 
+compile [Block thr; rest]l =
+   [| \st -> let monad ioM in do
+        st' <- st
+        $(compile rest) $ return (thr, st') |]
+
 {-compile [Apply; rest]l =
    [| \act -> let monad ioM in do
 	(Quote thr) st <- act
@@ -1532,7 +1537,8 @@ compile [Call c; rest]l =
         $(compile rest) $ (run c) st |]
 
 deepApply :: (f -> g) -> Tractable g -> {blowUpBy g u} -> (f -> {range g}, u)
-deepApply f (arr@ArrT from to) (a, st) = deepApply (f a) to st
+deepApply f (arr@ArrT _ to) (a, st) = check (deepApply contract to st)
+    where contract z = f z a
 deepApply f IntT st = (f, st)
 deepApply f BoolT st = (f, st)
 
