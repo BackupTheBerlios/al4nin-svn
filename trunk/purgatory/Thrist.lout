@@ -1452,7 +1452,9 @@ data Cat :: * ~> * ~> * where
 intint = ArrT IntT IntT
 intbool = ArrT IntT BoolT
 
-minus = Prim intint (-)
+flip f a b = f b a
+
+minus = Prim intint $ flip (-)
 times = Prim intint (*)
 equals = Prim intbool (==)
 
@@ -1517,9 +1519,9 @@ compile [Push a; rest]l =
 
 compile [Prim tr f; rest]l =
    [| \st -> let monad ioM in do
-        (a, st') <- st
-        let (f', st'') = deepApply f tr st'
-        $(compile rest) $ return (f' a, st'') |]
+        st' <- st
+        let (a', st'') = deepApply f tr st'
+        $(compile rest) $ return (a', st'') |]
 
 compile [Block thr; rest]l =
    [| \st -> let monad ioM in do
@@ -1536,11 +1538,10 @@ compile [Call c; rest]l =
    [| \st -> let monad ioM in do
         $(compile rest) $ (run c) st |]
 
-deepApply :: (f -> g) -> Tractable g -> {blowUpBy g u} -> (f -> {range g}, u)
-deepApply f (arr@ArrT _ to) (a, st) = check (deepApply contract to st)
-    where contract z = f z a
-deepApply f IntT st = (f, st)
-deepApply f BoolT st = (f, st)
+deepApply :: (f -> g) -> Tractable g -> (f, {blowUpBy g u}) -> ({range g}, u)
+deepApply f (arr@ArrT _ to) (a, st) = deepApply (f a) to st
+deepApply f IntT (a, st) = (f a, st)
+deepApply f BoolT (a, st) = (f a, st)
 
 
 compileFun (f@(Function n t c)) = let compiled = lazy (compile $ subst f compiled c) in compiled
