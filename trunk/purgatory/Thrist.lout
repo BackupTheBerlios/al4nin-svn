@@ -1523,10 +1523,18 @@ compile [Prim tr f; rest]l =
         let (a', st'') = deepApply f tr st'
         $(compile rest) $ return (a', st'') |]
 
+compile [Block true, Block false, If; rest]l =
+   [| \st -> let monad ioM in do
+        (cond, st') <- st
+	let st'' = if cond then $(compile true) (return st') else $(compile false) (return st')
+        $(compile rest) st'' |]
+
+{-
 compile [Block thr; rest]l =
    [| \st -> let monad ioM in do
         st' <- st
         $(compile rest) $ return (thr, st') |]
+-}
 
 {-compile [Apply; rest]l =
    [| \act -> let monad ioM in do
@@ -1537,6 +1545,12 @@ compile [Block thr; rest]l =
 compile [Call c; rest]l =
    [| \st -> let monad ioM in do
         $(compile rest) $ (run c) st |]
+
+compile [Fun f, Apply; rest]l =
+   [| \st -> let monad ioM in do
+        $(compile rest') $ (run f') st |]
+  where f' = compileFun f
+        rest' = subst f f' rest
 
 deepApply :: (f -> g) -> Tractable g -> (f, {blowUpBy g u}) -> ({range g}, u)
 deepApply f (arr@ArrT _ to) (a, st) = deepApply (f a) to st
