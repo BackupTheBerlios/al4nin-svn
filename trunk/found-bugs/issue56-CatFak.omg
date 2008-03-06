@@ -1,0 +1,172 @@
+-- #line 1404
+import "LangPrelude.prg"
+data Thrist :: (* ~> * ~> *) ~> * ~> * ~> * where
+  Nil :: Thrist p a a
+  Cons :: p a b -> Thrist p b c -> Thrist p a c
+ deriving List(l) 
+-- #line 1412
+-- type functions for creating universals
+blowUpBy :: * ~> * ~> *
+{blowUpBy (a -> b) s} = {blowUpBy b (a, s)}
+{blowUpBy Int s} = s
+{blowUpBy Bool s} = s
+
+-- type functions for analysing function arrows
+range :: * ~> *
+{range (c -> d)} = {range d}
+{range Int} = Int
+{range Bool} = Bool
+
+-- the type universe a Cat program can operate on
+data Tractable :: * ~> * where
+  IntT :: Tractable Int
+  BoolT :: Tractable Bool
+  ArrT :: Tractable a -> Tractable b -> Tractable (a -> b)
+
+-- evidence about type safe-ness of Cats
+data Sound :: * ~> * ~> * where
+  Nop :: Atom opaque -> Sound (Cat () ()) (Cat opaque opaque)
+  In :: Tractable new -> Sound (Cat a b) (Cat (new, a) b)
+  Out :: Tractable new -> Sound (Cat a b) (Cat a (new, b))
+  Rev :: Sound from to -> Sound to from
+
+-- the Cat datatype, language primitives and typing rules
+data Cat :: * ~> * ~> * where
+  Push :: a -> Cat opaque (a, opaque)
+  Pop :: Cat (a, opaque) opaque
+  Dup :: Cat (a, opaque) (a, (a, opaque))
+  Prim :: Tractable b -> (a -> b) -> Cat {blowUpBy (a -> b) opaque} ({range b}, opaque)
+  Block :: Thrist Cat b c -> Cat opaque (Thrist Cat b c, opaque)
+  Fun :: Function b c -> Cat opaque (Thrist Cat b c, opaque)
+  Apply :: Cat (Thrist Cat b c, b) c
+  If :: Cat (Thrist Cat s t, Thrist Cat s t, Bool, s) t
+  Print :: Cat (a, opaque) opaque
+  Call :: Code (IO b -> IO c) -> Cat b c
+
+-- some abbreviations
+intint = ArrT IntT IntT
+intbool = ArrT IntT BoolT
+
+minus = Prim intint (-)
+times = Prim intint (*)
+equals = Prim intbool (==)
+
+data Function :: * ~> * ~> * where
+  Function :: String
+             -> Thrist Sound (Cat () ()) (Cat a b)
+             -> Thrist Cat a b
+             -> Function a b
+
+-- infer :: Thrist Cat a b -> Thrist Sound (Cat opaque opaque) (Cat a b)
+-- infer [Push a]l = 
+
+
+fakFunc :: IO (Function (Int, op) (Int, op))
+fakFunc = let monad ioM in do
+      a <- freshAtom
+      let loosen :: Function (Int, op) (Int, op) -> Function (Int, op') (Int, op')
+          loosen = unsafeCast
+      let fak = [Dup, Push 0, equals,
+                   Block [Pop, Push 1]l,
+                   Block [Dup, Push 1, minus, Fun $ loosen f, Apply, times]l,
+                 If]l
+          f = Function "fak" [Nop a, In IntT, Out IntT]l fak
+      return f
+
+usecase = let monad ioM in do
+    fak <- fakFunc
+    return ([Push 42, Fun fak, Apply, Print]l, fak)
+
+sameRep :: Tractable a -> Tractable b -> Maybe (Equal a b)
+sameRep IntT IntT = Just Eq
+sameRep BoolT BoolT = Just Eq
+sameRep (ArrT a b) (ArrT c d) = let monad maybeM in do
+    Eq <- sameRep a c
+    Eq <- sameRep b d
+    return Eq
+sameRep _ _ = Nothing
+
+compile :: Thrist Cat a b -> Code (IO a -> IO b)
+compile []l = [| id |]
+
+compile [Print; rest]l =
+   [| \st -> let monad ioM in do
+        (a, st') <- st
+        putStr $ show a
+        $(compile rest) $ return st' |]
+
+compile [Pop; rest]l =
+   [| \st -> let monad ioM in do
+        (_, st') <- st
+        $(compile rest) $ return st' |]
+
+compile [Dup; rest]l =
+   [| \st -> let monad ioM in do
+        (st'@(a, _)) <- st
+        $(compile rest) $ return (a, st') |]
+
+compile [Push a; rest]l =
+   [| \st -> let monad ioM in do
+        st' <- st
+        $(compile rest) $ return (a, st') |]
+
+compile [Prim tr f; rest]l =
+   [| \st -> let monad ioM in do
+        (a, st') <- st
+        let (f', st'') = deepApply f tr st'
+        $(compile rest) $ return (f' a, st'') |]
+
+compile [Block thr; rest]l =
+   [| \st -> let monad ioM in do
+        st' <- st
+        $(compile rest) $ return (thr, st') |]
+
+{-compile [Apply; rest]l =
+   [| \act -> let monad ioM in do
+	(Quote thr) st <- act
+	$(compile rest) (interpretCat' thr (return st)) |]
+-}
+
+compile [Call c; rest]l =
+   [| \st -> let monad ioM in do
+        $(compile rest) $ (run c) st |]
+
+deepApply :: (f -> g) -> Tractable g -> {blowUpBy g u} -> (f -> {range g}, u)
+deepApply f (arr@ArrT _ to) (a, st) = check (deepApply contract to st)
+    where contract z = f z a
+deepApply f IntT st = (f, st)
+deepApply f BoolT st = (f, st)
+
+
+compileFun (f@(Function n t c)) = let compiled = lazy (compile $ subst f compiled c) in compiled
+
+subst :: Function f t -> Code (IO f -> IO t) -> Thrist Cat a b -> Thrist Cat a b
+subst _ _ []l = []l
+
+subst (f@Function n t _) c [(b@Fun (Function n' t' _)), (a@Apply); rest]l =
+    case (sameSound t t', eqStr n n') of
+        (Just Eq, True) -> [Call c; subst f c rest]l
+        _ -> [b, a; rest]l
+
+subst f c [Block b; rest]l = [Block (subst f c b); subst f c rest]l
+subst f c [head; tail]l = [head; subst f c tail]l
+
+
+sameSound2 :: Equal a a' -> Thrist Sound a b -> Thrist Sound a' b' -> Maybe (Equal b b')
+sameSound2 Eq [Nop a; rest]l [Nop a'; rest']l = let monad maybeM in do
+    Eq <- same a a'
+    Eq <- sameSound2 Eq rest rest'
+    return Eq
+sameSound2 Eq [In a; rest]l [In a'; rest']l = let monad maybeM in do
+    Eq <- sameRep a a'
+    Eq <- sameSound2 Eq rest rest'
+    return Eq
+sameSound2 Eq [Out a; rest]l [Out a'; rest']l = let monad maybeM in do
+    Eq <- sameRep a a'
+    Eq <- sameSound2 Eq rest rest'
+    return Eq
+sameSound2 Eq []l []l = Just Eq
+sameSound2 _ _ _ = Nothing
+
+sameSound = sameSound2 Eq
+
