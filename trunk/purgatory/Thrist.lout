@@ -1557,7 +1557,7 @@ deepApply f (arr@ArrT _ to) (a, st) = deepApply (f a) to st
 deepApply f IntT (a, st) = (f a, st)
 deepApply f BoolT (a, st) = (f a, st)
 
-
+compileFun :: Function f t -> Code (IO f -> IO t)
 compileFun (f@(Function n t c)) = let compiled = lazy (compile $ subst f compiled c) in compiled
 
 subst :: Function f t -> Code (IO f -> IO t) -> Thrist Cat a b -> Thrist Cat a b
