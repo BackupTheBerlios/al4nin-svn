@@ -1531,19 +1531,6 @@ compile [Block true, Block false, If; rest]l =
 	let st'' = if cond then $(compile true) (return st') else $(compile false) (return st')
         $(compile rest) st'' |]
 
-{-
-compile [Block thr; rest]l =
-   [| \st -> let monad ioM in do
-        st' <- st
-        $(compile rest) $ return (thr, st') |]
--}
-
-{-compile [Apply; rest]l =
-   [| \act -> let monad ioM in do
-	(Quote thr) st <- act
-	$(compile rest) (interpretCat' thr (return st)) |]
--}
-
 compile [Call c; rest]l =
    [| \st -> let monad ioM in do
         $(compile rest) $ c st |]
@@ -1560,7 +1547,7 @@ deepApply f IntT (a, st) = (f a, st)
 deepApply f BoolT (a, st) = (f a, st)
 
 compileFun :: Function f t -> Code (IO f -> IO t)
-compileFun (f@(Function n t c)) = let compiled = [lazy (compile $ subst f (mimic run (head compiled)) c)] in head compiled
+compileFun (f@(Function _ _ c)) = let compiled = compile $ subst f (mimic run compiled) c in compiled
 
 subst :: Function f t -> (IO f -> IO t) -> Thrist Cat a b -> Thrist Cat a b
 subst _ _ []l = []l
