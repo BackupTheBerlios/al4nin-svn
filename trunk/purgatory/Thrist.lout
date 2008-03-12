@@ -1459,15 +1459,11 @@ times = Prim intint (*)
 equals = Prim intbool (==)
 
 data Function :: * ~> * ~> * where
-  Function :: String
-             -> Thrist Sound (Cat () ()) (Cat a b)
-             -> Thrist Cat a b
-             -> Function a b
+  Function :: Thrist Sound (Cat () ()) (Cat a b)
+              -> Thrist Cat a b
+              -> Function a b
 
--- infer :: Thrist Cat a b -> Thrist Sound (Cat opaque opaque) (Cat a b)
--- infer [Push a]l = 
-
-
+-- build the faculty function
 fakFunc :: IO (Function (Int, op) (Int, op))
 fakFunc = let monad ioM in do
       a <- freshAtom
@@ -1477,14 +1473,8 @@ fakFunc = let monad ioM in do
                    Block [Pop, Push 1]l,
                    Block [Dup, Push 1, minus, Fun $ loosen f, Apply, times]l,
                  If]l
-          f = Function "fak" [Nop a, In IntT, Out IntT]l fak
+          f = Function [Nop a, In IntT, Out IntT]l fak
       return f
-
-usecase = let monad ioM in do
-    fak <- fakFunc
-    let thr = [Push 5, Fun fak, Apply, Print]l
-    _ <- (run $ compile thr) (returnIO ())
-    return (thr, fak)
 
 sameRep :: Tractable a -> Tractable b -> Maybe (Equal a b)
 sameRep IntT IntT = Just Eq
@@ -1547,14 +1537,14 @@ deepApply f IntT (a, st) = (f a, st)
 deepApply f BoolT (a, st) = (f a, st)
 
 compileFun :: Function f t -> Code (IO f -> IO t)
-compileFun (f@(Function _ _ c)) = let compiled = compile $ subst f (mimic run compiled) c in compiled
+compileFun (f@(Function _ c)) = let compiled = compile $ subst f (mimic run compiled) c in compiled
 
 subst :: Function f t -> (IO f -> IO t) -> Thrist Cat a b -> Thrist Cat a b
 subst _ _ []l = []l
 
-subst (f@Function n t _) c [(b@Fun (Function n' t' _)), (a@Apply); rest]l =
-    case (sameSound t t', eqStr n n') of
-        (Just Eq, True) -> [Call c; subst f c rest]l
+subst (f@Function t _) c [(b@Fun (Function t' _)), (a@Apply); rest]l =
+    case sameSound t t' of
+        Just Eq -> [Call c; subst f c rest]l
         _ -> [b, a; rest]l
 
 subst f c [Block b; rest]l = [Block (subst f c b); subst f c rest]l
@@ -1578,8 +1568,23 @@ sameSound2 Eq []l []l = Just Eq
 sameSound2 _ _ _ = Nothing
 
 sameSound = sameSound2 Eq
-
 @End @Haskell
+
+We can now compute a factorial using
+
+@LD @Haskell @Begin
+usecase = let monad ioM in do
+    fak <- fakFunc
+    let thr = [Push 5, Fun fak, Apply, Print]l
+    _ <- (run $ compile thr) (returnIO ())
+    return ()
+@End @Haskell
+
+usecase @Prompt {
+Executing IO action
+120
+}
+
 @End @Appendix
 
 @Appendix
