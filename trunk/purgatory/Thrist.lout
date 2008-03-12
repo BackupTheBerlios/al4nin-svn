@@ -1446,7 +1446,7 @@ data Cat :: * ~> * ~> * where
   Apply :: Cat (Thrist Cat b c, b) c
   If :: Cat (Thrist Cat s t, Thrist Cat s t, Bool, s) t
   Print :: Cat (a, opaque) opaque
-  Call :: Code (IO b -> IO c) -> Cat b c
+  Call :: (IO b -> IO c) -> Cat b c
 
 -- some abbreviations
 intint = ArrT IntT IntT
@@ -1482,7 +1482,9 @@ fakFunc = let monad ioM in do
 
 usecase = let monad ioM in do
     fak <- fakFunc
-    return ([Push 42, Fun fak, Apply, Print]l, fak)
+    let thr = [Push 42, Fun fak, Apply, Print]l
+    _ <- (run $ compile thr) (returnIO ())
+    return (thr, fak)
 
 sameRep :: Tractable a -> Tractable b -> Maybe (Equal a b)
 sameRep IntT IntT = Just Eq
@@ -1544,12 +1546,12 @@ compile [Block thr; rest]l =
 
 compile [Call c; rest]l =
    [| \st -> let monad ioM in do
-        $(compile rest) $ (run c) st |]
+        $(compile rest) $ c st |]
 
 compile [Fun f, Apply; rest]l =
    [| \st -> let monad ioM in do
-        $(compile rest') $ (run f') st |]
-  where f' = compileFun f
+        $(compile rest') $ f' st |]
+  where f' = run (strict (compileFun f))
         rest' = subst f f' rest
 
 deepApply :: (f -> g) -> Tractable g -> (f, {blowUpBy g u}) -> ({range g}, u)
@@ -1558,9 +1560,9 @@ deepApply f IntT (a, st) = (f a, st)
 deepApply f BoolT (a, st) = (f a, st)
 
 compileFun :: Function f t -> Code (IO f -> IO t)
-compileFun (f@(Function n t c)) = let compiled = lazy (compile $ subst f compiled c) in compiled
+compileFun (f@(Function n t c)) = let compiled = [lazy (compile $ subst f (mimic (run . strict) (head compiled)) c)] in mimic head compiled
 
-subst :: Function f t -> Code (IO f -> IO t) -> Thrist Cat a b -> Thrist Cat a b
+subst :: Function f t -> (IO f -> IO t) -> Thrist Cat a b -> Thrist Cat a b
 subst _ _ []l = []l
 
 subst (f@Function n t _) c [(b@Fun (Function n' t' _)), (a@Apply); rest]l =
