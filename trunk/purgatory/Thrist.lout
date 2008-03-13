@@ -49,7 +49,7 @@ transformations.
 @Title { Structure of the Paper }
 @Begin
 @PP
-In the following section we motivate our later introduction of @Haskell {Thrist}
+In the following section we motivate our subsequent introduction of @Haskell {Thrist}
 with well known examples. The third section is devoted to the development of
 three practial applications of @Haskell {Thrist}s. Next we present some less useful
 but entertaining uses. Section five examines other work, while section six concludes,
@@ -106,7 +106,7 @@ universally qualified ones:
 }
 @LP
 Now, functions are a bit more interesting than @Haskell {List}s above, they can be composed!
-Interestingly, composition (written as (.)) is again a function:
+Interestingly, composition (written as @Haskell {(.)}) is again a function:
 @LD {
 {(.)} @Prompt
   {<fn> : forall a b c.(a -> b) -> (c -> a) -> c -> b}
@@ -351,7 +351,7 @@ tells us that there is no netto change in the stack's shape.
 
 
 @SubSubSection
-@Title { Making Use of @Omega{}'s features }
+@Title { Making Use of @Omega{}'s Features }
 @Begin
 @PP
 We shall from now on make use of a feature of the @Omega language
@@ -622,16 +622,16 @@ all optimizations must be type preserving.
 The language Cat is intended as an intermediate language produced by
 front-end compilers and consumed by back-ends that target stack based
 virtual machines like JVM and CIL. It is advisable to generalize Cat in a way
-that Pop gets a count parameter that tells how many elements are to be
-popped of the stack. Also instead of Swap it would be beneficial to have
-a Permute primitive that subsumes all variants of stack shuffling operations,
-allowing us to get rid of Swap and friends. All these parametrized primitives
+that @Haskell {Pop} gets a count parameter that tells how many elements are to be
+popped of the stack. Also instead of @Haskell {Swap} it would be beneficial to have
+a @Haskell {Permute} primitive that subsumes all variants of stack shuffling operations,
+allowing us to get rid of @Haskell {Swap} and friends. All these parametrized primitives
 would have one problem in common, namely that the stack shape would
 vary depending on the  value of the parameter(s), requiring dependent
 types to define them. Fortunately @Omega provides a device that is approaching
 the power of dependent types, singleton types and type-level functions.
 
-Here is a sketch of PopN:
+Here is a sketch of @Haskell {PopN}:
 
 @ID @Haskell {
   PopN :: Nat' (S n) -> Cat {blow (S n) s} s
@@ -922,7 +922,7 @@ parse [Rep p; r]l as = parse r (parseRep [p]l as) where
 @Title { Compilation }
 @Begin
 @PP
-Similarly to the Thrist Cat we can compile our parser combinators to
+In a fashion similar to the @Haskell {Thrist Cat} we can compile our parser combinators to
 a more efficient algorithm by removing the interpretative overhead.
 
 @End @SubSubSection
@@ -1337,7 +1337,7 @@ in the first type parameter to the thrist. Thus they are universal.
 @BeginSubAppendices
 
 @SubAppendix
-  @Title { Extending Thrists }
+  @Title { Extending }
 @Begin
 @LD @Haskell {
 extendThrist :: forall (a :: *1) (b :: a ~> a ~> *0) (c :: a) (d :: a) (e :: a).
@@ -1351,7 +1351,7 @@ extendThrist [b; r]l a = [b; extendThrist r a]l
 @End @SubAppendix
 
 @SubAppendix
-  @Title { Appending Thrists }
+  @Title { Appending }
 @Begin
 @LD @Haskell {
 appendThrist :: forall (a :: *1) (b :: a ~> a ~> *0) (c :: a) (d :: a) (e :: a).
@@ -1365,7 +1365,7 @@ appendThrist [b; r]l a = [b; appendThrist r a]l
 @End @SubAppendix
 
 @SubAppendix
-  @Title { Flattening Thrists }
+  @Title { Flattening }
 @Begin
 @LD @Haskell {
 flattenThrist :: Thrist (Thrist k) a b -> Thrist k a b
@@ -1376,7 +1376,7 @@ flattenThrist [a; as]l = appendThrist a $ flattenThrist as
 @End @SubAppendix
 
 @SubAppendix
-  @Title { Instrumenting Thrists }
+  @Title { Instrumenting }
 @Begin
 @PP
 It might be useful to wrap each thrist member with
