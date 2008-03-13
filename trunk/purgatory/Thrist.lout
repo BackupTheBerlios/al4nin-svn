@@ -1612,10 +1612,51 @@ data Parse :: * ~> * ~> * where
   CataPlus :: ([a] -> b) -> Parse ([a], c) (b, c)
   Par :: Parse a b -> Parse c d -> Parse (a, c) (b, d)
   Wrap :: Thrist Parse a b -> Parse a b
-}
 
 
 
+parse :: Thrist Parse a b -> a -> Maybe b
+
+parse []l a = Just a
+
+parse [Atom c; r]l a = if ord c == ord a then parse r a else Nothing
+
+--parse [Pred p; r]l a = if p a then parse r a else Nothing
+
+parse [Sure f; r]l a = parse r (f a)
+
+parse [Try f; r]l a = do { b <- f a; parse r b } where monad maybeM
+
+parse [Rep1 p; r]l as = parse r (parseRep p as) where
+      parseRep :: Parse a b -> [a] -> ([b], [a])
+      parseRep _ [] = ([], [])
+      parseRep p (as@(a:ar)) = case parse [p]l a of
+          Nothing -> ([], as)
+          Just b -> (b:bs, rest)
+             where (bs, rest) = parseRep p ar
+
+parse [Rep p; r]l as = parse r (parseRep [p]l as) where
+      parseRep :: Thrist Parse [a] (b, [a]) -> [a] -> ([b], [a])
+      parseRep _ [] = ([], [])
+      parseRep p as = case parse p as of
+                      Nothing -> ([], as)
+                      Just (b, as') -> (b:bs, rest)
+                          where (bs, rest) = parseRep p as'
+
+parse [Group ps; r]l as = do { bs <- parseGroup ps as; parse r bs } where
+      monad maybeM
+      parseGroup :: [Parse a b] -> [a] -> Maybe ([b], [a])
+      parseGroup [] rest = Just ([], rest) -- overlength input
+      parseGroup _ [] = Nothing            -- input too short
+      parseGroup (p:ps) (a:as) = do
+				 b <- parse [p]l a
+				 (bs, rest) <- parseGroup ps as
+				 return (b:bs, rest)
+
+parse [Wrap thr; r]l a = do { a' <- parse thr a; parse r a' } where monad maybeM
 
 @End @Haskell
+
+
+
 @End @Appendix
