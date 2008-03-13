@@ -1518,7 +1518,7 @@ compile [Prim tr f; rest]l =
 compile [Block true, Block false, If; rest]l =
    [| \st -> let monad ioM in do
         (cond, st') <- st
-	let st'' = if cond then $(compile true) (return st') else $(compile false) (return st')
+        let st'' = if cond then $(compile true) (return st') else $(compile false) (return st')
         $(compile rest) st'' |]
 
 compile [Call c; rest]l =
