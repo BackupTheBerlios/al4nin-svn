@@ -54,7 +54,7 @@
 /title.*=.*/ {print "   @Title { " cont " }"; next}
 # /.*=.*/ {print "   @TitleNote { " cont " }"; next}
 /type.*=.*/ {print "   @TRType { " cont " }"; next}
-/url.*=.*/ {print "   @URL { \"" cont "\" }"; next}
+/url.*=.*/ {print "   @URL { " cont " }"; next}
 /volume.*=.*/ {print "   @Volume { " cont " }"; next}
 /year.*=.*/ {print "   @Year { " cont " }"; next}
 /isbn.*=.*/ {print "   # @ISBN { " cont " }"; next}
