@@ -4,7 +4,7 @@
 @SysInclude { tbl }
 @SysInclude { graph }
 @SysInclude { eq }
-@SysInclude { haskell }
+@Include { haskellx }
 @Database @FontDef {"db/lm"}
 @Database @Reference {"db/acmrefs"}
 
@@ -1409,33 +1409,47 @@ data Thrist :: (* ~> * ~> *) ~> * ~> * ~> * where
  deriving List(l) 
 @End @Haskell
 
+We need a type-level function for converting
+type arrows into matching configutations of the
+top-of-the-stack. This is done by @Haskell {blowUpBy}.
+@Haskell {range} on the other hand finds the result type
+of a function arrow.
 @LD @Haskell @Begin
--- type functions for creating universals
 blowUpBy :: * ~> * ~> *
 {blowUpBy (a -> b) s} = (a, {blowUpBy b s})
 {blowUpBy Int s} = s
 {blowUpBy Bool s} = s
 
--- type functions for analysing function arrows
 range :: * ~> *
 {range (c -> d)} = {range d}
 {range Int} = Int
 {range Bool} = Bool
+@End @Haskell
 
--- the type universe a Cat program can operate on
+All types in type universe our (simplified) Cat program can operate on
+is witnessed by a value of @Haskell {Tractable}, and @Haskell {sameRep}
+states their equality.
+
+@LD @Haskell @Begin
 data Tractable :: * ~> * where
   IntT :: Tractable Int
   BoolT :: Tractable Bool
   ArrT :: Tractable a -> Tractable b -> Tractable (a -> b)
 
--- evidence about type safe-ness of Cats
-data Sound :: * ~> * ~> * where
-  Nop :: Atom opaque -> Sound (Cat () ()) (Cat opaque opaque)
-  In :: Tractable new -> Sound (Cat a b) (Cat (new, a) b)
-  Out :: Tractable new -> Sound (Cat a b) (Cat a (new, b))
-  Rev :: Sound from to -> Sound to from
+sameRep :: Tractable a -> Tractable b -> Maybe (Equal a b)
+sameRep IntT IntT = Just Eq
+sameRep BoolT BoolT = Just Eq
+sameRep (ArrT a b) (ArrT c d) = let monad maybeM in do
+    Eq <- sameRep a c
+    Eq <- sameRep b d
+    return Eq
+sameRep _ _ = Nothing
+@End @Haskell
 
--- the Cat datatype, language primitives and typing rules
+Now we can introduce the Cat datatype which fixes the
+language primitives and typing rules.
+
+@LD @Haskell @Begin
 data Cat :: * ~> * ~> * where
   Push :: a -> Cat opaque (a, opaque)
   Pop :: Cat (a, opaque) opaque
@@ -1447,8 +1461,12 @@ data Cat :: * ~> * ~> * where
   If :: Cat (Thrist Cat s t, Thrist Cat s t, Bool, s) t
   Print :: Cat (a, opaque) opaque
   Call :: (IO b -> IO c) -> Cat b c
+@End @Haskell
 
--- some abbreviations
+To define the needed primitives that can be used in this appendix
+we propose a small set of some abbreviations:
+
+@LD @Haskell @Begin
 intint = ArrT IntT IntT
 intbool = ArrT IntT BoolT
 
@@ -1457,6 +1475,23 @@ flip f a b = f b a
 minus = Prim intint $ flip (-)
 times = Prim intint (*)
 equals = Prim intbool (==)
+@End @Haskell
+
+We are about to define callable functions. To this end
+we need a datatype to evidence the transformations
+on the shape of the stack as performed by the function.
+It will allow us to compare two functions. Since our
+example only contains a single function, we do not
+bother naming them. The identification is taken care of
+by an atom. @Haskell { Sound }'s constructors cater for
+elementary changes in the stack's shape. They can
+be contained in a thrist to get a net effect.
+
+@LD @Haskell @Begin
+data Sound :: * ~> * ~> * where
+  Nop :: Atom opaque -> Sound (Cat () ()) (Cat opaque opaque)
+  In :: Tractable new -> Sound (Cat a b) (Cat (new, a) b)
+  Out :: Tractable new -> Sound (Cat a b) (Cat a (new, b))
 
 data Function :: * ~> * ~> * where
   Function :: Thrist Sound (Cat () ()) (Cat a b)
@@ -1475,15 +1510,6 @@ fakFunc = let monad ioM in do
                  If]l
           f = Function [Nop a, In IntT, Out IntT]l fak
       return f
-
-sameRep :: Tractable a -> Tractable b -> Maybe (Equal a b)
-sameRep IntT IntT = Just Eq
-sameRep BoolT BoolT = Just Eq
-sameRep (ArrT a b) (ArrT c d) = let monad maybeM in do
-    Eq <- sameRep a c
-    Eq <- sameRep b d
-    return Eq
-sameRep _ _ = Nothing
 
 compile :: Thrist Cat a b -> Code (IO a -> IO b)
 compile []l = [| id |]
