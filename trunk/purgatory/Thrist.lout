@@ -12,7 +12,7 @@ def @TargetForExtract right output {}
 
 def @IgnoreForOutput right stuff {}
 
-def @Prompt left input right output { { Helvetica Base -1p } @Font { prompt> @Haskell { input } @PP @I { output } } }
+def @Prompt left input right output { { Helvetica Base -1p } @Font { prompt> @Haskell { input } @PP { output } } }
 def @Omega { {@I {@Sym Omega}}mega }
 
 @Report
@@ -91,7 +91,7 @@ The most prominent member of this class of types is the arrow type:
 
 @LD {
 { :k (->) } @Prompt
-  { (->) :: *0 ~> *0 ~> *0 }
+  { (->) :: *0 "~>" *0 "~>" *0 }
 }
 
 Fully saturated, @Haskell {a -> b} signifies the type of all functions that take elements of @Haskell {a} to
@@ -242,7 +242,7 @@ thrists later in the discussion. But now let's put the last missing
 piece in place to show that an arrow thrist is strictly more general
 than function composition, the @Haskell {runArrowThrist} function:
 
-@ID @Haskell @Begin
+@LD @Haskell @Begin
 runArrowThrist :: Thrist (->) b c -> c -> b
 runArrowThrist Nil b = b
 runArrowThrist (Cons f r) a = runThrist r (f a)
