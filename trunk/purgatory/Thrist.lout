@@ -36,7 +36,7 @@ Additionally we can perform pattern matching on our @Haskell {Thrist} elements, 
 obtaining the ability to do analysis on them. On the practical side
 we develop three new two-parameter GADTs for inclusion into {@Haskell {Thrist}}s.
 The first, when accompanied by an appropriate interpreter, directly model the semantics
-of the Cat language, while the second caters for a new type of parser combinator libraries.
+of the @I Cat language, while the second caters for a new type of parser combinator libraries.
 In our third example we demonstrate the use of {@Haskell {Thrist}}s in state machines.
 The @Haskell {Thrist} approach of exposing the intermediate types where the
 elements are joined together especially shows its potential in the ability to
@@ -62,7 +62,8 @@ pointing out open problems and showing up possible future directions.
 @PP
 We are well acquainted with data structures that are parameterized over
 data types, as they are a bread-and-butter tool for functional programmers.
-For example the @Haskell {List} datatype could be introduced in Haskell
+For example the @Haskell {List} datatype could be introduced in the
+Haskell-like language @Omega @Cite { $sheard07.omega }
 with the following definition:
 @PP
 @TargetForExtract "check/List"
@@ -102,10 +103,10 @@ universally qualified ones:
 }
 @RLD {
 {ord} @Prompt
-  {<primfun to1> : Char -> Int}
+  {<primfun ord> : Char -> Int}
 }
 @LP
-Now, functions are a bit more interesting than @Haskell {List}s above, they can be composed!
+Now, functions are a bit more interesting than @Haskell {List}s above, for they can be composed!
 Interestingly, composition (written as @Haskell {(.)}) is again a function:
 @LD {
 {(.)} @Prompt
@@ -128,8 +129,8 @@ We can play with our new toy in the following way:
 @LP
 The type of the composition function constrains the types of its arguments in
 a nontrivial way: the range of the second funtion must match with the domain
-of the first. (Universal types will always match, monotypes must be equal).
-Violating this rule gives a type error:
+of the first (universally qualified types will always match,
+while monotypes must be equal). Violating this rule gives a type error:
 
 @LD {
 { ord . ord } @Prompt
