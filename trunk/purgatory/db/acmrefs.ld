@@ -32,6 +32,17 @@
 
 { @Reference
    @Type { InProceedings }
+   @Tag { sheard07.omega }
+   @Author { Sheard, Tim }
+   @Title { Programming in Omega }
+   @Year { 2007 }
+   @InTitle { 2nd Central European Functional Programming School }
+   @Month { June }
+}
+
+
+{ @Reference
+   @Type { InProceedings }
    @Tag { swierstra07.beast }
    @Author { Wouter Swierstra and Thorsten Altenkirch }
    @Title { Beauty in the beast }

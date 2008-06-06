@@ -28,6 +28,17 @@
  }
 
 
+@inproceedings{R4063,
+ tag = {sheard07.omega},
+ author = {Sheard, Tim},
+ title = {Programming in Omega},
+ year = {2007},
+ booktitle = {2nd Central European Functional Programming School},
+ month = {June},
+ URL = {http://web.cecs.pdx.edu/~sheard/}
+}
+
+
 @inproceedings{1291206,
  tag = {swierstra07.beast},
  author = {Wouter Swierstra and Thorsten Altenkirch},
