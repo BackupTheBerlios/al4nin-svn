@@ -268,7 +268,7 @@ passed to non-local functions, because the existential type would escape.
 @PP
 Looking back at our progress so far, the analogy of thrists with the game of
 dominoes ("http://en.wikipedia.org/wiki/Dominoes") could spring into our minds:
-@LP Dominoes are laid out in a valid configuration only, when the stones sharing a common
+@LP Dominoes are only laid out in a valid configuration, when the stones sharing a common
 edge possess the same number of dots next to this edge. Our @Haskell {Nil}
 corresponds to an empty board, and @Haskell { Cons } joins two stones with
 a common edge. A simple, but important difference to our thrists is that the
@@ -347,7 +347,7 @@ that only sematically sound programs can be expressed as a
 The data we built up can be a representation of a @Cat program that
 pushes 19 and then 23 on the stack, adds them, keeping only the
 result 42 on the stack, and then pops this result off. The inferred type
-tells us that there is no netto change in the stack's shape.
+tells us that there is no net change in the stack's shape.
 
 @End @SubSubSection
 
@@ -358,8 +358,8 @@ tells us that there is no netto change in the stack's shape.
 @PP
 We shall from now on make use of a feature of the @Omega language
 to define custom syntax for datatypes. Our aim is to hide the
-Thrist constructors @Haskell { Cons } and @Haskell { Nil } behind a more intuitive fa{@Char ccedilla}ade.
-We shall write the above expression as
+@Haskell {Thrist} constructors @Haskell { Cons } and @Haskell { Nil } behind a more intuitive fa{@Char ccedilla}ade.
+In the rest of this paper we shall write the above expression as
 @LD {
 { [Push 19, Push 23, Add, Pop]l } @Prompt
 { [Push 19, Push 23, Add, Pop]l :: Thrist Cat a a }
