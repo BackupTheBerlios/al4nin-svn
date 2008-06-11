@@ -163,7 +163,7 @@ that has all properties of function composition, without being amnesiac?
 Indeed we can, and the rest of this section shall explain how.
 @PP
 Our crucial observation from the introduction was that the types at the ends of the function
-arrows must thread up, intuitively @FootNote { we reconcile the conflict between
+arrows must thread up, intuitively @FootNote { we reconcile the discrepancy between
 the function arrow's @Haskell {(->)} direction and the customary
 composition @Haskell {g . f} by considering a modified @I {reverse composition} }:
 
@@ -181,7 +181,7 @@ data Thrist :: * ~> * ~> * where
 @End @Haskell
 
 The alert reader will have noticed that we have defined a proper GADT,
-since the @Haskell {Nil} constructor is only inhabiting the @I diagonal
+since e.g. the @Haskell {Nil} constructor is only inhabiting the @I diagonal
 of the @I {two-dimensional} parameter space.
 @PP
 We can now duplicate the @I feeling of function composition:
@@ -202,7 +202,7 @@ If we fail to provide this embedding, we cannot consider thrists being a general
 function composition.
 @PP
 Not everything is lost, however. Close scrutiny reveals that our usage of
-@Haskell {(,)}{@FootNote { pronounced "\"pair\""}},
+@Haskell {(,)}{@FootNote { pronounced "\"pair\""}}
 is the culprit. If we could liberate ourselves from this
 premature decision, we could gain back our hope.
 @End @SubSection
@@ -241,7 +241,7 @@ The @I {pair thrist} that caused us some headache before!
 We shall explore some other interesting but sometimes futile
 thrists later in the discussion. But now let's put the last missing
 piece in place to show that an arrow thrist is strictly more general
-than function composition, the @Haskell {runArrowThrist} function:
+than function composition. Here comes the @Haskell {runArrowThrist} function:
 
 @LD @Haskell @Begin
 runArrowThrist :: Thrist (->) b c -> c -> b
@@ -253,7 +253,7 @@ runArrowThrist (Cons f r) a = runThrist r (f a)
 This function now confirms the vague intuition that @Haskell {Nil} plays the r{@Char ocircumflex}le of
 the neutral element of the arrow thrist, just like the identity function
 plays the r{@Char ocircumflex}le of the neutral element in the monoid of composed functions.
-We shall encounter this recurring fact as we proceed to our implementations.
+We shall encounter this recurring fact as we proceed to our examples' implementations.
 @LP The definition of @Haskell { runArrowThrist } on a @Haskell { Cons } constructor
 deserves some attention. We have not yet explicitly mentioned it, but range of
 the function @Haskell { f } is existentially qualified, because it does not
