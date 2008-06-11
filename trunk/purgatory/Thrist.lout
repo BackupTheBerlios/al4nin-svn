@@ -14,6 +14,7 @@ def @IgnoreForOutput right stuff {}
 
 def @Prompt left input right output { { Helvetica Base -1p } @Font { prompt> @Haskell { input } @PP { output } } }
 def @Omega { {@I {@Sym Omega}}mega }
+def @Cat { { Helvetica Base -1p } @Font Cat }
 
 @Report
   @CoverSheet { No }
@@ -36,7 +37,7 @@ Additionally we can perform pattern matching on our @Haskell {Thrist} elements, 
 obtaining the ability to do analysis on them. On the practical side
 we develop three new two-parameter GADTs for inclusion into {@Haskell {Thrist}}s.
 The first, when accompanied by an appropriate interpreter, directly model the semantics
-of the @I Cat language, while the second caters for a new type of parser combinator libraries.
+of the @Cat language, while the second caters for a new type of parser combinator libraries.
 In our third example we demonstrate the use of {@Haskell {Thrist}}s in state machines.
 The @Haskell {Thrist} approach of exposing the intermediate types where the
 elements are joined together especially shows its potential in the ability to
@@ -288,7 +289,7 @@ dominoes' face numbers do not correspond to the contained @I {value}, but to the
 Now that we have defined the Thrist datatype and gave a sufficiently
 generic interface to cover nontrivial cases, time has come to look for
 real-world applications. Specifically we shall describe a combinator
-library for creating ASTs of the Cat language, a statically typed stack-
+library for creating ASTs of the @Cat language, a statically typed stack-
 oriented language ("http://www.cat-language.com/"), and a parser
 combinator library. We shall sketch the use of thrists in transition
 arrows of state machines and finally give some curious examples
@@ -300,7 +301,7 @@ that may have some practical value.
 @Title { Application one: the Cat Thrist }
 @Begin
 @PP
-Like all stack-oriented languages Cat employs a simple idiom of
+Like all stack-oriented languages, @Cat employs a simple idiom of
 computation. A rich set of primitives are available for pushing
 values on a stack, permuting them and popping them off. Logical
 and arithmetic primitives consume portions of the top of the stack
@@ -309,11 +310,11 @@ as a succession of primitive invocations and procedure calls.
 The semantics of procedure calls is defined as the insertion of the
 called procedure's contents to the point of the invocation.
 @PP
-Let's begin with the definition of the Cat datastucture, that will
+Let's begin with the definition of the @Haskell {Cat} datastucture, that will
 serve as the first parameter to Thrist. Clearly it should be
 parametrized with two types. Naturally we choose the
 first type parameter to describe the shape of the stack before
-and the second parameter after the Cat primitive has been
+and the second parameter after the @Haskell {Cat} primitive has been
 executed.
 
 @TargetForExtract "check/Cat"
@@ -331,19 +332,19 @@ data Cat :: * ~> * ~> * where
 @Title { First Explorations }
 @Begin
 @PP
-We shall extend our Cat with new primitives as the need arises, but
+We shall extend our @Haskell {Cat} with new primitives as the need arises, but
 for now we have enough to perform some experiments.
 We have chosen the tuple datatype to represent stack shapes,
 but we are free to pick any other sequence-like datatype that
 is able to record the type of each element.
-The Cat datatype is defined as a GADT, which will guarantee
+The @Haskell {Cat} datatype is defined as a GADT, which will guarantee
 that only sematically sound programs can be expressed as a
-Thrist Cat. We can begin our explorations immediately:
+@Haskell {Thrist Cat}. We can begin our explorations immediately:
 @LD {
 { Cons (Push 19) $ Cons (Push 23) $ Cons Add $ Cons Pop Nil } @Prompt
 { Cons (Push 19) (Cons (Push 23) (Add (Cons Pop (Cons Add (Cons Pop Nil)))) :: Thrist Cat a a }
 }
-The data we built up can be a representation of a Cat program that
+The data we built up can be a representation of a @Cat program that
 pushes 19 and then 23 on the stack, adds them, keeping only the
 result 42 on the stack, and then pops this result off. The inferred type
 tells us that there is no netto change in the stack's shape.
@@ -372,10 +373,10 @@ We can now continue using this terser syntax:
 { [Pop, Pop]l } @Prompt
 { [Pop, Pop]l :: Thrist Cat (a, (b, c)) c }
 }
-The inferred type reflects the function of this Cat fragment,
+The inferred type reflects the function of this @Cat fragment,
 namely starting out with a stack that has at least two elements
 pushed, we end up with those two values removed.
-@LP There are invalid Cat programs, for example addition of two
+@LP There are invalid @Cat programs, for example addition of two
 characters:
 @LD {
 { [Push 'a', Dup, Add]l } @Prompt
@@ -389,7 +390,7 @@ expects two integers on the stack, but there are two @Haskell { Char }s availabl
 @Title { Interpreter }
 @Begin
 @PP
-Now it is time to build an interpreter for Thrist Cat, and
+Now it is time to build an interpreter for @Haskell {Thrist Cat}, and
 thus define its big-step semantics:
 @ID @Haskell @Begin
 interpret' :: Thrist Cat a b -> a -> b
@@ -461,10 +462,10 @@ Trying out this monadic interpreter gives us:
 @PP () :: IO () }
 }
 
-It is a reasonable restriction to Cat programs that they can
+It is a reasonable restriction to @Cat programs that they can
 be started with any stack shape and they finish with the same
 stack unchanged. We can ensure this property by writing
-a top-level interpreter function for Cat programs using
+a top-level interpreter function for @Cat programs using
 @I {rank-2 polymorphism}:
 
 @ID @Haskell operators {Base} @Begin
@@ -480,13 +481,13 @@ Obviously this @Haskell {interpret} function is only called for side-effects.
 @Begin
 @PP
 
-Above we have defined an arithmetic primitive in Cat, namely @Haskell { Add }. While possible,
+Above we have defined an arithmetic primitive in @Cat, namely @Haskell { Add }. While possible,
 it is not desired to define all (which is potentially a lot) primitives this
 way, with their own typing rules, and own clause in the interpreter. Also,
 this approach does preclude a very useful notion, called @I { partial application }. In this
 example, @Haskell { Add } must always be applied to two elements on the stack.
 @PP What we are looking for is a more-or-less generic approach to define
-logical and arithmetic operators in Cat, say, using the @Haskell { Prim (+) }
+logical and arithmetic operators in @Cat, say, using the @Haskell { Prim (+) }
 to frob arithmetic addition from the underlying @Omega implementation.
 
 @LD @Heading { Encountering First Problems }
@@ -520,7 +521,7 @@ substitute @Haskell { Prim (+) }:
 
 @LD @Heading { More Problems while Interpreting }
 Unfortunately we have not mastered everything yet. We remember that
-the semantics of our Cat combinators is defined by the interpretation
+the semantics of our @Haskell {Cat} combinators is defined by the interpretation
 function. So we are obliged to extend @Haskell { interpret }. We can try thus:
 
 @TODO
@@ -582,13 +583,13 @@ to incrementally saturate the @Omega function present in the primitive:
 @Begin
 @PP
 A well-known technique to turn an interpreter into a compiler
-is staging. The compile function takes a Thrist Cat into
+is staging. The compile function takes a @Haskell {Thrist Cat} into
 a function of the metalanguage, that when executed causes the
 same effect as the interpretation of the program itself. Naturally,
 the compiled program is expected to run faster, since the interpretative
 overhead is already removed.
 
-We demonstrate the technique for a selection of the Cat primitives
+We demonstrate the technique for a selection of the @Haskell {Cat} primitives
 only.
 
 @ID @Haskell operators {Base} @Begin
@@ -608,11 +609,11 @@ compile' [Print; rest]l = [| \st -> do
 @Title { Optimization }
 @Begin
 @PP
-The fact that Cat programs are represented as data in the metalanguage
+The fact that @Cat programs are represented as data in the metalanguage
 that is amenable to analysis by pattern matching, we can write an optimization function
 that performs several code optimizations on a program, such as head and tail merging
-of conditionals, value folding, inlining etc. Because the Cat thrist does not admit wrongly
-typed Cat programs and the optimization function takes Thrist Cat to Thrist Cat,
+of conditionals, value folding, inlining etc. Because the @Haskell {Cat} thrist does not admit wrongly
+typed @Cat programs and the optimization function takes @Haskell {Thrist Cat} to @Haskell {Thrist Cat},
 all optimizations must be type preserving.
 @End @SubSubSection
 
@@ -620,9 +621,9 @@ all optimizations must be type preserving.
 @Title { Generalization }
 @Begin
 @PP
-The language Cat is intended as an intermediate language produced by
+The language @Cat is intended as an intermediate language produced by
 front-end compilers and consumed by back-ends that target stack based
-virtual machines like JVM and CIL. It is advisable to generalize Cat in a way
+virtual machines like JVM and CIL. It is advisable to generalize @Haskell {Cat} in a way
 that @Haskell {Pop} gets a count parameter that tells how many elements are to be
 popped of the stack. Also instead of @Haskell {Swap} it would be beneficial to have
 a @Haskell {Permute} primitive that subsumes all variants of stack shuffling operations,
@@ -1323,7 +1324,7 @@ excellent testbed for formulating the ideas expressed in this paper.
 The @I { HaL 2 } workshop gave me the opportunity to discuss the connection
 between categories and thrists, thanks to Heinrich-Gregor Zirnstein,
 for encouragement and to Johan Jeuring for constructive criticism.
-Christopher Diggins corrected some of my views on the Cat language and
+Christopher Diggins corrected some of my views on the @Cat language and
 provided valuable input for the presentation.
 @End @Section
 
@@ -1398,7 +1399,7 @@ intersperseThrist i [a; as]l = [i, a; intersperseThrist i as]l
 @End @Appendix
 
 @Appendix
-  @Title { A Complete Cat Example: @I fak }
+  @Title { A Complete @Cat Example: @I fak }
 @Begin
 @PP
 @TargetForExtract "check/CatFak"
@@ -1427,7 +1428,7 @@ range :: * ~> *
 {range Bool} = Bool
 @End @Haskell
 
-All types in type universe our (simplified) Cat program can operate on
+All types in type universe our (simplified) @Cat program can operate on
 is witnessed by a value of @Haskell {Tractable}, and @Haskell {sameRep}
 states their equality.
 
@@ -1447,7 +1448,7 @@ sameRep (ArrT a b) (ArrT c d) = let monad maybeM in do
 sameRep _ _ = Nothing
 @End @Haskell
 
-Now we can introduce the Cat datatype which fixes the
+Now we can introduce the @Haskell {Cat} datatype which fixes the
 language primitives and typing rules.
 
 @LD @Haskell @Begin
