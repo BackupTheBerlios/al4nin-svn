@@ -18,17 +18,17 @@ endif
 .PHONY: view clean check
 
 %.pdf: %.ps
-	$(DISTILL) $^
+	$(DISTILL) $<
 
-%.lout.ps: %.lout
-	$(LOUT) -r2 -o $@ $^
+%.lout.ps: %.lout haskellx haskellfx
+	$(LOUT) -r2 -o $@ $<
 
 view: Thrist.lout.pdf
-	$(VIEWER) $^
+	$(VIEWER) $<
 
 clean:
 	rm *.ps *.pdf *.li *.ld db/*.li
 
 
 check: Thrist.lout
-	$(AWK) -f extract.awk < $^
+	$(AWK) -f extract.awk < $<
