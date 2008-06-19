@@ -1,5 +1,12 @@
 { @Reference
    @Type { Misc }
+   @Tag { wikipedia.category }
+   @Title { Wikipedia: Category }
+   @URL { http://en.wikipedia.org/wiki/Category_(mathematics) }
+}
+
+{ @Reference
+   @Type { Misc }
    @Tag { wikipedia.free-monoid }
    @Title { Wikipedia: Free monoid }
    @URL { http://en.wikipedia.org/wiki/Free_monoid }
