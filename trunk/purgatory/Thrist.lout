@@ -203,7 +203,7 @@ If we fail to provide this embedding, we cannot consider thrists being a general
 function composition.
 @PP
 Not everything is lost, however. Close scrutiny reveals that our usage of
-@Haskell {(,)}{@FootNote { pronounced "\"pair\""}}
+@Haskell {(,)}{@FootNote { pronounced ``pair''}}
 is the culprit. If we could liberate ourselves from this
 premature decision, we could gain back our hope.
 @End @SubSection
@@ -1207,7 +1207,7 @@ even when disregarding any semantics and concentrating on the types of its const
 So it remains to find out whether totality holds to settle on the exact concept. Can we always
 form a new thrist by appending two arbitrary thrists? The answer is clearly @I {no}, as we
 have already stated several times, the typing rule for the @Haskell {Cons} operation may interfere.
-So, looking up the concept with these properties in Figure XXX??? brings us straight to @I {category}.
+So, looking up the concept with these properties in Figure XXX??? brings us straight to @I {category} @Cite {$wikipedia.category}.
 Looking at it from another angle we can imagine @I {directed graphs}, and thrists corresponding
 to any @I path between two @I {nodes}, respecting directionality. But this is nothing new, as
 directed graphs and categories are the same concept.
@@ -1238,7 +1238,7 @@ which happens to be a free category C* if the datatype @Haskell {p} is isomorphi
 @Begin
 @PP
 David Roundy's @I { Darcs } @Cite { $roundy.darcs2 } is a version control system
-which builds upon a theory of patches @Cite { $wikibooks.patch }, defining the evolution of data repositories (and
+which builds upon a @I {theory of patches} @Cite { $wikibooks.patch }, defining the evolution of data repositories (and
 documents therein) as a gradual application of individual changes. The recent adoption
 of GADTs into the system has lead to a two-parameter @Haskell {Patch} datatype and
 @Haskell {FL}, @Haskell {RL} GADTs which are used for sequencing these (among others).
