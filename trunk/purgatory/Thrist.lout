@@ -268,7 +268,7 @@ passed to non-local functions, because the existential type would escape.
 }
 @PP
 Looking back at our progress so far, the analogy of thrists with the game of
-dominoes ("http://en.wikipedia.org/wiki/Dominoes") could spring into our minds:
+dominoes @Cite {$wikipedia.dominoes} could spring into our minds:
 @LP Dominoes are only laid out in a valid configuration, when the stones sharing a common
 edge possess the same number of dots next to this edge. Our @Haskell {Nil}
 corresponds to an empty board, and @Haskell { Cons } joins two stones with
@@ -1198,7 +1198,7 @@ one has to resort to point-free passing of intermediate values (i.e. returning t
 When looking at the Wikipedia page @Cite {$wikipedia.groupoid} that explains mathematical
 structures possessing a binary operation, we can make an attempt to gain some insight
 of how thrists can be fitted in a niche. Obviously, the @I associativity property holds,
-like for lists, it is impossible to distinguish thrists appended @Footnote {see Appendix A.2}
+like for lists, it is impossible to distinguish thrists appended @FootNote {see Appendix A.2}
 as long the ordered sequence of elements is pointwise equal. For reference, the table
 of mathematical structures with an associative binary operation is reproduced in Figure XXX???.
 Clearly, the @Haskell {Cons} operation mandates an order, so @I commutativity cannot hold.
@@ -1238,7 +1238,7 @@ which happens to be a free category C* if the datatype @Haskell {p} is isomorphi
 @Begin
 @PP
 David Roundy's @I { Darcs } @Cite { $roundy.darcs2 } is a version control system
-which builds upon a theory of patches @Cite { $TMR8.patch }, defining the evolution of data repositories (and
+which builds upon a theory of patches @Cite { $wikibooks.patch }, defining the evolution of data repositories (and
 documents therein) as a gradual application of individual changes. The recent adoption
 of GADTs into the system has lead to a two-parameter @Haskell {Patch} datatype and
 @Haskell {FL}, @Haskell {RL} GADTs which are used for sequencing these (among others).

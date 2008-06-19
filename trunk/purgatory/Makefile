@@ -20,7 +20,7 @@ endif
 %.pdf: %.ps
 	$(DISTILL) $<
 
-%.lout.ps: %.lout haskellx haskellfx
+%.lout.ps: %.lout haskellx haskellfx db/*.ld
 	$(LOUT) -r2 -o $@ $<
 
 view: Thrist.lout.pdf
