@@ -7,6 +7,7 @@
 # PhDThesis MiscP
 
 # /Book.*=.*/ {print "Book { " $4 " }"; next}
+/@book[ \t]*{.*/ {print "{ @Reference\n   @Type { Book }"; have = 1; next}
 # /Booklet.*=.*/ {print "Book { " $4 " }"; next}
 # /Proceedings.*=.*/ {print "Proceedings { " $4 " }"; next}
 # /Conference.*=.*/ {print "Proceedings { " $4 " }"; next}
@@ -58,6 +59,7 @@
 /volume.*=.*/ {print "   @Volume { " cont " }"; next}
 /year.*=.*/ {print "   @Year { " cont " }"; next}
 /isbn.*=.*/ {print "   # @ISBN { " cont " }"; next}
+/series.*=.*/ {print "   @TitleNote { " cont " }"; next}
 
 ## close the record
 {if (have) print "}\n\n"; have = 0; next}

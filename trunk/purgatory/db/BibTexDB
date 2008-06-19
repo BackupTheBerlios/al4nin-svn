@@ -125,3 +125,14 @@
  month = {Sep},
  year = {2001}
 }
+
+@book{maclane.working,
+   tag =       {maclane.working},
+   author =    {Saunders Mac Lane},
+   title =     {Categories for the Working Mathematician},
+   publisher = {Springer-Verlag},
+   series =    {Graduate Texts in Mathematics},
+   number =    {5},
+   year =      {1998},
+   edition =   {Second Edition}
+}

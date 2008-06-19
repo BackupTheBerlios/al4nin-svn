@@ -134,3 +134,16 @@
 }
 
 
+{ @Reference
+   @Type { Book }
+   @Tag { maclane.working }
+   @Author { Saunders Mac Lane }
+   @Title { Categories for the Working Mathematician }
+   @Publisher { Springer-Verlag }
+   @TitleNote { Graduate Texts in Mathematics }
+   @Number { 5 }
+   @Year { 1998 }
+   @Edition { Second Edition }
+}
+
+
