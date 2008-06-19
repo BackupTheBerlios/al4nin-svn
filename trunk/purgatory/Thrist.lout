@@ -7,6 +7,7 @@
 @Include { haskellx }
 @Database @FontDef {"db/lm"}
 @Database @Reference {"db/acmrefs"}
+@Database @Reference {"db/refs"}
 
 def @TargetForExtract right output {}
 
@@ -1194,16 +1195,37 @@ one has to resort to point-free passing of intermediate values (i.e. returning t
   @Title { Connection to Categories }
 @Begin
 @PP
-The type-threaded nature of the Thrist datatype is the distinguishing feature of @I { free categories } too. In the Appendix
-we supply an @Haskell { appendThrist } function that can be regarded as the inner multiplication (concatenation)
-operation in the free category. {@Omega}'s user-defined kind definition allows for defining categories (with countable
-object set) as non-inhabited types.
-
-encoding free categories as Thrists
-@LP every Thrist gives rise to a category?
-@LP RevThrist is the opposite category?
-@LP commutative diagrams?
-@LP limits?
+When looking at the Wikipedia page @Cite {$wikipedia.groupoid} that explains mathematical
+structures possessing a binary operation, we can make an attempt to gain some insight
+of how thrists can be fitted in a niche. Obviously, the @I associativity property holds,
+like for lists, it is impossible to distinguish thrists appended @Footnote {see Appendix A.2}
+as long the ordered sequence of elements is pointwise equal. For reference, the table
+of mathematical structures with an associative binary operation is reproduced in Figure XXX???.
+Clearly, the @Haskell {Cons} operation mandates an order, so @I commutativity cannot hold.
+Also, not every datatype that can serve as a first parameter to @Haskell {Thrist} has an inverse,
+even when disregarding any semantics and concentrating on the types of its constructors.
+So it remains to find out whether totality holds to settle on the exact concept. Can we always
+form a new thrist by appending two arbitrary thrists? The answer is clearly @I {no}, as we
+have already stated several times, the typing rule for the @Haskell {Cons} operation may interfere.
+So, looking up the concept with these properties in Figure XXX??? brings us straight to @I {category}.
+Looking at it from another angle we can imagine @I {directed graphs}, and thrists corresponding
+to any @I path between two @I {nodes}, respecting directionality. But this is nothing new, as
+directed graphs and categories are the same concept.
+There is still something missing, though. For a mathematical structure to be a category: each object
+must have a corresponding @I {identity morphism}. This is not in general fulfilled for
+an arbitrary datatype that is passed to @Haskell {Thrist}, but is it possible to obtain it for
+@Haskell {Thrist p} for an admissible @Haskell {p}?
+@PP
+Let's look at the problem from another angle first. The type-threaded nature of the
+@Haskell {Thrist} datatype is the distinguishing feature of @I { free categories } @Cite { $maclane.working }
+too. In the Appendix we supply an @Haskell { appendThrist } function that can be regarded
+as the inner multiplication operation (concatenation) in the free category. So,
+a free category is a free monoid @Cite { $wikipedia.free-monoid } over an arbitrary category C
+where C's available morphisms restrict concatenation, or simply put, words formed from objects of C
+with consecutive letters having an arrow in C between them. The @Haskell {Thrist}'s typing rule very much
+tells the same story, and @Haskell {Nil :: Thist p a a} is obviously the identity
+under @Haskell { appendThrist }. So we have shown @Haskell {Thrist p} to be a category,
+which happens to be a free category C* if the datatype @Haskell {p} is isomorphic to C.
 @End @SubSection
 
 
@@ -1215,8 +1237,8 @@ encoding free categories as Thrists
   @Title { Other Work }
 @Begin
 @PP
-David Roundy's @I { Darcs } system @Cite { $roundy.darcs2 } is a version control system
-which builds upon a theory of patches, defining the evolution of data repositories (and
+David Roundy's @I { Darcs } @Cite { $roundy.darcs2 } is a version control system
+which builds upon a theory of patches @Cite { $TMR8.patch }, defining the evolution of data repositories (and
 documents therein) as a gradual application of individual changes. The recent adoption
 of GADTs into the system has lead to a two-parameter @Haskell {Patch} datatype and
 @Haskell {FL}, @Haskell {RL} GADTs which are used for sequencing these (among others).
