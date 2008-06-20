@@ -263,10 +263,6 @@ when pattern matching: the {@I head} component{@FootNote {or for symmetry reason
 of a @Haskell { Cons } cannot be
 passed to non-local functions, because the existential type would escape.
 @PP
-@Considerations {
-[Question: is every thrist a monoid? "http://en.wikipedia.org/wiki/Monoid"]
-}
-@PP
 Looking back at our progress so far, the analogy of thrists with the game of
 dominoes @Cite {$wikipedia.dominoes} could spring into our minds:
 @LP Dominoes are only laid out in a valid configuration, when the stones sharing a common
@@ -367,7 +363,7 @@ In the rest of this paper we shall write the above expression as
 }
 @Omega's parser and printer perform the conversion to
 the internal form when the list-like brackets @Haskell {[]} followed
-by the letter "\"l\"" are encountered.
+by the letter ``l'' are encountered.
 @PP
 We can now continue using this terser syntax:
 @LD {
@@ -393,7 +389,7 @@ expects two integers on the stack, but there are two @Haskell { Char }s availabl
 @PP
 Now it is time to build an interpreter for @Haskell {Thrist Cat}, and
 thus define its big-step semantics:
-@ID @Haskell @Begin
+@LD @Haskell @Begin
 interpret' :: Thrist Cat a b -> a -> b
 interpret' []l st = st
 interpret' [Push x; rest]l st = interpret' rest (x, st)
@@ -428,10 +424,10 @@ interpret' [Print; rest]l st = do
         interpret' rest st'
   where monad ioM
 }
-In this function @Haskell { ioM } is globally bound to a value of type @Haskell { Monad Maybe }
+In this function @Haskell { ioM } is globally bound to a value of type @Haskell { Monad IO }
 containing the monadic @Haskell { return } and @Haskell { bind } functions
 for the { @I do-notation }'s perusal{ @FootNote { @Omega's (current) lack of @I { type classes }
-necessitates the explicit passing of @Haskell { Monad :: (* ~> *) ~> * } values } }.
+necessitates the explicit passing of @Haskell { Monad :: (* ~> *) ~> * } values (dictionaries)} }.
 In similar spirit we have to rewrite the other cases too:
 
 @ID @Haskell operators {Base} @Begin
@@ -494,6 +490,7 @@ to frob arithmetic addition from the underlying @Omega implementation.
 @LD @Heading { Encountering First Problems }
 We could introduce @Haskell { Prim } thus:
 @ID @Haskell {
+  ...
   Prim :: (a -> b) -> Cat (a, opaque) (b, opaque)
   ...
 }
@@ -512,7 +509,7 @@ allows us to decompose the arrow's structure using a type function, we try:
 @Haskell { blowUpBy } @FootNote { see the definition of @Haskell { blowUpBy }
 and @Haskell { result } in the Appendix } creates the expected stack shape needed
 for fully saturating the primitive, while @Haskell { result } determines the
-rightmost type in the function's type.
+rightmost type in the function's arrow type.
 With these definitions we can observe the correct type inference of our @Haskell { Add }
 substitute @Haskell { Prim (+) }:
 @LD {
@@ -536,7 +533,7 @@ stack slots. This description must be a value so that it can be pattern
 matched at runtime and it has to provide a constructor for all tractable
 datatypes.
 
-@ID @Haskell {
+@LD @Haskell {
 data Tractable :: * ~> * where
   IntT :: Tractable Int
   BoolT :: Tractable Bool
@@ -558,8 +555,8 @@ constructor:
 }
 
 The first argument to @Haskell { Prim } is called a @I representation{ @FootNote { technically
-these types are called @I { singleton types } and constitue a reflection of the structure
-of the type-level objects into the value-world. }}, becase it records the
+these types are called @I { singleton types } and constitute a reflection of the structure
+of the type-level objects into the value world. }}, becase it records the
 structure of the function's range's type{ @FootNote { It suffices to describe the range, because
 the domain's type is easily handled without a representation. } }.
 @LP We can reproduce our previous @Haskell { Add } primitive now:
@@ -632,7 +629,7 @@ allowing us to get rid of @Haskell {Swap} and friends. All these parametrized pr
 would have one problem in common, namely that the stack shape would
 vary depending on the  value of the parameter(s), requiring dependent
 types to define them. Fortunately @Omega provides a device that is approaching
-the power of dependent types, singleton types and type-level functions.
+the power of dependent types, namely singleton types and type-level functions.
 
 Here is a sketch of @Haskell {PopN}:
 
