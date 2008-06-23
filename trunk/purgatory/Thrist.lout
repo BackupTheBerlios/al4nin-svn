@@ -1198,12 +1198,14 @@ one has to resort to point-free passing of intermediate values (i.e. returning t
     @Caption { Mathematical structures with binary inner operation }
 @Tbl
     ruleabove { yes }
-    aformat { @B @Cell indent { ctr } iv { ctr } A
-            | @B @Cell indent { ctr } iv { ctr } B
-            | @B @Cell indent { ctr } iv { ctr } C
-            | @B @Cell indent { ctr } iv { ctr } D
-            | @B @Cell indent { ctr } iv { ctr } E
-            | @B @Cell indent { ctr } iv { ctr } F }
+    ruleabovecolour { darkgrey }
+    ruleabovewidth { 0.02f }
+    aformat { @Cell indent { ctr } iv { ctr } @B A
+            | @Cell indent { ctr } iv { ctr } @B B
+            | @Cell indent { ctr } iv { ctr } @B C
+            | @Cell indent { ctr } iv { ctr } @B D
+            | @Cell indent { ctr } iv { ctr } @B E
+            | @Cell indent { ctr } iv { ctr } @B F }
     bformat { @Cell indent { ctr } A
             | @Cell indent { ctr } B
             | @Cell indent { ctr } C
@@ -1232,7 +1234,7 @@ one has to resort to point-free passing of intermediate values (i.e. returning t
     D { yes }
     E { no }
     F { no }
-@Rowa
+@Rowb
     A { Category }
     B { yes }
     C { yes }
