@@ -1192,12 +1192,32 @@ one has to resort to point-free passing of intermediate values (i.e. returning t
   @Title { Connection to Categories }
 @Begin
 @PP
+
+@Figure
+    @Tag { binary }
+    @Caption { Mathematical structures with binary inner operation }
+@Tbl
+    aformat { @Cell indent { ctr } iv { ctr } A | @Cell indent { ctr } iv { ctr } B }
+    bformat { @Cell indent { ctr } width { 3c } height { 1c } A | @Cell indent { ctr } height { 1c } B | @Cell indent { ctr } height { 1c } C }
+{
+@Rowa
+    A { Monoid }
+    B { Groupoid }
+@Rowa
+    A { Category }
+    B { M:: @Node Mid }
+@Rowb
+    B { Group }
+    C { Wuff }
+}
+
+
 When looking at the Wikipedia page @Cite {$wikipedia.groupoid} that explains mathematical
 structures possessing a binary operation, we can make an attempt to gain some insight
 of how thrists can be fitted in a niche. Obviously, the @I associativity property holds,
 like for lists, it is impossible to distinguish thrists appended @FootNote {see Appendix A.2}
 as long the ordered sequence of elements is pointwise equal. For reference, the table
-of mathematical structures with an associative binary operation is reproduced in Figure XXX???.
+of mathematical structures with an associative binary operation is reproduced in Figure @NumberOf { binary }.
 Clearly, the @Haskell {Cons} operation mandates an order, so @I commutativity cannot hold.
 Also, not every datatype that can serve as a first parameter to @Haskell {Thrist} has an inverse,
 even when disregarding any semantics and concentrating on the types of its constructors.
