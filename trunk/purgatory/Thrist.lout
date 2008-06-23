@@ -1138,60 +1138,6 @@ could serve as a way to formulate proofs
   @Title { Connection to Arrows and Monads }
 @Begin
 @PP
-Since arrows in the Haskell world also originated from the generalization of function
-composition it is helpful to give a comparison of the @Haskell { Arrow } @I { type class } in Haskell and
-our Thrist datastructure. Obviously any instance of the Haskell type class @Haskell { Arrow } can
-be expressed as a thrist. We have to accompany the @Haskell { Thrist Arrow } with an interpretation
-function that is rather canonic, and will be given in the Appendix. This semantics obviously
-guarantees the arrow laws @Cite { $hughes00.arrows }. On the other hand thrists are not always
-easily fitted in an arrow. It is the @Haskell { arr } instance method that is problematic
-to provide. Thrists just serve as a container and do not carry a semantics, while @Haskell { arr }
-mandates a function argument for the method @Haskell { arr }.
-@Considerations { a value of type @Haskell { Thrist Arrow } corresponds to the @F { do ... proc ... } syntactic sugar expression in Haskell @Cite { $paterson01.notation }}
-@PP
-Nilsson @Cite { $nilsson05.frp } embarks on optimization of a GADT-based @Haskell { Arrow } library,
-but he only considers the identity function as a special case. He observes a substantial
-speedup in microbenchmarks when the optimizer is able to discover and short-circuit
-the identity arrow. In @Haskell { ParseThrist } the identity can be written in several ways,
-e.g. as @Haskell { Wrap Nil } or as @Haskell { Sure id }. When interpreting, there is probably no
-significant win in using the former, when compiling to @Haskell { Code } the underlying
-metaprogramming system in @Omega presumably possesses all the information to recover
-the identity function from the @Omega interpreter's internals. In case of
-translation to a different programming system every function inside of @Haskell { Try } and @Haskell { Sure }
-constructors would need auxiliary denotation anyway, and could be optimized
-either on export or inside of the external system itself.
-@PP
-Monads can also be regarded as a specialization to arrows, so we expect that @Haskell { Thrist (Monad' T) }
-can be canonically derived. Here @Haskell { Monad' T a b } represents the type of a monadic actions
-either starting afresh and resulting a monadic value @Haskell { T b } or representing a Kleisli arrow
-@Haskell { a -> T b }.
-@LP We can define the adapter @Haskell { Monad' } to have three parameters, the first fixing the @Haskell { Monad }
-and the last two to accomodate for the @Haskell { Thrist } interface:
-@TODO
-@LD @Haskell {
-data Monad' :: (* ~> *) ~> * ~> * ~> * where
-  Feed :: m b -> Monad' m a b
-  Digest :: (a -> m b) -> Monad' m a b
-}
-@PP
-@Considerations { a value of type @Haskell { Thrist (Monad' T) } corresponds to the @F { do ... } syntactic sugar expression in Haskell }
-@Considerations { Unimo? for ensuring that the interpreter obeys monadic semantics,
- in an Appendix: use Unimo to constuct an @Omega Monad' -> Monad function, hmm this is not correct, unimo :: ??? -> Monad } 
-@Considerations { a word about Unimo: does compilation of the unimo value (staging) give the performance back? probably not,
-the values are included into the data structure, each monadic "do{}" needs to be compiled. In our context the thrists (Parser)
-do not contain "external" values, so no recompilation is necessary. }
-@Considerations { Comonads?, see paper @Cite { $heunenjacobs.monoid },
-Uustalu"&"Vene:The Essence of Dataflow Programming @Cite { $uustaluvene05.dataflow } }
-@Considerations { since thrists do not provide a binding construct like the do-notation
-one has to resort to point-free passing of intermediate values (i.e. returning tuples) }
-@Considerations { Control.Applicative ? }
-@End @SubSection
-
-
-@SubSection
-  @Title { Connection to Categories }
-@Begin
-@PP
 
 @Figure
     @Tag { binary }
@@ -1257,7 +1203,60 @@ one has to resort to point-free passing of intermediate values (i.e. returning t
     F { no }
 }
 
+Since arrows in the Haskell world also originated from the generalization of function
+composition it is helpful to give a comparison of the @Haskell { Arrow } @I { type class } in Haskell and
+our Thrist datastructure. Obviously any instance of the Haskell type class @Haskell { Arrow } can
+be expressed as a thrist. We have to accompany the @Haskell { Thrist Arrow } with an interpretation
+function that is rather canonic, and will be given in the Appendix. This semantics obviously
+guarantees the arrow laws @Cite { $hughes00.arrows }. On the other hand thrists are not always
+easily fitted in an arrow. It is the @Haskell { arr } instance method that is problematic
+to provide. Thrists just serve as a container and do not carry a semantics, while @Haskell { arr }
+mandates a function argument for the method @Haskell { arr }.
+@Considerations { a value of type @Haskell { Thrist Arrow } corresponds to the @F { do ... proc ... } syntactic sugar expression in Haskell @Cite { $paterson01.notation }}
+@PP
+Nilsson @Cite { $nilsson05.frp } embarks on optimization of a GADT-based @Haskell { Arrow } library,
+but he only considers the identity function as a special case. He observes a substantial
+speedup in microbenchmarks when the optimizer is able to discover and short-circuit
+the identity arrow. In @Haskell { ParseThrist } the identity can be written in several ways,
+e.g. as @Haskell { Wrap Nil } or as @Haskell { Sure id }. When interpreting, there is probably no
+significant win in using the former, when compiling to @Haskell { Code } the underlying
+metaprogramming system in @Omega presumably possesses all the information to recover
+the identity function from the @Omega interpreter's internals. In case of
+translation to a different programming system every function inside of @Haskell { Try } and @Haskell { Sure }
+constructors would need auxiliary denotation anyway, and could be optimized
+either on export or inside of the external system itself.
+@PP
+Monads can also be regarded as a specialization to arrows, so we expect that @Haskell { Thrist (Monad' T) }
+can be canonically derived. Here @Haskell { Monad' T a b } represents the type of a monadic actions
+either starting afresh and resulting a monadic value @Haskell { T b } or representing a Kleisli arrow
+@Haskell { a -> T b }.
+@LP We can define the adapter @Haskell { Monad' } to have three parameters, the first fixing the @Haskell { Monad }
+and the last two to accomodate for the @Haskell { Thrist } interface:
+@TODO
+@LD @Haskell {
+data Monad' :: (* ~> *) ~> * ~> * ~> * where
+  Feed :: m b -> Monad' m a b
+  Digest :: (a -> m b) -> Monad' m a b
+}
+@PP
+@Considerations { a value of type @Haskell { Thrist (Monad' T) } corresponds to the @F { do ... } syntactic sugar expression in Haskell }
+@Considerations { Unimo? for ensuring that the interpreter obeys monadic semantics,
+ in an Appendix: use Unimo to constuct an @Omega Monad' -> Monad function, hmm this is not correct, unimo :: ??? -> Monad } 
+@Considerations { a word about Unimo: does compilation of the unimo value (staging) give the performance back? probably not,
+the values are included into the data structure, each monadic "do{}" needs to be compiled. In our context the thrists (Parser)
+do not contain "external" values, so no recompilation is necessary. }
+@Considerations { Comonads?, see paper @Cite { $heunenjacobs.monoid },
+Uustalu"&"Vene:The Essence of Dataflow Programming @Cite { $uustaluvene05.dataflow } }
+@Considerations { since thrists do not provide a binding construct like the do-notation
+one has to resort to point-free passing of intermediate values (i.e. returning tuples) }
+@Considerations { Control.Applicative ? }
+@End @SubSection
 
+
+@SubSection
+  @Title { Connection to Categories }
+@Begin
+@PP
 When looking at the Wikipedia page @Cite {$wikipedia.groupoid} that explains mathematical
 structures possessing a binary operation, we can make an attempt to gain some insight
 of how thrists can be fitted in a niche. Obviously, the @I associativity property holds,
