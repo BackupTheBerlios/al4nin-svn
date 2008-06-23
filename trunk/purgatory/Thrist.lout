@@ -1197,18 +1197,62 @@ one has to resort to point-free passing of intermediate values (i.e. returning t
     @Tag { binary }
     @Caption { Mathematical structures with binary inner operation }
 @Tbl
-    aformat { @Cell indent { ctr } iv { ctr } A | @Cell indent { ctr } iv { ctr } B }
-    bformat { @Cell indent { ctr } width { 3c } height { 1c } A | @Cell indent { ctr } height { 1c } B | @Cell indent { ctr } height { 1c } C }
+    ruleabove { yes }
+    aformat { @B @Cell indent { ctr } iv { ctr } A
+            | @B @Cell indent { ctr } iv { ctr } B
+            | @B @Cell indent { ctr } iv { ctr } C
+            | @B @Cell indent { ctr } iv { ctr } D
+            | @B @Cell indent { ctr } iv { ctr } E
+            | @B @Cell indent { ctr } iv { ctr } F }
+    bformat { @Cell indent { ctr } A
+            | @Cell indent { ctr } B
+            | @Cell indent { ctr } C
+            | @Cell indent { ctr } D
+            | @Cell indent { ctr } E
+            | @Cell indent { ctr } F }
 {
 @Rowa
+    A { Name }
+    B { Associative? }
+    C { Identity? }
+    D { Total? }
+    E { Invertible? }
+    F { Commutative? }
+@Rowb
     A { Monoid }
-    B { Groupoid }
+    B { yes }
+    C { yes }
+    D { yes }
+    E { no }
+    F { no }
+@Rowb
+    A { Semigroup }
+    B { yes }
+    C { no }
+    D { yes }
+    E { no }
+    F { no }
 @Rowa
     A { Category }
-    B { M:: @Node Mid }
+    B { yes }
+    C { yes }
+    D { no }
+    E { no }
+    F { no }
 @Rowb
-    B { Group }
-    C { Wuff }
+    A { Groupoid }
+    B { yes }
+    C { yes }
+    D { no }
+    E { yes }
+    F { no }
+@Rowb
+    A { Group }
+    B { yes }
+    C { yes }
+    D { yes }
+    E { yes }
+    F { no }
 }
 
 
@@ -1224,7 +1268,8 @@ even when disregarding any semantics and concentrating on the types of its const
 So it remains to find out whether totality holds to settle on the exact concept. Can we always
 form a new thrist by appending two arbitrary thrists? The answer is clearly @I {no}, as we
 have already stated several times, the typing rule for the @Haskell {Cons} operation may interfere.
-So, looking up the concept with these properties in Figure XXX??? brings us straight to @I {category} @Cite {$wikipedia.category}.
+So, looking up the concept with these properties in Figure @NumberOf { binary }
+brings us straight to @I {category} @Cite {$wikipedia.category}.
 Looking at it from another angle we can imagine @I {directed graphs}, and thrists corresponding
 to any @I path between two @I {nodes}, respecting directionality. But this is nothing new, as
 directed graphs and categories are the same concept.
