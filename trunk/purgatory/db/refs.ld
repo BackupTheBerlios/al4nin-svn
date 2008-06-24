@@ -43,6 +43,6 @@
 { @Reference
    @Type { Misc }
    @Tag { gcc.ssa }
-   @Title {  }
-   @URL { http:// }
+   @Title { GCC: SSA for Trees }
+   @URL { http://gcc.gnu.org/projects/tree-ssa/ }
 }

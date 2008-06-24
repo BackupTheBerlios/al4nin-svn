@@ -621,7 +621,8 @@ all optimizations must be type preserving.
 @PP
 The language @Cat is intended as an intermediate language produced by
 front-end compilers and consumed by back-ends that target stack based
-virtual machines like JVM and CIL. It is advisable to generalize @Haskell {Cat} in a way
+virtual machines like JVM @Cite { $jvm.intro } and CIL @Cite { $cil.intro }.
+It is advisable to generalize @Haskell {Cat} in a way
 that @Haskell {Pop} gets a count parameter that tells how many elements are to be
 popped of the stack. Also instead of @Haskell {Swap} it would be beneficial to have
 a @Haskell {Permute} primitive that subsumes all variants of stack shuffling operations,
