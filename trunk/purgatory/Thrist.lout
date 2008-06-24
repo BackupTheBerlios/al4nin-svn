@@ -507,7 +507,7 @@ allows us to decompose the arrow's structure using a type function, we try:
   ...
 }
 @Haskell { blowUpBy } @FootNote { see the definition of @Haskell { blowUpBy }
-and @Haskell { result } in the Appendix } creates the expected stack shape needed
+and @Haskell { result } in the Appendix @NumberOf { complete.Cat } } creates the expected stack shape needed
 for fully saturating the primitive, while @Haskell { result } determines the
 rightmost type in the function's arrow type.
 With these definitions we can observe the correct type inference of our @Haskell { Add }
@@ -1207,7 +1207,7 @@ Since arrows in the Haskell world also originated from the generalization of fun
 composition it is helpful to give a comparison of the @Haskell { Arrow } @I { type class } in Haskell and
 our Thrist datastructure. Obviously any instance of the Haskell type class @Haskell { Arrow } can
 be expressed as a thrist. We have to accompany the @Haskell { Thrist Arrow } with an interpretation
-function that is rather canonic, and will be given in the Appendix. This semantics obviously
+function that is rather canonic, and will be given in the Appendix @NumberOf { arrow.adapter }. This semantics obviously
 guarantees the arrow laws @Cite { $hughes00.arrows }. On the other hand thrists are not always
 easily fitted in an arrow. It is the @Haskell { arr } instance method that is problematic
 to provide. Thrists just serve as a container and do not carry a semantics, while @Haskell { arr }
@@ -1260,7 +1260,7 @@ one has to resort to point-free passing of intermediate values (i.e. returning t
 When looking at the Wikipedia page @Cite {$wikipedia.groupoid} that explains mathematical
 structures possessing a binary operation, we can make an attempt to gain some insight
 of how thrists can be fitted in a niche. Obviously, the @I associativity property holds,
-like for lists, it is impossible to distinguish thrists appended @FootNote {see Appendix A.2}
+like for lists, it is impossible to distinguish thrists appended @FootNote {see Appendix @NumberOf { append }}
 as long the ordered sequence of elements is pointwise equal. For reference, the table
 of mathematical structures with an associative binary operation is reproduced in Figure @NumberOf { binary }.
 Clearly, the @Haskell {Cons} operation mandates an order, so @I commutativity cannot hold.
@@ -1281,7 +1281,7 @@ an arbitrary datatype that is passed to @Haskell {Thrist}, but is it possible to
 @PP
 Let's look at the problem from another angle first. The type-threaded nature of the
 @Haskell {Thrist} datatype is the distinguishing feature of @I { free categories } @Cite { $maclane.working }
-too. In the Appendix we supply an @Haskell { appendThrist } function that can be regarded
+too. In the Appendix @NumberOf { append } we supply an @Haskell { appendThrist } function that can be regarded
 as the inner multiplication operation (concatenation) in the free category. So,
 a free category is a free monoid @Cite { $wikipedia.free-monoid } over an arbitrary category C
 where C's available morphisms restrict concatenation, or simply put, words formed from objects of C
@@ -1367,7 +1367,7 @@ is still plenty to find out.
 Since the @Haskell { a } and @Haskell { b } parameters can encode
 propositions, the @Haskell { Thrist } approach can convey the evolution
 of abstract properties, e.g. the adherence to the SSA form @Cite {appel}.
-Modern compiler architectures{ @FootNote { GCC @Cite {gcc} and LLVM @Cite {llvm} being notable representants } }
+Modern compiler architectures{ @FootNote { GCC @Cite {$gcc.ssa} and LLVM @Cite {$llvm.intro} being notable representants } }
 tend to favor this formalism for internal representation of imperative programs.
 Explicitly tracking def-use information paired with annotation preserving
 transformations might pave the way to certified compilers, but apperars to
@@ -1439,6 +1439,7 @@ extendThrist [b; r]l a = [b; extendThrist r a]l
 
 @SubAppendix
   @Title { Appending }
+  @Tag { append }
 @Begin
 @LD @Haskell {
 appendThrist :: forall (a :: *1) (b :: a ~> a ~> *0) (c :: a) (d :: a) (e :: a).
@@ -1485,6 +1486,7 @@ intersperseThrist i [a; as]l = [i, a; intersperseThrist i as]l
 
 @Appendix
   @Title { A Complete @Cat Example: @I fak }
+  @Tag { complete.Cat }
 @Begin
 @PP
 @TargetForExtract "check/CatFak"
