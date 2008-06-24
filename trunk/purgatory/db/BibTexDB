@@ -146,3 +146,12 @@
    month =     {Mar},
    year =      {2004}
 }
+
+@inproceedings{Novillo03,
+   tag =       {gcc.ssa}
+   author =    {Diego Novillo},
+   booktitle = {GCC Developers Summit},
+   title =     {Tree SSA - A New Optimization Infrastructure for GCC},
+   url =       {http://people.redhat.com/dnovillo/Papers/tree-ssa-gccs03.pdf},
+   year =      {2003}
+}

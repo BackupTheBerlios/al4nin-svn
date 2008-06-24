@@ -42,7 +42,7 @@
 
 { @Reference
    @Type { Misc }
-   @Tag { gcc.ssa }
-   @Title { GCC: SSA for Trees }
-   @URL { http://gcc.gnu.org/projects/tree-ssa/ }
+   @Tag { cil.intro }
+   @Title { Wikipedia: Common Intermediate Language }
+   @URL { http://en.wikipedia.org/wiki/Common_Intermediate_Language }
 }

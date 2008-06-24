@@ -159,3 +159,14 @@
 }
 
 
+{ @Reference
+   @Type { InProceedings }
+   @Tag { gcc.ssa }
+   @Author { Diego Novillo }
+   @InTitle { GCC Developers Summit }
+   @Title { Tree SSA - A New Optimization Infrastructure for GCC }
+   @URL { http://people.redhat.com/dnovillo/Papers/tree-ssa-gccs03.pdf }
+   @Year { 2003 }
+}
+
+
