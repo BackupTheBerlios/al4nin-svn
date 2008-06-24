@@ -147,3 +147,15 @@
 }
 
 
+{ @Reference
+   @Type { InProceedings }
+   @Tag { llvm.intro }
+   @Author { Chris Lattner and Vikram Adve }
+   @Title { LLVM: A Compilation Framework for Lifelong Program Analysis "&" Transformation }
+   @InTitle { Proceedings of the 2004 International Symposium on Code Generation and Optimization (CGO'04) }
+   @Address { Palo Alto, California }
+   @Month { Mar }
+   @Year { 2004 }
+}
+
+
