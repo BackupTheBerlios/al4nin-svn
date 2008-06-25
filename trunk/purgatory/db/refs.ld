@@ -53,3 +53,10 @@
    @Title { Wikipedia: Java bytecode }
    @URL { http://en.wikipedia.org/wiki/Java_bytecode }
 }
+
+{ @Reference
+   @Type { Misc }
+   @Tag { cat.intro }
+   @Title { The Cat Programming Language }
+   @URL { http://www.cat-language.com/ }
+}

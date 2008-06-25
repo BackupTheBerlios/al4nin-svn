@@ -283,19 +283,20 @@ dominoes' face numbers do not correspond to the contained @I {value}, but to the
 @Begin
 @PP
 
-Now that we have defined the Thrist datatype and gave a sufficiently
+Now that we have defined the @Haskell { Thrist } datatype and gave a sufficiently
 generic interface to cover nontrivial cases, time has come to look for
 real-world applications. Specifically we shall describe a combinator
-library for creating ASTs of the @Cat language, a statically typed stack-
-oriented language ("http://www.cat-language.com/"), and a parser
-combinator library. We shall sketch the use of thrists in transition
-arrows of state machines and finally give some curious examples
-that may have some practical value.
+library for creating ASTs of @Cat, a statically typed stack-oriented
+language @Cite { $cat.intro }. As a second application we shall draft a parser
+combinator library that admits various implementation strategies. We shall also
+sketch the use of thrists in transition arrows of state machines to obtain certain
+correctness guarantees, and finally show some curious examples that may even have
+some practical value.
 
 @BeginSubSections
 
 @SubSection
-@Title { Application one: the Cat Thrist }
+@Title { Application one: the @Cat Thrist }
 @Begin
 @PP
 Like all stack-oriented languages, @Cat employs a simple idiom of
@@ -1374,12 +1375,12 @@ Explicitly tracking def-use information paired with annotation preserving
 transformations might pave the way to certified compilers, but apperars to
 be a challenging task.
 @LP LLVM has a @I getelementpointer instruction, which allows to do offset calculations
-into deeply nested data structures. The decent from the encompassing pointer, array or
+into deeply nested data structures. The descent from the encompassing pointer, array or
 structure type can be conveniently encoded as a thrist, where the underlying GADT
 provides constructors for dereferencing of pointers, picking of array elements
 and skipping over (resp. selecting) of structure members. This thrist can then
 easily converted into the sequence of integers that represents the intended
-datastructure part in the getelementpointer instruction.
+datastructure part in the @I getelementpointer instruction.
 @LP is parametricity in the first parameter useful? I.e.
 can we formulate sensible functions on @Haskell { Thrist p a b }, where
 p is left universal?
