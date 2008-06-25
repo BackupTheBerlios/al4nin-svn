@@ -46,3 +46,10 @@
    @Title { Wikipedia: Common Intermediate Language }
    @URL { http://en.wikipedia.org/wiki/Common_Intermediate_Language }
 }
+
+{ @Reference
+   @Type { Misc }
+   @Tag { jvm.intro }
+   @Title { Wikipedia: Java bytecode }
+   @URL { http://en.wikipedia.org/wiki/Java_bytecode }
+}

@@ -1773,6 +1773,33 @@ parse [Wrap thr; r]l a = do { a' <- parse thr a; parse r a' } where monad maybeM
 
 @End @Haskell
 
+@End @Appendix
 
+@Appendix
+  @Title { Adapting Haskell's Arrow Class }
+  @Tag { arrow.adapter }
+@Begin
+@PP
+
+@LD @Haskell @Begin
+module Embeddings where
+import Prelude
+import Control.Arrow
+import Char
+
+data Thrist :: (* -> * -> *) -> * -> * -> * where
+  Nil :: Thrist p a a
+  Cons :: p a b -> Thrist p b c -> Thrist p a c
+
+data Arrow' :: (* -> * -> *) -> * -> * -> * where
+  Arr :: Arrow a => a b c -> Arrow' a b c
+  First :: Arrow a => Arrow' a b c -> Arrow' a (b, d) (c, d)
+
+recover :: Arrow a => Thrist (Arrow' a) b c -> a b c
+recover Nil = arr id
+recover (Cons (Arr f) r) = f >>> recover r
+recover (Cons (First a) r) = first (recover $ Cons a Nil) >>> recover r
+
+@End @Haskell
 
 @End @Appendix
