@@ -821,7 +821,7 @@ Of course there are some pitfalls here but the principle is clear:
    @ListItem { The interesting prefix is split off the rest, }
    @ListItem { if the prefix is semantically important it gets condensed to a more appropriate form or else discarded, }
    @ListItem { parallel processing is used if both components of an input pair are relevant. }
-   @ListItem { As the execution of the trist proceeds the incrementally more of the token are analysed, condensed and converted. }
+   @ListItem { As the execution of the thrist proceeds the incrementally more of the token are analysed, condensed and converted. }
 @EndList
 
 @TargetForExtract "check/Machine"
@@ -1699,7 +1699,7 @@ usecase = let monad ioM in do
 
 usecase @Prompt {
 Executing IO action
-120
+@LP 120
 }
 
 @End @Appendix
