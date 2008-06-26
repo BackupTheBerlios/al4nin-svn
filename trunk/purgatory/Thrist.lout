@@ -760,7 +760,7 @@ data Token =
   Number Int Bool Bool
   | ...
 }
-So we expect that our parser that produces Tokens to have a type Thrist Parse [Char] ([Token], [Char]).
+So we expect that our parser that produces @Haskell {Token}s to have a type @Haskell {Thrist Parse [Char] ([Token], [Char])}.
 
 @End @SubSubSection
 
@@ -1414,7 +1414,7 @@ for encouragement and to Johan Jeuring for constructive criticism.
 Christopher Diggins corrected some of my views on the @Cat language and
 provided valuable input for the presentation. Ganesh Sittampalam told the
 story of thrists in darcs and gave the final impulse to get this paper
-puplished.
+published.
 @End @Section
 
 
