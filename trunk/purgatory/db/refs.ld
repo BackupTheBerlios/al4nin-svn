@@ -60,3 +60,14 @@
    @Title { The Cat Programming Language }
    @URL { http://www.cat-language.com/ }
 }
+
+{ @Reference
+   @Type { Misc }
+   @Tag { mcbride07.rstar }
+   @Author { Conor McBride }
+   @InTitle { Fun in the Afternoon }
+   @Title { R* is the new [{@Sym alpha}] }
+   @URL { http://sneezy.cs.nott.ac.uk/fun/nov-07/R-star.pdf }
+   @Month { Nov }
+   @Year { 2007 }
+}
