@@ -62,7 +62,7 @@
 }
 
 { @Reference
-   @Type { Misc }
+   @Type { InProceedings }
    @Tag { mcbride07.rstar }
    @Author { Conor McBride }
    @InTitle { Fun in the Afternoon }

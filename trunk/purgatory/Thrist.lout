@@ -1301,17 +1301,18 @@ codebase in the year 2007 but its origins can be traced back to a brain-storming
 Haskell'05 workshop in Tallinn.
 @PP
 In his @I {Fun in the Afternoon} talk @Cite {$mcbride07.rstar}, Conor McBride proposed
-the free category R* as generalization to the list datatype. At the heart of the matter,
-his R stands  for the first parameter to our @Haskell {Thrist}, while the ''*`` is borrowed
-from the mathematical notation for free categories, and is essentially our @Haskell {Thrist}
-type constructor together with the appedThrist operation. To demonstrate his point,
+the free category {@I R}* as generalization to the conventional list datatype and several others.
+At the heart of the matter, his @I R stands  for the first parameter to our @Haskell {Thrist},
+while the ''*`` is borrowed from the mathematical notation for free categories, and thus essentially
+our @Haskell {Thrist} type constructor together with the @Haskell {appendThrist} operation.
+To demonstrate his point,
 @ID @Haskell {
 data List' :: * ~> * ~> * where
   Elem :: a -> List' a a
 }
-is a similar adapter to the one in @NumberOf { section.arrow-monad } and @Haskell {Thrist List'} the
-datatype McBride proposes as the new list datatype. In this special case we really obtain
-a free category, since @Haskell {List'} defines identity morphisms only.
+is a similar adapter to the one in @NumberOf { section.arrow-monad } and @Haskell {Thrist List'} is the
+datatype McBride proposes as the new list type. In this special case we really obtain
+a free category, since @Haskell {List'} defines identity morphisms.
 @PP
 Chuan-kai Lin's @I { Unimo } framework @Cite { $lin06.unimo } is an attempt to describe monads operationally
 by interpreting a datastructure that describes the monad. By the fact that the interpreter
