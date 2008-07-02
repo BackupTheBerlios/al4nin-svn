@@ -521,10 +521,20 @@ substitute @Haskell { Prim (+) }:
 @LD @Heading { More Problems while Interpreting }
 Unfortunately we have not mastered everything yet. We remember that
 the semantics of our @Haskell {Cat} combinators is defined by the interpretation
-function. So we are obliged to extend @Haskell { interpret }. We can try thus:
+function. So we are obliged to extend @Haskell { interpret' }. We can try thus:
 
-@TODO
+@ID @Haskell operators {Base} @Begin
+interpret' [Prim f; rest]l st = do
+        (a, st') <- st
+        interpret' rest $ return (f a, st')
+  where monad ioM
+@End @Haskell
 
+But this can only work for @I unary primitives, and since the primitive is allowed to
+possess higher arity it cannot typecheck. Clearly, a solution is needed that is able to
+distinguish between different-arity primitives at runtime. Since we are not inclined
+to introduce a new family of @Haskell { Cat } alternatives, @Haskell { Prim1 }, @Haskell { Prim2 },
+etc., we have to equip @Haskell { Prim } with a second argument.
 
 @LD @Heading { Using Representation Types to Describe Arities }
 The solution is to attach an object of @I {representation type} to every @Haskell { Prim }
