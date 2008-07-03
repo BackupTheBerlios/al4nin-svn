@@ -16,6 +16,7 @@ def @IgnoreForOutput right stuff {}
 def @Prompt left input right output { { Helvetica Base -1p } @Font { prompt> @Haskell { input } @PP { output } } }
 def @Omega { {@I {@Sym Omega}}mega }
 def @Cat { { Helvetica Base -1p } @Font Cat }
+def @CLang { { Helvetica Base -1p } @Font C }
 
 @Report
   @CoverSheet { No }
@@ -279,14 +280,14 @@ dominoes' face numbers do not correspond to the contained @I {value}, but to the
 @End @Section
 
 @Section
-@Title { Three Practical Thrists }
+@Title { Three Practical @Haskell { Thrist }s }
 @Begin
 @PP
 
 Now that we have defined the @Haskell { Thrist } datatype and gave a sufficiently
 generic interface to cover nontrivial cases, time has come to look for
 real-world applications. Specifically we shall describe a combinator
-library for creating ASTs of @Cat, a statically typed stack-oriented
+library for creating ASTs of @Cat, a statically typed "stack-oriented"
 language @Cite { $cat.intro }. As a second application we shall draft a parser
 combinator library that admits various implementation strategies. We shall also
 sketch the use of thrists in transition arrows of state machines to obtain certain
@@ -308,8 +309,8 @@ as a succession of primitive invocations and procedure calls.
 The semantics of procedure calls is defined as the insertion of the
 called procedure's contents to the point of the invocation.
 @PP
-Let's begin with the definition of the @Haskell {Cat} datastucture, that will
-serve as the first parameter to Thrist. Clearly it should be
+Let's begin with the definition of the @Haskell {Cat} data-stucture, that will
+serve as the first parameter to @Haskell {Thrist}. Clearly it should be
 parametrized with two types. Naturally we choose the
 first type parameter to describe the shape of the stack before
 and the second parameter after the @Haskell {Cat} primitive has been
@@ -351,7 +352,7 @@ tells us that there is no net change in the stack's shape.
 
 
 @SubSubSection
-@Title { Making Use of @Omega{}'s Features }
+@Title { Making Use of {@Omega}'s Features }
 @Begin
 @PP
 We shall from now on make use of a feature of the @Omega language
@@ -578,7 +579,7 @@ the domain's type is easily handled without a representation. } }.
 }
 
 @LD @Heading { Interpreting Primitives }
-We finally have all ingredients together to embark on putting down the @Haskell { interpret }
+We finally have all ingredients together to embark on putting down the @Haskell { interpret' }
 case on @Haskell { Prim }. The key idea is here to pattern match on the representation value in order
 to incrementally saturate the @Omega function present in the primitive:
 
@@ -601,7 +602,7 @@ overhead is already removed.
 We demonstrate the technique for a selection of the @Haskell {Cat} primitives
 only.
 
-@ID @Haskell operators {Base} @Begin
+@LD @Haskell operators {Base} @Begin
 compile' :: Thrist Cat a b -> Code (IO a -> IO b)
 compile' [Print; rest]l = [| \st -> do
         (a, st') <- st
@@ -675,7 +676,7 @@ interpret [PopN (S n); rest]l st -> do
 
 
 @SubSection
-@Title { Application two: a GADT-based Parse Thrist }
+@Title { Application two: a GADT-based Parser Thrist }
 @Begin
 @PP
 Traditional monadic parser combinator libraries (like Parsec) suffer from the
@@ -696,7 +697,7 @@ can be interpreted or compiled and analysed in any reasonable way.
 
 But first let's be clear about what we aim at. We demonstrate the process of
 parsing by the example of a lexer with semantic evaluation. Our tokens
-are the various literal numerals like they occur in the C language:
+are the various literal numerals like they occur in the @CLang language:
 @ID @F {0xCafeBabe 0XE0UL 123456L}
 These are the steps we wish to proceed on the second token:
 @List
@@ -732,7 +733,7 @@ These are the steps we wish to proceed on the second token:
 @Begin
 @PP
 
-To be able to compose these operations we define the GADT Parse:
+To be able to compose these operations we define the GADT @Haskell {Parse}:
 
 @ID @Haskell {
 data Parse :: * ~> * ~> * where
@@ -1020,7 +1021,7 @@ of facets each.
 To formally introduce the facets, we employ another @Omega feature,
 namely @I { user-defined kinds }, whose alternatives can be used to
 parameterise the @Haskell { State } datatype:
-@ID @Haskell @Begin
+@LD @Haskell @Begin
 kind Gate = GateClosed | GateOpen
 kind Secondary = SecondaryEnabled | SecondaryBlocked
 kind Handshake = Idle | NeedAck | Requested
@@ -1214,7 +1215,7 @@ to provide. Thrists just serve as a container and do not carry a semantics, whil
 mandates a function argument for the method @Haskell { arr }.
 @Considerations { a value of type @Haskell { Thrist Arrow } corresponds to the @F { do ... proc ... } syntactic sugar expression in Haskell @Cite { $paterson01.notation }}
 @PP
-Nilsson @Cite { $nilsson05.frp } embarks on optimization of a GADT-based @Haskell { Arrow } library,
+Nilsson @Cite { $nilsson05.frp } embarks on optimizing a GADT-based @Haskell { Arrow } library,
 but he only considers the identity function as a special case. He observes a substantial
 speedup in microbenchmarks when the optimizer is able to discover and short-circuit
 the identity arrow. In @Haskell { ParseThrist } the identity can be written in several ways,
@@ -1394,7 +1395,7 @@ datastructure part in the @I getelementpointer instruction.
 @LP is parametricity in the first parameter useful? I.e.
 can we formulate sensible functions on @Haskell { Thrist p a b }, where
 p is left universal?
-@LP Given certain callback functions, can the Thrist be accompanied with
+@LP Given certain callback functions, can the @Haskell { Thrist } be accompanied with
 a generic interpretation function, in the style of @I {Unimo}? Would it be
 possible to instrument thrists with a monadic semantics this way?
 @LP Folds on thrists. Hard because types vary. Existentials? Folds are very important
@@ -1529,9 +1530,9 @@ range :: * ~> *
 {range Bool} = Bool
 @End @Haskell
 
-All types in type universe our (simplified) @Cat program can operate on
+All types in the type universe that our (simplified) @Cat program can operate on
 is witnessed by a value of @Haskell {Tractable}, and @Haskell {sameRep}
-states their equality.
+states their equality between them.
 
 @LD @Haskell @Begin
 data Tractable :: * ~> * where
@@ -1717,7 +1718,7 @@ Executing IO action
 @End @Appendix
 
 @Appendix
-  @Title { Parsing C Literals }
+  @Title { Parsing @CLang Literals }
 @Begin
 @PP
 @TargetForExtract "check/ParseC"
@@ -1789,7 +1790,7 @@ parse [Wrap thr; r]l a = do { a' <- parse thr a; parse r a' } where monad maybeM
 @End @Appendix
 
 @Appendix
-  @Title { Adapting Haskell's Arrow Class }
+  @Title { Adapting Haskell's @Haskell {Arrow} Class }
   @Tag { arrow.adapter }
 @Begin
 @PP
