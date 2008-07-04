@@ -580,12 +580,33 @@ the domain's type is easily handled without a representation. } }.
 
 @LD @Heading { Interpreting Primitives }
 We finally have all ingredients together to embark on putting down the @Haskell { interpret' }
-case on @Haskell { Prim }. The key idea is here to pattern match on the representation value in order
-to incrementally saturate the @Omega function present in the primitive:
+case on @Haskell { Prim }. The key idea is here to pattern match on the representation
+value in order to incrementally saturate the @Omega function present in the primitive:
 
-@TODO
+@ID @Haskell operators {Base} @Begin
+interpret' [Prim (ArrT x y) f; rest]l st = do
+        (a, st') <- st
+        interpret' [Prim y (f a); rest]l (return st)
+  where monad ioM
+@End @Haskell
 
+We see that the value popped off the stack is partially applied to the function
+and a new primitive is created with the right type representation  and prepended
+to the thrist being interpreted. The rest of the possible represented types are
+implemented along the lines of our earlier attempt that only covered unary primitives:
 
+@ID @Haskell operators {Base} @Begin
+interpret' [Prim IntT f; rest]l st = do
+        (a, st') <- st
+        interpret' rest $ return (f a, st')
+  where monad ioM
+@End @Haskell
+
+Unfortunately this code for @Haskell { IntT } must be duplicated for all alternatives
+in @Haskell { Tractable } and cannot be wildcarded.
+@PP
+At this point the interpreter is essentially done, and missing pieces can be filled in
+easily.
 @End @SubSubSection
 
 @SubSubSection
@@ -611,7 +632,7 @@ compile' [Print; rest]l = [| \st -> do
     where monad ioM |]
 @End @Haskell
 
-[TODO: Push, etc.]
+[@TODO: Push, etc.]
 
 @End @SubSubSection
 
@@ -649,7 +670,7 @@ Here is a sketch of @Haskell {PopN}:
 @ID @Haskell {
   PopN :: Nat' (S n) -> Cat {blow (S n) s} s
 }
-It uses the type-level function blow to add the
+It uses the type-level function @Haskell {blow} to add the
 necessary number of universal type variables
 to the initial stack's shape:
 
@@ -658,15 +679,19 @@ blow :: Nat ~> *0 ~> *0
 {blow Z s} = s
 {blow (S n) s} = (t, {blow n s})
 }
+
 The interpreter can be written thus:
 
 @ID @Haskell {
-interpret [PopN (S n); rest]l st -> do
+interpret' [PopN (S n); rest]l st -> do
         (_, st') <- st
         case n of
         0v -> interpret' rest st'
         _ -> interpret' [PopN n; rest]l st'
 }
+
+Here we can rediscover the recursion pattern that helped us interpreting
+"N-ary" primitives.
 
 @End @SubSubSection
 
@@ -821,8 +846,7 @@ hexToken = Wrap [Group [Atom '0', Atom 'X']
   , Sure snd
   , Rep1 $ Try hexdigit
   , Par (CataPlus foldHex) signedSized
-  , Try numberToken
-  ]l
+  , Try numberToken]l
 
 tokens = Rep hexToken
 }
