@@ -33,7 +33,7 @@ def @CLang { { Helvetica Base -1p } @Font C }
 We develop a novel list-like datastructure (which we name @Haskell {Thrist}),
 that is able to capture the typing rule of function composition.
 Indeed, we show that when @Haskell {Thrist} is parameterized with the function
-type constructor @Haskell {(->)} we can provide an interpretation function
+type constructor @Haskell {(->)} an interpretation function can be provided
 which completely emulates the classical function composition @Haskell {(.)}.
 Additionally we can perform pattern matching on our @Haskell {Thrist} elements, thus
 obtaining the ability to do analysis on them. On the practical side
@@ -42,7 +42,7 @@ The first, when accompanied by an appropriate interpreter, directly model the se
 of the @Cat language, while the second caters for a new type of parser combinator libraries.
 In our third example we demonstrate the use of {@Haskell {Thrist}}s in state machines.
 The @Haskell {Thrist} approach of exposing the intermediate types where the
-elements are joined together especially shows its potential in the ability to
+elements are joined together shows its potential especially in the ability to
 stage the interpreter in a type-safe way and only allows for type correct
 transformations.
 }
