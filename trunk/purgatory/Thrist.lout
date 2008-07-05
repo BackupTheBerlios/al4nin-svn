@@ -1838,6 +1838,10 @@ parse [Wrap thr; r]l a = do { a' <- parse thr a; parse r a' } where monad maybeM
   @Tag { arrow.adapter }
 @Begin
 @PP
+We show how the two elementary @Haskell {Arrow} operations
+(viz. @Haskell {arr} and @Haskell {>>>}) are directly related
+to the two @Haskell {Thrist} data constructors. This example is
+in Haskell as @Omega does not support type classes.
 
 @LD @Haskell @Begin
 module Embeddings where

@@ -117,7 +117,7 @@ def @HaskellSetup
     
 	@PI @PK @PO @PN @PS @PC @PCL @PL @PA @PM @PD 
 	@PLAMBDA @PCIRC @PPLUSPLUS @PCOLON @PDOUBLECOLON
-	@PBRACKETBAR @PBARBRACKET
+	@PBRACKETBAR @PBARBRACKET @PARROWBIND
 
 	@A "$>"
 
@@ -514,6 +514,15 @@ def @HaskellSetup
 	{
 	    style @Case {
 		symbol	@Yield { @PO {: |0.8s :} }
+		else	@Yield { @PO x			}
+	    }
+	}
+
+	def @PARROWBIND
+		right x
+	{
+	    style @Case {
+		symbol	@Yield { @PO {>> |0.174fo >>} }
 		else	@Yield { @PO x			}
 	    }
 	}
