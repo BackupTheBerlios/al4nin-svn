@@ -562,7 +562,9 @@ rules, how compound datatypes can be represented, given tractable ones.
 constructor:
 
 @ID @Haskell {
-  Prim :: Tractable b -> (a -> b) -> Cat {blowUpBy (a -> b) opaque} ({result b}, opaque)
+  Prim :: Tractable b -> (a -> b) ->
+          Cat {blowUpBy (a -> b) opaque}
+              ({result b}, opaque)
   ...
 }
 
@@ -614,7 +616,7 @@ easily.
 @Begin
 @PP
 A well-known technique to turn an interpreter into a compiler
-is staging {@Cite {$sheard99.staging}}. The compile function takes a @Haskell {Thrist Cat} into
+is staging @Cite {$sheard99.staging}. The compile function takes a @Haskell {Thrist Cat} into
 a function of the metalanguage, that when executed causes the
 same effect as the interpretation of the program itself. Naturally,
 the compiled program is expected to run faster, since the interpretative
@@ -668,7 +670,7 @@ allowing us to get rid of @Haskell {Swap} and friends. All these parametrized pr
 would have one problem in common, namely that the stack shape would
 vary depending on the  value of the parameter(s), requiring dependent
 types to define them. Fortunately @Omega provides a device that is approaching
-the power of dependent types, namely singleton types and type-level functions.
+the power of dependent types, namely @I {singleton types} and @I {type-level functions}.
 
 Here is a sketch of @Haskell {PopN}:
 
@@ -709,7 +711,7 @@ Here we can rediscover the recursion pattern that helped us interpreting
 @Title { Application two: a GADT-based Parser Thrist }
 @Begin
 @PP
-Traditional monadic parser combinator libraries (like Parsec) suffer from the
+Traditional monadic parser combinator libraries (like Parsec @Cite {$leijen01.parsec}) suffer from the
 same problem like the composition operator: they compose easily
 but cannot be dissected and analysed, or translated to other
 representations. We proceed similarly to the @Haskell { Thist (->) } and @Haskell { Thrist Cat } to
@@ -944,19 +946,27 @@ SouthEast :: State GateOpen SecondaryBlocked (H Idle Idle')
 @Title { Defining the Semantics by Interpretation }
 @Begin
 @PP
-We provide the parse function for the Rep constructor as an example:
+We provide the @Haskell {parse} function for the @Haskell {Rep} constructor as an example:
 
-@LD @Haskell {
+@LD @Haskell @Begin
 parse :: Thrist Parse a b -> a -> Maybe b
 
-parse [Rep p; r]l as = parse r (parseRep [p]l as) where
-      parseRep :: Thrist Parse [a] (b, [a]) -> [a] -> ([b], [a])
+parse [Rep p; r]l as = parse r (parseRep [p]l as)
+    where
+      parseRep :: Thrist Parse [a] (b, [a]) ->
+                      [a] -> ([b], [a])
       parseRep _ [] = ([], [])
       parseRep p as = case parse p as of
                       Nothing -> ([], as)
                       Just (b, as') -> (b:bs, rest)
-                          where (bs, rest) = parseRep p as'
-}
+          where (bs, rest) = parseRep p as'
+@End @Haskell
+This code is rather unsurprising: to obtain zero or more of @Haskell {p}
+we have to consume as many from the input as possible and accumulate them
+in the result along with the remaining input.
+@PP
+For the rest of the implementation we defer to Appendix @NumberOf { parsing.token }
+which contains a working example for parsing hexadecimal tokens.
 
 @End @SubSubSection
 
@@ -965,7 +975,9 @@ parse [Rep p; r]l as = parse r (parseRep [p]l as) where
 @Begin
 @PP
 In a fashion similar to the @Haskell {Thrist Cat} we can compile our parser combinators to
-a more efficient algorithm by removing the interpretative overhead.
+a more efficient algorithm by removing the interpretative overhead. We have complete freedom
+in the selection of implementation methodology: we can target the object language directly
+or plumb monadic- resp. arrow-based parser combinators.
 
 @End @SubSubSection
 
@@ -974,6 +986,8 @@ a more efficient algorithm by removing the interpretative overhead.
 @Begin
 @PP
 We can run various analyses on our parsers, to ensure that the grammar is unambiguous, for example.
+A popular transformation would be the detection of left-recursion and its transformation to a right-
+recursive form.
 
 @End @SubSubSection
 
@@ -1748,6 +1762,7 @@ Executing IO action
 
 @Appendix
   @Title { Parsing @CLang Literals }
+  @Tag { parsing.token }
 @Begin
 @PP
 @TargetForExtract "check/ParseC"

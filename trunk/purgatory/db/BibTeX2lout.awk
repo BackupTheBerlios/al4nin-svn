@@ -13,6 +13,7 @@
 # /Conference.*=.*/ {print "Proceedings { " $4 " }"; next}
 # /PhdThesis.*=.*/ {print "PhDThesis { " $4 " }"; next}
 # /TechReport.*=.*/ {print "TechReport { " $4 " }"; next}
+/@techreport[ \t]*{.*/ {print "{ @Reference\n   @Type { TechReport }"; have = 1; next}
 # /Manual.*=.*/ {print "TechReport { " $4 " }"; next}
 # /MastersThesis.*=.*/ {print "MastersThesis { " $4 " }"; next}
 # /Misc.*=.*/ {print "Misc { " $4 " }"; next}

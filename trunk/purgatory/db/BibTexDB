@@ -168,3 +168,13 @@
    address = {Berkeley, CA, USA},
    url = {http://www.usenix.org/events/dsl99/full_papers/sheard/sheard_html/dsl.html}
 }
+
+@techreport{UUCS200135,
+   tag = {leijen01.parsec},
+   author = {D. J. P. Leijen, H. J. M. Meijer},
+   year = {2001},
+   title = {Parsec: Direct style monadic parser combinators for the real world},
+   number = {UU-CS-2001-35},
+   institution = {Department of Information and Computing Sciences, Utrecht University},
+   url = {http://www.cs.uu.nl/research/techreps/repo/CS-2001/2001-35.pdf},
+}

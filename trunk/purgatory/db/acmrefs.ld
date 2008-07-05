@@ -186,3 +186,15 @@
 }
 
 
+{ @Reference
+   @Type { TechReport }
+   @Tag { leijen01.parsec }
+   @Author { D. J. P. Leijen, H. J. M. Meijer }
+   @Year { 2001 }
+   @Title { Parsec: Direct style monadic parser combinators for the real world }
+   @Number { UU-CS-2001-35 }
+   @Institution { Department of Information and Computing Sciences, Utrecht University }
+   @URL { http://www.cs.uu.nl/research/techreps/repo/CS-2001/2001-35.pdf }
+}
+
+
