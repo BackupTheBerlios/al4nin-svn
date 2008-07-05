@@ -35,7 +35,7 @@
  year = {2007},
  booktitle = {2nd Central European Functional Programming School},
  month = {June},
- URL = {http://web.cecs.pdx.edu/~sheard/}
+ url = {http://web.cecs.pdx.edu/~sheard/}
 }
 
 
@@ -154,4 +154,17 @@
    title =     {Tree SSA - A New Optimization Infrastructure for GCC},
    url =       {http://people.redhat.com/dnovillo/Papers/tree-ssa-gccs03.pdf},
    year =      {2003}
+}
+
+@inproceedings{1267943,
+   tag =       {sheard99.staging}
+   author = {Tim Sheard and Zine-el-abidine Benaissa and Emir Pasalic},
+   title = {DSL implementation using staging and monads},
+   booktitle = {DSL'99: Proceedings of the 2nd conference on Conference on Domain-Specific Languages},
+   year = {1999},
+   pages = {81-94},
+   location = {Austin, Texas},
+   publisher = {USENIX Association},
+   address = {Berkeley, CA, USA},
+   url = {http://www.usenix.org/events/dsl99/full_papers/sheard/sheard_html/dsl.html}
 }

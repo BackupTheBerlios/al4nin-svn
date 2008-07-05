@@ -38,6 +38,7 @@
    @Year { 2007 }
    @InTitle { 2nd Central European Functional Programming School }
    @Month { June }
+   @URL { http://web.cecs.pdx.edu/~sheard/ }
 }
 
 
@@ -167,6 +168,21 @@
    @Title { Tree SSA - A New Optimization Infrastructure for GCC }
    @URL { http://people.redhat.com/dnovillo/Papers/tree-ssa-gccs03.pdf }
    @Year { 2003 }
+}
+
+
+{ @Reference
+   @Type { InProceedings }
+   @Tag { sheard99.staging }
+   @Author { Tim Sheard and Zine-el-abidine Benaissa and Emir Pasalic }
+   @Title { DSL implementation using staging and monads }
+   @InTitle { DSL'99: Proceedings of the 2nd conference on Conference on Domain-Specific Languages }
+   @Year { 1999 }
+   @Pages { 81-94 }
+   # @Location { Austin, Texas }
+   @Publisher { USENIX Association }
+   @Address { Berkeley, CA, USA }
+   @URL { http://www.usenix.org/events/dsl99/full_papers/sheard/sheard_html/dsl.html }
 }
 
 

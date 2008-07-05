@@ -614,25 +614,30 @@ easily.
 @Begin
 @PP
 A well-known technique to turn an interpreter into a compiler
-is staging. The compile function takes a @Haskell {Thrist Cat} into
+is staging {@Cite {$sheard99.staging}}. The compile function takes a @Haskell {Thrist Cat} into
 a function of the metalanguage, that when executed causes the
 same effect as the interpretation of the program itself. Naturally,
 the compiled program is expected to run faster, since the interpretative
 overhead is already removed.
 
-We demonstrate the technique for a selection of the @Haskell {Cat} primitives
-only.
+We demonstrate the technique for one @Haskell {Cat} primitive only{@FootNote
+{for a complete implementation consult the Appendix @NumberOf {complete.Cat}}}.
 
 @LD @Haskell operators {Base} @Begin
-compile' :: Thrist Cat a b -> Code (IO a -> IO b)
-compile' [Print; rest]l = [| \st -> do
+compile :: Thrist Cat a b -> Code (IO a -> IO b)
+compile [Print; rest]l = [| \st -> do
         (a, st') <- st
         putStr $ show a
-        $(compile' rest) $ return st'
+        $(compile rest) $ return st'
     where monad ioM |]
 @End @Haskell
 
-[@TODO: Push, etc.]
+The code pretty much resembles the interpreter, with the main differences being
+the @Haskell {[| ... |]} @I {code brackets} and the @I {escaping syntax} @Haskell {$(...)}.
+The former allows for constructing values of type @Haskell {Code a} (as seen in the function's
+type annotation), and the latter is needed for splicing code into a hole in the code.
+Essentially the whole @Cat program gets compiled, which in turn can be executed by
+means of the @Haskell {run} function by supplying an initial stack.
 
 @End @SubSubSection
 
