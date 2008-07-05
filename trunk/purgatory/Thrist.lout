@@ -1163,18 +1163,31 @@ track type equality internally. The @I { Curry-Howard correspondence } is employ
 to prove propositions encoded in the types of functions, and the resulting @Haskell { Equal }
 types can be introduced by @I { theorem declarations } into the type-checker's
 rewrite engine. Typical and useful instantiations of @Haskell { Equal } arise in connection
-with type fucntions, e.g. @Haskell { Equal {plus a b} {plus b a} } which is a manifestation
+with type functions, e.g. @Haskell { Equal {plus a b} {plus b a} } which is a manifestation
 of the @Haskell { plus } type function's commutativity.
-@LP When we assert @Haskell { trans :: Thrist Equal a a } and @Haskell { trans } is a non-empty
-thrist, then @Haskell { trans } can be interpreted as a transitivity proof:
-@TODO
+@LP When we assert @Haskell { lemma :: Thrist Equal a a } and @Haskell { lemma } is a
+thrist of length greater or equal to 2, then the following function @Haskell { trans }
+can be applied to get a proof object by transitivity:
 
-Modelling transitivity.
+@ID @Haskell @Begin
+trans :: Thrist Equal a b -> Equal a b
+trans []l = Eq
+trans [eq; rest]l = case (eq, trans rest) of
+                    (Eq, Eq) -> Eq
+@End @Haskell
 
-@PP One could go a step farther and consider a (=>){@FootNote {imaginary @Omega operator} }
+Since the elementary proof objects that are lined up in the thrist already have their types
+aligned where they meet it is easy to contract the whole thing to a witness.
+
+@PP
+One could go a step farther and consider a @Haskell {(=>)}{@FootNote {imaginary @Omega operator} }
 relation as a binary datatype, with constructors that encode the implication.
 Then @Haskell { circ :: Thrist (=>) a a } could encode circular implications, equating
 all intermediate types (propositions).
+@PP
+With this speculative note we leave the realm of curiosity and turn
+our attention to interesting and useful abstractions that are already
+part of the functional programmer's weaponry.
 @End @SubSection
 
 @SubSection
