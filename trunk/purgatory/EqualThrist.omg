@@ -1,0 +1,6 @@
+import "Thrist.omg"
+
+trans :: Thrist Equal a b -> Equal a b
+trans []l = Eq
+trans [_; rest]l = case trans rest of
+                   Eq -> Eq
