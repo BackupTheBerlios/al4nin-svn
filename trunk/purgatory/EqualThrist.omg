@@ -1,6 +1,7 @@
+import "LangPrelude.prg" 
 import "Thrist.omg"
 
 trans :: Thrist Equal a b -> Equal a b
 trans []l = Eq
-trans [_; rest]l = case trans rest of
-                   Eq -> Eq
+trans [eq; rest]l = case (eq, trans rest) of
+                    (Eq, Eq) -> Eq
