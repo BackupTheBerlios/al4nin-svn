@@ -1265,28 +1265,52 @@ In the Haskell world, @I arrows @Cite { $hughes00.arrows } also originated from 
 composition. It is helpful to give a comparison of the @Haskell { Arrow } @I { type class } in Haskell and
 our @Haskell { Thrist } definition. 
 
+It is fairly easy to see how the Haskell type class @Haskell { Arrow } can be expressed as a thrist.
+Here is a stripped-down definition of @Haskell { Arrow } to its essence:
+@LD @Haskell {
+class Arrow a where
+  arr :: (b -> c) -> a b c
+  (>>>) :: a b c -> a c d -> a b d
+  first :: a b c -> a (b, d) (c, d)
+}
+The first method (@Haskell {Arrow}) is taking an ordinary  function into the arrow, the second
+@Haskell {(>>>)} can be regarded as composition and the third (@Haskell {first}) defines the
+interaction between arrows and pairs. As we have already stated in the introduction (@NumberOf {intro.compose}),
+the @Haskell { Cons } already provides the r{@Char ocircumflex}le of @Haskell {(>>>)}.
+To cover the other two, all we have to do is to provide a three-parameter datatype with two data
+constructors @Haskell {Arr} and @Haskell {First}:
+@LD @Haskell {
+data Arrow' :: (* -> * -> *) -> * -> * -> * where
+  Arr :: (b -> c) -> Arrow' a b c
+  First :: Arrow' a b c -> Arrow' a (b, d) (c, d)
+}
 
-Obviously any instance of the Haskell type class @Haskell { Arrow } can
-be expressed as a thrist. We have to accompany the @Haskell { Thrist Arrow } with an interpretation
-function that is rather canonic, and will be given in the Appendix @NumberOf { arrow.adapter }. This semantics obviously
-guarantees the arrow laws @Cite { $hughes00.arrows }.
+#Obviously any instance of the Haskell type class @Haskell { Arrow } can
+#be expressed as a thrist.
 
-On the other hand thrists are not always
-easily fitted in an arrow. It is the @Haskell { arr } instance method that is problematic
-to provide. Thrists just serve as a container and do not carry a semantics, while @Haskell { arr }
-mandates a function argument for the method @Haskell { arr }.
+To obtain the arrow {@I behaviour}, we have to accompany the @Haskell { Thrist Arrow' }
+with an interpretation function that guarantees the arrow laws @Cite { $hughes00.arrows }.
+Forunately such a semantics can be canonically defined in terms of the enclosed
+arrow's methods. Please consult the Appendix @NumberOf { arrow.adapter } for a slightly
+different, but complete implementation.
 @PP
-Nilsson @Cite { $nilsson05.frp } embarks on optimizing a GADT-based @Haskell { Arrow } library,
-but he only considers the identity function as a special case. He observes a substantial
-speedup in microbenchmarks when the optimizer is able to discover and short-circuit
-the identity arrow. In @Haskell { ParseThrist } the identity can be written in several ways,
-e.g. as @Haskell { Wrap Nil } or as @Haskell { Sure id }. When interpreting, there is probably no
-significant win in using the former, when compiling to @Haskell { Code } the underlying
-metaprogramming system in @Omega presumably possesses all the information to recover
-the identity function from the @Omega interpreter's internals. In case of
-translation to a different programming system every function inside of @Haskell { Try } and @Haskell { Sure }
-constructors would need auxiliary denotation anyway, and could be optimized
-either on export or inside of the external system itself.
+As we can see now, thrists (along with an appropriate semantics) do generalize arrows,
+on the other hand they are not always easily fitted in an arrow.
+It is the @Haskell { arr } method that is problematic to provide.
+Thrists just serve as a container and do not carry a semantics per se, while @Haskell { Arrow }
+instances mandate a function argument for the method @Haskell { arr }.
+#@PP
+#Nilsson @Cite { $nilsson05.frp } embarks on optimizing a GADT-based @Haskell { Arrow } library,
+#but he only considers the identity function as a special case. He observes a substantial
+#speedup in microbenchmarks when the optimizer is able to discover and short-circuit
+#the identity arrow. In @Haskell { ParseThrist } the identity can be written in several ways,
+#e.g. as @Haskell { Wrap Nil } or as @Haskell { Sure id }. When interpreting, there is probably no
+#significant win in using the former, when compiling to @Haskell { Code } the underlying
+#metaprogramming system in @Omega presumably possesses all the information to recover
+#the identity function from the @Omega interpreter's internals. In case of
+#translation to a different programming system every function inside of @Haskell { Try } and @Haskell { Sure }
+#constructors would need auxiliary denotation anyway, and could be optimized
+#either on export or inside of the external system itself.
 @PP
 Monads can also be regarded as a specialization to arrows, so we expect that @Haskell { Thrist (Monad' T) }
 can be canonically derived. Here @Haskell { Monad' T a b } represents the type of a monadic actions
