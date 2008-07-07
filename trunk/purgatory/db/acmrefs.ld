@@ -8,7 +8,6 @@
    # @ISBN { 1-59593-064-7 }
    @Pages { 54--65 }
    # @Location { Tallinn, Estonia }
-   # @Doi { http://doi.acm.org/10.1145/1086365.1086374 }
    @Publisher { ACM Press }
    @Address { New York, NY, USA }
 }
@@ -24,7 +23,6 @@
    # @ISBN { 1-59593-309-3 }
    @Pages { 274--285 }
    # @Location { Portland, Oregon, USA }
-   # @Doi { http://doi.acm.org/10.1145/1159803.1159840 }
    @Publisher { ACM Press }
    @Address { New York, NY, USA }
 }
@@ -52,7 +50,6 @@
    # @ISBN { 978-1-59593-674-5 }
    @Pages { 25--36 }
    # @Location { Freiburg, Germany }
-   # @Doi { http://doi.acm.org/10.1145/1291201.1291206 }
    @Publisher { ACM }
    @Address { New York, NY, USA }
 }
@@ -68,7 +65,6 @@
    # @ISBN { 1-58113-605-6 }
    @Pages { 105--113 }
    # @Location { Pittsburgh, Pennsylvania }
-   # @Doi { http://doi.acm.org/10.1145/581690.581699 }
    @Publisher { ACM Press }
    @Address { New York, NY, USA }
 }
@@ -86,7 +82,6 @@
    @InTitle { Lecture Notes in Computer Science }
    @Volume { 4164 }
    @Year { 2005 }
-   # @Doi { http://dx.doi.org/10.1007/11894100_5 }
    # @ISBN { 3-540-46843-9 }
    @Day { 2006-12-14 }
    @Keywords { dblp }
@@ -102,7 +97,6 @@
    @Volume { 158 }
    @Year { 2006 }
    @Pages { 219--236 }
-   # @Doi { http://dx.doi.org/10.1016/j.entcs.2006.04.012 }
 }
 
 
