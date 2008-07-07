@@ -210,7 +210,8 @@ premature decision, we could gain back our hope.
 @End @SubSection
 
 @SubSection
-@Title { The Improved Thrist }
+  @Title { The Improved Thrist }
+  @Tag {intro.compose}
 @Begin
 @PP
 We try all over again, this time abstracting away the pair into an additional parameter:
@@ -1267,7 +1268,7 @@ our @Haskell { Thrist } definition.
 
 It is fairly easy to see how the Haskell type class @Haskell { Arrow } can be expressed as a thrist.
 Here is a stripped-down definition of @Haskell { Arrow } to its essence:
-@LD @Haskell {
+@ID @Haskell {
 class Arrow a where
   arr :: (b -> c) -> a b c
   (>>>) :: a b c -> a c d -> a b d
@@ -1276,8 +1277,8 @@ class Arrow a where
 The first method (@Haskell {Arrow}) is taking an ordinary  function into the arrow, the second
 @Haskell {(>>>)} can be regarded as composition and the third (@Haskell {first}) defines the
 interaction between arrows and pairs. As we have already stated in the introduction (@NumberOf {intro.compose}),
-the @Haskell { Cons } already provides the r{@Char ocircumflex}le of @Haskell {(>>>)}.
-To cover the other two, all we have to do is to provide a three-parameter datatype with two data
+@Haskell { Cons } already provides the r{@Char ocircumflex}le of @Haskell {(>>>)}.
+To cover the remaining two, all we have to do is to define a three-parameter datatype with two data
 constructors @Haskell {Arr} and @Haskell {First}:
 @LD @Haskell {
 data Arrow' :: (* -> * -> *) -> * -> * -> * where
@@ -1285,13 +1286,10 @@ data Arrow' :: (* -> * -> *) -> * -> * -> * where
   First :: Arrow' a b c -> Arrow' a (b, d) (c, d)
 }
 
-#Obviously any instance of the Haskell type class @Haskell { Arrow } can
-#be expressed as a thrist.
-
 To obtain the arrow {@I behaviour}, we have to accompany the @Haskell { Thrist Arrow' }
 with an interpretation function that guarantees the arrow laws @Cite { $hughes00.arrows }.
-Forunately such a semantics can be canonically defined in terms of the enclosed
-arrow's methods. Please consult the Appendix @NumberOf { arrow.adapter } for a slightly
+Fortunately such a semantics can be canonically defined in terms of the enclosed
+arrow's methods. Please consult Appendix @NumberOf { arrow.adapter } for a slightly
 different, but complete implementation.
 @PP
 As we can see now, thrists (along with an appropriate semantics) do generalize arrows,
@@ -1299,18 +1297,6 @@ on the other hand they are not always easily fitted in an arrow.
 It is the @Haskell { arr } method that is problematic to provide.
 Thrists just serve as a container and do not carry a semantics per se, while @Haskell { Arrow }
 instances mandate a function argument for the method @Haskell { arr }.
-#@PP
-#Nilsson @Cite { $nilsson05.frp } embarks on optimizing a GADT-based @Haskell { Arrow } library,
-#but he only considers the identity function as a special case. He observes a substantial
-#speedup in microbenchmarks when the optimizer is able to discover and short-circuit
-#the identity arrow. In @Haskell { ParseThrist } the identity can be written in several ways,
-#e.g. as @Haskell { Wrap Nil } or as @Haskell { Sure id }. When interpreting, there is probably no
-#significant win in using the former, when compiling to @Haskell { Code } the underlying
-#metaprogramming system in @Omega presumably possesses all the information to recover
-#the identity function from the @Omega interpreter's internals. In case of
-#translation to a different programming system every function inside of @Haskell { Try } and @Haskell { Sure }
-#constructors would need auxiliary denotation anyway, and could be optimized
-#either on export or inside of the external system itself.
 @PP
 Monads can also be regarded as a specialization to arrows, so we expect that @Haskell { Thrist (Monad' T) }
 can be canonically derived. Here @Haskell { Monad' T a b } represents the type of a monadic actions
@@ -1323,6 +1309,11 @@ data Monad' :: (* ~> *) ~> * ~> * ~> * where
   Feed :: m b -> Monad' m a b
   Digest :: (a -> m b) -> Monad' m a b
 }
+Her @Haskell {Feed} can be regarded as the moral equivalent of the monadic @Haskell { return },
+while @Haskell {Digest} stands for the @I bind operation @Haskell { (>>=) }.
+@LP Again, we have to provide a semantics, to make the embedding complete:
+@TODO semantics
+@PP
 We will stop here, but not without mentioning that recent research has established
 a connection between dataflow programming and its elegant reformulation using
 @I comonads @Cite { $uustaluvene05.dataflow }. An adapter for comonads is just
@@ -1415,9 +1406,9 @@ manner is given by the Haskell Workshop paper of Swierstra et al. @Cite { $swier
 another use of the @I { free monad }, a data structure built up as an ADT. The result can be examined intensionally
 by pattern matching, in a similar fashion like our thrists can be taken apart by the semantics functions.
 @PP
-Chris Heunen and Bart Jacobs' work @Cite { $heunenjacobs.monoid } on the connection of Arrows and Monads
+Chris Heunen and Bart Jacobs' work @Cite { $heunenjacobs.monoid } on the connection of arrows and monads
 and their category theoretical formalisation is of relevance because it reveals the mathematical
-structure behind these constructs, stating the common generalization to them as {@I monoids}.
+structure behind these constructs, giving a common generalization to them as {@I monoids}.
 Arrows @Cite { $hughes00.arrows } appeared in the general mindset as a pragmatic approach to deal with
 a certain class of parsers that did not fit into the monadic framework @Cite { $duponcheel96.parser }.
 Nilsson @Cite { $nilsson05.frp } provides a method for optimizing limited cases of arrow combinator libraries using GADTs.
