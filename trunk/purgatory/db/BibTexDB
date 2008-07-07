@@ -75,7 +75,7 @@
  author = {Tarmo Uustalu and Varmo Vene},
  edition = {CEFP},
  editor = {Zoltán Horváth},
- pages = {135-167},
+ pages = {135--167},
  publisher = {Springer},
  booktitle = {Lecture Notes in Computer Science},
  volume = {4164},
@@ -93,7 +93,7 @@
   journal = {Electr. Notes Theor. Comput. Sci.},
   volume = {158},
   year = {2006},
-  pages = {219-236},
+  pages = {219--236},
   doi = {http://dx.doi.org/10.1016/j.entcs.2006.04.012},
   bibsource = {DBLP, http://dblp.uni-trier.de}
 }
@@ -107,7 +107,7 @@
  journal = {Science of Computer Programming},
  url = {http://www.cs.chalmers.se/~rjmh/Papers/arrows.ps},
  volume = {37},
- pages = {67-111},
+ pages = {67--111},
  month = {May},
  year = {2000}
 }
@@ -121,7 +121,7 @@
  location = {Firenze, Italy},
  url = {http://www.soi.city.ac.uk/~ross/papers/notation.html},
  publisher = {ACM Press},
- pages = {229-240},
+ pages = {229--240},
  month = {Sep},
  year = {2001}
 }
@@ -162,7 +162,7 @@
    title = {DSL implementation using staging and monads},
    booktitle = {DSL'99: Proceedings of the 2nd conference on Conference on Domain-Specific Languages},
    year = {1999},
-   pages = {81-94},
+   pages = {81--94},
    location = {Austin, Texas},
    publisher = {USENIX Association},
    address = {Berkeley, CA, USA},
@@ -178,3 +178,26 @@
    institution = {Department of Information and Computing Sciences, Utrecht University},
    url = {http://www.cs.uu.nl/research/techreps/repo/CS-2001/2001-35.pdf},
 }
+
+@article{DBLP:journals/sigplan/Appel88,
+   tag       = {appel98.ssa},
+   author    = {Andrew W. Appel},
+   title     = {SSA is Functional Programming},
+   journal   = {SIGPLAN Notices},
+   volume    = {33},
+   number    = {4},
+   year      = {1998},
+   pages     = {17--20},
+}
+
+@inproceedings{734159,
+   tag = {duponcheel96.parser},
+   author = {S. Doaitse Swierstra and Luc Duponcheel},
+   title = {Deterministic, Error-Correcting Combinator Parsers},
+   booktitle = {Advanced Functional Programming, Second International School-Tutorial Text},
+   year = {1996},
+   isbn = {3-540-61628-4},
+   pages = {184--207},
+   publisher = {Springer-Verlag},
+   address = {London, UK},
+ }

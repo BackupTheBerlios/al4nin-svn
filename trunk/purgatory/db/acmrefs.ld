@@ -81,7 +81,7 @@
    @Author { Tarmo Uustalu and Varmo Vene }
    @Edition { CEFP }
    @InAuthor { Zoltán Horváth }
-   @Pages { 135-167 }
+   @Pages { 135--167 }
    @Publisher { Springer }
    @InTitle { Lecture Notes in Computer Science }
    @Volume { 4164 }
@@ -101,7 +101,7 @@
    @Journal { Electr. Notes Theor. Comput. Sci. }
    @Volume { 158 }
    @Year { 2006 }
-   @Pages { 219-236 }
+   @Pages { 219--236 }
    # @Doi { http://dx.doi.org/10.1016/j.entcs.2006.04.012 }
 }
 
@@ -114,7 +114,7 @@
    @Journal { Science of Computer Programming }
    @URL { http://www.cs.chalmers.se/~rjmh/Papers/arrows.ps }
    @Volume { 37 }
-   @Pages { 67-111 }
+   @Pages { 67--111 }
    @Month { May }
    @Year { 2000 }
 }
@@ -129,7 +129,7 @@
    # @Location { Firenze, Italy }
    @URL { http://www.soi.city.ac.uk/~ross/papers/notation.html }
    @Publisher { ACM Press }
-   @Pages { 229-240 }
+   @Pages { 229--240 }
    @Month { Sep }
    @Year { 2001 }
 }
@@ -178,7 +178,7 @@
    @Title { DSL implementation using staging and monads }
    @InTitle { DSL'99: Proceedings of the 2nd conference on Conference on Domain-Specific Languages }
    @Year { 1999 }
-   @Pages { 81-94 }
+   @Pages { 81--94 }
    # @Location { Austin, Texas }
    @Publisher { USENIX Association }
    @Address { Berkeley, CA, USA }
@@ -195,6 +195,33 @@
    @Number { UU-CS-2001-35 }
    @Institution { Department of Information and Computing Sciences, Utrecht University }
    @URL { http://www.cs.uu.nl/research/techreps/repo/CS-2001/2001-35.pdf }
+}
+
+
+{ @Reference
+   @Type { Article }
+   @Tag { appel98.ssa }
+   @Author { Andrew W. Appel }
+   @Title { SSA is Functional Programming }
+   @Journal { SIGPLAN Notices }
+   @Volume { 33 }
+   @Number { 4 }
+   @Year { 1998 }
+   @Pages { 17--20 }
+}
+
+
+{ @Reference
+   @Type { InProceedings }
+   @Tag { duponcheel96.parser }
+   @Author { S. Doaitse Swierstra and Luc Duponcheel }
+   @Title { Deterministic, Error-Correcting Combinator Parsers }
+   @InTitle { Advanced Functional Programming, Second International School-Tutorial Text }
+   @Year { 1996 }
+   # @ISBN { 3-540-61628-4 }
+   @Pages { 184--207 }
+   @Publisher { Springer-Verlag }
+   @Address { London, UK }
 }
 
 
