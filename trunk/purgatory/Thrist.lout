@@ -1262,7 +1262,7 @@ part of the functional programmer's weaponry.
 
 Since arrows in the Haskell world also originated from the generalization of function
 composition it is helpful to give a comparison of the @Haskell { Arrow } @I { type class } in Haskell and
-our Thrist datastructure. Obviously any instance of the Haskell type class @Haskell { Arrow } can
+our @Haskell { Thrist } data structure. Obviously any instance of the Haskell type class @Haskell { Arrow } can
 be expressed as a thrist. We have to accompany the @Haskell { Thrist Arrow } with an interpretation
 function that is rather canonic, and will be given in the Appendix @NumberOf { arrow.adapter }. This semantics obviously
 guarantees the arrow laws @Cite { $hughes00.arrows }. On the other hand thrists are not always
@@ -1358,14 +1358,15 @@ which happens to be a free category C* if the datatype @Haskell {p} is isomorphi
 @Begin
 @PP
 David Roundy's @I { Darcs } @Cite { $roundy.darcs2 } is a version control system
-which builds upon a @I {theory of patches} @Cite { $wikibooks.patch }, defining the evolution of data repositories (and
-documents therein) as a gradual application of individual changes. The recent adoption
-of GADTs into the system has lead to a two-parameter @Haskell {Patch} datatype and
+which builds upon a @I {theory of patches} @Cite { $wikibooks.patch }, defining
+the evolution of data repositories (and of documents therein) as a gradual application
+of individual changes. The recent adoption
+of GADTs into the system has led to a two-parameter @Haskell {Patch} datatype and
 @Haskell {FL}, @Haskell {RL} GADTs which are used for sequencing these (among others).
 The definition of @Haskell {FL} is identical to how our @Haskell {Thrist} would be
 defined in Haskell! Being hidden in a utility module, @Haskell {FL} entered the @I { Darcs }
 codebase in the year 2007 but its origins can be traced back to a brain-storming session at
-Haskell'05 workshop in Tallinn.
+@I {Haskell'05} workshop in Tallinn.
 @PP
 In his @I {Fun in the Afternoon} talk @Cite {$mcbride07.rstar}, Conor McBride proposed
 the free category {@I R}* as generalization to the conventional list datatype and several others.
@@ -1377,16 +1378,17 @@ To demonstrate his point,
 data List' :: * ~> * ~> * where
   Elem :: a -> List' a a
 }
-is a similar adapter to the one in @NumberOf { section.arrow-monad } and @Haskell {Thrist List'} is the
+is a similar adapter to the one in Section @NumberOf { section.arrow-monad } and @Haskell {Thrist List'} is the
 datatype McBride proposes as the new list type. In this special case we really obtain
 a free category, since @Haskell {List'} defines identity morphisms.
 @PP
+Ever since the invention of Lisp the program-as-data idiom has been a treasure trove for functional programmers.
 Chuan-kai Lin's @I { Unimo } framework @Cite { $lin06.unimo } is an attempt to describe monads operationally
 by interpreting a datastructure that describes the monad. By the fact that the interpreter
 is proven to satisfy the monadic laws, a guarantee is given that the monadic semantics
-is fulfilled, regardless what callback functions the monad's creator supplies. GADTs appear in
-his work only as the datatypes modelling the @I { effect basis } of monads, while they are not needed
-for the general case.
+is fulfilled, regardless what callback functions the monad's creator supplies.
+GADTs appear in his work only as the datatypes modelling the @I { effect basis } of monads,
+while they are not needed for the general case.
 @PP
 Another example of the rekindled interest in modelling side-effecting computations in a purely functional
 manner is given by the Haskell Workshop paper of Swierstra et al. @Cite { $swierstra07.beast }, which demonstrates
@@ -1395,13 +1397,13 @@ by pattern matching, in a similar fashion like our thrists can be taken apart by
 @PP
 Chris Heunen and Bart Jacobs' work @Cite { $heunenjacobs.monoid } on the connection of Arrows and Monads
 and their category theoretical formalisation is of relevance because it reveals the mathematical
-structure behind these constructs.
-Arrows appeared in the general mindset as a pragmatic approach to deal with a certain class of parsers
-@Cite { $hughes00.arrows } that did not fit into the monadic framework.
-Nilsson provides a method for optimizing limited cases of arrow combinator libraries using GADTs. He
-is still bound to the limitations of the amesiac nature of function composition inside the arrow
-framework for functional reactive programming, but seem to gain some noticeable gains in performance
-especially in microbenchmarks that are modelling the arrow laws.
+structure behind these constructs, stating the common generalization to them as {@I monoids}.
+Arrows @Cite { $hughes00.arrows } appeared in the general mindset as a pragmatic approach to deal with
+a certain class of parsers that did not fit into the monadic framework @Cite { $duponcheel96.parser }.
+Nilsson @Cite { $nilsson05.frp } provides a method for optimizing limited cases of arrow combinator libraries using GADTs.
+In the scope of framework for functional reactive programming he is still bound to the limitations of the amesiac nature of
+function composition inside the arrow, but seem to gain some noticeable gains in performance especially with microbenchmarks
+modelling the arrow laws.
 @End @Section
 
 @Section
@@ -1413,59 +1415,53 @@ type structure from its semantics. The data structure we suggest is a
 GADT with two constructors strongly resembling classical lists, but with a
 side-condition that the types must be threaded. The semantics is provided by
 an interpretation function that can be provided separately for each first parameter
-of the Thrist type constructor.
+of the @Haskell {Thrist} type constructor.
 
-@PP We have further provided three examples for the usefulness of the thrist data
+@PP We have provided three examples for the usefulness of the thrist data
 structure and demonstrated that the ability to take thrists apart and analyse is
 a very good arguments for their use. Also, all operations performed on thrists, such
 as subdivision, insertion and extension must be performed by algorithms that preserve
-the strong typing constraints that are imposed by the @Haskell { Thrist } data structure's
-typing rule. For this to work it is crucial that @Haskell { Thrist } is defined to be
+the strong typing constraints that are imposed by the @Haskell { Thrist } type constructor's
+typing rule. For this to work, it is crucial that @Haskell { Thrist } is defined to be
 a generalized algebraic datatype (GADT).
+
 @PP We have further shown that thrists generalize arrows naturally and monads with
-a shallow adaptation layer. Free categories can be modelled as thrists and we conjecture
-that computationally relevant categories can be fitted into the @Haskell { Thrist }
-framework.
+a shallow adaptation layer. We have identified free categories to be the closest
+relative of our thrists in the mathematical realm.
 @PP Last, but not least, we could successfully exploit {@Omega}'s extensible syntax
 to present thrists in a uniform and aestetical way, well alike {@I Haskell}'s syntax
 for lists, with the same ease of pattern matching and construction.
 @PP
 Although the above provides sufficient evidence of the usefulness of thrists, there
 is still plenty to find out.
-@LP what other useful @Haskell { p }s in @Haskell { Thrist p a b } exist?
-Since the @Haskell { a } and @Haskell { b } parameters can encode
+@LP What other useful @Haskell {p}s in @Haskell { Thrist p a b } exist?
+Since the @Haskell {a} and @Haskell {b} parameters can encode
 propositions, the @Haskell { Thrist } approach can convey the evolution
-of abstract properties, e.g. the adherence to the SSA form @Cite {appel}.
+of abstract properties, e.g. the adherence to the SSA form @Cite {$appel98.ssa}.
 Modern compiler architectures{ @FootNote { GCC @Cite {$gcc.ssa} and LLVM @Cite {$llvm.intro} being notable representants } }
 tend to favor this formalism for internal representation of imperative programs.
-Explicitly tracking def-use information paired with annotation preserving
-transformations might pave the way to certified compilers, but apperars to
+Explicitly tracking @I {def-use} information paired with annotation preserving
+transformations might pave the way to certified compilers, but appears to
 be a challenging task.
-@LP LLVM has a @I getelementpointer instruction, which allows to do offset calculations
-into deeply nested data structures. The descent from the encompassing pointer, array or
-structure type can be conveniently encoded as a thrist, where the underlying GADT
-provides constructors for dereferencing of pointers, picking of array elements
-and skipping over (resp. selecting) of structure members. This thrist can then
-easily converted into the sequence of integers that represents the intended
-datastructure part in the @I getelementpointer instruction.
-@LP is parametricity in the first parameter useful? I.e.
-can we formulate sensible functions on @Haskell { Thrist p a b }, where
-p is left universal?
-@LP Given certain callback functions, can the @Haskell { Thrist } be accompanied with
-a generic interpretation function, in the style of @I {Unimo}? Would it be
-possible to instrument thrists with a monadic semantics this way?
-@LP Folds on thrists. Hard because types vary. Existentials? Folds are very important
-for lists, so we need them.
-@LP Syntactical questions: can "\"do\"" (monadic) or "\"proc\" ... \"do\"" (arrow{
-@FootNote { arrow syntax is available in certain Haskell implementatons, but not in @Omega}})
-syntax be used for more convenient construction of thrists than with the @Haskell { [a, b; r]l }
-notation?
-@LP More generalization, though not very important for demonstration, generalizing the
-Thrist type signature to accept the last two parameters from any level of the @I { sort hierarchy }
-seems useful. Parity in generality at least with the built-in @Haskell { Equal } type seems
-desirable{ @FootNote { in @Omega its type signature is
-@Haskell { Equal :: level b.forall (a::*(1 + b)).a ~> a ~> *0 } } }, but even
-different levels for the second and third parameters are conceivable.
+@LP A similar question is that of restricted monads. Is it possible to provide a
+more generic adapter than the one presented in Section @NumberOf {section.arrow-monad},
+that encompasses restricted monads too?
+@LP LLVM @Cite {$llvm.intro} has a @I getelementpointer instruction, which allows to do offset calculations
+into deeply nested ({@CLang}-style) data structures. The descent from the encompassing pointer, array or
+structure type to the desired structure member can be conveniently encoded as a thrist,
+where the underlying GADT provides constructors for dereferencing of pointers, picking of array elements
+and skipping over (resp. selecting) of structure members. The resulting thrist can then
+easily converted into the sequence of integers that is encoded in the @I getelementpointer instruction.
+@LP @I Parametricity is a powerful weapon in proving program properties. It seems a worthwile direction
+of research to find out which sensible algorithms on thrists exist on @Haskell { Thrist p a b }, where
+p is left universal. At first glance maps and folds seem to break because of the typing rule, but
+studying the correspondig free categories might show the way. As these transformations are essential
+for a wide range of regular data structures, we should be able to use similar higher-order functions too.
+@LP While the syntax presented here is already quite palatable, it remains to be seen how thrists can be
+given syntactic sugar along the lines of the monadic ''do`` (or even arrow{
+@FootNote { @I {arrow syntax} is available in certain Haskell implementations, but not in @Omega}}) notation
+used in current Haskell implementations.
+@PP We intend to tackle these theoretical and practical questions as a follow-on.
 @End @Section
 
 
