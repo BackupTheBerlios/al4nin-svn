@@ -1178,7 +1178,7 @@ trans [eq; rest]l = case (eq, trans rest) of
 @End @Haskell
 
 Since the elementary proof objects that are lined up in the thrist already have their types
-aligned where they meet it is easy to contract the whole thing to a witness.
+aligned where they meet, it is easy to contract the whole thing to a single witness.
 
 @PP
 One could go a step farther and consider a @Haskell {(=>)}{@FootNote {imaginary @Omega operator} }
