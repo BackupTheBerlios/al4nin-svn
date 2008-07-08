@@ -531,8 +531,7 @@ def @HaskellSetup
 		right x
 	{
 	    style @Case {
-#		symbol	@Yield { @PO {-0.1f @HShift @A sym {arrowright} x |0.0fo {white @Colour @A sym {arrowhorizex} x} |0.0fo +4p @Font @A sym {similar} "~"} }
-		symbol	@Yield { @PO {@A sym {arrowright} x |0.0fo {white @Colour +0.09f @HShift @A sym {arrowright} x} |0.0fo +4p @Font @A sym {similar} "~"} }
+		symbol	@Yield { @PO {@A sym {arrowright} x |0.0fo {white @Colour +0.09f @HShift @A sym {arrowright} x} |0.0fo +3p @Font @A sym {similar} "~"} }
 		else	@Yield { @PO x			}
 	    }
 	}
