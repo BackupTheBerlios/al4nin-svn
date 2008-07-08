@@ -1315,10 +1315,10 @@ while @Haskell {Digest} stands for the @I bind operation @Haskell { (>>=) }.
 @LD @Haskell {
 runM' :: Monad m -> m a ->
          Thrist (Monad' m) a b -> m b
-runM' _ mon []l = mon
+runM' _ seed []l = seed
 runM' v _ [Feed m; rest]l = runM' v m rest
-runM' (v@Monad _ bind _) mon [Digest f; rest]l
-         = runM' v (bind mon f) rest
+runM' (v@Monad _ bind _) seed [Digest f; rest]l
+         = runM' v (bind seed f) rest
 }
 Some words of explanation are in order. For technical reasons @Haskell {runM'} receives a monadic
 @I seed argument, this allows to implement the @Haskell {Feed} and @Haskell {Digest} alternatives
