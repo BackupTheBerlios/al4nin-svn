@@ -1309,10 +1309,22 @@ data Monad' :: (* ~> *) ~> * ~> * ~> * where
   Feed :: m b -> Monad' m a b
   Digest :: (a -> m b) -> Monad' m a b
 }
-Her @Haskell {Feed} can be regarded as the moral equivalent of the monadic @Haskell { return },
+Here @Haskell {Feed} can be regarded as the moral equivalent of the monadic @Haskell { return },
 while @Haskell {Digest} stands for the @I bind operation @Haskell { (>>=) }.
 @LP Again, we have to provide a semantics, to make the embedding complete:
-@TODO semantics
+@LD @Haskell {
+runM' :: Monad m -> m a ->
+         Thrist (Monad' m) a b -> m b
+runM' _ mon []l = mon
+runM' v _ [Feed m; rest]l = runM' v m rest
+runM' (v@Monad _ bind _) mon [Digest f; rest]l
+         = runM' v (bind mon f) rest
+}
+Some words of explanation are in order. For technical reasons @Haskell {runM'} receives a monadic
+@I seed argument, this allows to implement the @Haskell {Feed} and @Haskell {Digest} alternatives
+by simple recursion. The presence of the first argument compensates for a current deficiency
+of @Omega (namely the lack of type classes), and is needed for explicit passing of the @Haskell {Monad}
+dictionary.
 @PP
 We will stop here, but not without mentioning that recent research has established
 a connection between dataflow programming and its elegant reformulation using
