@@ -789,7 +789,7 @@ data Parse :: * ~> * ~> * where
   Rep1 :: Parse a b -> Parse [a] ([b], [a])
   Rep :: Parse [a] (b, [a]) -> Parse [a] ([b], [a])
   Group :: [Parse a b] -> Parse [a] ([b], [a])
-  CataPlus :: ([a] -> b) -> Parse ([a], c) (b, c)
+--  CataPlus :: ([a] -> b) -> Parse ([a], c) (b, c)
   Par :: Parse a b -> Parse c d -> Parse (a, c) (b, d)
   Wrap :: Thrist Parse a b -> Parse a b
 @End @Haskell
@@ -853,7 +853,7 @@ So far we've got @Haskell { ([14, 0], "UL") :: ([Int], [Char]) }.
 
 @ListItem { Since we cannot discard either component, we have to proceed in parallel with
 @LD @Haskell {
-Par (CataPlus foldHex)
+Par (Wrap [Try nonEmpty, Sure foldHex]l)
     (Wrap [Rep1 $ Atom 'U',
           Par (Sure id)
               (Rep1 $ Atom 'L')]l)
@@ -870,8 +870,9 @@ consisting of the parsed token and the rest of the input.
 }
 @EndList
 
-We have not yet given the defininitions of the @Haskell {hexdigit}, @Haskell {foldHex} and @Haskell {numberToken}
-functions. These follow next and should be rather obvious.
+We have not yet given the defininitions of the @Haskell {hexdigit}, @Haskell {foldHex},
+@Haskell {nonEmpty} and @Haskell {numberToken} functions. These follow next and should
+be rather obvious.
 
 @ID @Haskell @Begin
 hexdigit = \c -> if ord '0' <= ord c && ord c <= ord '9'
@@ -882,6 +883,9 @@ hexdigit = \c -> if ord '0' <= ord c && ord c <= ord '9'
                    then Just (ord c - ord '7') else Nothing
 
 foldHex = foldl (\acc x -> (acc * 16) + x) 0
+
+nonEmpty (all@(_:_)) = Just all
+nonEmpty _ = Nothing
 
 numberToken :: (Int, (String, (String, String))) -> Maybe (Token, String)
 numberToken (i, ("", ("", rest))) = Just (Number i False False, rest)
@@ -896,7 +900,7 @@ hexToken =
   [ Group [Atom '0', Atom 'X']
   , Sure snd
   , Rep1 (Try hexdigit)
-  , Par (CataPlus foldHex) signedSized
+  , Par (Wrap [Try nonEmpty, Sure foldHex]l) signedSized
   , Try numberToken ]l
 
 tokens = Rep (Wrap hexToken)
@@ -912,7 +916,7 @@ With some squinting we can summarize the principles as:
 As the execution of the thrist proceeds, incrementally more of the token are analysed, condensed and converted.
 
 ######################## THIS FIGURE SHOULD SHOW UP IN A DIFFERENT PLACE #############################
-@TargetForExtract "check/Machine"
+@TargetForExtract "check/Machine2"
 @Figure
     @Tag { machine }
     @Caption { State machine fragment }
@@ -1003,7 +1007,7 @@ parse [Rep p; r]l as = parse r (parseRep [p]l as)
       parseRep p as = case parse p as of
                       Nothing -> ([], as)
                       Just (b, as') -> (b:bs, rest)
-          where (bs, rest) = parseRep p as'
+                        where (bs, rest) = parseRep p as'
 @End @Haskell
 This code is rather unsurprising: to obtain a list of @Haskell {p}s
 we have to consume as many parsed constituents from the input as possible
@@ -1107,7 +1111,8 @@ from a toolbox of elementary actions which deal with a minimal number
 of facets each.
 To formally introduce the facets, we employ another @Omega feature,
 namely @I { user-defined kinds }, whose alternatives can be used to
-parameterise the @Haskell { State } datatype:
+parameterize the @Haskell { State } datatype:
+@TargetForExtract "check/Machine1"
 @LD @Haskell @Begin
 kind Gate = GateClosed | GateOpen
 kind Secondary = SecondaryEnabled | SecondaryBlocked
@@ -1857,7 +1862,7 @@ data Parse :: * ~> * ~> * where
   Rep1 :: Parse a b -> Parse [a] ([b], [a])
   Rep :: Parse [a] (b, [a]) -> Parse [a] ([b], [a])
   Group :: [Parse a b] -> Parse [a] ([b], [a])
-  CataPlus :: ([a] -> b) -> Parse ([a], c) (b, c)
+--  CataPlus :: ([a] -> b) -> Parse ([a], c) (b, c)
   Par :: Parse a b -> Parse c d -> Parse (a, c) (b, d)
   Wrap :: Thrist Parse a b -> Parse a b
 
