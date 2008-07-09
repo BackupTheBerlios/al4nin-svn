@@ -204,7 +204,7 @@ If we fail to provide this embedding, we cannot consider thrists being a general
 function composition.
 @PP
 Not everything is lost, however. Close scrutiny reveals that our usage of
-@Haskell {(,)}{@FootNote { pronounced ``pair''}}
+@Haskell {(,)}{@FootNote { pronounced ''pair``}}
 is the culprit. If we could liberate ourselves from this
 premature decision, we could gain back our hope.
 @End @SubSection
@@ -366,7 +366,7 @@ In the rest of this paper we shall write the above expression as
 }
 @Omega's parser and printer perform the conversion to
 the internal form when the list-like brackets @Haskell {[]} followed
-by the letter ``l'' are encountered.
+by the letter ''l`` are encountered.
 @PP
 We can now continue using this terser syntax:
 @LD {
@@ -772,9 +772,9 @@ the input string into a prefix being scrutinized and the as of yet unanalysed re
 @PP
 To be able to compose these envisioned operations we define the GADT @Haskell {Parse}:
 
+@TargetForExtract "check/Parser.incomplete"
 @LD @Haskell {
 data Parse :: * ~> * ~> * where
-  Epsilon :: Parse [a] ([b], [a])
   Atom :: Char -> Parse Char Char
   Sure :: (a -> b) -> Parse a b
   Try :: (a -> Maybe b) -> Parse a b
@@ -787,24 +787,23 @@ data Parse :: * ~> * ~> * where
 }
 
 The datatype @Haskell { Parse a b } represents a parser that consumes data of type @Haskell { a }
-and if a match is found it produces data of type @Haskell { b }. The types mentioned in the
+and if a match is found it produces a value of type @Haskell { b }. The types mentioned in the
 constructors already give us a strong indication about their intended meaning:
 
 @DashList
 @ListItem {  @Haskell {(Atom 'X')} matches only the capital @Haskell {'X'} character }
-@ListItem {  @Haskell {Epsilon} matches a zero-size prefix of a list of @Haskell {as} and returns an empty list of @Haskell {bs} along with the unconsumed rest of @Haskell {as} }
 @ListItem {  @Haskell {(Sure ord)} alway matches, consuming a @Haskell {Char} and returning its @Haskell {Int} ASCII value }
 @ListItem {  @Haskell {(Try hexdigit)} matches only if a character is a hexadecimal one and returns its hex value, fails otherwise }
 @ListItem {  @Haskell {(Rep1 (Atom 'X'))} matches as many capital @Haskell {'X'}s as possible and returns a pair consisting the matched and unconsumed portions }
 @ListItem {  @Haskell {(Rep part)} similarly tries to match as many @Haskell {part}s in the input's prefix as possible }
-@ListItem {  @Haskell {(Group [Atom 'a', Atom 'b'])} matches only a prefix @I {''ab``} in the input, returning it in a pair along with the unconsumed portion, or fails otherwise }
+@ListItem {  @Haskell {(Group [Atom 'a', Atom 'b'])} just matches a prefix @I {''ab``} in the input, returning it in a pair along with the unconsumed portion, or fails otherwise }
 @ListItem {  @Haskell {(CataPlus foldDec)} consumes a pair of a list of digits and some other data, if the list is empty it fails, otherwise it folds the sequence to a number, then returns the pair of this number and the other data, which remains unchanged }
 @ListItem {  @Haskell {(Par fst snd)} runs @Haskell {fst} and @Haskell {snd} on the two components of the pair, failing if any of them fails }
 @ListItem {  @Haskell {(Wrap parseThr)} simply allows to treat a thrist as a @Haskell {Parse}. }
 @EndList
 
-In the above descriptions we only suggest a possible semantics, because the data of type @Haskell {Parse}
-does not mandate it in any way. So when we talk about ''returns a substring`` then this is just an intention,
+In the above descriptions we only suggest a possible semantics, because @Haskell {Parse}
+does not mandate it in any way. So when we talk about ''returns something`` then this is just an intention,
 an implementation may choose to employ an other strategy (such as @I {continuation passing}). It
 is also completely unspecified what @I failure and @I success actually entail.
 @PP
@@ -829,25 +828,30 @@ How can we use our combinators to describe the parsing steps 0) to 6) from the S
 @BulletList
 
 @ListItem { First, we use
-@Haskell operators {Base} {Group [Atom '0', Atom 'X']}
+@Haskell {Group [Atom '0', Atom 'X']}
 to match the prefix of the string @Haskell {"0XE0UL"} and
 produce @Haskell {("0X", "E0UL") :: ([Char], [Char])}.
 }
 
-@ListItem { Then we can discard the prefix because we know that we have to do base 16 conversion later.
-Employ @Haskell {Sure snd} to do this, obtaining @Haskell {"E0UL" :: [Char]}.
+@ListItem { Then we can discard the prefix because at this point we know
+that we have to do a base 16 conversion later.
+We employ @Haskell {Sure snd} to do this, obtaining @Haskell {"E0UL" :: [Char]}.
 }
 
-@ListItem { Then @Haskell operators {Base} {Rep1 $ Try hexdigit}
-will split off two more characters, converting them to hex values on the way, we obtain @Haskell { ([14, 0], "UL") :: ([Int], [Char]) }.
+@ListItem { Then @Haskell {Rep1 (Try hexdigit)}
+will split off two more characters, converting them to decimal values on the way.
+So far we've got @Haskell { ([14, 0], "UL") :: ([Int], [Char]) }.
 }
 
-@ListItem { We cannot discard either component, so we proceed in parallel with
-@LD @Haskell operators {Base} {Par (CataPlus foldHex)
-       (Wrap [Rep1 $ Atom 'U', Par (Sure id) (Rep1 $ Atom 'L')]l)
+@ListItem { Since we cannot discard either component, we have to proceed in parallel with
+@LD @Haskell {
+Par (CataPlus foldHex)
+    (Wrap [Rep1 $ Atom 'U',
+          Par (Sure id)
+              (Rep1 $ Atom 'L')]l)
 }
-where the first component produces 224, and the second will proceed by splitting off any @Haskell { 'U' } and then
-splitting off any @Haskell { 'L' }, producing a triple @Haskell { ("U", ("L", "")) }.
+where the first component produces 224, and the second goes on by splitting off any @Haskell { 'U' } 
+followed by any @Haskell { 'L' }, producing a triple @Haskell { ("U", ("L", "")) }.
 At this stage we have @Haskell {(224, ("U", ("L", ""))) :: (Int, ([Char], ([Char], [Char])))}.
 }
 
@@ -858,27 +862,33 @@ consisting of the parsed token and the rest of the input.
 }
 @EndList
 
-Putting this all together we can write
-@ID @Haskell operators {Base} {
-signedSized = Wrap [Rep1 $ Atom 'U', Par (Sure id) (Rep1 $ Atom 'L')]l
+We have not yet given the defininitions of the @Haskell {hexdigit}, @Haskell {foldHex} and @Haskell {numberToken}
+functions. These can be found in the Appendix @NumberOf {parsing.token} and should be rather obvious.
 
-hexToken = Wrap [Group [Atom '0', Atom 'X']
+Putting all together we can write:
+@ID @Haskell {
+signedSized = Wrap [Rep1 (Atom 'U'), Par (Sure id) (Rep1 (Atom 'L'))]l
+
+hexToken =
+  [ Group [Atom '0', Atom 'X']
   , Sure snd
-  , Rep1 $ Try hexdigit
+  , Rep1 (Try hexdigit)
   , Par (CataPlus foldHex) signedSized
   , Try numberToken]l
 
-tokens = Rep hexToken
+tokens = Rep (Wrap hexToken)
 }
 
-Of course there are some pitfalls here but the principle is clear:
+With some squinting we can summarize the principles as:
 @DashList
    @ListItem { The interesting prefix is split off the rest, }
-   @ListItem { if the prefix is semantically important it gets condensed to a more appropriate form or else discarded, }
-   @ListItem { parallel processing is used if both components of an input pair are relevant. }
-   @ListItem { As the execution of the thrist proceeds the incrementally more of the token are analysed, condensed and converted. }
+   @ListItem { if it is semantically important we condense it to a more appropriate form, }
+   @ListItem { resorting to parallel processing if both components of an input pair are relevant. }
 @EndList
 
+As the execution of the thrist proceeds, incrementally more of the token are analysed, condensed and converted.
+
+######################## THIS FIGURE SHOULD SHOW UP IN A DIFFERENT PLACE #############################
 @TargetForExtract "check/Machine"
 @Figure
     @Tag { machine }
@@ -950,9 +960,6 @@ SouthEast :: State GateOpen SecondaryBlocked (H Idle Idle')
 @Arrow from { S } to { SE } ylabel { req } ylabelctr { no }
 }
 
-
-
-
 @End @SubSubSection
 
 @SubSubSection
@@ -961,6 +968,7 @@ SouthEast :: State GateOpen SecondaryBlocked (H Idle Idle')
 @PP
 We provide the @Haskell {parse} function for the @Haskell {Rep} constructor as an example:
 
+@TargetForExtract "check/Parser.incomplete"
 @LD @Haskell @Begin
 parse :: Thrist Parse a b -> a -> Maybe b
 
@@ -974,9 +982,9 @@ parse [Rep p; r]l as = parse r (parseRep [p]l as)
                       Just (b, as') -> (b:bs, rest)
           where (bs, rest) = parseRep p as'
 @End @Haskell
-This code is rather unsurprising: to obtain zero or more of @Haskell {p}
-we have to consume as many from the input as possible and accumulate them
-in the result along with the remaining input.
+This code is rather unsurprising: to obtain a list of @Haskell {p}s
+we have to consume as many parsed constituents from the input as possible
+and accumulate them in the result along with the remaining input.
 @PP
 For the rest of the implementation we defer to Appendix @NumberOf { parsing.token }
 which contains a working example for parsing hexadecimal tokens.
@@ -1820,7 +1828,6 @@ data Thrist :: (* ~> * ~> *) ~> * ~> * ~> * where
 
 @LD @Haskell @Begin
 data Parse :: * ~> * ~> * where
-  Epsilon :: Parse [a] ([b], [a])
   Atom :: Char -> Parse Char Char
   Sure :: (a -> b) -> Parse a b
   Try :: (a -> Maybe b) -> Parse a b
