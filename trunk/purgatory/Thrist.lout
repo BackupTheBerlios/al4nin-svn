@@ -773,6 +773,14 @@ the input string into a prefix being scrutinized and the as of yet unanalysed re
 To be able to compose these envisioned operations we define the GADT @Haskell {Parse}:
 
 @TargetForExtract "check/Parser.incomplete1"
+@IgnoreForOutput @Haskell @Begin
+import "LangPrelude.prg"
+data Thrist :: (* ~> * ~> *) ~> * ~> * ~> * where
+  Nil :: Thrist p a a
+  Cons :: p a b -> Thrist p b c -> Thrist p a c
+ deriving List(l) 
+@End @Haskell
+
 @LD @Haskell @Begin
 data Parse :: * ~> * ~> * where
   Atom :: Char -> Parse Char Char
@@ -863,7 +871,22 @@ consisting of the parsed token and the rest of the input.
 @EndList
 
 We have not yet given the defininitions of the @Haskell {hexdigit}, @Haskell {foldHex} and @Haskell {numberToken}
-functions. These can be found in the Appendix @NumberOf {parsing.token} and should be rather obvious.
+functions. These follow next and should be rather obvious.
+
+@ID @Haskell @Begin
+hexdigit = \c -> if ord '0' <= ord c && ord c <= ord '9'
+                   then Just (ord c - ord '0') else
+                 if ord 'a' <= ord c && ord c <= ord 'f'
+                   then Just (ord c - ord 'W') else
+                 if ord 'A' <= ord c && ord c <= ord 'F'
+                   then Just (ord c - ord '7') else Nothing
+
+foldHex = foldl (\acc x -> (acc * 16) + x) 0
+
+numberToken :: (Int, (String, (String, String))) -> Maybe (Token, String)
+numberToken (i, ("", ("", rest))) = Just (Number i False False, rest)
+-- #### TODO others
+@End @Haskell
 
 Putting all together we can write:
 @ID @Haskell @Begin
@@ -874,7 +897,7 @@ hexToken =
   , Sure snd
   , Rep1 (Try hexdigit)
   , Par (CataPlus foldHex) signedSized
-  , Try numberToken]l
+  , Try numberToken ]l
 
 tokens = Rep (Wrap hexToken)
 @End @Haskell
