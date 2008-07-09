@@ -905,7 +905,7 @@ As the execution of the thrist proceeds, incrementally more of the token are ana
 
 @Tbl
     aformat { @Cell indent { ctr } iv { ctr } A | @Cell indent { ctr } iv { ctr } B }
-    bformat { @Cell indent { ctr } width { 3c } height { 1c } A | @Cell indent { ctr } height { 1c } B | @Cell indent { ctr } height { 1c } C }
+    bformat { @Cell indent { ctr } width { 3c } height { 1.15c } A | @Cell indent { ctr } height { 1.15c } B | @Cell indent { ctr } height { 1.15c } C }
     marginhorizontal { 0.5c }
     marginvertical { 0.25c }
 {
