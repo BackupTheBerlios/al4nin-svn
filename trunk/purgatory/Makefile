@@ -32,3 +32,4 @@ clean:
 
 check: Thrist.lout
 	$(AWK) -f extract.awk < $<
+	cat check/Parser.incomplete* | sed -e "s/  | .../--  | .../1" > check/Parser.omg
