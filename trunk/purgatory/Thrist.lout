@@ -1149,12 +1149,12 @@ data Obligation :: (Gate Secondary Handshake) ~> (Gate Secondary Handshake) ~> *
 @End @Haskell
 
 From the type signatures we can deduce that e.g. the @Haskell {TriggerAck} clears
-the @Haskell {NeedAck} condition on the current state. On the other hand if the
-obligation raises some condition that corresponds to none of the possible states,
-then the subsequent action is in charge to clear this condition. @Haskell {TriggerExclusive}
+the @Haskell {NeedAck} facet on the current state. On the other hand if the
+obligation raises some facet that corresponds to none of the possible states,
+then the subsequent action is in charge to clear this facet. To wit @Haskell {TriggerExclusive}
 above does raise @Haskell {Requested}, but no state in Figure @NumberOf { machine }
-has such a condition listed. To obtain a transition system that passes the type checker
-some action must turn the @Haskell {Requested} bact to @Haskell {Idle}. We takl about
+has such a facet listed. To obtain a transition system that passes the type checker
+some action must turn the @Haskell {Requested} back to @Haskell {Idle}. We'll talk about
 transition actions next.
 @End @SubSubSection
 
@@ -1163,7 +1163,11 @@ transition actions next.
 @Title { Action Thrists }
 @Begin
 @PP
-We can implement the elementary actions as a GADT:
+Actions associated with state transitions can be arbitrarily complex, so instead of
+putting down a monolythic action for each transition arrow, we wish to modularize
+our actions. To this end we break down monolithic blocks into @I {elementary actions}
+that also carry facets, so the typing constraints can be easily enforced.
+We choose to implement the elementary actions as a GADT:
 
 @ID @Haskell @Begin
 data Action :: (Gate, Secondary, Handshake) ~> (Gate, Secondary, Handshake) ~> * where
