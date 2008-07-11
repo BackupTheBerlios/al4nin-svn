@@ -952,27 +952,27 @@ As the execution of the thrist proceeds, incrementally more of the token are ana
 {
 @Rowa
     A { @Haskell @Begin
-NorthWest :: State GateClosed SecondaryEnabled (H Idle Idle')
+northWest :: State GateClosed SecondaryEnabled (H Idle Idle')
         @End @Haskell }
 @Rowa
     A { @Haskell @Begin
-North :: State GateClosed SecondaryEnabled (H Idle Idle')
+north :: State GateClosed SecondaryEnabled (H Idle Idle')
         @End @Haskell }
 @Rowa
     A { @Haskell @Begin
-West :: State GateClosed SecondaryEnabled (H Idle NeedAck)
+west :: State GateClosed SecondaryEnabled (H Idle NeedAck)
         @End @Haskell }
 @Rowa
     A { @Haskell @Begin
-Mid :: State GateClosed SecondaryBlocked (H Idle NeedAck)
+mid :: State GateClosed SecondaryBlocked (H Idle NeedAck)
         @End @Haskell }
 @Rowa
     A { @Haskell @Begin
-South :: State GateClosed SecondaryBlocked (H Idle Idle')
+south :: State GateClosed SecondaryBlocked (H Idle Idle')
         @End @Haskell }
 @Rowa
     A { @Haskell @Begin
-SouthEast :: State GateOpen SecondaryBlocked (H Idle Idle')
+southEast :: State GateOpen SecondaryBlocked (H Idle Idle')
         @End @Haskell }
 }
 
@@ -1131,11 +1131,39 @@ to ensure the working of the handshaking protocol.
 @End @SubSubSection
 
 @SubSubSection
+@Title { Triggers as Obligations }
+@Begin
+@PP
+The state machine holds a distinguished state at any time. Triggers acting on the machine
+are used to initiate a change of the current state. Additionally, triggers can impose
+certain constraints that need to be dealt with during the actual transition. To encode
+triggers we introduce{@FootNote {the code is not syntactically correct
+(@Omega has no pairs at the kind level), but demonstrates our point}}:
+
+@ID @Haskell @Begin
+data Obligation :: (Gate Secondary Handshake) ~> (Gate Secondary Handshake) ~> * where
+  TriggerExclusive :: Obligation (a, b, H Idle c) (a, b, H Requested c)
+  TriggerAck :: Obligation (a, b, H c NeedAck) (a, b, H c Idle')
+  TriggerPlugged :: Obligation (GateClosed, b, H Idle c) (GateClosed, b, H Idle c)
+  ...
+@End @Haskell
+
+From the type signatures we can deduce that e.g. the @Haskell {TriggerAck} clears
+the @Haskell {NeedAck} condition on the current state. On the other hand if the
+obligation raises some condition that corresponds to none of the possible states,
+then the subsequent action is in charge to clear this condition. @Haskell {TriggerExclusive}
+above does raise @Haskell {Requested}, but no state in Figure @NumberOf { machine }
+has such a condition listed. To obtain a transition system that passes the type checker
+some action must turn the @Haskell {Requested} bact to @Haskell {Idle}. We takl about
+transition actions next.
+@End @SubSubSection
+
+
+@SubSubSection
 @Title { Action Thrists }
 @Begin
 @PP
-We can implement the elementary actions as a GADT{@FootNote {the code is not syntactically correct
-(@Omega has no pairs at the kind level), but demonstrates our point}}:
+We can implement the elementary actions as a GADT:
 
 @ID @Haskell @Begin
 data Action :: (Gate, Secondary, Handshake) ~> (Gate, Secondary, Handshake) ~> * where
@@ -1147,15 +1175,19 @@ data Action :: (Gate, Secondary, Handshake) ~> (Gate, Secondary, Handshake) ~> *
 @End @Haskell
 
 Then state transitions would correspond to @Haskell { Thrist Action }s that
-originate from a state:
-@ID @Haskell @Begin
+originate from a state, select a possible transition arrow given a trigger,
+and finally execute a series of actions before settling at the target state:
+
+@LD @Haskell @Begin
 data Transition :: Gate ~> Secondary ~> Handshake ~> * where
-  From :: State g' s' h' -> Thrist Action (g', s', h') (g, s, h) -> Transition g s h
+  From :: State g' s' h' ->
+          Obligation (g', s', h') (g'', s'', h'') ->
+          Thrist Action (g'', s'', h'') (g, s, h) -> Transition g s h
 @End @Haskell
 
-For instance the @Haskell { South } state could be defined thus:
+For instance the @Haskell { south } state could be defined thus:
 @ID @Haskell @Begin
-South = State [From West [OpenGate]l]
+south = State [From west TriggerAck [BlockSecondary]l]
 @End @Haskell
 
 @PP
