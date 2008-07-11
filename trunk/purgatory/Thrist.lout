@@ -916,7 +916,7 @@ With some squinting we can summarize the principles as:
 As the execution of the thrist proceeds, incrementally more of the token are analysed, condensed and converted.
 
 ######################## THIS FIGURE SHOULD SHOW UP IN A DIFFERENT PLACE #############################
-@TargetForExtract "check/Machine2"
+@TargetForExtract "check/Machine.part2"
 @Figure
     @Tag { machine }
     @Caption { State machine fragment }
@@ -1112,11 +1112,13 @@ of facets each.
 To formally introduce the facets, we employ another @Omega feature,
 namely @I { user-defined kinds }, whose alternatives can be used to
 parameterize the @Haskell { State } datatype:
-@TargetForExtract "check/Machine1"
+@TargetForExtract "check/Machine.part1"
 @LD @Haskell @Begin
 kind Gate = GateClosed | GateOpen
 kind Secondary = SecondaryEnabled | SecondaryBlocked
-kind Handshake = Idle | NeedAck | Requested
+kind HandshakeIn = Idle | Requested
+kind HandshakeOut = Idle' | NeedAck
+kind Handshake = H HandshakeIn HandshakeOut
 
 data State :: Gate ~> Secondary ~> Handshake ~> * where
   State :: [Transition g s h] -> State g s h
@@ -1132,15 +1134,16 @@ to ensure the working of the handshaking protocol.
 @Title { Action Thrists }
 @Begin
 @PP
-We can implement the elementary actions as a GADT:
+We can implement the elementary actions as a GADT{@FootNote {the code is not syntactically correct
+(@Omega has no pairs at the kind level), but demonstrates our point}}:
 
 @ID @Haskell @Begin
-data Action :: Gate ~> Secondary ~> Handshake ~> * where
-  RequestExclusive :: Action (a, b, Idle) (a, b, NeedAck)
-  AckExclusive :: Action (a, b, Requested) (a, b, Idle)
+data Action :: (Gate, Secondary, Handshake) ~> (Gate, Secondary, Handshake) ~> * where
+  RequestExclusive :: Action (a, b, H c Idle') (a, b, H c NeedAck)
+  AckExclusive :: Action (a, b, H Requested c) (a, b, H Idle c)
   OpenGate :: Action (GateClosed, SecondaryBlocked, c) (GateOpen, SecondaryBlocked, c)
   BlockSecondary :: Action (a, SecondaryEnabled, c) (a, SecondaryBlocked, c)
-  -- ...
+  ...
 @End @Haskell
 
 Then state transitions would correspond to @Haskell { Thrist Action }s that
@@ -1218,6 +1221,7 @@ of the @Haskell { plus } type function's commutativity.
 thrist of length greater or equal to 2, then the following function @Haskell { trans }
 can be applied to get a proof object by transitivity:
 
+@TargetForExtract "check/Curious"
 @ID @Haskell @Begin
 trans :: Thrist Equal a b -> Equal a b
 trans []l = Eq
