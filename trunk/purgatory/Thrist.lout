@@ -1124,10 +1124,10 @@ data State :: Gate ~> Secondary ~> Handshake ~> * where
   State :: [Transition g s h] -> State g s h
 @End @Haskell
 
-On its right side, figure @NumberOf { machine } shows
-the states along with the facets and
-the labeling of the transition lists the elementary actions needed
-to ensure the working of the handshaking protocol.
+Figure @NumberOf { machine } includes the states along with the facets and
+the labeling of the transition lists the actions needed e.g. to ensure the working
+of the handshaking protocol. For now we leave the definition of @Haskell {Transition}
+open, we shall supply it in due time.
 @End @SubSubSection
 
 @SubSubSection
@@ -1178,26 +1178,38 @@ data Action :: (Gate, Secondary, Handshake) ~> (Gate, Secondary, Handshake) ~> *
   ...
 @End @Haskell
 
-Then state transitions would correspond to @Haskell { Thrist Action }s that
-originate from a state, select a possible transition arrow given a trigger,
-and finally execute a series of actions before settling at the target state:
+Given this definition of elementary actions we can apply our thrist framework
+and form thrists from these. Then state transitions would correspond to three ingredients:
+@List
+   @ListItem { they originate from a state, }
+   @ListItem { select a possible transition arrow given a trigger, }
+   @ListItem { and finally execute a @Haskell { Thrist Action } to arrive at the target state. }
+@EndList
 
-@LD @Haskell @Begin
+We define:
+
+@ID @Haskell @Begin
 data Transition :: Gate ~> Secondary ~> Handshake ~> * where
   From :: State g' s' h' ->
           Obligation (g', s', h') (g'', s'', h'') ->
-          Thrist Action (g'', s'', h'') (g, s, h) -> Transition g s h
+          Thrist Action (g'', s'', h'') (g, s, h) ->
+          Transition g s h
 @End @Haskell
 
+We have fulfilled our earlier promise, and now we can define @Haskell {State}s.
 For instance the @Haskell { south } state could be defined thus:
 @ID @Haskell @Begin
 south = State [From west TriggerAck [BlockSecondary]l]
 @End @Haskell
 
+We have succeeded in providing a very compact representation of state machines.
+From the above expression we can see that only one transition arrow arrives at @Haskell { south }, how
+it is triggered and which action follows. The fact that the type checker allows
+this expression is an additional assurance of correctness.
+
 @PP
 What do we gain with such a declarative description of the state machine at
 hand?
-@LP
 @DashList
    @ListItem { First, given a fine-grained encoding of the protocol's and business logic's
 encoding in the state facets, the type system will take care of checking that
@@ -1210,7 +1222,7 @@ is an error prone task and help from the type system highly welcome. }
    @ListItem { Second, the possibility to pattern-match on the actions that form transitions
 it is possible to enumerate all possible admissible configurations of the communicating
 state machines and use proof techniques to ensure that the principal invariant of
-the system is met{@FootNote { Highlighting this verification aspect is beyond the scope ot this paper } }. }
+the system is met. }
 @EndList
 
 @End @SubSubSection
