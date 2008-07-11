@@ -1202,14 +1202,13 @@ For instance the @Haskell { south } state could be defined thus:
 south = State [From west TriggerAck [BlockSecondary]l]
 @End @Haskell
 
-We have succeeded in providing a very compact representation of state machines.
+At last we have succeeded in providing a very compact representation of state machines.
 From the above expression we can see that only one transition arrow arrives at @Haskell { south }, how
 it is triggered and which action follows. The fact that the type checker allows
 this expression is an additional assurance of correctness.
 
 @PP
-What do we gain with such a declarative description of the state machine at
-hand?
+So what do we gain with such a declarative description of the state machine at hand?
 @DashList
    @ListItem { First, given a fine-grained encoding of the protocol's and business logic's
 encoding in the state facets, the type system will take care of checking that
@@ -1299,7 +1298,7 @@ part of the functional programmer's weaponry.
 
 @Figure
     @Tag { binary }
-    @Caption { Mathematical structures with binary inner operation }
+    @Caption { Mathematical structures with binary inner operation that is associative }
 @Tbl
     ruleabove { yes }
     ruleabovecolour { darkgrey }
@@ -1518,14 +1517,19 @@ manner is given by the Haskell Workshop paper of Swierstra et al. @Cite { $swier
 another use of the @I { free monad }, a data structure built up as an ADT. The result can be examined intensionally
 by pattern matching, in a similar fashion like our thrists can be taken apart by the semantics functions.
 @PP
-Chris Heunen and Bart Jacobs' work @Cite { $heunenjacobs.monoid } on the connection of arrows and monads
-and their category theoretical formalisation is of relevance because it reveals the mathematical
-structure behind these constructs, giving a common generalization to them as {@I monoids}.
+Chris Heunen and Bart Jacobs' work @Cite { $heunenjacobs.monoid } examines the connection of arrows and monads
+and their category theoretical formalisation. They reveal the mathematical structure behind these constructs,
+giving a common generalization to them as {@I monoids}. This is a different result from ours, while separating
+structure from behaviour we arrive at thrists that are augmented with a semantics.
+@PP
 Arrows @Cite { $hughes00.arrows } appeared in the general mindset as a pragmatic approach to deal with
 a certain class of parsers that did not fit into the monadic framework @Cite { $duponcheel96.parser }.
+While the analysis aspect (of the combined grammar) was one of the objectives, it happened at runtime
+on data propagated through the arrow. Our approach enables the analysis of the arrow itself.
+@PP
 Nilsson @Cite { $nilsson05.frp } provides a method for optimizing limited cases of arrow combinator libraries using GADTs.
-In the scope of framework for functional reactive programming he is still bound to the limitations of the amesiac nature of
-function composition inside the arrow, but seem to gain some noticeable gains in performance especially with microbenchmarks
+In the scope of his framework for functional reactive programming he is still bound to the limitations of the amesiac nature of
+function composition inside of the arrow, but seem to gain some noticeable gains in performance especially with microbenchmarks
 modelling the arrow laws.
 @End @Section
 
