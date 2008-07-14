@@ -1141,7 +1141,7 @@ triggers we introduce{@FootNote {the code is not syntactically correct
 (@Omega has no pairs at the kind level), but demonstrates our point}}:
 
 @ID @Haskell @Begin
-data Obligation :: (Gate Secondary Handshake) ~> (Gate Secondary Handshake) ~> * where
+data Obligation :: (Gate, Secondary, Handshake) ~> (Gate, Secondary, Handshake) ~> * where
   TriggerExclusive :: Obligation (a, b, H Idle c) (a, b, H Requested c)
   TriggerAck :: Obligation (a, b, H c NeedAck) (a, b, H c Idle')
   TriggerPlugged :: Obligation (GateClosed, b, H Idle c) (GateClosed, b, H Idle c)
