@@ -1,7 +1,7 @@
 -- -*-Haskell-*-
 
 {-
- * Copyright (c) 2007 Gabor Greif
+ * Copyright (c) 2007-2008 Gabor Greif
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -107,6 +107,12 @@ cat (Cons WiToSo r) = "WiToSo " ++ cat r
 cat (Cons SoTo r) = "SoTo " ++ cat r
 cat (Cons ToSo r) = "ToSo " ++ cat r
 
+runThrist :: (forall (a::*0 ~> *0 ~> *0) b.a b b)
+	     -> (forall (a::*0 ~> *0 ~> *0) b c d.a b c -> a c d -> a b d)
+	     -> Thrist a b c
+	     -> a b c
+runThrist n _ []l = n
+runThrist n c [h; t]l = c h (runThrist n c t)
 
 
 
