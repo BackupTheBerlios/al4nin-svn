@@ -78,8 +78,8 @@ data List :: * ~> * where
 @PP
 We deliberately avoid the traditional syntax of defining the @Haskell {List} datatype,
 and use a @I {GADT-style} definition{@FootNote {in a @I {generalized algebraic datatype}
-the data constructor is allowed to define a more specific type than the datatype itself }},
-because we want to build on this fundament later.
+each data constructor is allowed to define a more specific type than the datatype itself }},
+because we want to build on this foundation later.
 It is enough to say that @Haskell {List} does not impose any constraints on the
 contained datatype whatsoever:
 @LD {
@@ -246,10 +246,18 @@ thrists later in the discussion. But now let's put the last missing
 piece in place to show that an arrow thrist is strictly more general
 than function composition. Here comes the @Haskell {runArrowThrist} function:
 
+@TargetForExtract "check/runArrowThrist.omg"
+@IgnoreForOutput @Haskell @Begin
+import "LangPrelude.prg"
+data Thrist :: (* ~> * ~> *) ~> * ~> * ~> * where
+  Nil :: Thrist p a a
+  Cons :: p a b -> Thrist p b c -> Thrist p a c
+ deriving List(l) 
+@End @Haskell
 @LD @Haskell @Begin
-runArrowThrist :: Thrist (->) b c -> c -> b
+runArrowThrist :: Thrist (->) b c -> b -> c
 runArrowThrist Nil b = b
-runArrowThrist (Cons f r) a = runThrist r (f a)
+runArrowThrist (Cons f r) a = runArrowThrist r (f a)
 @End @Haskell
 
 
@@ -285,7 +293,7 @@ dominoes' face numbers do not correspond to the contained @I {value}, but to the
 @Begin
 @PP
 
-Now that we have defined the @Haskell { Thrist } datatype and gave a sufficiently
+Now that we have defined the @Haskell { Thrist } datatype and given a sufficiently
 generic interface to cover nontrivial cases, time has come to look for
 real-world applications. Specifically we shall describe a combinator
 library for creating ASTs of @Cat, a statically typed "stack-oriented"
@@ -408,7 +416,7 @@ It works:
 }
 
 With this basic functionality in place, we get bolder and define
-a primitive with side effect:
+a primitive with a side-effect:
 
 @ID @Haskell {
 data Cat :: * ~> * ~> * where
@@ -473,7 +481,7 @@ interpret :: (forall a. Thrist Cat a a) -> IO ()
 interpret program = interpret' program $ returnIO ()
 @End @Haskell
 
-Obviously this @Haskell {interpret} function is only called for side-effects.
+Obviously this @Haskell {interpret} function is called for its side-effects.
 @End @SubSubSection
 
 @SubSubSection
@@ -1487,7 +1495,7 @@ of GADTs into the system has led to a two-parameter @Haskell {Patch} datatype an
 @Haskell {FL}, @Haskell {RL} GADTs which are used for sequencing these (among others).
 The definition of @Haskell {FL} is identical to how our @Haskell {Thrist} would be
 defined in Haskell! Being hidden in a utility module, @Haskell {FL} entered the @I { Darcs }
-codebase in the year 2007 but its origins can be traced back to a brain-storming session at
+codebase in the year 2007 but its origins can be traced back to a brain-storming session at the
 @I {Haskell'05} workshop in Tallinn.
 @PP
 In his @I {Fun in the Afternoon} talk @Cite {$mcbride07.rstar}, Conor McBride proposed
@@ -1529,7 +1537,7 @@ on data propagated through the arrow. Our approach enables the analysis of the a
 @PP
 Nilsson @Cite { $nilsson05.frp } provides a method for optimizing limited cases of arrow combinator libraries using GADTs.
 In the scope of his framework for functional reactive programming he is still bound to the limitations of the amesiac nature of
-function composition inside of the arrow, but seem to gain some noticeable gains in performance especially with microbenchmarks
+function composition inside of the arrow, but seems to gain some noticeable gains in performance especially with microbenchmarks
 modelling the arrow laws.
 @End @Section
 
