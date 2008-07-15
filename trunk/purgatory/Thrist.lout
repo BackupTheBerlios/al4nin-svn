@@ -244,9 +244,9 @@ The @I {pair thrist} that caused us some headache before!
 We shall explore some other interesting but sometimes futile
 thrists later in the discussion. But now let's put the last missing
 piece in place to show that an arrow thrist is strictly more general
-than function composition. Here comes the @Haskell {runArrowThrist} function:
+than function composition. Here comes the @Haskell {runArrThrist} function:
 
-@TargetForExtract "check/runArrowThrist.omg"
+@TargetForExtract "check/runArrThrist.omg"
 @IgnoreForOutput @Haskell @Begin
 import "LangPrelude.prg"
 data Thrist :: (* ~> * ~> *) ~> * ~> * ~> * where
@@ -255,9 +255,9 @@ data Thrist :: (* ~> * ~> *) ~> * ~> * ~> * where
  deriving List(l) 
 @End @Haskell
 @LD @Haskell @Begin
-runArrowThrist :: Thrist (->) b c -> b -> c
-runArrowThrist Nil b = b
-runArrowThrist (Cons f r) a = runArrowThrist r (f a)
+runArrThrist :: Thrist (->) b c -> b -> c
+runArrThrist Nil b = b
+runArrThrist (Cons f r) a = runArrThrist r (f a)
 @End @Haskell
 
 
@@ -265,7 +265,7 @@ This function now confirms the vague intuition that @Haskell {Nil} plays the r{@
 the neutral element of the arrow thrist, just like the identity function
 plays the r{@Char ocircumflex}le of the neutral element in the monoid of composed functions.
 We shall encounter this recurring fact as we proceed to our examples' implementations.
-@LP The definition of @Haskell { runArrowThrist } on a @Haskell { Cons } constructor
+@LP The definition of @Haskell { runArrThrist } on a @Haskell { Cons } constructor
 deserves some attention. We have not yet explicitly mentioned it, but range of
 the function @Haskell { f } is existentially qualified, because it does not
 appear in the final result of @Haskell { Cons }. This implies a minor complication
@@ -990,8 +990,8 @@ southEast :: State GateOpen SecondaryBlocked (H Idle Idle')
 @Arrow from { N } to { M } ylabel { plug } ylabelctr { no }
 @Arrow from { NW } to { W } ylabel { plug } ylabelctr { no }
 @Arrow from { W } to { M } ylabel { req } ylabelctr { no }
-@Arrow from { W } to { S } ylabel { ack }
-@Arrow from { M } to { SE } ylabel { ack }
+@Arrow from { W } to { S } zlabel { ack } zindent { 1.8f }
+@Arrow from { M } to { SE } zlabel { ack } zindent { 1.8f }
 @Arrow from { S } to { SE } ylabel { req } ylabelctr { no }
 }
 
