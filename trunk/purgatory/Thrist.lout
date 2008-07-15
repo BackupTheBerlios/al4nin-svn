@@ -204,7 +204,7 @@ If we fail to provide this embedding, we cannot consider thrists being a general
 function composition.
 @PP
 Not everything is lost, however. Close scrutiny reveals that our usage of
-@Haskell {(,)}{@FootNote { pronounced ''pair``}}
+@Haskell {(,)}{@FootNote { pronounced ``pair''}}
 is the culprit. If we could liberate ourselves from this
 premature decision, we could gain back our hope.
 @End @SubSection
@@ -374,7 +374,7 @@ In the rest of this paper we shall write the above expression as
 }
 @Omega's parser and printer perform the conversion to
 the internal form when the list-like brackets @Haskell {[]} followed
-by the letter ''l`` are encountered.
+by the letter ``l'' are encountered.
 @PP
 We can now continue using this terser syntax:
 @LD {
@@ -810,13 +810,13 @@ constructors already give us a strong indication about their intended meaning:
 @ListItem {  @Haskell {(Try hexdigit)} matches only if a character is a hexadecimal one and returns its hex value, fails otherwise }
 @ListItem {  @Haskell {(Rep1 (Atom 'X'))} matches as many capital @Haskell {'X'}s as possible and returns a pair consisting the matched and unconsumed portions }
 @ListItem {  @Haskell {(Rep part)} similarly tries to match as many @Haskell {part}s in the input's prefix as possible }
-@ListItem {  @Haskell {(Group [Atom 'a', Atom 'b'])} just matches a prefix @I {''ab``} in the input, returning it in a pair along with the unconsumed portion, or fails otherwise }
+@ListItem {  @Haskell {(Group [Atom 'a', Atom 'b'])} just matches a prefix @I {``ab''} in the input, returning it in a pair along with the unconsumed portion, or fails otherwise }
 @ListItem {  @Haskell {(Par fst snd)} runs @Haskell {fst} and @Haskell {snd} on the two components of the pair, failing if any of them fails }
 @ListItem {  @Haskell {(Wrap parseThr)} simply allows to treat a thrist as a @Haskell {Parse}. }
 @EndList
 
 In the above descriptions we only suggest a possible semantics, because @Haskell {Parse}
-does not mandate it in any way. So when we talk about ''returns something`` then this is just an intention,
+does not mandate it in any way. So when we talk about ``returns something'' then this is just an intention,
 an implementation may choose to employ an other strategy (such as @I {continuation passing}). It
 is also completely unspecified what @I failure and @I success actually entail.
 @PP
@@ -1501,7 +1501,7 @@ codebase in the year 2007 but its origins can be traced back to a brain-storming
 In his @I {Fun in the Afternoon} talk @Cite {$mcbride07.rstar}, Conor McBride proposed
 the free category {@I R}* as generalization to the conventional list datatype and several others.
 At the heart of the matter, his @I R stands  for the first parameter to our @Haskell {Thrist},
-while the ''*`` is borrowed from the mathematical notation for free categories, and thus essentially
+while the ``*'' is borrowed from the mathematical notation for free categories, and thus essentially
 our @Haskell {Thrist} type constructor together with the @Haskell {appendThrist} operation.
 To demonstrate his point,
 @ID @Haskell {
@@ -1593,7 +1593,7 @@ p is left universal. At first glance maps and folds seem to break because of the
 studying the correspondig free categories might show the way. As these transformations are essential
 for a wide range of regular data structures, we should be able to use similar higher-order functions too.
 @LP While the syntax presented here is already quite palatable, it remains to be seen how thrists can be
-given syntactic sugar along the lines of the monadic ''do`` (or even arrow{
+given syntactic sugar along the lines of the monadic ``do'' (or even arrow{
 @FootNote { @I {arrow syntax} @Cite { $paterson01.notation } is available in certain Haskell implementations, but not in @Omega}}) notation
 used in current Haskell implementations.
 @PP We intend to tackle these theoretical and practical questions as a follow-on.
