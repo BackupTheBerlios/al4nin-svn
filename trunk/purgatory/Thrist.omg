@@ -107,8 +107,8 @@ cat (Cons WiToSo r) = "WiToSo " ++ cat r
 cat (Cons SoTo r) = "SoTo " ++ cat r
 cat (Cons ToSo r) = "ToSo " ++ cat r
 
-runThrist :: (forall (a::*0 ~> *0 ~> *0) b.a b b)
-	     -> (forall (a::*0 ~> *0 ~> *0) b c d.a b c -> a c d -> a b d)
+runThrist :: forall (a :: *0~>*0~>*0) . (forall (b :: *0).a b b)
+	     -> (forall (b :: *0) (c :: *0) (d :: *0).a b c -> a c d -> a b d)
 	     -> Thrist a b c
 	     -> a b c
 runThrist n _ []l = n
@@ -155,9 +155,9 @@ tp1 = [Nothing, Just]s
 --{
 funThrist = [ord, (+) 2, chr]l
 
-runThrist :: Thrist (->) a b -> a -> b
-runThrist Nil b = b
-runThrist (Cons f r) a = runThrist r (f a)
+runArrThrist :: Thrist (->) a b -> a -> b
+runArrThrist Nil b = b
+runArrThrist (Cons f r) a = runArrThrist r (f a)
 --}
 
 {-
@@ -165,9 +165,9 @@ runThrist (Cons f r) a = runThrist r (f a)
 
 prompt> funThrist
  [<primfun to1>,<fn>,<primfun to1>]l : Thrist (->) Char Char
-prompt> runThrist funThrist
+prompt> runArrThrist funThrist
  <fn> : Char -> Char
-prompt> runThrist funThrist 'x'
+prompt> runArrThrist funThrist 'x'
  'z' : Char
 
 -}
