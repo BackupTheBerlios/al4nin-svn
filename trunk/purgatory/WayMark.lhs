@@ -69,7 +69,30 @@ Test section:
 
 > testcase = Val 5 (One $ Zero $ One $ Stop $ Zero $ Fin testcase)
 
-
+> soundTags :: Int -> Property
 > soundTags n = n > 0 && n < 8 ==> verify (Val 5 p) where Val i p = testcase 
 
      where arr = takeLast n testcase
+
+> t1 = quickCheck soundTags
+
+> data History
+>   = Insert History
+>   | Remove Int History
+>   | Done
+>  deriving Show
+
+Now we can construct a Value given the pointer pattern and a history:
+
+> construct :: Int -> History -> Value
+> construct i h = construct' seed h where seed = Val i (Fin seed)
+
+The actual mutating function is construct':
+
+> construct' v Done = v
+> construct' (Val i p) (Insert rest) = construct' (Val i $ Stop p) rest
+> construct' (Val i (Zero p)) (Remove 0 rest) = construct' (Val i p) rest
+> construct' (Val i (One p)) (Remove 0 rest) = construct' (Val i p) rest
+> construct' (Val i (Stop p)) (Remove 0 rest) = construct' (Val i p) rest
+
+      >     where v = remove 
