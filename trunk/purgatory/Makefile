@@ -1,5 +1,7 @@
 PLATFORM = $(shell uname)
 
+CC = gcc
+
 ifeq (Darwin,$(PLATFORM))
 PSRES = /Users/ggreif/psres
 LOUT = lout -F $(PSRES)
@@ -17,10 +19,13 @@ endif
 
 .PHONY: view clean check
 
+prg2lout: prg2lout.c
+	$(CC) -O2 $< -o $@
+
 %.pdf: %.ps
 	$(DISTILL) $<
 
-%.lout.ps: %.lout haskellx haskellfx db/*.ld
+%.lout.ps: %.lout haskellx haskellfx db/*.ld prg2lout
 	$(LOUT) -r2 -o $@ $<
 
 view: Thrist.lout.pdf
