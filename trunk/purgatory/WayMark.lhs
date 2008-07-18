@@ -48,11 +48,12 @@ The following function scans the waymarks along the chain and
 returns the numerical pattern for Value*.
 
 Note: for simplicity the required step count is 3 at the moment.
+requiredSteps = 3
 
 > compute' :: Int -> Int -> UsePtr -> Int
 > compute' steps seed (Zero p) = compute' (steps + 1) (seed + seed) p
 > compute' steps seed (One p) = compute' (steps + 1) (seed + seed + 1) p
-> compute' steps seed (Stop p) = if steps == 3 then seed else compute' 0 0 p
+> compute' steps seed (Stop p) = if steps == requiredSteps then seed else compute' 0 0 p
 > compute' steps seed (Fin (Val i _)) = i
 
 Test section:
