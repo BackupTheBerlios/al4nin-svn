@@ -21,10 +21,18 @@
  * OR OTHER DEALINGS IN THE SOFTWARE.
  -}
 
+First we define the datatype for tagged pointers.
+The Fin constructor points back to the Value itself:
 
 > data UsePtr = Zero UsePtr | One UsePtr | Stop UsePtr | Fin Value
 
+Values (here) store the numerical integer for the bit pattern of the
+pointer (Value*) and the first Use* in the chain.
+
 > data Value = Val Int UsePtr
+
+The verify function walks the Use chain and for each pointer performs
+a check whether the computed Value* matches up with the reality.
 
 > verify :: Value -> Bool
 > verify (Val i (p@(Zero p'))) = compute p == i && verify (Val i p')
@@ -32,7 +40,14 @@
 > verify (Val i (p@(Stop p'))) = compute p == i && verify (Val i p')
 > verify (Val i (Fin (Val i' _))) = i == i'
 
+Forwarding function supplying step counter and seed:
+
 > compute p = compute' 0 0 p
+
+The following function scans the waymarks along the chain and
+returns the numerical pattern for Value*.
+
+Note: for simplicity the required step count is 3 at the moment.
 
 > compute' :: Int -> Int -> UsePtr -> Int
 > compute' steps seed (Zero p) = compute' (steps + 1) (seed + seed) p
@@ -40,4 +55,6 @@
 > compute' steps seed (Stop p) = if steps == 3 then seed else compute' 0 0 p
 > compute' steps seed (Fin (Val i _)) = i
 
-> test = Val 5 $ One $ Zero $ One $ Stop $ Zero $ Fin test
+Test section:
+
+> test = Val 5 (One $ Zero $ One $ Stop $ Zero $ Fin test)
