@@ -21,6 +21,8 @@
  * OR OTHER DEALINGS IN THE SOFTWARE.
  -}
 
+> import Test.QuickCheck
+
 First we define the datatype for tagged pointers.
 The Fin constructor points back to the Value itself:
 
@@ -65,4 +67,9 @@ Note: for simplicity the required step count is 3 at the moment.
 
 Test section:
 
-> test = Val 5 (One $ Zero $ One $ Stop $ Zero $ Fin test)
+> testcase = Val 5 (One $ Zero $ One $ Stop $ Zero $ Fin testcase)
+
+
+> soundTags n = n > 0 && n < 8 ==> verify (Val 5 p) where Val i p = testcase 
+
+     where arr = takeLast n testcase
