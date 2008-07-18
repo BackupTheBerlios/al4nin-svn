@@ -25,11 +25,17 @@ First we define the datatype for tagged pointers.
 The Fin constructor points back to the Value itself:
 
 > data UsePtr = Zero UsePtr | One UsePtr | Stop UsePtr | Fin Value
+> instance Show UsePtr where
+>     show (Zero p) = "0" ++ show p
+>     show (One p) = "1" ++ show p
+>     show (Stop p) = "s" ++ show p
+>     show (Fin _) = "S"
 
 Values (here) store the numerical integer for the bit pattern of the
 pointer (Value*) and the first Use* in the chain.
 
 > data Value = Val Int UsePtr
+>     deriving Show
 
 The verify function walks the Use chain and for each pointer performs
 a check whether the computed Value* matches up with the reality.
@@ -48,7 +54,8 @@ The following function scans the waymarks along the chain and
 returns the numerical pattern for Value*.
 
 Note: for simplicity the required step count is 3 at the moment.
-requiredSteps = 3
+
+> requiredSteps = 3
 
 > compute' :: Int -> Int -> UsePtr -> Int
 > compute' steps seed (Zero p) = compute' (steps + 1) (seed + seed) p
