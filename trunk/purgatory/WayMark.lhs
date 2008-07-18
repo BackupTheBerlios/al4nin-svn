@@ -95,4 +95,8 @@ The actual mutating function is construct':
 > construct' (Val i (One p)) (Remove 0 rest) = construct' (Val i p) rest
 > construct' (Val i (Stop p)) (Remove 0 rest) = construct' (Val i p) rest
 
+> construct' (Val i (Stop p)) (Remove (n+1) rest) = Val i (Stop p')
+>     where (Val i' p') = construct' (Val i p) (Remove n rest)
+
+
       >     where v = remove 
