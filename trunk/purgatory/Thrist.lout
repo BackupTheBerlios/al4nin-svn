@@ -153,12 +153,12 @@ paper.
 @Title { Generalizing Function Composition }
 @Begin
 @PP
-While function composition seems to be a cute artifact of mathematics, (where
-nevertheless all computable functions can be derived from), this is no reason
+While function composition seems to be a cute artifact of mathematics, (nevertheless,
+all computable functions can be derived from it), this is no reason
 for us to stop at this point! First, we observe that function composition is a one-way
 street: once two functions are composed, they amalgamate beyond recognition.
 There is no way (inside our system) to take them apart again. This is very much
-resembling the addition, where @Haskell { (23 + 19) } gives @Haskell {42} and this result has completely
+resembling addition, where @Haskell { (23 + 19) } gives @Haskell {42} and this result has completely
 lost all memories of the fact how it was obtained. But can we create a datastructure
 that has all properties of function composition, without being amnesiac?
 @PP
@@ -227,7 +227,11 @@ data Thrist :: (* ~> * ~> *) ~> * ~> * ~> * where
 All that remains of the pair is the bitter aftertaste
 and the letter @Haskell {p} in the definition of @Haskell {Thrist}.
 @PP
-It looks like we are getting closer now:
+The @I deriving clause above activates some special syntax for
+reading or displaying which we will peruse later. At the moment
+we are interested in the types only and it looks like we are getting
+closer now:
+
 @LD {
 { Cons chr (Cons ("\\"x -> x + 32) (Cons ord Nil)) } @Prompt
 { ... : Thrist (->) Char Char }
@@ -372,9 +376,13 @@ In the rest of this paper we shall write the above expression as
 { [Push 19, Push 23, Add, Pop]l } @Prompt
 { [Push 19, Push 23, Add, Pop]l :: Thrist Cat a a }
 }
-@Omega's parser and printer perform the conversion to
-the internal form when the list-like brackets @Haskell {[]} followed
-by the letter ``l'' are encountered.
+At this point it becomes obvious what we have merely hinted in
+Section @NumberOf {intro.compose}: the @I deriving clause causes
+@Omega's parser and printer to perform the conversion to
+the internal form whenever the list-like brackets @Haskell {[]} followed
+by the letter ``l'' are encountered{@FootNote {@Haskell {[a, b]l} is equivalent
+to @Haskell {Cons a (Cons b Nil)}, while semicolon separates off the tail: 
+@Haskell {[a; b]l == Cons a b}}}.
 @PP
 We can now continue using this terser syntax:
 @LD {
@@ -487,8 +495,6 @@ Obviously this @Haskell {interpret} function is called for its side-effects.
 @SubSubSection
 @Title { Extending the Primitives }
 @Begin
-@PP
-
 Above we have defined an arithmetic primitive in @Cat, namely @Haskell { Add }. While possible,
 it is not desired to define all (which is potentially a lot) primitives this
 way, with their own typing rules, and own clause in the interpreter. Also,
@@ -507,12 +513,12 @@ We could introduce @Haskell { Prim } thus:
 }
 While this approach can surely be made to work with unary functions,
 it is not immediately seen how binary @FootNote { or arbitrary arity functions for that matter }
-operators can be formalized in the type-safe way mandated by @Omega{.}
-The expectation is that a binary primitive would consume the top @Haskell { n } items from the
-stack and produce one item as the result.
+operators can be formalized in the type-safe way mandated by {@Omega}.
+The expectation is that an @Haskell { n }-ary primitive would consume the
+top @Haskell { n } items from the stack and produce one item as the result.
 @LP We have to reformulate our typing rule to deal with the case that
 the type parameter @Haskell { b } is in turn a function arrow. Since @Omega
-allows us to decompose the arrow's structure using a type function, we try:
+allows us to decompose the arrow's structure using a @I {type function}, we try:
 @ID @Haskell {
   Prim :: (a -> b) -> Cat {blowUpBy (a -> b) opaque} ({result b}, opaque)
   ...
