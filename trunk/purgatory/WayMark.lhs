@@ -82,6 +82,11 @@ Test section:
 >   | Done
 >  deriving Show
 
+Some quickCheck helpers:
+
+> instance Arbitrary History where
+>   arbitrary = oneof [return Done]
+
 Now we can construct a Value given the pointer pattern and a history:
 
 > construct :: Int -> History -> Value
