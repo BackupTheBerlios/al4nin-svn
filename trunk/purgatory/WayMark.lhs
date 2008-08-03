@@ -21,6 +21,7 @@
  * OR OTHER DEALINGS IN THE SOFTWARE.
  -}
 
+> import Monad
 > import Test.QuickCheck
 
 First we define the datatype for tagged pointers.
@@ -85,7 +86,14 @@ Test section:
 Some quickCheck helpers:
 
 > instance Arbitrary History where
->   arbitrary = oneof [return Done]
+>   arbitrary = sized history
+>     where
+>       history 0 = return Done
+>       history n | n>0 = oneof
+>         [ return Done
+>         , liftM Insert subtree
+>         , liftM2 Remove arbitrary subtree]
+>           where subtree = history (n `div` 2)
 
 Now we can construct a Value given the pointer pattern and a history:
 
