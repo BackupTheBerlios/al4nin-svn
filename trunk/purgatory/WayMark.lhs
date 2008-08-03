@@ -91,9 +91,9 @@ Some quickCheck helpers:
 >       history 0 = return Done
 >       history n | n>0 = oneof
 >         [ return Done
->         , liftM Insert subtree
->         , liftM2 Remove arbitrary subtree]
->           where subtree = history (n `div` 2)
+>         , liftM Insert subhistory
+>         , liftM2 Remove arbitrary subhistory ]
+>           where subhistory = history (n - 1)
 
 Now we can construct a Value given the pointer pattern and a history:
 
