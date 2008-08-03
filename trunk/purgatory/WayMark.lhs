@@ -113,3 +113,9 @@ The actual mutating function is construct':
 
 
       >     where v = remove 
+
+
+> prop_hist h = case h of
+>   Done -> True
+>   Insert (Remove _ Done) -> False
+>   _ -> True
