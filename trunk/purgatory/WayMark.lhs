@@ -32,7 +32,7 @@ The Fin constructor points back to the Value itself:
 >     show (Zero p) = "0" ++ show p
 >     show (One p) = "1" ++ show p
 >     show (Stop p) = "s" ++ show p
->     show (Fin _) = "S"
+>     show (Fin (Val i _)) = "S(" ++ show i ++ ")"
 
 Values (here) store the numerical integer for the bit pattern of the
 pointer (Value*) and the first Use* in the chain.
@@ -69,6 +69,8 @@ Note: for simplicity the required step count is 3 at the moment.
 Test section:
 
 > testcase = Val 5 (One $ Zero $ One $ Stop $ Zero $ Fin testcase)
+> testcase' = let (Val i p) = testcase in let v = Val (i+1) $ copy v p in v
+
 
 > soundTags :: Int -> Property
 > soundTags n = n > 0 && n < 8 ==> verify (Val 5 p) where Val i p = testcase 
@@ -105,16 +107,28 @@ The actual mutating function is construct':
 > construct' v Done = v
 > construct' (Val i p) (Insert rest) = construct' (let v = Val i $ Stop $ copy v p in v) rest
 
-> construct' v@(Val i (Zero p)) (Remove _ rest) = v
-> construct' (Val i (Zero p)) (Remove 0 rest) = construct' (let v = Val i $ copy v p in v) rest
-> construct' (Val i (One p)) (Remove 0 rest) = construct' (let v = Val i $ copy v p in v) rest
-> construct' (Val i (Stop p)) (Remove 0 rest) = construct' (let v = Val i $ copy v p in v) rest
+> construct' v@(Val _ (Fin _)) (Remove _ rest) = v
+> construct' (Val i p) (Remove n rest) = let v = Val i $ copy v $ shorten p n in v
 
-> construct' (Val i (Stop p)) (Remove (n+1) rest) = let v = Val i (Stop $ copy v p') in v
->     where (Val i' p') = construct' (Val i p) (Remove n rest)
+> shorten (Zero p) 0 = p
+> shorten (One p) 0 = p
+> shorten (Stop p) 0 = p
+> shorten f@(Fin _) 0 = f
+> shorten (Zero p) (n+1) = Zero $ shorten p n
+> shorten (One p) (n+1) = One $ shorten p n
+> shorten (Stop p) (n+1) = Stop $ shorten p n
+> shorten (Fin (Val _ p)) (n+1) = shorten p (n+1)
+
+
+--> construct' (Val i (Zero p)) (Remove 0 rest) = construct' (let v = Val i $ copy v p in v) rest
+--> construct' (Val i (One p)) (Remove 0 rest) = construct' (let v = Val i $ copy v p in v) rest
+--> construct' (Val i (Stop p)) (Remove 0 rest) = construct' (let v = Val i $ copy v p in v) rest
+
+--> construct' (Val i (Stop p)) (Remove (n+1) rest) = let v = Val i (Stop $ copy v p') in v
+-->     where (Val i' p') = construct' (Val i p) (Remove n rest)
 
 The copy function ensures that we maintain the invariant that
-Fin actually points to the same Val
+Fin actually points to the same Val (sharing)
 
 > copy v (Fin _) = Fin v
 > copy v (Zero p) = Zero $ copy v p
