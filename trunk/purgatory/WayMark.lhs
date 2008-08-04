@@ -124,18 +124,6 @@ The actual mutating function is construct':
 > ext constr (Left p) = Left $ constr p
 > ext _ r@(Right n) = r
 
---> shorten (One p) (n+1) = One $ shorten p n
---> shorten (Stop p) (n+1) = Stop $ shorten p n
---> shorten (Fin (Val _ p)) (n+1) = shorten p (n+1)
-
-
---> construct' (Val i (Zero p)) (Remove 0 rest) = construct' (let v = Val i $ copy v p in v) rest
---> construct' (Val i (One p)) (Remove 0 rest) = construct' (let v = Val i $ copy v p in v) rest
---> construct' (Val i (Stop p)) (Remove 0 rest) = construct' (let v = Val i $ copy v p in v) rest
-
---> construct' (Val i (Stop p)) (Remove (n+1) rest) = let v = Val i (Stop $ copy v p') in v
--->     where (Val i' p') = construct' (Val i p) (Remove n rest)
-
 The copy function ensures that we maintain the invariant that
 Fin actually points to the same Val (sharing)
 
@@ -144,9 +132,7 @@ Fin actually points to the same Val (sharing)
 > copy v (One p) = One $ copy v p
 > copy v (Stop p) = Stop $ copy v p
 
-
-      >     where v = remove 
-
+Declare some QuickCheck properties
 
 > prop_hist h = case h of
 >   Done -> True
