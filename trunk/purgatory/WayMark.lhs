@@ -75,8 +75,6 @@ Test section:
 > soundTags :: Int -> Property
 > soundTags n = n > 0 && n < 8 ==> verify (Val 5 p) where Val i p = testcase 
 
-     where arr = takeLast n testcase
-
 > t1 = quickCheck soundTags
 
 > data History
@@ -134,7 +132,11 @@ Fin actually points to the same Val (sharing)
 
 Declare some QuickCheck properties
 
-> prop_hist h = case h of
+> prop_hist' h = case h of
 >   Done -> True
 >   Insert (Insert (Remove _ Done)) -> False
 >   _ -> True
+
+> prop_hist h = verify (construct' testcase h)
+
+> t2 = quickCheck prop_hist
