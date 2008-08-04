@@ -92,7 +92,7 @@ Some quickCheck helpers:
 >       history n | n>0 = oneof
 >         [ return Done
 >         , liftM Insert subhistory
->         , liftM2 Remove arbitrary subhistory ]
+>         , liftM2 Remove (do {i <- arbitrary; return $ abs i }) subhistory ]
 >           where subhistory = history (n - 1)
 
 Now we can construct a Value given the pointer pattern and a history:
