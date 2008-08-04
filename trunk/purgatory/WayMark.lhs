@@ -108,16 +108,25 @@ The actual mutating function is construct':
 > construct' (Val i p) (Insert rest) = construct' (let v = Val i $ Stop $ copy v p in v) rest
 
 > construct' v@(Val _ (Fin _)) (Remove _ rest) = v
-> construct' (Val i p) (Remove n rest) = let v = Val i $ copy v $ shorten p n in v
+> construct' (Val i p) (Remove n rest) = let v = Val i $ copy v $ shp p (shorten p n) in v
 
-> shorten (Zero p) 0 = p
-> shorten (One p) 0 = p
-> shorten (Stop p) 0 = p
-> shorten f@(Fin _) 0 = f
-> shorten (Zero p) (n+1) = Zero $ shorten p n
-> shorten (One p) (n+1) = One $ shorten p n
-> shorten (Stop p) (n+1) = Stop $ shorten p n
-> shorten (Fin (Val _ p)) (n+1) = shorten p (n+1)
+> shp p (Left p') = p'
+> shp p (Right n) = shp p (shorten p n)
+ 
+> shorten (Zero p) 0 = Left p
+> shorten (One p) 0 = Left p
+> shorten (Stop p) 0 = Left p
+> shorten (Fin _) n = Right n
+> shorten (Zero p) (n+1) = ext Zero $ shorten p n
+> shorten (One p) (n+1) = ext One $ shorten p n
+> shorten (Stop p) (n+1) = ext Stop $ shorten p n
+
+> ext constr (Left p) = Left $ constr p
+> ext _ r@(Right n) = r
+
+--> shorten (One p) (n+1) = One $ shorten p n
+--> shorten (Stop p) (n+1) = Stop $ shorten p n
+--> shorten (Fin (Val _ p)) (n+1) = shorten p (n+1)
 
 
 --> construct' (Val i (Zero p)) (Remove 0 rest) = construct' (let v = Val i $ copy v p in v) rest
