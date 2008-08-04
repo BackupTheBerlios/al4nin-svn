@@ -92,7 +92,7 @@ Some quickCheck helpers:
 >       history n | n>0 = oneof
 >         [ return Done
 >         , liftM Insert subhistory
->         , liftM2 Remove (do {i <- arbitrary; return $ abs i }) subhistory ]
+>         , liftM2 Remove (fmap abs arbitrary) subhistory ]
 >           where subhistory = history (n - 1)
 
 Now we can construct a Value given the pointer pattern and a history:
@@ -103,13 +103,23 @@ Now we can construct a Value given the pointer pattern and a history:
 The actual mutating function is construct':
 
 > construct' v Done = v
-> construct' (Val i p) (Insert rest) = construct' (Val i $ Stop p) rest
-> construct' (Val i (Zero p)) (Remove 0 rest) = construct' (Val i p) rest
-> construct' (Val i (One p)) (Remove 0 rest) = construct' (Val i p) rest
-> construct' (Val i (Stop p)) (Remove 0 rest) = construct' (Val i p) rest
+> construct' (Val i p) (Insert rest) = construct' (let v = Val i $ Stop $ copy v p in v) rest
 
-> construct' (Val i (Stop p)) (Remove (n+1) rest) = Val i (Stop p')
+> construct' v@(Val i (Zero p)) (Remove _ rest) = v
+> construct' (Val i (Zero p)) (Remove 0 rest) = construct' (let v = Val i $ copy v p in v) rest
+> construct' (Val i (One p)) (Remove 0 rest) = construct' (let v = Val i $ copy v p in v) rest
+> construct' (Val i (Stop p)) (Remove 0 rest) = construct' (let v = Val i $ copy v p in v) rest
+
+> construct' (Val i (Stop p)) (Remove (n+1) rest) = let v = Val i (Stop $ copy v p') in v
 >     where (Val i' p') = construct' (Val i p) (Remove n rest)
+
+The copy function ensures that we maintain the invariant that
+Fin actually points to the same Val
+
+> copy v (Fin _) = Fin v
+> copy v (Zero p) = Zero $ copy v p
+> copy v (One p) = One $ copy v p
+> copy v (Stop p) = Stop $ copy v p
 
 
       >     where v = remove 
@@ -117,5 +127,5 @@ The actual mutating function is construct':
 
 > prop_hist h = case h of
 >   Done -> True
->   Insert (Remove _ Done) -> False
+>   Insert (Insert (Remove _ Done)) -> False
 >   _ -> True
