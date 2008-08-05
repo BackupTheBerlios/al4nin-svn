@@ -115,13 +115,9 @@ The actual mutating function is construct':
 > shp p (Left p') = p'
 > shp p (Right n) = shp p (shorten p n)
  
-> shorten (Tagged Zero p) 0 = Left p
-> shorten (Tagged One p) 0 = Left p
-> shorten (Tagged Stop p) 0 = Left p
+> shorten (Tagged _ p) 0 = Left p
 > shorten (Fin _) n = Right n
-> shorten (Tagged Zero p) (n+1) = ext Zero $ shorten p n
-> shorten (Tagged One p) (n+1) = ext One $ shorten p n
-> shorten (Tagged Stop p) (n+1) = ext Stop $ shorten p n
+> shorten (Tagged t p) (n+1) = ext t $ shorten p n
 
 > ext constr (Left p) = Left $ Tagged constr p
 > ext _ r@(Right n) = r
@@ -130,9 +126,7 @@ The copy function ensures that we maintain the invariant that
 Fin actually points to the same Val (sharing)
 
 > copy v (Fin _) = Fin v
-> copy v (Tagged Zero p) = Tagged Zero $ copy v p
-> copy v (Tagged One p) = Tagged One $ copy v p
-> copy v (Tagged Stop p) = Tagged Stop $ copy v p
+> copy v (Tagged t p) = Tagged t $ copy v p
 
 Declare some QuickCheck properties
 
