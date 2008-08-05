@@ -27,11 +27,14 @@
 First we define the datatype for tagged pointers.
 The Fin constructor points back to the Value itself:
 
-> data UsePtr = Zero UsePtr | One UsePtr | Stop UsePtr | Fin Value
+> data UseTag = Zero | One | Stop
+>   deriving Show
+
+> data UsePtr = Tagged UseTag UsePtr | Fin Value
 > instance Show UsePtr where
->     show (Zero p) = "0" ++ show p
->     show (One p) = "1" ++ show p
->     show (Stop p) = "s" ++ show p
+>     show (Tagged Zero p) = "0" ++ show p
+>     show (Tagged One p) = "1" ++ show p
+>     show (Tagged Stop p) = "s" ++ show p
 >     show (Fin (Val i _)) = "S(" ++ show i ++ ")"
 
 Values (here) store the numerical integer for the bit pattern of the
@@ -44,9 +47,9 @@ The verify function walks the Use chain and for each pointer performs
 a check whether the computed Value* matches up with the reality.
 
 > verify :: Value -> Bool
-> verify (Val i (p@(Zero p'))) = compute p == i && verify (Val i p')
-> verify (Val i (p@(One p'))) = compute p == i && verify (Val i p')
-> verify (Val i (p@(Stop p'))) = compute p == i && verify (Val i p')
+> verify (Val i (p@(Tagged Zero p'))) = compute p == i && verify (Val i p')
+> verify (Val i (p@(Tagged One p'))) = compute p == i && verify (Val i p')
+> verify (Val i (p@(Tagged Stop p'))) = compute p == i && verify (Val i p')
 > verify (Val i (Fin (Val i' _))) = i == i'
 
 Forwarding function supplying step counter and seed:
@@ -61,14 +64,14 @@ Note: for simplicity the required step count is 3 at the moment.
 > requiredSteps = 3
 
 > compute' :: Int -> Int -> UsePtr -> Int
-> compute' steps seed (Zero p) = compute' (steps + 1) (seed + seed) p
-> compute' steps seed (One p) = compute' (steps + 1) (seed + seed + 1) p
-> compute' steps seed (Stop p) = if steps == requiredSteps then seed else compute' 0 0 p
+> compute' steps seed (Tagged Zero p) = compute' (steps + 1) (seed + seed) p
+> compute' steps seed (Tagged One p) = compute' (steps + 1) (seed + seed + 1) p
+> compute' steps seed (Tagged Stop p) = if steps == requiredSteps then seed else compute' 0 0 p
 > compute' steps seed (Fin (Val i _)) = i
 
 Test section:
 
-> testcase = Val 5 (One $ Zero $ One $ Stop $ Zero $ Fin testcase)
+> testcase = Val 5 (Tagged One $ Tagged Zero $ Tagged One $ Tagged Stop $ Tagged Zero $ Fin testcase)
 > testcase' = let (Val i p) = testcase in let v = Val (i+1) $ copy v p in v
 
 
@@ -86,10 +89,11 @@ Test section:
 Some quickCheck helpers:
 
 > instance Arbitrary History where
+>   coarbitrary = undefined
 >   arbitrary = sized history
 >     where
 >       history 0 = return Done
->       history n | n>0 = oneof
+>       history n | n > 0 = oneof
 >         [ return Done
 >         , liftM Insert subhistory
 >         , liftM2 Remove (fmap abs arbitrary) subhistory ]
@@ -103,7 +107,7 @@ Now we can construct a Value given the pointer pattern and a history:
 The actual mutating function is construct':
 
 > construct' v Done = v
-> construct' (Val i p) (Insert rest) = construct' (let v = Val i $ Stop $ copy v p in v) rest
+> construct' (Val i p) (Insert rest) = construct' (let v = Val i $ Tagged Stop $ copy v p in v) rest
 
 > construct' v@(Val _ (Fin _)) (Remove _ rest) = v
 > construct' (Val i p) (Remove n rest) = let v = Val i $ copy v $ shp p (shorten p n) in v
@@ -111,24 +115,24 @@ The actual mutating function is construct':
 > shp p (Left p') = p'
 > shp p (Right n) = shp p (shorten p n)
  
-> shorten (Zero p) 0 = Left p
-> shorten (One p) 0 = Left p
-> shorten (Stop p) 0 = Left p
+> shorten (Tagged Zero p) 0 = Left p
+> shorten (Tagged One p) 0 = Left p
+> shorten (Tagged Stop p) 0 = Left p
 > shorten (Fin _) n = Right n
-> shorten (Zero p) (n+1) = ext Zero $ shorten p n
-> shorten (One p) (n+1) = ext One $ shorten p n
-> shorten (Stop p) (n+1) = ext Stop $ shorten p n
+> shorten (Tagged Zero p) (n+1) = ext Zero $ shorten p n
+> shorten (Tagged One p) (n+1) = ext One $ shorten p n
+> shorten (Tagged Stop p) (n+1) = ext Stop $ shorten p n
 
-> ext constr (Left p) = Left $ constr p
+> ext constr (Left p) = Left $ Tagged constr p
 > ext _ r@(Right n) = r
 
 The copy function ensures that we maintain the invariant that
 Fin actually points to the same Val (sharing)
 
 > copy v (Fin _) = Fin v
-> copy v (Zero p) = Zero $ copy v p
-> copy v (One p) = One $ copy v p
-> copy v (Stop p) = Stop $ copy v p
+> copy v (Tagged Zero p) = Tagged Zero $ copy v p
+> copy v (Tagged One p) = Tagged One $ copy v p
+> copy v (Tagged Stop p) = Tagged Stop $ copy v p
 
 Declare some QuickCheck properties
 
