@@ -70,6 +70,36 @@ Note: for simplicity the required step count is 3 at the moment.
 > compute' steps seed (Tagged Stop p) = if steps == requiredSteps then seed else compute' 0 0 p
 > compute' steps seed (Fin (Val i _)) = i
 
+The lookup function calls compute' to get the bit pattern and returns also the
+position of a potential start pointer at which the fresh marks could be reapplied.
+
+> remark :: Int -> Int -> Int -> UsePtr -> Maybe Int
+
+   > remark steps pos (Tagged Zero p) = remark (steps + 1) pos p
+   > remark steps seed (Tagged One p) = compute' (steps + 1) (seed + seed + 1) p
+
+> remark steps pos invsteps (Tagged Stop p) = if validcluster requiredSteps p then (if enough pos invsteps then Just pos else Nothing) else remark 0 (pos + 1) invsteps p
+>     where
+>       validcluster 0 (Tagged Stop _) = True
+>       validcluster _ (Tagged Stop _) = False
+>       validcluster n (Tagged _ p) = validcluster (n - 1) p
+>       enough 0 invsteps = invsteps == requiredSteps
+>       enough _ invsteps = invsteps >= requiredSteps
+
+>
+> remark steps pos invsteps (Tagged _ p) = remark (steps + 1) pos' invsteps' p
+>     where (pos', invsteps') = if (pos == 0 && invsteps == requiredSteps)
+>                               then (0, requiredSteps + 1)
+>                               else if (pos == 0 && invsteps >= requiredSteps)
+>                               then (1, requiredSteps + 1)
+>                               else if (pos == 0)
+>                               then (0, invsteps + 1)
+>                               else if (invsteps == requiredSteps + 1)
+>                               then (pos + 1, requiredSteps + 1)
+>                               else (pos, invsteps + 1)
+> remark steps pos invsteps (Fin (Val i _)) = Nothing -- ### for NOW
+
+
 Test section:
 
 > testcase = Val 5 (Tagged One $ Tagged Zero $ Tagged One $ Tagged Stop $ Tagged Zero $ Fin testcase)
