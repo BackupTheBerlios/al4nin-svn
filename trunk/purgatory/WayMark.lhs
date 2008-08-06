@@ -78,28 +78,18 @@ Test section:
 > data HistoryElem
 >   = Insert
 >   | Remove Int
+>   | Lookup Int
 >  deriving Show
 
 > type History = [HistoryElem]
 
 Some quickCheck helpers:
 
-> {-
-> instance Arbitrary History where
->   coarbitrary = undefined
->   arbitrary = sized history
->     where
->       history 0 = return Done
->       history n | n > 0 = oneof
->         [ return Done
->         , liftM Insert subhistory
->         , liftM2 Remove (fmap abs arbitrary) subhistory ]
->           where subhistory = history (n - 1)
-> -}
-
 > instance Arbitrary HistoryElem where
 >   coarbitrary = undefined
->   arbitrary = frequency [(2, return Insert), (1, liftM Remove (fmap abs arbitrary))]
+>   arbitrary = frequency [ (2, return Insert)
+>                         , (1, liftM Remove (fmap abs arbitrary))
+>                         , (1, liftM Lookup (fmap abs arbitrary))]
 
 
 Now we can construct a Value given the pointer pattern and a history:
@@ -114,6 +104,7 @@ The actual mutating function is construct':
 
 > construct' v@(Val _ (Fin _)) (Remove _ : rest) = construct' v rest
 > construct' (Val i p) (Remove n : rest) = let v = Val i $ copy v $ shp p (shorten p n) in construct' v rest
+> construct' v (Lookup n : rest) = construct' v rest
 
 > shp p (Left p') = p'
 > shp p (Right n) = shp p (shorten p n)
