@@ -83,6 +83,7 @@ position of a potential start pointer at which the fresh marks could be reapplie
 >       validcluster 0 (Tagged Stop _) = True
 >       validcluster _ (Tagged Stop _) = False
 >       validcluster n (Tagged _ p) = validcluster (n - 1) p
+>       validcluster _ _ = False
 >       enough 0 invsteps = invsteps == requiredSteps
 >       enough _ invsteps = invsteps >= requiredSteps
 
@@ -157,3 +158,10 @@ Declare some QuickCheck properties
 > prop_hist h = verify (construct' testcase h)
 
 > t1 = quickCheck prop_hist
+
+Some niceties for interactive testing:
+
+> o = Tagged Zero
+> i = Tagged One
+> s = Tagged Stop
+> f = Fin $ Val 0 f
