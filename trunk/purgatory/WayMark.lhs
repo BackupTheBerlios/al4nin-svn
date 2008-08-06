@@ -110,11 +110,11 @@ We have to catch Fin at last:
 Ok, now we are left with properly initiated clusters (of possibly zero length). Let's
 handle Stop first:
 
-> repaint True _ pos steps (Tagged Stop p) = if (validcluster requiredSteps p)
->                                            then (if steps == requiredSteps then Just pos else Nothing)
->                                            else (if steps == requiredSteps
->                                                  then repaint True requiredSteps (pos + 1) requiredSteps p
->                                                  else repaint True requiredSteps pos (steps + 1) p)
+> repaint True _ pos steps (Tagged Stop p) = case (validcluster requiredSteps p, steps == requiredSteps) of
+>                                            (True, True) -> Just pos
+>                                            (True, False) -> Nothing
+>                                            (False, True) -> repaint True requiredSteps (pos + 1) requiredSteps p
+>                                            (False, False) -> repaint True requiredSteps pos (steps + 1) p
 >     where
 >       validcluster 0 _ = True
 >       validcluster _ (Tagged Stop _) = False
