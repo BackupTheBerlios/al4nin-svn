@@ -112,7 +112,9 @@ handle Stop first:
 
 > repaint True _ pos steps (Tagged Stop p) = if (validcluster requiredSteps p)
 >                                            then (if steps == requiredSteps then Just pos else Nothing)
->                                            else repaint True 0 pos (steps + 1) p
+>                                            else (if steps == requiredSteps
+>                                                  then repaint True requiredSteps (pos + 1) requiredSteps p
+>                                                  else repaint True requiredSteps pos (steps + 1) p)
 >     where
 >       validcluster 0 _ = True
 >       validcluster _ (Tagged Stop _) = False
