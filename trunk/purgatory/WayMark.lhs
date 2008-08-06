@@ -74,7 +74,9 @@ The lookup function calls compute' to get the bit pattern and returns also the
 position of a potential start pointer at which the fresh marks could be reapplied.
 
 > remark :: Int -> Int -> UsePtr -> Maybe Int
-> remark pos invsteps (Tagged Stop p) = if validcluster requiredSteps p then (if enough pos invsteps then Just pos else Nothing) else remark pos (invsteps + 1) p
+> remark pos invsteps (Tagged Stop p) = if validcluster requiredSteps p
+>                                       then (if enough pos invsteps then Just pos else Nothing)
+>                                       else remark pos' invsteps' p
 >     where
 >       validcluster 0 (Tagged Stop _) = True
 >       validcluster _ (Tagged Stop _) = False
@@ -82,6 +84,7 @@ position of a potential start pointer at which the fresh marks could be reapplie
 >       validcluster _ _ = False
 >       enough 0 invsteps = invsteps == requiredSteps
 >       enough _ invsteps = invsteps >= requiredSteps
+>       (pos', invsteps') = if enough pos invsteps then (pos + 1, invsteps) else (pos, invsteps + 1)
 
 >
 > remark pos invsteps (Tagged _ p) = remark pos' invsteps' p
