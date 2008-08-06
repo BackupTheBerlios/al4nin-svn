@@ -47,9 +47,7 @@ The verify function walks the Use chain and for each pointer performs
 a check whether the computed Value* matches up with the reality.
 
 > verify :: Value -> Bool
-> verify (Val i (p@(Tagged Zero p'))) = compute p == i && verify (Val i p')
-> verify (Val i (p@(Tagged One p'))) = compute p == i && verify (Val i p')
-> verify (Val i (p@(Tagged Stop p'))) = compute p == i && verify (Val i p')
+> verify (Val i (p@(Tagged _ p'))) = compute p == i && verify (Val i p')
 > verify (Val i (Fin (Val i' _))) = i == i'
 
 Forwarding function supplying step counter and seed:
