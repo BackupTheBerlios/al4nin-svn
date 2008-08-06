@@ -75,14 +75,16 @@ Test section:
 > testcase = Val 5 (Tagged One $ Tagged Zero $ Tagged One $ Tagged Stop $ Tagged Zero $ Fin testcase)
 > testcase' = let (Val i p) = testcase in let v = Val (i+1) $ copy v p in v
 
-> data History
->   = Insert History
->   | Remove Int History
->   | Done
+> data HistoryElem
+>   = Insert
+>   | Remove Int
 >  deriving Show
+
+> type History = [HistoryElem]
 
 Some quickCheck helpers:
 
+> {-
 > instance Arbitrary History where
 >   coarbitrary = undefined
 >   arbitrary = sized history
@@ -93,6 +95,12 @@ Some quickCheck helpers:
 >         , liftM Insert subhistory
 >         , liftM2 Remove (fmap abs arbitrary) subhistory ]
 >           where subhistory = history (n - 1)
+> -}
+
+> instance Arbitrary HistoryElem where
+>   coarbitrary = undefined
+>   arbitrary = frequency [(2, return Insert), (1, liftM Remove (fmap abs arbitrary))]
+
 
 Now we can construct a Value given the pointer pattern and a history:
 
@@ -101,11 +109,11 @@ Now we can construct a Value given the pointer pattern and a history:
 
 The actual mutating function is construct':
 
-> construct' v Done = v
-> construct' (Val i p) (Insert rest) = let v = Val i $ Tagged Stop $ copy v p in construct' v rest
+> construct' v [] = v
+> construct' (Val i p) (Insert : rest) = let v = Val i $ Tagged Stop $ copy v p in construct' v rest
 
-> construct' v@(Val _ (Fin _)) (Remove _ rest) = construct' v rest
-> construct' (Val i p) (Remove n rest) = let v = Val i $ copy v $ shp p (shorten p n) in construct' v rest
+> construct' v@(Val _ (Fin _)) (Remove _ : rest) = construct' v rest
+> construct' (Val i p) (Remove n : rest) = let v = Val i $ copy v $ shp p (shorten p n) in construct' v rest
 
 > shp p (Left p') = p'
 > shp p (Right n) = shp p (shorten p n)
