@@ -73,12 +73,8 @@ Note: for simplicity the required step count is 3 at the moment.
 The lookup function calls compute' to get the bit pattern and returns also the
 position of a potential start pointer at which the fresh marks could be reapplied.
 
-> remark :: Int -> Int -> Int -> UsePtr -> Maybe Int
-
-   > remark steps pos (Tagged Zero p) = remark (steps + 1) pos p
-   > remark steps seed (Tagged One p) = compute' (steps + 1) (seed + seed + 1) p
-
-> remark steps pos invsteps (Tagged Stop p) = if validcluster requiredSteps p then (if enough pos invsteps then Just pos else Nothing) else remark 0 (pos + 1) invsteps p
+> remark :: Int -> Int -> UsePtr -> Maybe Int
+> remark pos invsteps (Tagged Stop p) = if validcluster requiredSteps p then (if enough pos invsteps then Just pos else Nothing) else remark pos (invsteps + 1) p
 >     where
 >       validcluster 0 (Tagged Stop _) = True
 >       validcluster _ (Tagged Stop _) = False
@@ -88,7 +84,7 @@ position of a potential start pointer at which the fresh marks could be reapplie
 >       enough _ invsteps = invsteps >= requiredSteps
 
 >
-> remark steps pos invsteps (Tagged _ p) = remark (steps + 1) pos' invsteps' p
+> remark pos invsteps (Tagged _ p) = remark pos' invsteps' p
 >     where (pos', invsteps') = if (pos == 0 && invsteps == requiredSteps)
 >                               then (0, requiredSteps + 1)
 >                               else if (pos == 0 && invsteps >= requiredSteps)
@@ -98,7 +94,7 @@ position of a potential start pointer at which the fresh marks could be reapplie
 >                               else if (invsteps == requiredSteps + 1)
 >                               then (pos + 1, requiredSteps + 1)
 >                               else (pos, invsteps + 1)
-> remark steps pos invsteps (Fin (Val i _)) = Nothing -- ### for NOW
+> remark pos invsteps (Fin (Val i _)) = Nothing -- ### for NOW
 
 
 Test section:
@@ -165,3 +161,8 @@ Some niceties for interactive testing:
 > i = Tagged One
 > s = Tagged Stop
 > f = Fin $ Val 0 f
+
+
+> te1 = s $ s $ s $ s $ o $ i $ o $ s $ f
+> te2 = s $ s $ s $ o $ i $ f
+> te3 = i $ o $ i te1
