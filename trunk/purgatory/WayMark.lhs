@@ -54,6 +54,9 @@ Forwarding function supplying step counter and seed:
 
 > compute p = compute' 0 0 p
 
+The 0 for steps above means that a Value serves
+as an implicit Stop.
+
 The following function scans the waymarks along the chain and
 returns the numerical pattern for Value*.
 
@@ -105,10 +108,10 @@ Now we can construct a Value given the pointer pattern and a history:
 The actual mutating function is construct':
 
 > construct' v Done = v
-> construct' (Val i p) (Insert rest) = construct' (let v = Val i $ Tagged Stop $ copy v p in v) rest
+> construct' (Val i p) (Insert rest) = let v = Val i $ Tagged Stop $ copy v p in construct' v rest
 
-> construct' v@(Val _ (Fin _)) (Remove _ rest) = v
-> construct' (Val i p) (Remove n rest) = let v = Val i $ copy v $ shp p (shorten p n) in v
+> construct' v@(Val _ (Fin _)) (Remove _ rest) = construct' v rest
+> construct' (Val i p) (Remove n rest) = let v = Val i $ copy v $ shp p (shorten p n) in construct' v rest
 
 > shp p (Left p') = p'
 > shp p (Right n) = shp p (shorten p n)
@@ -127,11 +130,6 @@ Fin actually points to the same Val (sharing)
 > copy v (Tagged t p) = Tagged t $ copy v p
 
 Declare some QuickCheck properties
-
-> prop_hist' h = case h of
->   Done -> True
->   Insert (Insert (Remove _ Done)) -> False
->   _ -> True
 
 > prop_hist h = verify (construct' testcase h)
 
