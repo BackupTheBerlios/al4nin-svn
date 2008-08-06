@@ -73,10 +73,11 @@ Note: for simplicity the required step count is 3 at the moment.
 The lookup function calls compute' to get the bit pattern and returns also the
 position of a potential start pointer at which the fresh marks could be reapplied.
 
-> remark :: Int -> Int -> UsePtr -> Maybe Int
-> remark pos invsteps (Tagged Stop p) = if validcluster requiredSteps p
->                                       then (if enough pos invsteps then Just pos else Nothing)
->                                       else remark pos' invsteps' p
+> remark :: Int -> Int -> Int -> UsePtr -> Maybe Int
+> remark 0 _ _ _ = Nothing
+> remark togo pos invsteps (Tagged Stop p) = if validcluster requiredSteps p
+>                                            then (if enough pos invsteps then Just pos else Nothing)
+>                                            else remark (requiredSteps - 1) pos' invsteps' p
 >     where
 >       validcluster 0 (Tagged Stop _) = True
 >       validcluster _ (Tagged Stop _) = False
@@ -87,7 +88,7 @@ position of a potential start pointer at which the fresh marks could be reapplie
 >       (pos', invsteps') = if enough pos invsteps then (pos + 1, invsteps) else (pos, invsteps + 1)
 
 >
-> remark pos invsteps (Tagged _ p) = remark pos' invsteps' p
+> remark togo pos invsteps (Tagged _ p) = remark (togo - 1) pos' invsteps' p
 >     where (pos', invsteps') = if (pos == 0 && invsteps == requiredSteps)
 >                               then (0, requiredSteps + 1)
 >                               else if (pos == 0 && invsteps >= requiredSteps)
@@ -97,7 +98,7 @@ position of a potential start pointer at which the fresh marks could be reapplie
 >                               else if (invsteps == requiredSteps + 1)
 >                               then (pos + 1, requiredSteps + 1)
 >                               else (pos, invsteps + 1)
-> remark pos invsteps (Fin (Val i _)) = Nothing -- ### for NOW
+> remark _ pos invsteps (Fin (Val i _)) = Nothing -- ### for NOW
 
 
 Test section:
