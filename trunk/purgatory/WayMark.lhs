@@ -77,7 +77,7 @@ position of a potential start pointer at which the fresh marks could be reapplie
 > remark 0 _ _ _ = Nothing
 > remark togo pos invsteps (Tagged Stop p) = if validcluster requiredSteps p
 >                                            then (if enough pos invsteps then Just pos else Nothing)
->                                            else remark (requiredSteps - 1) pos' invsteps' p
+>                                            else remark requiredSteps pos' invsteps' p
 >     where
 >       validcluster 0 (Tagged Stop _) = True
 >       validcluster _ (Tagged Stop _) = False
@@ -170,3 +170,4 @@ Some niceties for interactive testing:
 > te1 = s $ s $ s $ s $ o $ i $ o $ s $ f
 > te2 = s $ s $ s $ o $ i $ f
 > te3 = i $ o $ i te1
+> te4 = i $ o $ te1
