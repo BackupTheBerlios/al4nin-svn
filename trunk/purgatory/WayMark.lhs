@@ -75,12 +75,6 @@ Test section:
 > testcase = Val 5 (Tagged One $ Tagged Zero $ Tagged One $ Tagged Stop $ Tagged Zero $ Fin testcase)
 > testcase' = let (Val i p) = testcase in let v = Val (i+1) $ copy v p in v
 
-
-> soundTags :: Int -> Property
-> soundTags n = n > 0 && n < 8 ==> verify (Val 5 p) where Val i p = testcase 
-
-> t1 = quickCheck soundTags
-
 > data History
 >   = Insert History
 >   | Remove Int History
@@ -133,4 +127,4 @@ Declare some QuickCheck properties
 
 > prop_hist h = verify (construct' testcase h)
 
-> t2 = quickCheck prop_hist
+> t1 = quickCheck prop_hist
