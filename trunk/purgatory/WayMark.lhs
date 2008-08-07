@@ -133,38 +133,12 @@ Remains to handle Fin:
 >                                    then Just pos
 >                                    else Nothing
 
-> remark :: Int -> Int -> Int -> UsePtr -> Maybe Int
-> remark 0 _ _ (Tagged Stop _) = Nothing
-> remark togo pos invsteps (Tagged Stop p) = if validcluster requiredSteps p
->                                            then (if enough pos invsteps then Just pos else Nothing)
->                                            else remark requiredSteps pos' invsteps' p
->     where
->       validcluster 0 (Tagged Stop _) = True
->       validcluster _ (Tagged Stop _) = False
->       validcluster n (Tagged _ p) = validcluster (n - 1) p
->       validcluster _ _ = False
->       enough 0 invsteps = invsteps == requiredSteps
->       enough _ invsteps = invsteps >= requiredSteps
->       (pos', invsteps') = if enough pos invsteps then (pos + 1, invsteps) else (pos, invsteps + 1)
-
->
-> remark togo pos invsteps (Tagged _ p) = remark (togo - 1) pos' invsteps' p
->     where (pos', invsteps') = if (pos == 0 && invsteps == requiredSteps)
->                               then (0, requiredSteps + 1)
->                               else if (pos == 0 && invsteps >= requiredSteps)
->                               then (1, requiredSteps + 1)
->                               else if (pos == 0)
->                               then (0, invsteps + 1)
->                               else if (invsteps == requiredSteps + 1)
->                               then (pos + 1, requiredSteps + 1)
->                               else (pos, invsteps + 1)
-> remark _ pos invsteps (Fin (Val i _)) = Nothing -- ### for NOW
-
 
 Test section:
 
 > testcase = Val 5 (Tagged One $ Tagged Zero $ Tagged One $ Tagged Stop $ Tagged Zero $ Fin testcase)
 > testcase' = let (Val i p) = testcase in let v = Val (i+1) $ copy v p in v
+> fishy = Val 5 (i $ o $ i $ s $ i $ o $ i $ Fin fishy)
 
 > data HistoryElem
 >   = Insert
@@ -194,6 +168,10 @@ The actual mutating function is construct':
 > construct' (Val i p) (Insert : rest) = let v = Val i $ Tagged Stop $ copy v p in construct' v rest
 
 > construct' v@(Val _ (Fin _)) (Remove _ : rest) = construct' v rest
+
+We have to special case removal of a Stop, since that may merge clusters.
+Better put a stop downstream to prevent this. TODO
+
 > construct' (Val i p) (Remove n : rest) = let v = Val i $ copy v $ shp p (shorten p n) in construct' v rest
 > construct' v (Lookup n : rest) = construct' v rest
 
@@ -216,8 +194,10 @@ Fin actually points to the same Val (sharing)
 Declare some QuickCheck properties
 
 > prop_hist h = verify (construct' testcase h)
+> prop_hist_fishy h = verify (construct' fishy h)
 
 > t1 = quickCheck prop_hist
+> t2 = quickCheck prop_hist_fishy
 
 Some niceties for interactive testing:
 
