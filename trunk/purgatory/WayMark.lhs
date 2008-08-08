@@ -191,7 +191,7 @@ We have to special case removal of a Stop, since that may merge clusters.
 Better put a stop downstream to prevent this. TODO
 
 > construct' (Val i p) (Remove n : rest) = let v = Val i $ copy v $ shp p (shorten p n) in construct' v rest
-> construct' v (Lookup n : rest) = construct' v rest
+> construct' (Val i p) (Lookup n : rest) = let v = Val i $ copy v $ pep p (peek p n) in construct' v rest
 
 > shp p (Left p') = p'
 > shp p (Right n) = shp p (shorten p n)
@@ -202,6 +202,15 @@ Better put a stop downstream to prevent this. TODO
 
 > ext constr (Left p) = Left $ Tagged constr p
 > ext _ r@(Right n) = r
+
+> pep :: UsePtr -> Either UsePtr Int -> UsePtr
+> pep p (Left p') = p'
+> pep p (Right n) = pep p (peek p n)
+
+> peek p@(Tagged _ _) 0 = Left $ snd $ Main.lookup p
+> peek (Fin _) n = Right n
+> peek (Tagged t p) (n+1) = ext t $ peek p n
+
 
 The copy function ensures that we maintain the invariant that
 Fin actually points to the same Val (sharing)
