@@ -61,6 +61,8 @@ The following function scans the waymarks along the chain and
 returns the numerical pattern for Value*.
 
 Note: for simplicity the required step count is 3 at the moment.
+In the end it may well be a value that depends on the bit pattern
+itself.
 
 > requiredSteps = 3
 
@@ -73,7 +75,24 @@ Note: for simplicity the required step count is 3 at the moment.
 The lookup function calls compute' to get the bit pattern and returns also the
 position of a potential start pointer at which the fresh marks could be reapplied.
 
+> lookup :: UsePtr -> (Int, UsePtr)
+> lookup p = case repaint False requiredSteps 0 0 p of
+>            Nothing -> (i, p)
+>            Just pos -> (i, fst $ reapply i pos requiredSteps p)
+>   where
+>     i = compute' 0 0 p
+>     reapply i 1 steps (Tagged Zero p) = (Tagged Stop $ fst $ reapply i 0 steps p, 0)
+>     reapply i 1 steps (Tagged One p) = (Tagged Stop $ fst $ reapply i 0 steps p, 0)
+>     reapply i 0 0 p = (p, i)
+>     reapply i 0 (s + 1) p = (Tagged (if odd i' then One else Zero) p', i' `div` 2)
+>         where (p', i') = reapply i 0 s p
+>     reapply i (offs + 1) steps (Tagged t p) = (Tagged t $ fst $ reapply i offs steps p, 0)
 
+Now we have to provide the function for obtaining the repaint position.
+Be sure that a possible digit before this position must be changed to a Stop
+to avoid cluster extension.
+The function returns the index relative to UsePtr (zero based) where
+the requiredSteps digits maust be placed.
 
 > repaint :: Bool -> Int -> Int -> Int -> UsePtr -> Maybe Int
 
@@ -90,7 +109,6 @@ If we get a Stop and the cluster is not seen as properly initiated
 we have to assume that we started in the middle of a potentially
 valid cluster and we are not permitted to overpaint anything. But
 we have to carry on and shift the pos:
-
 
 E.g. 10s
        ^
