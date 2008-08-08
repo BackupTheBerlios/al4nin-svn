@@ -84,7 +84,7 @@ position of a potential start pointer at which the fresh marks could be reapplie
 >     reapply i 1 steps (Tagged Zero p) = (Tagged Stop $ fst $ reapply i 0 steps p, 0)
 >     reapply i 1 steps (Tagged One p) = (Tagged Stop $ fst $ reapply i 0 steps p, 0)
 >     reapply i 0 0 p = (p, i)
->     reapply i 0 (s + 1) p = (Tagged (if odd i' then One else Zero) p', i' `div` 2)
+>     reapply i 0 (s + 1) (Tagged _ p) = (Tagged (if odd i' then One else Zero) p', i' `div` 2)
 >         where (p', i') = reapply i 0 s p
 >     reapply i (offs + 1) steps (Tagged t p) = (Tagged t $ fst $ reapply i offs steps p, 0)
 
