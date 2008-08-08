@@ -21,6 +21,46 @@
  * OR OTHER DEALINGS IN THE SOFTWARE.
  -}
 
+This is a literate Haskell file.
+
+High level description:
+
+Def-use chains are managed via linked lists in LLVM.
+They allow O(1) removal because of a Pred member in the
+Use struct that points to a Use* of the previous Use or
+Value. The invariant is that *Pred == this if it is
+chained up.
+
+This chain (viz. the lowest significant bist of the
+Next pointers in the Use) can be used to carry a serial
+line protocol that when decoded does deliver the Value*
+that this chain belongs to. Any Use* is sufficient as
+input to the algorithm.
+
+The metaphor gives us these correspondences:
+ - 0, 1 --> data bits
+ - s    --> stop bit
+ - S    --> full stop, NO CARRIER
+
+I call this protocol waymarking, and the below algorithm
+is an implementation of it. It is self-repairing, in that
+any succession of Insert and Delete events won't change
+the result. Lookup events even reapply compromized waymarks
+in a conservative fashion, no potentially valid clusters are
+modified. This is all at the cost of a potentially longer
+sequence of bits to be scanned from the chain. The big benefit
+however is the reduction of the Use struct by a pointer: since
+the Value* can always be reliably recovered, there is no need
+to store it in the Use struct any more.
+
+The invariant that leads to this behaviour is that fixed-size
+clusters can only decrease in size and never increase.
+Clusters of the wrong size are always discarded and potentially
+refreshed at a Lookup.
+
+Bugs: This invariant is currently violated by a bug that
+removal of a single Stop may join two clusters.
+
 > import Monad
 > import Test.QuickCheck
 
@@ -154,7 +194,7 @@ Remains to handle Fin:
 
 Test section:
 
-> testcase = Val 5 (Tagged One $ Tagged Zero $ Tagged One $ Tagged Stop $ Tagged Zero $ Fin testcase)
+> testcase = Val 5 (i $ o $ i $ s $ o $ Fin testcase)
 > testcase' = let (Val i p) = testcase in let v = Val (i+1) $ copy v p in v
 > fishy = Val 5 (i $ o $ i $ s $ i $ o $ i $ Fin fishy)
 
