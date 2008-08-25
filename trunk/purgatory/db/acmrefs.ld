@@ -176,7 +176,7 @@
    # @Location { Austin, Texas }
    @Publisher { USENIX Association }
    @Address { Berkeley, CA, USA }
-   @URL { http://www.usenix.org/events/dsl99/full_papers/sheard/sheard_html/dsl.html }
+   @URL { http://www.usenix.org/events/dsl99/full_papers/sheard/sheard.pdf }
 }
 
 

@@ -149,15 +149,15 @@
 
 @inproceedings{1267943,
    tag =       {sheard99.staging}
-   author = {Tim Sheard and Zine-el-abidine Benaissa and Emir Pasalic},
-   title = {DSL implementation using staging and monads},
+   author =    {Tim Sheard and Zine-el-abidine Benaissa and Emir Pasalic},
+   title =     {DSL implementation using staging and monads},
    booktitle = {DSL'99: Proceedings of the 2nd conference on Conference on Domain-Specific Languages},
-   year = {1999},
-   pages = {81--94},
-   location = {Austin, Texas},
+   year =      {1999},
+   pages =     {81--94},
+   location =  {Austin, Texas},
    publisher = {USENIX Association},
-   address = {Berkeley, CA, USA},
-   url = {http://www.usenix.org/events/dsl99/full_papers/sheard/sheard_html/dsl.html}
+   address =   {Berkeley, CA, USA},
+   url =       {http://www.usenix.org/events/dsl99/full_papers/sheard/sheard.pdf}
 }
 
 @techreport{UUCS200135,
@@ -191,4 +191,5 @@
    pages = {184--207},
    publisher = {Springer-Verlag},
    address = {London, UK},
- }
+}
+
