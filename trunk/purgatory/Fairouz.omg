@@ -1,0 +1,27 @@
+import "LangPrelude.prg"
+
+-- SEE ALSO: HenkTest.omg
+data B :: *1 where
+  St :: Nat ~> B
+  Bi :: B ~> B
+
+data Star :: Nat ~> * where
+  Star0 :: Star Z
+  Star :: Star n -> Star (1 + n)t
+ deriving Nat(s)
+
+star :: Nat' n -> Star n
+star Z = Star0
+star (1 + n)v = Star (star n)
+
+tau :: 
+
+-- data Type :: 
+
+-- Pi is a 1-binder, i.e. the distance
+-- between the levels of ingress and egress is 1:
+-- P_:Int>Int  (this is normally written Int->Int:*)
+-- Lam is a 2-binder.
+-- tau takes an (n+1)-binder to an n-binder
+--           a 0-binder to a 0-binder
+
