@@ -26,3 +26,7 @@ data Ref :: Lab ~> * where
 data Block :: Row Lab Term ~> * where
   Fin :: Block {}r
   BCons :: Ref l -> Prim t i -> Block r -> Block {l=t; r}r
+ deriving Record(b)
+
+test1 = {Anon=Ret $ Const 5}b
+test2 = {Tag `a=Add (Const 40) (Const 2), Anon=Ret $ Use `a}b
