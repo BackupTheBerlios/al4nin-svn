@@ -30,3 +30,18 @@ data Block :: Row Lab Term ~> * where
 
 test1 = {Anon=Ret $ Const 5}b
 test2 = {Tag `a=Add (Const 40) (Const 2), Anon=Ret $ Use `a}b
+
+---------------
+-- instructions
+-- these actually track the defs and uses in the type system
+
+data Props :: *1 where
+  A :: Props
+
+data Instr :: Props ~> Props ~> * where
+  Def :: Label t -> Prim Regular i -> Instr A A
+  Exec :: Prim Regular i -> Instr A A
+  Term :: Prim Terminator i -> Instr A A
+
+test3 = Term $ Ret (Const 42)
+test4 = Def `a $ Add (Const 40) (Const 2)
