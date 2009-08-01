@@ -1,0 +1,28 @@
+import "LangPrelude.prg"
+
+-- for now this is untyped,
+-- I just want to demonstrate the 2-step
+-- approach
+
+kind Term = Terminator | Regular
+kind Init = InitBlock | SuccBlock
+
+kind Origin = Const | Defined
+
+data Use :: Origin ~> * where
+   Const :: Int -> Use Const
+   Use :: Label t -> Use Defined
+
+data Prim :: Term ~> Init ~> * where
+  Add :: Use cn -> Use cn' -> Prim Regular b
+  Ret :: Use cn -> Prim Terminator b
+
+kind Lab = Named Tag | Anon
+
+data Ref :: Lab ~> * where
+  Tag :: Label t -> Ref (Named t)
+  Anon :: Ref Anon
+
+data Block :: Row Lab Term ~> * where
+  Fin :: Block {}r
+  BCons :: Ref l -> Prim t i -> Block r -> Block {l=t; r}r
