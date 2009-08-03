@@ -7,12 +7,16 @@ import "LangPrelude.prg"
 kind Term = Terminator | Regular
 kind Init = InitBlock | SuccBlock
 
-kind Origin = Const | Defined
+kind Origin = Const | Defined Tag
 
 data Use :: Origin ~> * where
    Const :: Int -> Use Const
-   Use :: Label t -> Use Defined
+   Use :: Label t -> Use (Defined t)
 
+---------------
+-- primitives
+-- these can be parsed from a text file for example
+--
 data Prim :: Term ~> Init ~> * where
   Add :: Use cn -> Use cn' -> Prim Regular b
   Ret :: Use cn -> Prim Terminator b
