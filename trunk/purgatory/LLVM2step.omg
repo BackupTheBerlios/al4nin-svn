@@ -70,11 +70,21 @@ data Defs :: *1 where
   AddDef :: Tag ~> Defs ~> Defs
  deriving List(d)
 
+prop FreeDef :: Tag ~> Defs ~> * where
+  Trivially :: FreeDef t []d
+  More :: DiffLabel t t' -> FreeDef t r -> FreeDef t [t'; r]d
+ deriving List(f)
+
+{- NONSENSE!
+checkDef :: FreeDef t u -> Label t -> Prim Regular i us -> Maybe (FreeDef t {appendUses us u})
+checkDef f l (Add (Const _) (Const _)) = Just f
+-}
+
 data Props :: *1 where
   A :: Defs ~> Uses ~> Props
 
 data Instr :: Props ~> Props ~> * where
-  Def :: Label t -> Prim Regular i us -> Instr (A d {appendUses us u}) (A [t; d]d u)
+  Def :: FreeDef t d => Label t -> Prim Regular i us -> Instr (A d {appendUses us u}) (A [t; d]d u)
   Exec :: Prim Regular i us -> Instr (A d {appendUses us u}) (A d u)
   Term :: Prim Terminator i us -> Instr (A d {appendUses us u}) (A d u)
 
@@ -82,3 +92,17 @@ test3 = Term $ Ret (Const 42)
 test4 = Def `a $ Add (Const 40) (Const 2)
 test5 = Def `a $ Add (Const 40) (Use `b)
 test6 = Def `a $ Add (Use `b) (Use `c)
+
+data Thrist :: forall (l :: *1) . (l ~> l ~> *)  ~> l ~> l ~> * where
+  Nil :: Thrist k a a
+  Cons :: k a b -> Thrist k b c -> Thrist k a c
+ deriving List(l)
+
+
+{- NOT YET!
+--##test "double def not permitted"
+test7 :: Instr (A [`b]d []u) (A [`a, `b]d []u)
+test7 = Def `a $ Add (Const 40) (Const 2)
+-}
+
+test8 = [test5, test3]l
