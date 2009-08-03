@@ -83,6 +83,7 @@ checkDef f l (Add (Const _) (Const _)) = Just f
 data Props :: *1 where
   A :: Defs ~> Uses ~> Props
 
+-- exec should only apply when the return type of the primitive is void!
 data Instr :: Props ~> Props ~> * where
   Def :: FreeDef t d => Label t -> Prim Regular i us -> Instr (A d {appendUses us u}) (A [t; d]d u)
   Exec :: Prim Regular i us -> Instr (A d {appendUses us u}) (A d u)
@@ -106,3 +107,8 @@ test7 = Def `a $ Add (Const 40) (Const 2)
 -}
 
 test8 = [test5, test3]l
+
+buildBasicBlock2 :: Label t -> Prim Regular i us -> Prim Terminator i us' -> Maybe (Thrist Instr (A []d []u) (A [t]d []u))
+buildBasicBlock2 l (a@Add (Const _) (Const _)) (r@Ret (Const _)) = Just [Def l a, Term r]l
+
+test9 = buildBasicBlock2 `t (Add (Const 40) (Const 2)) (Ret $ Const 2)
