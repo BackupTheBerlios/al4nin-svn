@@ -168,9 +168,9 @@ prependDefs :: Defs ~> Defs ~> Defs
 
 buildBasicBlock :: DefEvidence ds -> Block r -> exists u . Maybe (DefEvidence {prependDefs {defsOnly r} ds}, Thrist Instr (A ds u) (A {prependDefs {defsOnly r} ds} []u), UseEvidence u)
 buildBasicBlock ds {Anon=(r@Ret _)}b = Ex (Just (ds, [Term r]l, collectUses r []ue))
---buildBasicBlock ds {Tag l=(a@Add _ _); r}b = case buildBasicBlock r of
---                                             Ex Nothing -> Ex Nothing
---                                             Ex (Just (thr, ue)) -> Ex (Just ([Def l a; thr]l, collectUses a ue))
+buildBasicBlock ds {Tag l=(a@Add _ _); r}b = case buildBasicBlock ds r of
+                                             Ex Nothing -> Ex Nothing
+                                             Ex (Just (ds', thr, ue)) -> Ex (Just ([l; ds']de, [Def l a; thr]l, collectUses a ue))
 buildBasicBlock _ _ = Ex Nothing
 
 
