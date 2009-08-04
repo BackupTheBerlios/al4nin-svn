@@ -173,10 +173,13 @@ buildBasicBlock :: DefEvidence ds -> Block r -> exists u . Maybe (DefEvidence {p
 buildBasicBlock ds {Anon=(r@Ret _)}b = Ex (Just (ds, [Term r]l, collectUses r []ue))
 
 buildBasicBlock ds {Tag l=(a@Add _ _); r}b = case (buildBasicBlock [l; ds]de r, proveFree l ds) of
-                                             (_, Nothing) -> Ex Nothing
-                                             (Ex Nothing, _) -> Ex Nothing
                                              (Ex (Just (ds', thr, ue)), Just ev) -> Ex (Just (ds', let proof = ev in [Def l a; thr]l, collectUses a ue))
+                                             _ -> Ex Nothing
+
 buildBasicBlock _ _ = Ex Nothing
 
 
 test13 = buildBasicBlock []de {Anon=(Ret (Use `a))}b
+test14 = buildBasicBlock [`a]de {Tag `b=Add (Use `a) (Const 40), Anon=(Ret (Use `b))}b
+test15 = buildBasicBlock [`a]de {Tag `b=Add (Use `a) (Const 40), Tag `c=Add (Const 2) (Use `b), Anon=(Ret (Use `c))}b
+
