@@ -122,3 +122,7 @@ test9 = buildBasicBlock2 `t (Add (Const 40) (Const 2)) (Ret $ Const 2)
 test10 = buildBasicBlock2 `t (Add (Const 40) (Const 2)) (Ret $ Use `t)
 test11 = buildBasicBlock2 `t (Add (Const 40) (Use `a)) (Ret $ Use `t)
 test12 = buildBasicBlock2 `t (Add (Use `c) (Use `a)) (Ret $ Use `t)
+
+buildBasicBlock :: Block r -> exists u d . Maybe (Thrist Instr (A []d u) (A d []u))
+buildBasicBlock {}b = Ex (Just []l)
+buildBasicBlock {Anon=(r@Ret _)}b = Ex (Just [Term r]l)
