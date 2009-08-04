@@ -130,6 +130,8 @@ defsOnly :: Row Lab Term ~> Defs
 {defsOnly {(Named n)=t; r}r} = [n; {defsOnly r}]d
 
 
-buildBasicBlock :: Block r -> exists u d . Maybe (Thrist Instr (A []d u) (A d []u))
+buildBasicBlock :: Block r -> exists u . Maybe (Thrist Instr (A []d u) (A {defsOnly r} []u))
 buildBasicBlock {}b = Ex Nothing
 buildBasicBlock {Anon=(r@Ret _)}b = Ex (Just [Term r]l)
+
+test13 = buildBasicBlock {Anon=(Ret (Use `a))}b
