@@ -75,11 +75,6 @@ prop FreeDef :: Tag ~> Defs ~> * where
   More :: DiffLabel t t' -> FreeDef t r -> FreeDef t [t'; r]d
  deriving List(f)
 
-{- NONSENSE!
-checkDef :: FreeDef t u -> Label t -> Prim Regular i us -> Maybe (FreeDef t {appendUses us u})
-checkDef f l (Add (Const _) (Const _)) = Just f
--}
-
 data Props :: *1 where
   A :: Defs ~> Uses ~> Props
 
@@ -166,12 +161,21 @@ prependDefs :: Defs ~> Defs ~> Defs
 {prependDefs []d ds} = ds
 {prependDefs [d; r]d ds} = {prependDefs r [d; ds]d}
 
+proveFree :: Label l -> DefEvidence de -> Maybe (FreeDef l de)
+proveFree _ []de = Just []f
+proveFree l [l'; r]de = case sameLabel l l' of
+                        L _ -> Nothing
+                        R d -> case proveFree l r of
+                               Nothing -> Nothing
+                               Just r' -> Just [d; r']f
+
 buildBasicBlock :: DefEvidence ds -> Block r -> exists u . Maybe (DefEvidence {prependDefs {defsOnly r} ds}, Thrist Instr (A ds u) (A {prependDefs {defsOnly r} ds} []u), UseEvidence u)
 buildBasicBlock ds {Anon=(r@Ret _)}b = Ex (Just (ds, [Term r]l, collectUses r []ue))
 
-buildBasicBlock ds {Tag l=(a@Add _ _); r}b = case buildBasicBlock [l; ds]de r of
-                                             Ex Nothing -> Ex Nothing
-                                             Ex (Just (ds', thr, ue)) -> Ex (Just (ds', [Def l a; thr]l, collectUses a ue))
+buildBasicBlock ds {Tag l=(a@Add _ _); r}b = case (buildBasicBlock [l; ds]de r, proveFree l ds) of
+                                             (_, Nothing) -> Ex Nothing
+                                             (Ex Nothing, _) -> Ex Nothing
+                                             (Ex (Just (ds', thr, ue)), Just ev) -> Ex (Just (ds', [Def l a; thr]l, collectUses a ue))
 buildBasicBlock _ _ = Ex Nothing
 
 
