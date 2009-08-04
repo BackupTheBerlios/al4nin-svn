@@ -130,11 +130,41 @@ defsOnly :: Row Lab Term ~> Defs
 {defsOnly {Anon=t; r}r} = {defsOnly r}
 {defsOnly {(Named n)=t; r}r} = [n; {defsOnly r}]d
 
+{-
+prependUse :: Origin ~> Uses ~> Uses
+{prependUse Const r} = r
+{prependUse (Defined t) r} = [t; r]u
+
+collectUses' :: Use o -> UseEvidence r -> UseEvidence {prependUse o r}
+-}
+{-
+collectUses' :: Use o -> UseEvidence r -> UseEvidence {prependUse o r}
+collectUses' (Const _) ev = ev
+collectUses' (Use l) ev = [l; ev]ue
+-}
+
+-- THE ABOVE CONSTRUCTION NEEDS LEMMAS prependUse <--> appendUses
+
+
+collectUses :: Prim b i us -> UseEvidence r -> UseEvidence {appendUses us r}
+collectUses (Ret (Const _)) ev =  ev
+collectUses (Ret (Use l)) ev = [l; ev]ue
+collectUses (Add (Const _) (Const _)) ev =  ev
+collectUses (Add (Const _) (Use l)) ev = [l; ev]ue
+collectUses (Add (Use l) (Const _)) ev = [l; ev]ue
+collectUses (Add (Use l) (Use m)) ev = [l, m; ev]ue
+
+-- NO LEMMA YET! collectUses (Ret u) ev = collectUses' u ev
 
 buildBasicBlock :: Block r -> exists u . Maybe (Thrist Instr (A []d u) (A {defsOnly r} []u), UseEvidence u)
 buildBasicBlock {}b = Ex Nothing
-buildBasicBlock {Anon=(r@Ret (Const _))}b = Ex (Just ([Term r]l, NoUses))
-buildBasicBlock {Anon=(r@Ret (Use l))}b = Ex (Just ([Term r]l, [l]ue))
+--buildBasicBlock {Anon=(r@Ret (Const _))}b = Ex (Just ([Term r]l, NoUses))
+--buildBasicBlock {Anon=(r@Ret (Use l))}b = Ex (Just ([Term r]l, [l]ue))
+buildBasicBlock {Anon=(r@Ret _)}b = Ex (Just ([Term r]l, collectUses r []ue))
+buildBasicBlock {Tag l=(a@Add _ _); r}b = case buildBasicBlock r of
+                                            Ex Nothing -> Ex Nothing
+                                            Ex (Just (thr, ue)) -> Ex (Just ([Def l a; thr]l, collectUses a ue))
+buildBasicBlock _ = Ex Nothing
 
 
 test13 = buildBasicBlock {Anon=(Ret (Use `a))}b
