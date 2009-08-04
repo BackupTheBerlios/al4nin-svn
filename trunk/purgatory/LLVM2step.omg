@@ -175,7 +175,7 @@ buildBasicBlock ds {Anon=(r@Ret _)}b = Ex (Just (ds, [Term r]l, collectUses r []
 buildBasicBlock ds {Tag l=(a@Add _ _); r}b = case (buildBasicBlock [l; ds]de r, proveFree l ds) of
                                              (_, Nothing) -> Ex Nothing
                                              (Ex Nothing, _) -> Ex Nothing
-                                             (Ex (Just (ds', thr, ue)), Just ev) -> Ex (Just (ds', [Def l a; thr]l, collectUses a ue))
+                                             (Ex (Just (ds', thr, ue)), Just ev) -> Ex (Just (ds', let proof = ev in [Def l a; thr]l, collectUses a ue))
 buildBasicBlock _ _ = Ex Nothing
 
 
