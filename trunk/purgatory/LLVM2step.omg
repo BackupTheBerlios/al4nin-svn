@@ -115,11 +115,7 @@ buildBasicBlock2 :: Label t ->
                     Prim Regular i us ->
                     Prim Terminator i us' ->
                     Maybe (Thrist Instr (A []d {appendUses us {appendUses us' []u}}) (A [t]d []u))
-buildBasicBlock2 l (a@Add (Const _) (Const _)) (r@Ret (Const _)) = Just [Def l a, Term r]l
-buildBasicBlock2 l (a@Add (Const _) (Const _)) (r@Ret (Use _)) = Just [Def l a, Term r]l
-buildBasicBlock2 l (a@Add (Const _) (Use _)) (r@Ret (Const _)) = Just [Def l a, Term r]l
-buildBasicBlock2 l (a@Add (Const _) (Use _)) (r@Ret (Use _)) = Just [Def l a, Term r]l
-buildBasicBlock2 l (a@Add uc (Use _)) (r@Ret (Use _)) = Just [Def l a, Term r]l
+buildBasicBlock2 l (a@Add _ _) (r@Ret _) = Just [Def l a, Term r]l
 buildBasicBlock2 _ _ _ = Nothing
 
 test9 = buildBasicBlock2 `t (Add (Const 40) (Const 2)) (Ret $ Const 2)
