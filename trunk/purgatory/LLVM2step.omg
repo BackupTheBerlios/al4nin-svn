@@ -109,8 +109,9 @@ test7 = Def `a $ Add (Const 40) (Const 2)
 test8 = [test5, test3]l
 
 data UseEvidence :: Uses ~> * where
-  NoUse :: UseEvidence []u
+  NoUses :: UseEvidence []u
   AddUse :: Label l -> UseEvidence r -> UseEvidence [l; r]u
+ deriving List(ue)
 
 buildBasicBlock2 :: Label t ->
                     Prim Regular i us ->
@@ -130,8 +131,10 @@ defsOnly :: Row Lab Term ~> Defs
 {defsOnly {(Named n)=t; r}r} = [n; {defsOnly r}]d
 
 
-buildBasicBlock :: Block r -> exists u . Maybe (Thrist Instr (A []d u) (A {defsOnly r} []u))
+buildBasicBlock :: Block r -> exists u . Maybe (Thrist Instr (A []d u) (A {defsOnly r} []u), UseEvidence u)
 buildBasicBlock {}b = Ex Nothing
-buildBasicBlock {Anon=(r@Ret _)}b = Ex (Just [Term r]l)
+buildBasicBlock {Anon=(r@Ret (Const _))}b = Ex (Just ([Term r]l, NoUses))
+buildBasicBlock {Anon=(r@Ret (Use l))}b = Ex (Just ([Term r]l, [l]ue))
+
 
 test13 = buildBasicBlock {Anon=(Ret (Use `a))}b
