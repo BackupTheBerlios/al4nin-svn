@@ -161,16 +161,17 @@ collectUses (Add (Use l) (Use m)) ev = [l, m; ev]ue
 
 -- NO LEMMA YET! collectUses (Ret u) ev = collectUses' u ev
 
--- Defs should be a snoc-list tho get this beautiful
+-- Defs should be a snoc-list to get this beautiful
 prependDefs :: Defs ~> Defs ~> Defs
 {prependDefs []d ds} = ds
-{prependDefs [d; r]d ds} = [d; {prependDefs r ds}]d
+{prependDefs [d; r]d ds} = {prependDefs r [d; ds]d}
 
 buildBasicBlock :: DefEvidence ds -> Block r -> exists u . Maybe (DefEvidence {prependDefs {defsOnly r} ds}, Thrist Instr (A ds u) (A {prependDefs {defsOnly r} ds} []u), UseEvidence u)
 buildBasicBlock ds {Anon=(r@Ret _)}b = Ex (Just (ds, [Term r]l, collectUses r []ue))
-buildBasicBlock ds {Tag l=(a@Add _ _); r}b = case buildBasicBlock ds r of
+
+buildBasicBlock ds {Tag l=(a@Add _ _); r}b = case buildBasicBlock [l; ds]de r of
                                              Ex Nothing -> Ex Nothing
-                                             Ex (Just (ds', thr, ue)) -> Ex (Just ([l; ds']de, [Def l a; thr]l, collectUses a ue))
+                                             Ex (Just (ds', thr, ue)) -> Ex (Just (ds', [Def l a; thr]l, collectUses a ue))
 buildBasicBlock _ _ = Ex Nothing
 
 
