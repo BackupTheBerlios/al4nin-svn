@@ -148,7 +148,7 @@ collectUses (Add (Const _) (Use l)) ev = [l; ev]ue
 collectUses (Add (Use l) (Const _)) ev = [l; ev]ue
 collectUses (Add (Use l) (Use m)) ev = [l, m; ev]ue
 collectUses (Phi []ue) ev = ev
-collectUses (Phi [l, r]ue) ev = [l; collectUses (Phi r) ev]ue
+collectUses (Phi [l; r]ue) ev = [l; collectUses (Phi r) ev]ue
 
 -- NO LEMMA YET! collectUses (Ret u) ev = collectUses' u ev
 
