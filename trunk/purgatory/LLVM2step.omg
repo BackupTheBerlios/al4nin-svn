@@ -76,13 +76,13 @@ prop FreeDef :: Tag ~> Defs ~> * where
  deriving List(f)
 
 data Props :: *1 where
-  A :: Defs ~> Uses ~> Props
+  A :: Defs ~> Uses ~> Term ~> Props
 
 -- exec should only apply when the return type of the primitive is void!
 data Instr :: Props ~> Props ~> * where
-  Def :: FreeDef t d => Label t -> Prim Regular i us -> Instr (A d {appendUses us u}) (A [t; d]d u)
-  Exec :: Prim Regular i us -> Instr (A d {appendUses us u}) (A d u)
-  Term :: Prim Terminator i us -> Instr (A d {appendUses us u}) (A d u)
+  Def :: FreeDef t d => Label t -> Prim Regular i us -> Instr (A d {appendUses us u} Regular) (A [t; d]d u Regular)
+  Exec :: Prim Regular i us -> Instr (A d {appendUses us u} Regular) (A d u Regular)
+  Term :: Prim Terminator i us -> Instr (A d {appendUses us u} Regular) (A d u Terminator)
 
 test3 = Term $ Ret (Const 42)
 test4 = Def `a $ Add (Const 40) (Const 2)
@@ -111,10 +111,12 @@ data DefEvidence :: Defs ~> * where
   AddDef :: Label l -> DefEvidence r -> DefEvidence [l; r]d
  deriving List(de)
 
+{-
 test9 = undefined
 test10 = undefined
 test11 = undefined
 test12 = undefined
+-}
 
 defsOnly :: Row Lab Term ~> Defs
 {defsOnly {}r} = []d
@@ -160,7 +162,7 @@ proveFree l [l'; r]de = case sameLabel l l' of
                                Nothing -> Nothing
                                Just r' -> Just [d; r']f
 
-buildBasicBlock :: DefEvidence ds -> Block r -> exists u . Maybe (DefEvidence {prependDefs {defsOnly r} ds}, Thrist Instr (A ds u) (A {prependDefs {defsOnly r} ds} []u), UseEvidence u)
+buildBasicBlock :: DefEvidence ds -> Block r -> exists u . Maybe (DefEvidence {prependDefs {defsOnly r} ds}, Thrist Instr (A ds u Regular) (A {prependDefs {defsOnly r} ds} []u Terminator), UseEvidence u)
 buildBasicBlock ds {Anon=(r@Ret _)}b = Ex (Just (ds, [Term r]l, collectUses r []ue))
 
 buildBasicBlock ds {Tag l=(a@Add _ _); r}b = case (buildBasicBlock [l; ds]de r, proveFree l ds) of
