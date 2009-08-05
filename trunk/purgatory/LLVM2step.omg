@@ -111,17 +111,10 @@ data DefEvidence :: Defs ~> * where
   AddDef :: Label l -> DefEvidence r -> DefEvidence [l; r]d
  deriving List(de)
 
-buildBasicBlock2 :: Label t ->
-                    Prim Regular i us ->
-                    Prim Terminator i us' ->
-                    Maybe (Thrist Instr (A []d {appendUses us {appendUses us' []u}}) (A [t]d []u))
-buildBasicBlock2 l (a@Add _ _) (r@Ret _) = Just [Def l a, Term r]l
-buildBasicBlock2 _ _ _ = Nothing
-
-test9 = buildBasicBlock2 `t (Add (Const 40) (Const 2)) (Ret $ Const 2)
-test10 = buildBasicBlock2 `t (Add (Const 40) (Const 2)) (Ret $ Use `t)
-test11 = buildBasicBlock2 `t (Add (Const 40) (Use `a)) (Ret $ Use `t)
-test12 = buildBasicBlock2 `t (Add (Use `c) (Use `a)) (Ret $ Use `t)
+test9 = undefined
+test10 = undefined
+test11 = undefined
+test12 = undefined
 
 defsOnly :: Row Lab Term ~> Defs
 {defsOnly {}r} = []d
