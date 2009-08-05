@@ -95,11 +95,9 @@ data Thrist :: forall (l :: *1) . (l ~> l ~> *)  ~> l ~> l ~> * where
  deriving List(l)
 
 
-{- NOT YET!
---##test "double def not permitted"
-test7 :: Instr (A [`b]d []u) (A [`a, `b]d []u)
-test7 = Def `a $ Add (Const 40) (Const 2)
--}
+##test "double def not permitted (but see issue 67!)"
+  test7 = [Def `a $ Add (Const 40) (Const 2), Def `a $ Add (Const 40) (Const 2)]l
+
 
 test8 = [test5, test3]l
 
