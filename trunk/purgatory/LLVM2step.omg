@@ -231,13 +231,18 @@ functionName :: Row Target b ~> Tag
 {functionName {F l a=b}r} = l
 {functionName {B l=b; r}r} = {functionName r}
 
-functionArgs :: Row Target b ~> Row Tag *
-{functionArgs {F l a=b}r} = a
+argsAsArrow :: * ~> Row Tag * ~> *
+{argsAsArrow r {}r} = r
+{argsAsArrow r {l=t; more}r} = t -> {argsAsArrow r more}
+
+
+functionArgs :: Row Target b ~> *
+{functionArgs {F l a=b}r} = {argsAsArrow Int a}
 {functionArgs {B l=b; r}r} = {functionArgs r}
 
 
-data Function :: Tag ~> Row Tag * ~> * where
+data Function :: Tag ~> * ~> * where
   Body :: BasicBlocks r -> Function {functionName r} {functionArgs r}
-  External :: Arguments a -> Label l -> Function l a
+  External :: Arguments a -> Label l -> Function l {argsAsArrow Int a}
 
 test21 = Body test20
