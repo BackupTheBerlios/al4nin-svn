@@ -182,3 +182,22 @@ test14 = buildBasicBlock [`a]de {Tag `b=Add (Use `a) (Const 40), Anon=(Ret (Use 
 test15 = buildBasicBlock [`a]de {Tag `b=Add (Use `a) (Const 40), Tag `c=Add (Const 2) (Use `b), Anon=(Ret (Use `c))}b
 test16 = buildBasicBlock []de {Tag `a=Phi [`n]ue, Anon=Ret $ Use `a}b
 
+
+---------------
+-- functions
+-- record of named basic blocks and a signature
+
+-- first we do step 1 and establish easily buildable (unchecked) data
+
+data LType a = DontCare
+
+data Arguments :: Row Tag * ~> * where
+  Void :: Arguments {}r
+  Saturable :: Label l -> LType t -> Arguments r -> Arguments {l=Int; r}r
+ deriving Record(a)
+
+data Blocks :: Row Tag (Row Lab Term) ~> * where
+  Entry :: Label l -> Block b -> Blocks {l=b}r
+  Successor :: Label l -> Block b -> Blocks r -> Blocks {l=b; r}r
+
+-- step 2: build the checked variant, by applying evidence to constraints
