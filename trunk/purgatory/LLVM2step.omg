@@ -196,8 +196,14 @@ data Arguments :: Row Tag * ~> * where
   Saturable :: Label l -> LType t -> Arguments r -> Arguments {l=Int; r}r
  deriving Record(a)
 
-data Blocks :: Row Tag (Row Lab Term) ~> * where
-  Entry :: Label l -> Block b -> Blocks {l=b}r
-  Successor :: Label l -> Block b -> Blocks r -> Blocks {l=b; r}r
+kind Target = F Tag | B Tag
+
+data Blocks :: Row Target (Row Lab Term) ~> * where
+  Entry :: Label l -> Block b -> Blocks {F l=b}r
+  Successor :: Label l -> Block b -> Blocks r -> Blocks {B l=b; r}r
+ -- deriving Record(bs)
+
+test17 = Entry `fak test2
+test18 = Successor `target test1 (Entry `fak test2)
 
 -- step 2: build the checked variant, by applying evidence to constraints
