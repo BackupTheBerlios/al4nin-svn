@@ -198,9 +198,14 @@ data Arguments :: Row Tag * ~> * where
 
 kind Target = F Tag | B Tag
 
+prop FreeName :: Target ~> Row Target a ~> * where
+  TriviallyN :: FreeName (B t) {F l=b}r
+  MoreNames :: DiffLabel t t' -> FreeName (B t) r -> FreeName (B t) {B t'=b; r}r
+ deriving List(fn)
+
 data Blocks :: Row Target (Row Lab Term) ~> * where
   Entry :: Label l -> Block b -> Blocks {F l=b}r
-  Successor :: Label l -> Block b -> Blocks r -> Blocks {B l=b; r}r
+  Successor :: {-FreeName (B l) r =>-} Label l -> Block b -> Blocks r -> Blocks {B l=b; r}r
  -- deriving Record(bs)
 
 test17 = Entry `fak test2
