@@ -227,10 +227,6 @@ data BasicBlocks :: Row Target (Row Lab Term) ~> * where
 test19 = EntryBlock {`n=DontCare}a `id [Term (Ret (Use `n))]l [`n]ue [`n]de
 test20 = SuccessorBlock `dead []de [Term (Ret (Const 42))]l []ue []de test19
 
-function :: Row Target b ~> *
-{function {F l a=b}r} = Function l a
-{function {B l=b; r}r} = {function r}
-
 functionName :: Row Target b ~> Tag
 {functionName {F l a=b}r} = l
 {functionName {B l=b; r}r} = {functionName r}
@@ -242,7 +238,6 @@ functionArgs :: Row Target b ~> Row Tag *
 
 data Function :: Tag ~> Row Tag * ~> * where
   Body :: BasicBlocks r -> Function {functionName r} {functionArgs r}
-  --Body' :: BasicBlocks r -> {function r}
   External :: Arguments a -> Label l -> Function l a
 
 test21 = Body test20
