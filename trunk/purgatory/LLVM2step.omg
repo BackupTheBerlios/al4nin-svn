@@ -218,6 +218,8 @@ argumentDefs :: Row Tag * ~> Defs
 {argumentDefs {l=a; r}r} = [l; {argumentDefs r}]d
 
 data BasicBlocks :: Row Target (Row Lab Term) ~> * where
-  EntryBlock :: Label l -> Arguments a -> Thrist Instr (A {argumentDefs a} u Regular) (A d []u Terminator) -> UseEvidence u -> DefEvidence d -> BasicBlocks {F l a=b}r
+  EntryBlock :: Arguments a -> Label l -> Thrist Instr (A {argumentDefs a} u Regular) (A d []u Terminator) -> UseEvidence u -> DefEvidence d -> BasicBlocks {F l a=b}r
+  SuccessorBlock :: FreeName (B l) r => Label l -> DefEvidence d -> Thrist Instr (A d u Regular) (A d' []u Terminator) -> UseEvidence u -> DefEvidence d' -> BasicBlocks r -> BasicBlocks {B l=b; r}r
 
-test19 = EntryBlock `id {`n=DontCare}a [Term (Ret (Use `n))]l [`n]ue [`n]de
+test19 = EntryBlock {`n=DontCare}a `id [Term (Ret (Use `n))]l [`n]ue [`n]de
+test20 = SuccessorBlock `dead []de [Term (Ret (Const 42))]l []ue []de test19
