@@ -212,3 +212,12 @@ test17 = Entry `fak {`a=DontCare, `b=DontCare}a test2
 test18 = Successor `target test1 test17
 
 -- step 2: build the checked variant, by applying evidence to constraints
+
+argumentDefs :: Row Tag * ~> Defs
+{argumentDefs {}r} = []d
+{argumentDefs {l=a; r}r} = [l; {argumentDefs r}]d
+
+data BasicBlocks :: Row Target (Row Lab Term) ~> * where
+  EntryBlock :: Label l -> Arguments a -> Thrist Instr (A {argumentDefs a} u Regular) (A d []u Terminator) -> UseEvidence u -> DefEvidence d -> BasicBlocks {F l a=b}r
+
+test19 = EntryBlock `id {`n=DontCare}a [Term (Ret (Use `n))]l [`n]ue [`n]de
