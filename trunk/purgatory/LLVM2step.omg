@@ -21,6 +21,7 @@ data Prim :: Term ~> Init ~> Uses ~> * where
   Phi :: UseEvidence us -> Prim Regular SuccBlock us
   Add :: Use cn -> Use cn' -> Prim Regular b {trackUses2 cn cn' []u}
   Ret :: Use cn -> Prim Terminator b {trackUses1 cn []u}
+  Branch :: Label l -> Prim Terminator b []u
 
 kind Lab = Named Tag | Anon
 
@@ -149,6 +150,8 @@ collectUses (Add (Use l) (Const _)) ev = [l; ev]ue
 collectUses (Add (Use l) (Use m)) ev = [l, m; ev]ue
 collectUses (Phi []ue) ev = ev
 collectUses (Phi [l; r]ue) ev = [l; collectUses (Phi r) ev]ue
+collectUses (Branch _) ev = ev
+
 
 -- NO LEMMA YET! collectUses (Ret u) ev = collectUses' u ev
 
