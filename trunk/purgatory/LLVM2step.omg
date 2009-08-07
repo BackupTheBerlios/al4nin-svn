@@ -7,11 +7,12 @@ import "LangPrelude.prg"
 kind Term = Terminator | Regular
 kind Init = InitBlock | SuccBlock
 
-kind Origin = Const | Defined Tag
+kind Origin = Const | Defined Tag | Module Tag Tag
 
 data Use :: Origin ~> * where
-   Const :: Int -> Use Const
-   Use :: Label t -> Use (Defined t)
+  Const :: Int -> Use Const
+  Use :: Label t -> Use (Defined t)
+  Global :: Label mod -> Label t -> Use (Module mod t)
 
 ---------------
 -- primitives
