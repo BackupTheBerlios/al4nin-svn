@@ -5,14 +5,21 @@ import "LangPrelude.prg"
 -- approach
 
 kind Term = Terminator | Regular
-kind Init = InitBlock | SuccBlock
+kind Init = EntryBlock | SuccBlock
+kind Scope = Universe | Mod | Func
 
-kind Origin = Const | Defined Tag | Module Tag Tag
+kind Origin :: Scope ~> *1 where
+  Const :: Origin Universe
+  Linkable :: Tag ~> Tag ~> Origin Mod
+  Defined :: Tag ~> Tag ~> Tag ~> Origin Func
 
-data Use :: Origin ~> * where
+data Use :: Origin s ~> * where
   Const :: Int -> Use Const
-  Use :: Label t -> Use (Defined t)
-  Global :: Label mod -> Label t -> Use (Module mod t)
+  Use :: Label m -> Label f -> Label t -> Use (Defined m f t)
+  Global :: Label mod -> Label t -> Use (Linkable mod t)
+
+-- for now simplify it
+use = Use `module `id
 
 ---------------
 -- primitives
@@ -37,7 +44,7 @@ data Block :: Row Lab Term ~> * where
  deriving Record(b)
 
 test1 = {Anon=Ret $ Const 5}b
-test2 = {Tag `a=Add (Const 40) (Const 2), Anon=Ret $ Use `a}b
+test2 = {Tag `a=Add (Const 40) (Const 2), Anon=Ret $ use `a}b
 
 ---------------
 -- instructions
@@ -51,15 +58,15 @@ data Uses :: *1 where
   AddUse :: Tag ~> Uses ~> Uses
  deriving List(u)
 
-trackUses1 :: Origin ~> Uses ~> Uses
+trackUses1 :: Origin s ~> Uses ~> Uses
 {trackUses1 Const us} = us
-{trackUses1 (Defined t) us} = [t; us]u
+{trackUses1 (Defined m f t) us} = [t; us]u
 
-trackUses2 :: Origin ~> Origin ~> Uses ~> Uses 
+trackUses2 :: Origin s ~> Origin u ~> Uses ~> Uses 
 {trackUses2 Const Const us} = us
-{trackUses2 Const (Defined t) us} = [t; us]u
-{trackUses2 (Defined t) Const us} = [t; us]u
-{trackUses2 (Defined t) (Defined t') us} = [t, t'; us]u
+{trackUses2 Const (Defined m f t) us} = [t; us]u
+{trackUses2 (Defined m f t) Const us} = [t; us]u
+{trackUses2 (Defined m f t) (Defined m' f' t') us} = [t, t'; us]u
 
 appendUses :: Uses ~> Uses ~> Uses
 {appendUses []u us} = us
@@ -90,8 +97,8 @@ data Instr :: Props ~> Props ~> * where
 
 test3 = Term $ Ret (Const 42)
 test4 = Def `a $ Add (Const 40) (Const 2)
-test5 = Def `a $ Add (Const 40) (Use `b)
-test6 = Def `a $ Add (Use `b) (Use `c)
+test5 = Def `a $ Add (Const 40) (use `b)
+test6 = Def `a $ Add (use `b) (use `c)
 
 data Thrist :: forall (l :: *1) . (l ~> l ~> *)  ~> l ~> l ~> * where
   Nil :: Thrist k a a
@@ -145,11 +152,11 @@ collectUses' (Use l) ev = [l; ev]ue
 
 collectUses :: Prim b i us -> UseEvidence r -> UseEvidence {appendUses us r}
 collectUses (Ret (Const _)) ev =  ev
-collectUses (Ret (Use l)) ev = [l; ev]ue
+collectUses (Ret (Use _ _ l)) ev = [l; ev]ue
 collectUses (Add (Const _) (Const _)) ev =  ev
-collectUses (Add (Const _) (Use l)) ev = [l; ev]ue
-collectUses (Add (Use l) (Const _)) ev = [l; ev]ue
-collectUses (Add (Use l) (Use m)) ev = [l, m; ev]ue
+collectUses (Add (Const _) (Use _ _ l)) ev = [l; ev]ue
+collectUses (Add (Use _ _ l) (Const _)) ev = [l; ev]ue
+collectUses (Add (Use _ _  l) (Use _ _  m)) ev = [l, m; ev]ue
 collectUses (Phi []ue) ev = ev
 collectUses (Phi [l; r]ue) ev = [l; collectUses (Phi r) ev]ue
 collectUses (Branch _) ev = ev
@@ -182,10 +189,10 @@ buildBasicBlock ds {Tag l=(p@Phi _); r}b = case (buildBasicBlock [l; ds]de r, pr
 buildBasicBlock _ _ = Ex Nothing
 
 
-test13 = buildBasicBlock []de {Anon=(Ret (Use `a))}b
-test14 = buildBasicBlock [`a]de {Tag `b=Add (Use `a) (Const 40), Anon=(Ret (Use `b))}b
-test15 = buildBasicBlock [`a]de {Tag `b=Add (Use `a) (Const 40), Tag `c=Add (Const 2) (Use `b), Anon=(Ret (Use `c))}b
-test16 = buildBasicBlock []de {Tag `a=Phi [`n]ue, Anon=Ret $ Use `a}b
+test13 = buildBasicBlock []de {Anon=(Ret (use `a))}b
+test14 = buildBasicBlock [`a]de {Tag `b=Add (use `a) (Const 40), Anon=(Ret (use `b))}b
+test15 = buildBasicBlock [`a]de {Tag `b=Add (use `a) (Const 40), Tag `c=Add (Const 2) (use `b), Anon=(Ret (use `c))}b
+test16 = buildBasicBlock []de {Tag `a=Phi [`n]ue, Anon=Ret $ use `a}b
 
 
 ---------------
@@ -226,7 +233,7 @@ data BasicBlocks :: Row Target (Row Lab Term) ~> * where
   EntryBlock :: Arguments a -> Label l -> Thrist Instr (A {argumentDefs a} u Regular) (A d []u Terminator) -> UseEvidence u -> DefEvidence d -> BasicBlocks {F l a=b}r
   SuccessorBlock :: FreeName (B l) r => Label l -> DefEvidence d -> Thrist Instr (A d u Regular) (A d' []u Terminator) -> UseEvidence u -> DefEvidence d' -> BasicBlocks r -> BasicBlocks {B l=b; r}r
 
-test19 = EntryBlock {`n=DontCare}a `id [Term (Ret (Use `n))]l [`n]ue [`n]de
+test19 = EntryBlock {`n=DontCare}a `id [Term (Ret (use `n))]l [`n]ue [`n]de
 test20 = SuccessorBlock `dead []de [Term (Ret (Const 42))]l []ue []de test19
 
 functionName :: Row Target b ~> Tag
