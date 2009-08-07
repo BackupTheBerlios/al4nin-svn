@@ -20,6 +20,7 @@ data Use :: Origin ~> * where
 data Prim :: Term ~> Init ~> Uses ~> * where
   Phi :: UseEvidence us -> Prim Regular SuccBlock us
   Add :: Use cn -> Use cn' -> Prim Regular b {trackUses2 cn cn' []u}
+  Call :: Label l -> UseEvidence us -> Prim Regular b us
   Ret :: Use cn -> Prim Terminator b {trackUses1 cn []u}
   Branch :: Label l -> Prim Terminator b []u
 
