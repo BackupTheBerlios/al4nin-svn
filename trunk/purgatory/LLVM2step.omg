@@ -209,7 +209,7 @@ prop FreeName :: Target ~> Row Target a ~> * where
 
 data Blocks :: Row Target (Row Lab Term) ~> * where
   Entry :: Label l -> Arguments a -> Block b -> Blocks {F l a=b}r
-  Successor :: {-FreeName (B l) r =>-} Label l -> Block b -> Blocks r -> Blocks {B l=b; r}r
+  Successor :: Label l -> Block b -> Blocks r -> Blocks {B l=b; r}r
  -- deriving Record(bs)
 
 test17 = Entry `fak {`a=DontCare, `b=DontCare}a test2
@@ -247,3 +247,14 @@ data Function :: Tag ~> * ~> * where
   External :: Arguments a -> Label l -> Function l {argsAsArrow Int a}
 
 test21 = Body test20
+
+---------------
+-- Modules
+-- record of named globals (e.g. functions)
+
+data Global :: Tag ~> * ~> * where
+  Fun :: Function l t -> Global l t
+  Var :: Label l -> Global l t
+  Alias :: Label l -> Global l t
+
+
