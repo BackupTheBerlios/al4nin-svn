@@ -3,7 +3,7 @@ import "LangPrelude.prg"
 -- Applicative functors
 
 data Applicative :: (* ~> * ~> *) ~> * ~> * where
-  Fun :: (a -> b) -> Applicative (->) (a -> b)
+  Fun :: f a b -> Applicative f (f a b)
   Val :: a -> Applicative f a
   App :: Applicative f (f a b) -> Applicative f a -> Applicative f b
 
