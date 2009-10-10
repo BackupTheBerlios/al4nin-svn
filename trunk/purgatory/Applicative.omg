@@ -13,5 +13,5 @@ data Thrist :: forall (l :: *1) . (l ~> l ~> *)  ~> l ~> l ~> * where
   Cons :: k a b -> Thrist k b c -> Thrist k a c
  deriving List(l)
 
-t0 = App (Fun chr) (Val 42)
+t0 = App (App (Fun (+)) (Val 42)) (Val 2)
 t1 = App (Fun [chr]l)
