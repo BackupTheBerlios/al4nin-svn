@@ -13,5 +13,14 @@ data Thrist :: forall (l :: *1) . (l ~> l ~> *)  ~> l ~> l ~> * where
   Cons :: k a b -> Thrist k b c -> Thrist k a c
  deriving List(l)
 
-t0 = App (App (Fun (+)) (Val 42)) (Val 2)
+t0 = App (App (Fun (+)) (Val 40)) (Val 2)
 t1 = App (Fun [chr]l)
+
+data Arith :: * ~> * ~> * where
+  Plus :: Arith Int (Arith Int Int)
+  Minus :: Arith Int (Arith Int Int)
+  Times :: Arith Int (Arith Int Int)
+  Div :: Arith Int (Arith Int Int)
+  Mod :: Arith Int (Arith Int Int)
+
+t2 = App (App (Fun Plus) (Val 40)) (Val 2)
