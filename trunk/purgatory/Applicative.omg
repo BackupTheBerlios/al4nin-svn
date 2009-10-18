@@ -24,3 +24,19 @@ data Arith :: * ~> * ~> * where
   Mod :: Arith Int (Arith Int Int)
 
 t2 = App (App (Fun Plus) (Val 40)) (Val 2)
+
+concType :: * ~> *
+{concType (Arith a b)} = {concType a} -> {concType b}
+{concType Int} = Int
+
+concretize :: Applicative Arith a -> Applicative (->) {concType a}
+concretize (Fun Plus) = Fun (+)
+--concretize (Val a) = Val a -- need representation types here
+concretize (App f a) = App (concretize f) (concretize a)
+
+{-
+I want something like
+
+[map, [plus, 1]l, [from, 1, 5]l ]l
+
+-}
