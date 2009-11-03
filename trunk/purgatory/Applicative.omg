@@ -34,9 +34,19 @@ concretize (Fun Plus) = Fun (+)
 --concretize (Val a) = Val a -- need representation types here
 concretize (App f a) = App (concretize f) (concretize a)
 
+-- okay now let's see if we can fold things
+
+--foldArith comb seed = App (Fun comb) `foldr` Val seed
+attempt1 = (\a b -> App (App (Fun Plus) (Val a)) b) `foldr` (Val 0)
+
 {-
 I want something like
 
 [map, [plus, 1]l, [from, 1, 5]l ]l
 
 -}
+
+data A :: * ~> * ~> * where
+  F :: (a -> b) -> A b a
+  A :: a -> A a ()
+
