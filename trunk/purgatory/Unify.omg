@@ -1,0 +1,25 @@
+import "/home/ggreif/%NoBackup%/omega/src/LangPrelude.prg"
+
+
+testIO = do
+				 handleIO (return "normal") worker
+    where monad ioM
+          worker xs = do
+											putStr ("HEHE " ++ xs)
+											return "inside"
+
+
+kind TypConstr = Regular | Univ Tag
+
+kind T = TInt | TArr T T
+
+data Typ :: TypConstr ~> T ~> *0 where
+  Int :: Typ Regular TInt
+  Var :: Label name -> Typ (Univ name) any
+  Arr :: Typ a contra -> Typ b co -> Typ Regular (TArr contra co)
+
+
+data Discharge :: Row Tag Nat ~> Row Tag Nat ~> *0 where
+  Triv :: Typ Regular a -> Typ Regular a -> Discharge dict dict
+  Alias :: Typ (Univ l) a -> Typ (Univ r) a -> Discharge dict {l=1t, r=1t; dict}r
+  Subst :: Typ (Univ l) a -> Typ Regular a -> Discharge dict {l=1t; dict}r
