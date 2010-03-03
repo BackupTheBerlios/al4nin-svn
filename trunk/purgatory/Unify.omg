@@ -11,15 +11,37 @@ testIO = do
 
 kind TypConstr = Regular | Univ Tag
 
-kind T = TInt | TArr T T
+kind T = TInt | TArr T T | TList T
 
 data Typ :: TypConstr ~> T ~> *0 where
   Int :: Typ Regular TInt
   Var :: Label name -> Typ (Univ name) any
   Arr :: Typ a contra -> Typ b co -> Typ Regular (TArr contra co)
+  List :: Typ a t -> Typ Regular (TList t)
 
 
 data Discharge :: Row Tag Nat ~> Row Tag Nat ~> *0 where
   Triv :: Typ Regular a -> Typ Regular a -> Discharge dict dict
   Alias :: Typ (Univ l) a -> Typ (Univ r) a -> Discharge dict {l=1t, r=1t; dict}r
   Subst :: Typ (Univ l) a -> Typ Regular a -> Discharge dict {l=1t; dict}r
+
+
+data Thrist :: forall (l :: *1) . (l ~> l ~> *)  ~> l ~> l ~> * where
+  Nil :: Thrist k a a
+  Cons :: k a b -> Thrist k b c -> Thrist k a c
+ deriving List(t)
+
+aV = Var `a
+idT = Arr aV aV
+
+bV = Var `b
+cV = Var `c
+mapT = Arr (Arr bV cV) (Arr (List bV) (List cV))
+
+intL = List Int
+
+resultV = Var `result
+
+-- gathering constraints for
+--   result = map id [1, 2, 4]
+
