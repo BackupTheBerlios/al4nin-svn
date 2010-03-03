@@ -22,6 +22,7 @@ data Typ :: TypConstr ~> T ~> *0 where
 
 data Discharge :: Row Tag Nat ~> Row Tag Nat ~> *0 where
   Triv :: Typ Regular a -> Typ Regular a -> Discharge dict dict
+  Deep :: Typ Regular a -> Typ Regular b -> Discharge dict dict
   Alias :: Typ (Univ l) a -> Typ (Univ r) a -> Discharge dict {l=1t, r=1t; dict}r
   Subst :: Typ (Univ l) a -> Typ Regular a -> Discharge dict {l=1t; dict}r
 
@@ -36,7 +37,17 @@ idT = Arr aV aV
 
 bV = Var `b
 cV = Var `c
+{- no workee :-(
 mapT = Arr (Arr bV cV) (Arr (List bV) (List cV))
+(Arr mapT1 mapT2) = mapT
+(Arr mapT21 mapT22) = mapT2
+-}
+mapT1 = Arr bV cV
+mapT21 = List bV
+mapT22 = List cV
+mapT2 = Arr mapT21 mapT22
+mapT = Arr mapT1 mapT2
+
 
 intL = List Int
 
@@ -44,4 +55,16 @@ resultV = Var `result
 
 -- gathering constraints for
 --   result = map id [1, 2, 4]
+
+{-
+
+1) map id ---> (Arr bV cV) =!= idT == Arr aV aV
+2) (map id) [1, 2, 4] ---> List cV =!= List Int
+3) result ---> resultV =!= List cV
+
+-}
+
+c1 = Deep mapT1 idT
+c2 = Deep mapT21 intL
+c3 = Subst resultV mapT22
 
