@@ -68,3 +68,4 @@ c1 = Deep mapT1 idT
 c2 = Deep mapT21 intL
 c3 = Subst resultV mapT22
 
+t1 = [c1, c2, c3]t
