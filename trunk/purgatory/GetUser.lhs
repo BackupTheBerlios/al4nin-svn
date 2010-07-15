@@ -46,7 +46,7 @@ Now we need a decoder.
 
 > pref :: [Char] -> Int
 > pref "S" = 1
-> pref ('s':rest) = decode 0 0 ('1' : rest)
+> pref ('s':rest) = decode 1 1 rest
 > pref (_:rest) = 1 + pref rest
 > 
 > decode walk acc ('0':rest) = decode (walk + 1) (acc * 2) rest
