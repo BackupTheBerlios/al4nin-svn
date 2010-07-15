@@ -41,6 +41,18 @@ This is a literate Haskell file.
 > test = takeLast 40 $ dist 20 []
 > 
 
+Now we need a decoder.
+
+> pref :: [Char] -> Int
+> pref "S" = 1
+> pref ('s':'1':rest) = decode 2 1 rest
+> pref (_:rest) = 1 + pref rest
+> 
+> decode walk acc ('0':rest) = decode (walk + 1) (acc * 2) rest
+> decode walk acc ('1':rest) = decode (walk + 1) (acc * 2 + 1) rest
+> decode walk acc _ = walk + acc
+> 
+
 Here come the accompanying tests.
 
 > testcase = dist 2000 []
