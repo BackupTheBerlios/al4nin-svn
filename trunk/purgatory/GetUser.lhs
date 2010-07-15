@@ -65,6 +65,6 @@ Here come the accompanying tests.
 And some more exhaustive ones.
 
 > 
-> deepCheck p = check (defaultConfig { configMaxTest = 500 }) p
+> -- deepCheck p = check (defaultConfig { configMaxTest = 500 }) p
 > 
 
