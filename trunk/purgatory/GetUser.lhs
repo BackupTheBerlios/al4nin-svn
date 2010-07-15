@@ -25,15 +25,16 @@ This is a literate Haskell file.
 
 > import Test.QuickCheck
 > 
-> digits :: Int -> [Char] -> [Char]
-> digits 0 acc = '0' : acc
-> digits 1 acc = '1' : acc
-> digits n acc = digits (n `div` 2) $ digits (n `mod` 2) acc
+> digits :: Bool -> Int -> [Char] -> [Char]
+> digits _ 0 acc = '0' : acc
+> digits True 1 acc = acc
+> digits False 1 acc = '1' : acc
+> digits dr n acc = digits dr (n `div` 2) $ digits False (n `mod` 2) acc
 > 
 > dist :: Int -> [Char] -> [Char]
 > dist 0 [] = ['S']
 > dist 0 acc = acc
-> dist 1 acc = let r = dist 0 acc in 's' : digits (length r) r
+> dist 1 acc = let r = dist 0 acc in 's' : digits True (length r) r
 > dist n acc = dist (n - 1) $ dist 1 acc
 > 
 > takeLast n ss = reverse $ take n $ reverse ss
@@ -45,7 +46,7 @@ Now we need a decoder.
 
 > pref :: [Char] -> Int
 > pref "S" = 1
-> pref ('s':'1':rest) = decode 2 1 rest
+> pref ('s':rest) = decode 0 0 ('1' : rest)
 > pref (_:rest) = 1 + pref rest
 > 
 > decode walk acc ('0':rest) = decode (walk + 1) (acc * 2) rest
@@ -55,7 +56,7 @@ Now we need a decoder.
 
 Here come the accompanying tests.
 
-> testcase = dist 2000 []
+> testcase = dist 10000 []
 > testcaseLength = length testcase
 > 
 > identityProp n = n > 0 && n <= testcaseLength ==> length arr == pref arr
