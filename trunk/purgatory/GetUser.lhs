@@ -40,3 +40,19 @@ This is a literate Haskell file.
 > 
 > test = takeLast 40 $ dist 20 []
 > 
+
+Here come the accompanying tests.
+
+> testcase = dist 2000 []
+> testcaseLength = length testcase
+> 
+> identityProp n = n > 0 && n <= testcaseLength ==> length arr == pref arr
+>     where arr = takeLast n testcase
+> 
+
+And some more exhaustive ones.
+
+> 
+> deepCheck p = check (defaultConfig { configMaxTest = 500 }) p
+> 
+
