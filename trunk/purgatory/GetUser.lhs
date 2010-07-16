@@ -61,7 +61,7 @@ Here come the accompanying tests.
 > testcaseLength = length testcase
 > 
 > identityProp n' = n > 0 && n <= testcaseLength ==> length arr == pref arr
->     where n = mod n' testcaseLength
+>     where n = mod n' testcaseLength + 1
 >           arr = takeLast n testcase
 > 
 
