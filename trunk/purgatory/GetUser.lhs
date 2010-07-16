@@ -60,8 +60,9 @@ Here come the accompanying tests.
 > testcase = dist 10000 []
 > testcaseLength = length testcase
 > 
-> identityProp n = n > 0 && n <= testcaseLength ==> length arr == pref arr
->     where arr = takeLast n testcase
+> identityProp n' = n > 0 && n <= testcaseLength ==> length arr == pref arr
+>     where n = mod n' testcaseLength
+>           arr = takeLast n testcase
 > 
 
 And some more exhaustive ones.
