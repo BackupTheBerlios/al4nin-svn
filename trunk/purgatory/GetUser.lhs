@@ -68,6 +68,6 @@ Here come the accompanying tests.
 And some more exhaustive ones.
 
 > 
-> -- deepCheck p = check (defaultConfig { configMaxTest = 500 }) p
+> deepCheck p = quickCheckWith (Args {maxSuccess = 5000, replay = Nothing, maxDiscard = 100, maxSize = 100}) p
 > 
 
