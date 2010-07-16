@@ -37,7 +37,8 @@ This is a literate Haskell file.
 > dist 1 acc = let r = dist 0 acc in 's' : digits True (length r) r
 > dist n acc = dist (n - 1) $ dist 1 acc
 > 
-> takeLast n ss = reverse $ take n $ reverse ss
+> takeLast n ss = drop excess ss
+>                   where excess = length ss - n
 > 
 > test = takeLast 40 $ dist 20 []
 > 
