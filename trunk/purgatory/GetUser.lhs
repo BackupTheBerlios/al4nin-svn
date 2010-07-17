@@ -71,3 +71,27 @@ And some more exhaustive ones.
 > deepCheck p = quickCheckWith (Args {maxSuccess = 5000, replay = Nothing, maxDiscard = 100, maxSize = 100}) p
 > 
 
+Now a decoder for a 3-bit alphabet:
+- 'S'        --> full-stop
+- 's'        --> stop
+- '0' .. '3' --> two-bits resp. fast jump to full-stop
+- 'o' .. 'i' --> one-bits resp. special cleverness after 's' (to be specified)
+
+> pref3 "S" = 1
+> pref3 ('s':'o':_) = error "special cleverness 0"
+> pref3 ('s':'i':_) = error "special cleverness 1"
+> pref3 "0S" = 2
+> pref3 ('1':_:'S':[]) = 3
+> pref3 ('2':_:_:'S':[]) = 4
+> pref3 ('3':_:_:_:'S':[]) = 5
+
+Hand-made testcase:
+
+> t3 = "3210S"
+> t3Length = length t3
+
+A similar property
+
+> i3Prop n' = n > 0 && n <= t3Length ==> n == pref arr
+>     where n = mod n' t3Length + 1
+>           arr = takeLast n t3
