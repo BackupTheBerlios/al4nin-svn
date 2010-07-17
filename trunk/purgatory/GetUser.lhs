@@ -50,6 +50,9 @@ Now we need a decoder.
 > pref ('s':rest) = decode 1 1 rest
 > pref (_:rest) = 1 + pref rest
 > 
+
+Decode regular digits after 's'.
+
 > decode walk acc ('0':rest) = decode (walk + 1) (acc * 2) rest
 > decode walk acc ('1':rest) = decode (walk + 1) (acc * 2 + 1) rest
 > decode walk acc _ = walk + acc
@@ -84,14 +87,31 @@ Now a decoder for a 3-bit alphabet:
 > pref3 ('1':_:'S':[]) = 3
 > pref3 ('2':_:_:'S':[]) = 4
 > pref3 ('3':_:_:_:'S':[]) = 5
+> pref3 ('s':'0':'S':[]) = 3
+> pref3 ('s':'0':_) = error "special cleverness 2"
+> pref3 ('s':'1':_:'S':[]) = 4
+> pref3 ('s':'2':_:_:'S':[]) = 5
+> pref3 ('s':'3':_:_:_:'S':[]) = 6
+> pref3 ('s':rest) = d3code 1 0 rest
+> pref3 (_:rest) = 1 + pref3 rest
+
+Decode regular digits after 's'.
+
+> d3code walk acc ('0':rest) = d3code (walk + 1) (acc * 4) rest
+> d3code walk acc ('1':rest) = d3code (walk + 1) (acc * 4 + 1) rest
+> d3code walk acc ('2':rest) = d3code (walk + 1) (acc * 4 + 2) rest
+> d3code walk acc ('3':rest) = d3code (walk + 1) (acc * 4 + 3) rest
+> d3code walk acc ('o':rest) = d3code (walk + 1) (acc * 2) rest
+> d3code walk acc ('i':rest) = d3code (walk + 1) (acc * 2 + 1) rest
+> d3code walk acc _ = walk + acc
 
 Hand-made testcase:
 
-> t3 = "3210S"
+> t3 = "s21s3os3210S"
 > t3Length = length t3
 
 A similar property
 
-> i3Prop n' = n > 0 && n <= t3Length ==> n == pref arr
+> i3Prop n' = n > 0 && n <= t3Length ==> n == pref3 arr
 >     where n = mod n' t3Length + 1
 >           arr = takeLast n t3
