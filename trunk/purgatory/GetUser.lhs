@@ -112,12 +112,11 @@ Decode regular digits after 's'.
 > d3code walk acc ('2':rest) = d3code (walk + 1) (acc * 4 + 2) rest
 > d3code walk acc ('3':rest) = d3code (walk + 1) (acc * 4 + 3) rest
 > d3code walk acc ('x':_) = walk + 1 + acc * 4 + 1
-> --d3code walk acc ('y':_) = walk + 1 + acc * 4 + 2
 > d3code walk acc _ = walk + acc
 
 Hand-made testcase:
 
-> t3 = "sx110sx033sx022sx011sx000s330s320s310s300sy30sy20sy10sy00sx30sx20s110s01s32sy3sy0s1x0syxS"
+> t3 = "sx132sx121sx110sx033sx022sx011sx000s330s320s310s300sy30sy20sy10sy00sx30sx20s110s01s32sy3sy0s1x0syxS"
 > t32 = "sy3sy0s1x0syxS"
 > t3Length = length t3
 
