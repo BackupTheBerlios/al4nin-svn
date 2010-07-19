@@ -93,8 +93,8 @@ Special rules:
 
 
 > pref3 "S" = 1
-> pref3 ('s':'0':rest) = d3code 3 4 rest -- non regular walk!
-> pref3 ('s':'x':rest) = 1 + pref3 ('x':rest)
+> pref3 ('s':'0':rest) = d3code 2 4 rest
+> pref3 ('s':'x':rest) = d3code 2 1 rest
 > pref3 ('s':'y':rest) = 1 + pref3 ('y':rest)
 > pref3 ('s':rest) = d3code 1 0 rest
 > pref3 ('x':n:_) | stop n = 2
@@ -115,7 +115,7 @@ Decode regular digits after 's'.
 
 Hand-made testcase:
 
-> t3 = "s00s32sy3sy0s1x0syxS"
+> t3 = "sx20s110s01s32sy3sy0s1x0syxS"
 > t3Length = length t3
 
 A similar property
