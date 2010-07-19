@@ -94,8 +94,8 @@ Special rules:
 
 > pref3 "S" = 1
 > pref3 ('s':'0':rest) = d3code 2 4 rest
-> --pref3 ('s':'x':n:rest) | stop n = d3code 2 5 rest
-> pref3 ('s':'y':rest) = d3code 2 2 rest
+> pref3 ('s':'x':rest) = d3code 2 5 rest
+> pref3 ('s':'y':rest) = 1 + pref3 ('y':rest)
 > pref3 ('s':rest) = d3code 1 0 rest
 > pref3 ('x':n:_) | stop n = 2
 > pref3 ('y':n:_) | stop n = 3
@@ -115,9 +115,7 @@ Decode regular digits after 's'.
 
 Hand-made testcase:
 
-> t3 = "s3s1S"
-> t4 = "0yxS"
-> t5 = "sy0s1x0syxS"
+> t3 = "sy0s1x0syxS"
 > t3Length = length t3
 
 A similar property
