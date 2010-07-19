@@ -77,22 +77,30 @@ And some more exhaustive ones.
 Now a decoder for a 3-bit alphabet:
 - 'S'        --> full-stop
 - 's'        --> stop
-- '0' .. '3' --> two-bits resp. fast jump to full-stop
-- 'o' .. 'i' --> one-bits resp. special cleverness after 's' (to be specified)
+- '0' .. '3' --> two-bits
+- 'x' .. 'y' --> two-bits encoding 01 and 10 but also being stop
+
+Special rules:
+'s' followed by '0' is three bits 100,
+'s' followed by 'x' is three bits 101,
+'s' followed by 'y' is three bits 110.
+
+> stop 'S' = True
+> stop 's' = True
+> stop 'x' = True
+> stop 'y' = True
+> stop _ = False
+
 
 > pref3 "S" = 1
-> pref3 ('s':'o':_) = error "special cleverness 0"
-> pref3 ('s':'i':_) = error "special cleverness 1"
-> pref3 "0S" = 2
-> pref3 ('1':_:'S':[]) = 3
-> pref3 ('2':_:_:'S':[]) = 4
-> pref3 ('3':_:_:_:'S':[]) = 5
-> pref3 ('s':'0':'S':[]) = 3
-> pref3 ('s':'0':_) = error "special cleverness 2"
-> pref3 ('s':'1':_:'S':[]) = 4
-> pref3 ('s':'2':_:_:'S':[]) = 5
-> pref3 ('s':'3':_:_:_:'S':[]) = 6
+> pref3 ('s':'0':rest) = d3code 2 4 rest
+> --pref3 ('s':'x':n:rest) | stop n = d3code 2 5 rest
+> pref3 ('s':'y':rest) = d3code 2 2 rest
 > pref3 ('s':rest) = d3code 1 0 rest
+> pref3 ('x':n:_) | stop n = 2
+> pref3 ('y':n:_) | stop n = 3
+> pref3 ('x':rest) = d3code 1 1 rest
+> pref3 ('y':rest) = d3code 1 2 rest
 > pref3 (_:rest) = 1 + pref3 rest
 
 Decode regular digits after 's'.
@@ -101,13 +109,15 @@ Decode regular digits after 's'.
 > d3code walk acc ('1':rest) = d3code (walk + 1) (acc * 4 + 1) rest
 > d3code walk acc ('2':rest) = d3code (walk + 1) (acc * 4 + 2) rest
 > d3code walk acc ('3':rest) = d3code (walk + 1) (acc * 4 + 3) rest
-> d3code walk acc ('o':rest) = d3code (walk + 1) (acc * 2) rest
-> d3code walk acc ('i':rest) = d3code (walk + 1) (acc * 2 + 1) rest
+> d3code walk acc ('x':_) = walk + 1 + acc * 4 + 1
+> d3code walk acc ('y':_) = walk + 1 + acc * 4 + 2
 > d3code walk acc _ = walk + acc
 
 Hand-made testcase:
 
-> t3 = "s33s30s21s3os3210S"
+> t3 = "s3s1S"
+> t4 = "0yxS"
+> t5 = "sy0s1x0syxS"
 > t3Length = length t3
 
 A similar property
