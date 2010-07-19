@@ -115,7 +115,7 @@ Decode regular digits after 's'.
 
 Hand-made testcase:
 
-> t3 = "sy0s1x0syxS"
+> t3 = "sy3sy0s1x0syxS"
 > t3Length = length t3
 
 A similar property
