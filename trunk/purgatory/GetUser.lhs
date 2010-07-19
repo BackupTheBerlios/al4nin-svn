@@ -76,9 +76,11 @@ And some more exhaustive ones.
 
 Now a decoder for a 3-bit alphabet:
 - 'S'        --> full-stop
-- 's'        --> stop
+- 's'        --> stop, start (both unvalued)
 - '0' .. '3' --> two-bits
-- 'x' .. 'y' --> two-bits encoding 01 and 10 but also being stop
+- 'x'        --> two-bits encoding 01 but also being start and stop (both valued)
+- 'y'        --> two-bits as start (valued 10) and unvalued stop
+
 
 Special rules:
 's' followed by '0' is three bits 100,
@@ -110,12 +112,13 @@ Decode regular digits after 's'.
 > d3code walk acc ('2':rest) = d3code (walk + 1) (acc * 4 + 2) rest
 > d3code walk acc ('3':rest) = d3code (walk + 1) (acc * 4 + 3) rest
 > d3code walk acc ('x':_) = walk + 1 + acc * 4 + 1
-> d3code walk acc ('y':_) = walk + 1 + acc * 4 + 2
+> --d3code walk acc ('y':_) = walk + 1 + acc * 4 + 2
 > d3code walk acc _ = walk + acc
 
 Hand-made testcase:
 
-> t3 = "x110sx033sx022sx011sx000s330s320s310s300sy30sy20sy10sy00sx30sx20s110s01s32sy3sy0s1x0syxS"
+> t3 = "sx110sx033sx022sx011sx000s330s320s310s300sy30sy20sy10sy00sx30sx20s110s01s32sy3sy0s1x0syxS"
+> t32 = "sy3sy0s1x0syxS"
 > t3Length = length t3
 
 A similar property
