@@ -81,11 +81,9 @@ Now a decoder for a 3-bit alphabet:
 - 'x'        --> two-bits encoding 01 but also being start and stop (both valued)
 - 'y'        --> two-bits as start (valued 10) and unvalued stop
 
-
 Special rules:
-'s' followed by '0' is three bits 100,
-'s' followed by 'x' is three bits 101,
-'s' followed by 'y' is three bits 110.
+- 's' followed by '0' is three bits 100,
+- 'x', 'y' followed by any stop has fixed value (special full-stop)
 
 > stop 'S' = True
 > stop 's' = True
@@ -119,6 +117,20 @@ Hand-made testcase:
 > t3 = "sx132sx121sx110sx033sx022sx011sx000s330s320s310s300sy30sy20sy10sy00sx30sx20s110s01s32sy3sy0s1x0syxS"
 > t32 = "sy3sy0s1x0syxS"
 > t3Length = length t3
+
+> di3its :: Int -> [Char] -> [Char]
+> di3its 0 acc = '0' : acc
+> di3its 1 acc = '1' : acc
+> di3its 2 acc = '2' : acc
+> di3its 3 acc = '3' : acc
+> di3its n acc = di3its (n `div` 4) $ di3its (n `mod` 4) acc
+> 
+> di3t :: Int -> [Char] -> [Char]
+> di3t 0 [] = ['S']
+> di3t 0 acc = acc
+> di3t 1 acc = let r = di3t 0 acc in 's' : di3its (length r) r
+> di3t n acc = di3t (n - 1) $ di3t 1 acc
+
 
 A similar property
 
