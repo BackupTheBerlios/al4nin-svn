@@ -123,12 +123,17 @@ Hand-made testcase:
 > di3its 1 acc = '1' : acc
 > di3its 2 acc = '2' : acc
 > di3its 3 acc = '3' : acc
+> di3its 4 acc = 'y' : acc
 > di3its n acc = di3its (n `div` 4) $ di3its (n `mod` 4) acc
 > 
 > di3t :: Int -> [Char] -> [Char]
 > di3t 0 [] = ['S']
 > di3t 0 acc = acc
-> di3t 1 acc = let r = di3t 0 acc in 's' : di3its (length r) r
+> di3t 1 acc = close follow
+>                where close (all@('y':_)) = all
+>                      close all = 's' : all
+>                      follow = di3its (length r) r
+>                      r = di3t 0 acc
 > di3t n acc = di3t (n - 1) $ di3t 1 acc
 
 
