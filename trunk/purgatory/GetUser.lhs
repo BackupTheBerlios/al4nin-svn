@@ -114,10 +114,10 @@ Decode regular digits after 's'.
 
 Hand-made testcase:
 
-> t2 = "sx132sx121sx110sx033sx022sx011sx000s330s320s310s300sy30sy20sy10sy00sx30sx20sx10s01s32sy3sy0s1x0syxS"
-> t3 =   "sx130sx113sx102s032s022s012s002s332s322s312s302y33y30y21y12y03y00sx30sx20sx10s01s32sy3sy0s1x0syxS"
-> t4 = di3t 221 "s32sy3sy0s1x0syxS"
-> t3Length = length t3
+> t1 = "sx132sx121sx110sx033sx022sx011sx000s330s320s310s300sy30sy20sy10sy00sx30sx20sx10s01s32sy3sy0s1x0syxS"
+> t2 =   "sx130sx113sx102s032s022s012s002s332s322s312s302y33y30y21y12y03y00sx30sx20sx10s01s32sy3sy0s1x0syxS"
+> t3 = di3t 221 "s32sy3sy0s1x0syxS"
+> t3length = length t3
 
 > di3its :: Int -> [Char] -> [Char]
 > di3its 0 acc = '0' : acc
@@ -142,6 +142,6 @@ Hand-made testcase:
 
 A similar property
 
-> i3Prop n' = n > 0 && n <= t3Length ==> n == pref3 arr
->     where n = mod n' t3Length + 1
+> i3Prop n' = n > 0 && n <= t3length ==> n == pref3 arr
+>     where n = mod n' t3length + 1
 >           arr = takeLast n t3
