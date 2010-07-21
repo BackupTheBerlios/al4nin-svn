@@ -116,7 +116,7 @@ Hand-made testcase:
 
 > t1 = "sx132sx121sx110sx033sx022sx011sx000s330s320s310s300sy30sy20sy10sy00sx30sx20sx10s01s32sy3sy0s1x0syxS"
 > t2 =   "sx130sx113sx102s032s022s012s002s332s322s312s302y33y30y21y12y03y00sx30sx20sx10s01s32sy3sy0s1x0syxS"
-> t3 = di3t 221 "s32sy3sy0s1x0syxS"
+> t3 = di3t 221 "s30y2y0s1x0syxS"
 > t3length = length t3
 
 > di3its :: Int -> [Char] -> [Char]
