@@ -114,8 +114,9 @@ Decode regular digits after 's'.
 
 Hand-made testcase:
 
-> t3 = "sx132sx121sx110sx033sx022sx011sx000s330s320s310s300sy30sy20sy10sy00sx30sx20s110s01s32sy3sy0s1x0syxS"
-> t32 = "sy3sy0s1x0syxS"
+> t2 = "sx132sx121sx110sx033sx022sx011sx000s330s320s310s300sy30sy20sy10sy00sx30sx20sx10s01s32sy3sy0s1x0syxS"
+> t3 =   "sx130sx113sx102s032s022s012s002s332s322s312s302y33y30y21y12y03y00sx30sx20sx10s01s32sy3sy0s1x0syxS"
+> t4 = di3t 221 "s32sy3sy0s1x0syxS"
 > t3Length = length t3
 
 > di3its :: Int -> [Char] -> [Char]
@@ -123,14 +124,16 @@ Hand-made testcase:
 > di3its 1 acc = '1' : acc
 > di3its 2 acc = '2' : acc
 > di3its 3 acc = '3' : acc
-> di3its 4 acc = 'y' : acc
+> di3its 4 acc = 's' : '0' : acc
 > di3its n acc = di3its (n `div` 4) $ di3its (n `mod` 4) acc
 > 
 > di3t :: Int -> [Char] -> [Char]
 > di3t 0 [] = ['S']
 > di3t 0 acc = acc
 > di3t 1 acc = close follow
->                where close (all@('y':_)) = all
+>                where close ('1':rest) = 's' : 'x' : rest
+>                      close ('2':rest) = 'y' : rest
+>                      close (all@('s':_)) = all
 >                      close all = 's' : all
 >                      follow = di3its (length r) r
 >                      r = di3t 0 acc
