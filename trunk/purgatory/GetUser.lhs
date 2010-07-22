@@ -114,15 +114,14 @@ Decode regular digits after 's'.
 
 Hand-made testcase:
 
-> t1 = "sx132sx121sx110sx033sx022sx011sx000s330s320s310s300sy30sy20sy10sy00sx30sx20sx10s01s32sy3sy0s1x0syxS"
-> t2 =   "sx130sx113sx102s032s022s012s002s332s322s312s302y33y30y21y12y03y00sx30sx20sx10s01s32sy3sy0s1x0syxS"
-> t3 = di3t 221 "s30y2y0s1x0syxS"
+> t3 = di3t 1221 "s1x0syxS"
 > t3length = length t3
 
 > di3its :: Int -> [Char] -> [Char]
 > di3its 0 acc = '0' : acc
 > di3its 1 acc = '1' : acc
 > di3its 2 acc = '2' : acc
+> di3its 3 ('s':eff@('x':_)) = eff
 > di3its 3 acc = '3' : acc
 > di3its 4 acc = 's' : '0' : acc
 > di3its n acc = di3its (n `div` 4) $ di3its (n `mod` 4) acc
