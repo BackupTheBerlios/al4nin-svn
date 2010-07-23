@@ -83,14 +83,7 @@ Now a decoder for a 3-bit alphabet:
 
 Special rules:
 - 's' followed by '0' is three bits 100,
-- 'x', 'y' followed by any stop has fixed value (special full-stop)
-
-> stop 'S' = True
-> stop 's' = True
-> stop 'x' = True
-> stop 'y' = True
-> stop _ = False
-
+- 's', 'x', 'y' followed by any stop has fixed value (special full-stop)
 
 > pref3 "S" = 1
 > pref3 ('s':'0':rest) = d3code 2 4 rest
