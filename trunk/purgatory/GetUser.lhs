@@ -95,10 +95,10 @@ Special rules:
 > pref3 "S" = 1
 > pref3 ('s':'0':rest) = d3code 2 4 rest
 > pref3 ('s':'x':rest) = d3code 2 1 rest
-> pref3 ('s':'y':rest) = 1 + pref3 ('y':rest)
+> pref3 ('s':'y':_) = 4
 > pref3 ('s':rest) = d3code 1 0 rest
-> pref3 ('x':n:_) | stop n = 2
-> pref3 ('y':n:_) | stop n = 3
+> pref3 ('x':'S':_) = 2
+> pref3 ('y':'x':_) = 3
 > pref3 ('x':rest) = d3code 1 1 rest
 > pref3 ('y':rest) = d3code 1 2 rest
 > pref3 (_:rest) = 1 + pref3 rest
