@@ -79,3 +79,5 @@ t10 = Cons (Arg 42) $ Cons (Fun Plus) Nil
 t11 = Cons (Arg 0) t10
 t12 = Par t10
 t13 = Par t11
+-- Times 25 (Plus 42 0)
+t14 = Cons (Par $ Cons (Arg 0) t10) $ Cons (Arg 25) $ Cons (Fun Times) Nil
