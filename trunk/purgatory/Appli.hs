@@ -66,3 +66,16 @@ data Appli :: (* -> * -> *) -> * -> * -> * where
 t0 = Cons (Arg c) $ Cons (Arg b) $ Cons (Arg a) $ Cons (Fun f) Nil
 t1 = Par t0
 t2 = Cons t1 $ Cons (Fun length) Nil
+
+
+data Arith :: * -> * -> * where
+  Plus :: Arith Int (Arith Int Int)
+  Minus :: Arith Int (Arith Int Int)
+  Times :: Arith Int (Arith Int Int)
+  Div :: Arith Int (Arith Int Int)
+  Mod :: Arith Int (Arith Int Int)
+
+t10 = Cons (Arg 42) $ Cons (Fun Plus) Nil
+t11 = Cons (Arg 0) t10
+t12 = Par t10
+t13 = Par t11
