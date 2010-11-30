@@ -1,20 +1,24 @@
 import "LangPrelude.prg"
 
--- Applicative functors
-
-data Applicative :: (* ~> * ~> *) ~> * ~> * where
-  Fun :: f a b -> Applicative f (f a b)
-  Val :: a -> Applicative f a
-  App :: Applicative f (f a b) -> Applicative f a -> Applicative f b
-
+-- Thrist definition
 
 data Thrist :: forall (l :: *1) . (l ~> l ~> *)  ~> l ~> l ~> * where
   Nil :: Thrist k a a
   Cons :: k a b -> Thrist k b c -> Thrist k a c
  deriving List(l)
 
-t0 = App (App (Fun (+)) (Val 40)) (Val 2)
-t1 = App (Fun [chr]l)
+-- Applicative functors
+
+data Peg = Peg -- :: * where
+
+data Applicative :: (* ~> * ~> *) ~> * ~> * ~> * where
+  Fun :: f a b -> Applicative f (f a b) Peg
+  Arg :: a -> Applicative f b (f a b)
+  Par :: Thrist (Applicative f) b Peg  -> Applicative f b (f a b)
+
+
+t0 = Par [Arg 2, Arg 40, Fun (+)]l -- App (App (Fun (+)) (Val 40)) (Val 2)
+t1 = Par ([Fun chr]l)
 
 data Arith :: * ~> * ~> * where
   Plus :: Arith Int (Arith Int Int)
@@ -23,8 +27,11 @@ data Arith :: * ~> * ~> * where
   Div :: Arith Int (Arith Int Int)
   Mod :: Arith Int (Arith Int Int)
 
-t2 = App (App (Fun Plus) (Val 40)) (Val 2)
+t2 = Par [Arg 2, Arg 40, Fun Plus]l -- App (App (Fun Plus) (Val 40)) (Val 2)
 
+
+
+{-
 concType :: * ~> *
 {concType (Arith a b)} = {concType a} -> {concType b}
 {concType Int} = Int
@@ -38,6 +45,7 @@ concretize (App f a) = App (concretize f) (concretize a)
 
 --foldArith comb seed = App (Fun comb) `foldr` Val seed
 attempt1 = (\a b -> App (App (Fun Plus) (Val a)) b) `foldr` (Val 0)
+-}
 
 {-
 I want something like
@@ -45,8 +53,4 @@ I want something like
 [map, [plus, 1]l, [from, 1, 5]l ]l
 
 -}
-
-data A :: * ~> * ~> * where
-  F :: (a -> b) -> A b a
-  A :: a -> A a ()
 
