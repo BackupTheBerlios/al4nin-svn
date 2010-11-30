@@ -1,12 +1,42 @@
 import "LangPrelude.prg"
 
 
+-- Define the unifier record
+data Flow :: *1 where
+  None :: Flow
+  Real :: Flow
+
+data Info :: Flow ~> * where
+  Nada :: Info None
+  Spec :: Info Real
+
+data Vars :: Flow ~> * where
+  Single :: Label a -> Vars Real
+  Equate :: Label a -> Label b -> Vars None
+
+
+data Unifier :: Row * Tag ~> * where
+  Empty :: Unifier {}r
+  Pair :: Info a -> Vars a -> Unifier r -> Unifier {Int=`huhu; r}r 
+ deriving Record(u)
+
+
+{-
+ideally:
+- Info should track the shape of the specialization in the type index
+- Vars should track the Tags in the type index
+- the Vars should be unique in the Unifier
+
+The specialization should be an applicative thrist. (Thrist Spec t Peg)
+-}
+
+
 testIO = do
 				 handleIO (return "normal") worker
     where monad ioM
           worker xs = do
-											putStr ("HEHE " ++ xs)
-											return "inside"
+            putStr ("HEHE " ++ xs)
+            return "inside"
 
 
 kind TypConstr = Regular | Univ Tag
