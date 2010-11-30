@@ -1,4 +1,4 @@
-import "/home/ggreif/%NoBackup%/omega/src/LangPrelude.prg"
+import "LangPrelude.prg"
 
 
 testIO = do
@@ -75,7 +75,7 @@ mergeTags :: Tag ~> Tag ~> Tag
 {mergeTags a a} = a
 
 tryMergeLabels :: Label a -> Label b -> (Label a + Label {mergeTags a b})
-tryMergeLabels a b = case labelEq a b of
-                     Just eq -> L a
-                     Nothing -> R undefined
+tryMergeLabels a b = case sameLabel a b of
+                     L eq -> L a
+                     R neq -> R undefined
 
