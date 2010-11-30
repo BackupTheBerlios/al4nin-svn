@@ -7,9 +7,11 @@ data Thrist :: forall (l :: *1) . (l ~> l ~> *)  ~> l ~> l ~> * where
   Cons :: k a b -> Thrist k b c -> Thrist k a c
  deriving List(l)
 
--- Applicative functors
+-- Peg is a void type 
 
-data Peg = Peg -- :: * where
+data Peg :: * where {}
+
+-- Applicative functors
 
 data Applicative :: (* ~> * ~> *) ~> * ~> * ~> * where
   Fun :: f a b -> Applicative f (f a b) Peg
