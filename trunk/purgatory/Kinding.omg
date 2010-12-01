@@ -1,5 +1,7 @@
 import "LangPrelude.prg"
 
+-- walks in the lambda plane
+
 data Payload :: *1 where
   None :: Payload
   Charge :: Nat ~> Nat ~> Payload
@@ -14,6 +16,8 @@ data Walk :: Nat ~> Nat ~> Payload ~> *1 where
  deriving syntax (w) Nat(Origin, Up) Tick(SE) Pair(Pair)
 
 
+-- types are paramerized by walks
+
 data Type :: Walk n m p ~> *  where
   Star :: Type 2w
   Up :: Type (2+n)w -> Type(3+n)w
@@ -23,6 +27,13 @@ data Type :: Walk n m p ~> *  where
   Lam :: Type p -> Type (p`1)w
  deriving syntax (ty) Nat(Star, Up) Tick(Lam) Pair(Ext)
 
+
+-- runtime values are represented by expressions
+
+data Expr :: * where
+  Lit :: Type 1w -> Expr  -- e.g. 42::Int
+  Lambda :: Type (p`1)w -> Expr -> Expr -- e.g. \a:Int.42
+  Appl :: Expr -> Expr -> Expr
 
 
 -- Tests
