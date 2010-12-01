@@ -22,3 +22,26 @@ data Type :: Walk n m p ~> *  where
   Ext :: Type (1+n)w -> Type r -> Type ((1+n)w, r)w
   Lam :: Type p -> Type (p`1)w
  deriving syntax (ty) Nat(Star, Up) Tick(Lam) Pair(Ext)
+
+
+
+-- Tests
+
+##test "exclude Term categorizer"
+  t0 = (Term, Star)ty
+
+-- strange Term (pi (x:Int).42)
+-- whose tau is lambda0 (x:Int).Int
+-- by definition same as Int
+-- should we disallow it?
+pi1_42 = ((Type, Type)ty`1)ty
+
+-- regular lambda2 : \x:Int.42
+lambda2Int = ((Type, Star)ty`2)ty
+
+-- regular PI1 : pi (x:Int).Int
+pi1Int = ((Type, Star)ty`1)ty
+
+-- type lambda2 : /\x:*:Int
+lambda2star = ((0ty, 1ty)ty`2)ty
+
