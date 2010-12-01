@@ -27,6 +27,13 @@ data Type :: Walk n m p ~> *  where
   Lam :: Type p -> Type (p`1)w
  deriving syntax (ty) Nat(Star, Up) Tick(Lam) Pair(Ext)
 
+-- tau: calculate classifier
+up :: Walk n m p ~> Walk (1+n)t m' p'
+{up (p`1)w} = p
+
+tau :: Type a -> Type {up a}
+tau (p`1)ty = p
+
 -- extract payload from lambda
 charge :: Walk n m (Charge k l) ~> Walk k l None
 {charge (c, t)w} = c
