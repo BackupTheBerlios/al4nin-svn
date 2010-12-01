@@ -36,12 +36,20 @@ uncharge :: Type p -> Type {charge p}
 uncharge (c, _)ty = c
 uncharge (p`1)ty = uncharge p
 
+-- calculate heart
+heart :: Walk n m (Charge k l) ~> Walk n 0t None
+{heart (p`1)w} = {down {heart p}}
+{heart (c, h)w} = h
+
+down ::  Walk (1+n)t 0t None ~> Walk n 0t None
+{down (1+n)w} = n
+
 -- runtime values are represented by expressions
 
 data Expr :: Walk n m p ~> * where
   Lit :: Type a -> Expr a  -- e.g. 42::Int
-  Lambda :: Type (p`1)w -> Expr a -> Expr (p`1)w -- e.g. \a:Int.42
-  Appl :: Expr f -> Expr {charge f} -> Expr a
+  Lambda :: Type (p`1)w -> Expr {heart (p`1)w} -> Expr (p`1)w -- e.g. \a:Int.42
+  Appl :: Expr f -> Expr {charge f} -> Expr {heart f}
 
 
 -- Tests
