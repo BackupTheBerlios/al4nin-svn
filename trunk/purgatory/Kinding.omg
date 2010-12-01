@@ -14,4 +14,5 @@ data Type :: Walk n m ~> *  where
   Up :: Type (2+n)w -> Type(3+n)w
   Type :: Type 1w
   Term :: Type 0w
- deriving syntax (ty) Nat(Star, Up)
+  Lam :: Type (n`0)w -> Type (n`1)w
+ deriving syntax (ty) Nat(Star, Up) Tick(Lam)
