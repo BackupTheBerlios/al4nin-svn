@@ -16,7 +16,7 @@ data Walk :: Nat ~> Nat ~> Payload ~> *1 where
  deriving syntax (w) Nat(Origin, Up) Tick(SE) Pair(Pair)
 
 
--- types are paramerized by walks
+-- types are parametrized by walks
 
 data Type :: Walk n m p ~> *  where
   Star :: Type 2w
@@ -30,10 +30,10 @@ data Type :: Walk n m p ~> *  where
 
 -- runtime values are represented by expressions
 
-data Expr :: * where
-  Lit :: Type 1w -> Expr  -- e.g. 42::Int
-  Lambda :: Type (p`1)w -> Expr -> Expr -- e.g. \a:Int.42
-  Appl :: Expr -> Expr -> Expr
+data Expr :: Walk n m p ~> * where
+  Lit :: Type a -> Expr a  -- e.g. 42::Int
+  Lambda :: Type (p`1)w -> Expr a -> Expr a -- e.g. \a:Int.42
+  Appl :: Expr f -> Expr a -> Expr a
 
 
 -- Tests
