@@ -49,7 +49,7 @@ down ::  Walk (1+n)t 0t None ~> Walk n 0t None
 data Expr :: Walk n m p ~> * where
   Lit :: Type a -> Expr a  -- e.g. 42::Int
   Lambda :: Type (p`1)w -> Expr {heart (p`1)w} -> Expr (p`1)w -- e.g. \a:Int.42
-  Appl :: Expr f -> Expr {charge f} -> Expr {heart f}
+  Appl :: Expr f -> Expr {down {charge f}} -> Expr {heart f}
 
 
 -- Tests
