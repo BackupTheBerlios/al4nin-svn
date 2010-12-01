@@ -9,8 +9,8 @@ data Payload :: *1 where
 data Walk :: Nat ~> Nat ~> Payload ~> *1 where
   Origin :: Walk 0t 0t None
   Up :: Walk n 0t None ~> Walk (1+n)t 0t None
-  SE :: Walk (1+n)t m (Charge k l) ~> Walk n (1+m)t (Charge k l)
   Pair :: Walk k l None ~> Walk n m None ~> Walk n m (Charge k l)
+  SE :: Walk (1+n)t m (Charge k l) ~> Walk n (1+m)t (Charge k l)
  deriving syntax (w) Nat(Origin, Up) Tick(SE) Pair(Pair)
 
 
