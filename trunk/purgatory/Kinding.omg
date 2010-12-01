@@ -9,8 +9,8 @@ data Payload :: *1 where
 data Walk :: Nat ~> Nat ~> Payload ~> *1 where
   Origin :: Walk 0t 0t None
   Up :: Walk n 0t None ~> Walk (1+n)t 0t None
-  SE :: Walk (1+n)t m None ~> Walk n (1+m)t None
-  Pair :: Walk n m None ~> Walk k l None ~> Walk k l (Charge n m)
+  SE :: Walk (1+n)t m (Charge k l) ~> Walk n (1+m)t (Charge k l)
+  Pair :: Walk k l None ~> Walk n m None ~> Walk n m (Charge k l)
  deriving syntax (w) Nat(Origin, Up) Tick(SE) Pair(Pair)
 
 
@@ -19,6 +19,6 @@ data Type :: Walk n m p ~> *  where
   Up :: Type (2+n)w -> Type(3+n)w
   Type :: Type 1w
   Term :: Type 0w
-  Ext :: Type c -> Type r -> Type r
-  Lam :: Type (n`0)w -> Type (n`1)w
- deriving syntax (ty) Nat(Star, Up) Tick(Lam)
+  Ext :: Type c -> Type r -> Type (c, r)w
+  Lam :: Type p -> Type (p`1)w
+ deriving syntax (ty) Nat(Star, Up) Tick(Lam) Pair(Ext)
