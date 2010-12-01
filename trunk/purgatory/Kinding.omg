@@ -10,10 +10,10 @@ data Payload :: *1 where
 --           v-- stratum
 data Walk :: Nat ~> Nat ~> Payload ~> *1 where
   Origin :: Walk 0t 0t None
-  Up :: Walk n 0t None ~> Walk (1+n)t 0t None
+  North :: Walk n 0t None ~> Walk (1+n)t 0t None
   Pair :: Walk k l None ~> Walk n m None ~> Walk n m (Charge k l)
   SE :: Walk (1+n)t m (Charge k l) ~> Walk n (1+m)t (Charge k l)
- deriving syntax (w) Nat(Origin, Up) Tick(SE) Pair(Pair)
+ deriving syntax (w) Nat(Origin, North) Tick(SE) Pair(Pair)
 
 
 -- types are parametrized by walks
