@@ -1,18 +1,24 @@
 import "LangPrelude.prg"
 
+data Payload :: *1 where
+  None :: Payload
+  Charge :: Nat ~> Nat ~> Payload
+
 --                  v-- pre-* distance
 --           v-- stratum
-data Walk :: Nat ~> Nat ~> *1 where
-  Origin :: Walk 0t 0t
-  Up :: Walk n 0t ~> Walk (1+n)t 0t
-  SE :: Walk (1+n)t m ~> Walk n (1+m)t
- deriving syntax (w) Nat(Origin, Up) Tick(SE)
+data Walk :: Nat ~> Nat ~> Payload ~> *1 where
+  Origin :: Walk 0t 0t None
+  Up :: Walk n 0t None ~> Walk (1+n)t 0t None
+  SE :: Walk (1+n)t m None ~> Walk n (1+m)t None
+  Pair :: Walk n m None ~> Walk k l None ~> Walk k l (Charge n m)
+ deriving syntax (w) Nat(Origin, Up) Tick(SE) Pair(Pair)
 
 
-data Type :: Walk n m ~> *  where
+data Type :: Walk n m p ~> *  where
   Star :: Type 2w
   Up :: Type (2+n)w -> Type(3+n)w
   Type :: Type 1w
   Term :: Type 0w
+  Ext :: Type c -> Type r -> Type r
   Lam :: Type (n`0)w -> Type (n`1)w
  deriving syntax (ty) Nat(Star, Up) Tick(Lam)
