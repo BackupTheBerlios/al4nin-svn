@@ -36,6 +36,7 @@ up :: Walk n m p ~> Walk (1+n)t m' p'
 tau :: Type a -> Type {up a}
 tau (p`1)ty = p
 tau (1+n)ty = (2+n)ty
+tau Type = Star
 tau Term = Type
 
 -- extract payload from lambda
