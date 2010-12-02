@@ -40,7 +40,7 @@ data Payload :: *1 where
   None :: Payload
   Charge :: Nat ~> Nat ~> Payload
 
---                  v-- pre-* distance
+--                  v-- dimensionality
 --           v-- stratum
 data Walk :: Nat ~> Nat ~> Payload ~> *1 where
   Origin :: Walk 0t 0t None
@@ -52,7 +52,7 @@ data Walk :: Nat ~> Nat ~> Payload ~> *1 where
 -- Types are
 --   * 0-dimensional: 42, Int, *, ...
 --   * 1-dimensional: PI a:Int.Int
---   * 2-dimensional: \   (How comes?)
+--   * 2-dimensional: \, dependent product: {a:A, b:B(a)}
 --   * etc.
 --
 -- types are parametrized by walks
