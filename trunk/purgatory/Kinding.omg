@@ -49,8 +49,17 @@ data Walk :: Nat ~> Nat ~> Payload ~> *1 where
   SE :: Walk (1+n)t m (Charge k l) ~> Walk n (1+m)t (Charge k l)
  deriving syntax (w) Nat(Origin, North) Tick(SE) Pair(Pair)
 
-
+-- Types are
+--   * 0-dimensional: 42, Int, *, ...
+--   * 1-dimensional: PI a:Int.Int
+--   * 2-dimensional: \   (How comes?)
+--   * etc.
+--
 -- types are parametrized by walks
+-- TODO:
+--   * Type :: * ~> * ~> *, making norm, up, charge, etc. unnecessary
+--   * Type applications
+--   * Sigma types
 
 data Type :: Walk n m p ~> *  where
   Star :: Type 2w
