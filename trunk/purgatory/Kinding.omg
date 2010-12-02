@@ -29,13 +29,16 @@ data Type :: Walk n m p ~> *  where
 
 -- tau: calculate classifier
 up :: Walk n m p ~> Walk (1+n)t m' p'
+{up (c, h)w} = {up h}
 {up (p`1)w} = p
 {up (1+n)w} = (2+n)w
 {up 0w} = 1w
 
 tau :: Type a -> Type {up a}
+tau (c, h)ty = tau h
 tau (p`1)ty = p
 tau (1+n)ty = (2+n)ty
+tau 0ty = 1ty
 tau Type = Star
 tau Term = Type
 
