@@ -1,0 +1,144 @@
+{-
+ * Copyright (c) 2010 Gabor Greif
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to deal
+ * in the Software without restriction, including without limitation the rights
+ * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies
+ * of the Software, and to permit persons to whom the Software is furnished to do
+ * so, subject to the following conditions:
+ *
+ * The above copyright notice and this permission notice shall be
+ * included in all copies or substantial portions of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
+ * EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES
+ * OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
+ * NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT
+ * HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY,
+ * WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+ * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE
+ * OR OTHER DEALINGS IN THE SOFTWARE.
+ -}
+
+-- Implement the PTS-like plane
+-- of PIs and lambdas (\ and /\), etc.
+-- Please refer to
+--  http://www.cedar-forest.org/forest/papers/journals-publications/jfp6-2.ps
+-- (esp. p. 4, item 4. "Higher degrees").
+--
+-- There are still many limitations, but I think
+-- the major obstacles are solved, contexts are
+-- easy to add, moreover categorizers must admit
+-- dependent types.
+
+import "LangPrelude.prg"
+
+-- walks in the lambda plane
+
+data Payload :: *1 where
+  None :: Payload
+  Charge :: Nat ~> Nat ~> Payload
+
+--                  v-- dimensionality
+--           v-- stratum
+data Walk :: Nat ~> Nat ~> Payload ~> *1 where
+  Origin :: Walk 0t 0t None
+  North :: Walk n 0t None ~> Walk (1+n)t 0t None
+  Pair :: Walk k l None ~> Walk n m None ~> Walk n m (Charge k l)
+  SE :: Walk (1+n)t m (Charge k l) ~> Walk n (1+m)t (Charge k l)
+ deriving syntax (w) Nat(Origin, North) Tick(SE) Pair(Pair)
+
+-- Types are
+--   * 0-dimensional: 42, Int, *, ...
+--   * 1-dimensional: PI a:Int.Int
+--   * 2-dimensional: \, dependent product: {a:A, b:B(a)}
+--   * etc.
+--
+-- types are parametrized by walks
+-- TODO:
+--   * Type :: * ~> * ~> *, making norm, up, charge, etc. unnecessary
+--   * Type applications
+--   * Sigma types
+
+data Type :: Walk n m p ~> Walk (1+n)t m' p' ~> *  where
+  Star :: Type 2w 3w
+  Up :: Type (2+n)w (3+n)w -> Type (3+n)w (4+n)w
+  Type :: Type 1w 2w
+  Term :: Type 0w 1w
+  Ext :: Type (1+n)w (2+n)w -> Type r s -> Type ((1+n)w, r)w s
+  Lam :: Type p q -> Type (p`1)w p
+ deriving syntax (ty) Nat(Star, Up) Tick(Lam) Pair(Ext)
+
+-- tau: calculate classifier
+norm :: Walk n m p ~> Walk n m p'
+{norm (p`1)w} = (p`1)w
+{norm (c, h)w} = h
+
+{-
+definitional :: Type a b -> Type {norm a} c
+definitional (it@(_`1)ty) = it
+definitional (c, h)ty = h
+-}
+
+up :: Walk n m p ~> Walk (1+n)t m' p'
+{up (c, h)w} = {up h}
+{up (p`1)w} = {norm p}
+{up (1+n)w} = (2+n)w
+{up 0w} = 1w
+
+--tau :: Type a ta -> Type ta tta
+--tau :: Type a {up a} -> Type {up a} {up {up a}}
+tau :: Type a ta -> Type ta {up ta}
+tau (c, h)ty = tau h
+tau (p`1)ty = undefined -- definitional p
+tau (1+n)ty = (2+n)ty
+tau 0ty = 1ty
+tau Type = Star
+tau Term = Type
+
+-- extract payload from lambda
+charge :: Walk n m (Charge k l) ~> Walk k l None
+{charge (c, t)w} = c
+{charge (p`1)w} = {charge p}
+
+uncharge :: Type p q -> Type {charge p} {up {charge p}}
+uncharge (c, _)ty = c
+uncharge (p`1)ty = uncharge p
+
+-- calculate heart
+heart :: Walk n m (Charge k l) ~> Walk n 0t None
+{heart (p`1)w} = {down {heart p}}
+{heart (c, h)w} = h
+
+down ::  Walk (1+n)t 0t None ~> Walk n 0t None
+{down (1+n)w} = n
+
+-- runtime values are represented by expressions
+
+data Expr :: Walk n m p ~> * where
+  Lit :: Type a b -> Expr a  -- e.g. 42::Int
+  Lambda :: Type (p`1)w p -> Expr {heart (p`1)w} -> Expr (p`1)w -- e.g. \a:Int.42
+  Appl :: Expr f -> Expr {down {charge f}} -> Expr {heart f}
+
+
+-- Tests
+
+##test "exclude Term categorizer"
+  t0 = (Term, Star)ty
+
+-- strange Term (pi (x:Int).42)
+-- whose tau is lambda0 (x:Int).Int
+-- by definition same as Int
+-- should we disallow it?
+pi1_42 = ((Type, Type)ty`1)ty
+
+-- regular lambda2 : \x:Int.42
+lambda2Int = ((Type, Star)ty`2)ty
+
+-- regular PI1 : pi (x:Int).Int
+pi1Int = ((Type, Star)ty`1)ty
+
+-- type lambda2 : /\x:*:Int
+lambda2star = ((0ty, 1ty)ty`2)ty
+
