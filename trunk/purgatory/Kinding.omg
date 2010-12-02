@@ -21,6 +21,17 @@
  * OR OTHER DEALINGS IN THE SOFTWARE.
  -}
 
+-- Implement the PTS-like plane
+-- of PIs and lambdas (\ and /\), etc.
+-- Please refer to
+--  http://www.cedar-forest.org/forest/papers/journals-publications/jfp6-2.ps
+-- (esp. p. 4, item 4. "Higher degrees").
+--
+-- There are still many limitations, but I think
+-- the major obstacles are solved, contexts are
+-- easy to add, moreover categorizers must admit
+-- dependent types.
+
 import "LangPrelude.prg"
 
 -- walks in the lambda plane
