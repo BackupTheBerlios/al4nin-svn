@@ -31,10 +31,12 @@ data Type :: Walk n m p ~> *  where
 up :: Walk n m p ~> Walk (1+n)t m' p'
 {up (p`1)w} = p
 {up (1+n)w} = (2+n)w
+{up 0w} = 1w
 
 tau :: Type a -> Type {up a}
 tau (p`1)ty = p
 tau (1+n)ty = (2+n)ty
+tau Term = Type
 
 -- extract payload from lambda
 charge :: Walk n m (Charge k l) ~> Walk k l None
