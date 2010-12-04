@@ -67,19 +67,21 @@ data Type :: Walk n m p ~> Walk (1+n)t m' p' ~> *  where
   Type :: Type 1w 2w
   Term :: Type 0w 1w
   Ext :: Type (1+n)w (2+n)w -> Type r s -> Type ((1+n)w, r)w s
-  Lam :: Type p {up p} -> Type (p`1)w p
+  Lam :: Type p {up p} -> Type (p`1)w {up (p`1)w}
  deriving syntax (ty) Nat(Star, Up) Tick(Lam) Pair(Ext)
 
 -- tau: calculate classifier
 up :: Walk n m p ~> Walk (1+n)t m' p'
 {up (c, h)w} = {up h}
-{up (p`1)w} = p
+{up ((c, h)w`1)w} = h
+{up (p`2)w} = (p`1)w
 {up (1+n)w} = (2+n)w
 {up 0w} = 1w
 
 tau :: Type a ta -> Type ta {up ta}
 tau (c, h)ty = tau h
-tau (p`1)ty = p
+tau ((c, h)ty`1)ty = h
+tau (p`2)ty = (p`1)ty
 tau (1+n)ty = (2+n)ty
 tau 0ty = 1ty
 tau Type = Star
@@ -106,7 +108,7 @@ down ::  Walk (1+n)t 0t None ~> Walk n 0t None
 
 data Expr :: Walk n m p ~> * where
   Lit :: Type a b -> Expr a  -- e.g. 42::Int
-  Lambda :: Type (p`1)w p -> Expr {heart (p`1)w} -> Expr (p`1)w -- e.g. \a:Int.42
+  Lambda :: Type (p`1)w {up (p`1)w} -> Expr {heart (p`1)w} -> Expr (p`1)w -- e.g. \a:Int.42
   Appl :: Expr f -> Expr {down {charge f}} -> Expr {heart f}
 
 
@@ -115,11 +117,15 @@ data Expr :: Walk n m p ~> * where
 ##test "exclude Term categorizer"
   t0 = (Term, Star)ty
 
--- strange Term (pi (x:Int).42)
--- whose tau is lambda0 (x:Int).Int
+-- strange Term (pi (x:42).42)
+-- whose tau is lambda0 (x:42).Int
 -- by definition same as Int
 -- should we disallow it?
 pi1_42 = ((Type, Type)ty`1)ty
+
+-- this has indeed classifier at Term level
+-- so x is not typeable --> pi term uninhabitable
+strange = Appl $ (Lambda pi1_42 $ Lit Term)
 
 -- regular lambda2 : \x:Int.42
 lambda2Int = ((Type, Star)ty`2)ty
