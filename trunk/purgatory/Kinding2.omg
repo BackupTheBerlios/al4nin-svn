@@ -71,30 +71,15 @@ data Type :: Walk n m p ~> Walk (1+n)t m' p' ~> *  where
  deriving syntax (ty) Nat(Star, Up) Tick(Lam) Pair(Ext)
 
 -- tau: calculate classifier
-norm :: Walk n m p ~> Walk (1+n)t m' p' 
-{norm (p`2)w} = (p`1)w
-{norm ((c, h)w`1)w} = h
-
-{-
-definitional :: Type (p`1)w p -> Type p {norm (p`1)w}
-definitional (it@(p`2)ty) = check (p`1)ty
-definitional ((c, h)ty`1)ty = h
--}
-norm0 :: Walk n m p ~> Walk n m' p'
-{norm0 (p`1)w} = (p`1)w
-{norm0 (c, h)w} = h
-
 up :: Walk n m p ~> Walk (1+n)t m' p'
 {up (c, h)w} = {up h}
-{up (p`1)w} = p -- {norm0 p}
+{up (p`1)w} = p
 {up (1+n)w} = (2+n)w
 {up 0w} = 1w
 
---tau :: Type a ta -> Type ta tta
---tau :: Type a {up a} -> Type {up a} {up {up a}}
 tau :: Type a ta -> Type ta {up ta}
 tau (c, h)ty = tau h
-tau (p`1)ty = p -- definitional p
+tau (p`1)ty = p
 tau (1+n)ty = (2+n)ty
 tau 0ty = 1ty
 tau Type = Star
