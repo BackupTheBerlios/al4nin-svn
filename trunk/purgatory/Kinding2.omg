@@ -103,10 +103,6 @@ heart :: Walk n m (Charge k l) ~> Walk n 0t None
 {heart (p`1)w} = {south {heart p}}
 {heart (c, h)w} = h
 
---down ::  Walk n (1+n)t (Charge n' 0t) ~> Walk n' 0t None ~> Walk n 0t None
---{down (c, h)w n} = n
---{down (p`1)w (1+n)w} = {down p n}
-
 -- runtime values are represented by expressions
 
 data Expr :: Walk n m p ~> * where
@@ -120,16 +116,6 @@ data Expr :: Walk n m p ~> * where
 ##test "exclude Term categorizer"
   t0 = (Term, Star)ty
 
--- strange Term (pi (x:42).42)
--- whose tau is lambda0 (x:42).Int
--- by definition same as Int
--- should we disallow it?
---pi1_42 = ((Term, Type)ty`1)ty
-
--- this has indeed classifier at Term level
--- so x is not typeable --> pi term uninhabitable
---strange = Appl $ (Lambda pi1_42 $ Lit Term)
-
 -- regular lambda2 : \x:Int.42
 lambda2Int = ((Type, Star)ty`2)ty
 t1 = Appl (Lambda lambda2Int (Lit Term)) (Lit Term)
@@ -138,7 +124,7 @@ t1 = Appl (Lambda lambda2Int (Lit Term)) (Lit Term)
 pi1Int = ((Type, Star)ty`1)ty
 t2 = Appl (Lambda pi1Int (Lit Type)) (Lit Term)
 
--- type lambda2 : /\x:*:Int
+-- type-level lambda2 : /\x:*:Int
 lambda2star = ((0ty, 1ty)ty`2)ty
 t3 = Appl (Lambda lambda2star (Lit Type)) (Lit Type)
 
