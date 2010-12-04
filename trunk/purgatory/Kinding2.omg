@@ -57,7 +57,6 @@ data Walk :: Nat ~> Nat ~> Payload ~> *1 where
 --
 -- types are parametrized by walks
 -- TODO:
---   * Type :: * ~> * ~> *, making norm, up, charge, etc. unnecessary
 --   * Type applications
 --   * Sigma types
 
