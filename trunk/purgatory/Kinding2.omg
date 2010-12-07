@@ -50,25 +50,24 @@ data Walk :: Nat ~> Nat ~> Payload ~> *1 where
   SE :: Walk (1+n)t m {k=l;p}p ~> Walk n (1+m)t {k=l;p}p
  deriving syntax (w) Nat(Origin, North) Tick(SE) Pair(Pair)
 
--- Types are
+-- Qualifiers are
 --   * 0-dimensional: 42, Int, *, ...
 --   * 1-dimensional: PI a:Int.Int
 --   * 2-dimensional: \, dependent product: {a:A, b:B(a)}
 --   * etc.
 --
--- types are parametrized by walks
+-- they are parametrized by walks
 -- TODO:
 --   * Type applications
 --   * Sigma types
---   * rename data Type --> data Qual
 
-data Type :: Walk n m p ~> Walk (1+n)t m' p' ~> *  where
-  Star :: Type 2w 3w
-  Up :: Type (2+n)w (3+n)w -> Type (3+n)w (4+n)w
-  Type :: Type 1w 2w
-  Term :: Type 0w 1w
-  Ext :: Type p {up p} -> Type r s -> Type (p, r)w s
-  Lam :: Type p {up p} -> Type (p`1)w {up (p`1)w}
+data Qual :: Walk n m p ~> Walk (1+n)t m' p' ~> *  where
+  Star :: Qual 2w 3w
+  Up :: Qual (2+n)w (3+n)w -> Qual (3+n)w (4+n)w
+  Type :: Qual 1w 2w
+  Term :: Qual 0w 1w
+  Ext :: Qual p {up p} -> Qual r s -> Qual (p, r)w s
+  Lam :: Qual p {up p} -> Qual (p`1)w {up (p`1)w}
  deriving syntax (ty) Nat(Star, Up) Tick(Lam) Pair(Ext)
 
 -- tau: calculate classifier
@@ -79,7 +78,7 @@ up :: Walk n m p ~> Walk (1+n)t m' p'
 {up (1+n)w} = (2+n)w
 {up 0w} = 1w
 
-tau :: Type a ta -> Type ta {up ta}
+tau :: Qual a ta -> Qual ta {up ta}
 tau (c, h)ty = tau h
 tau ((c, h)ty`1)ty = h
 tau (p`2)ty = (p`1)ty
@@ -93,7 +92,7 @@ charge :: Walk n m {k=l;p}p ~> Walk k l p
 {charge (c, t)w} = c
 {charge (p`1)w} = {charge p}
 
-uncharge :: Type p q -> Type {charge p} {up {charge p}}
+uncharge :: Qual p q -> Qual {charge p} {up {charge p}}
 uncharge (c, _)ty = c
 uncharge (p`1)ty = uncharge p
 
@@ -108,15 +107,15 @@ heart :: Walk n m {k=l;p}p ~> Walk n 0t None
 -- runtime values are represented by expressions
 
 data Expr :: Walk n m p ~> * where
-  Lit :: Type a b -> Expr a  -- e.g. 42::Int
-  Lambda :: Type (p`1)w {up (p`1)w} -> Expr {heart (p`1)w} -> Expr (p`1)w -- e.g. \a:Int.42
+  Lit :: Qual a b -> Expr a  -- e.g. 42::Int
+  Lambda :: Qual (p`1)w {up (p`1)w} -> Expr {heart (p`1)w} -> Expr (p`1)w -- e.g. \a:Int.42
   Appl :: Expr f -> Expr {south {charge f}} -> Expr {heart f}
 
 
 -- Tests
 
 -- TODO ##test "exclude Term categorizer"
---  t0 = (Term, Star)ty
+t0 = (Term, Star)ty
 
 -- regular lambda2 : \x:Int.42
 lambda2Int = ((Type, Star)ty`2)ty
