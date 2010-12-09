@@ -33,6 +33,7 @@
 -- dependent types.
 
 import "LangPrelude.prg"
+import "Applicative.omg"
 
 -- walks in the lambda plane
 
@@ -115,19 +116,19 @@ data Expr :: Walk n m p ~> * where
 -- Tests
 
 -- TODO ##test "exclude Term categorizer"
-t0 = (Term, Star)ty
+kt0 = (Term, Star)ty
 
 -- regular lambda2 : \x:Int.42
 lambda2Int = ((Type, Star)ty`2)ty
-t1 = Appl (Lambda lambda2Int (Lit Term)) (Lit Term)
+kt1 = Appl (Lambda lambda2Int (Lit Term)) (Lit Term)
 
 -- regular PI1 : pi (x:Int).Int
 pi1Int = ((Type, Star)ty`1)ty
-t2 = Appl (Lambda pi1Int (Lit Type)) (Lit Term)
+kt2 = Appl (Lambda pi1Int (Lit Type)) (Lit Term)
 
 -- type-level lambda2 : /\x:*:Int
 lambda2star = ((0ty, 1ty)ty`2)ty
-t3 = Appl (Lambda lambda2star (Lit Type)) (Lit Type)
+kt3 = Appl (Lambda lambda2star (Lit Type)) (Lit Type)
 
 -- mixed form: \f:Int->Int.f 42
 lambda2Int_Int = ((pi1Int, 0ty)ty`2)ty
