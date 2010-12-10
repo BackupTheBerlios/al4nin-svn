@@ -51,9 +51,10 @@ data Walk :: Nat ~> Nat ~> Payload ~> *1 where
   SE :: Walk (1+n)t m {k=l;p}p ~> Walk n (1+m)t {k=l;p}p
  deriving syntax (w) Nat(Origin, North) Tick(SE) Pair(Pair)
 
-data Walks :: *1 where
-  Heart :: Walks -- Walk n 0t {}p
-  Wrap :: Walk n (1+m)t p ~> Walks ~> Walks
+-- list of walks ending in the same stratum
+data Walks :: Nat ~> *1 where
+  Heart :: Walks n
+  Wrap :: Walk n m p ~> Walks n ~> Walks n
  deriving syntax (ws) List(Heart, Wrap)
 
 -- Qualifiers are
@@ -122,9 +123,9 @@ data Expr :: Walk n m p ~> * where
 --  Heart :: Qual n (1+n)w -> Frag n n
 --  Qual :: Qual v {up v} -> Frag v {heart v}
 
-data Context :: Walks ~> * where
-  Heart :: Qual n (1+n)w -> Context []ws
-  Wrap :: Qual v {up v} -> Context ws -> Context [v; ws]ws
+data Context :: Walks n ~> * where
+  Heart :: Qual n (1+n)w -> Context [n]ws
+  Wrap :: Qual (v`1)w {up (v`1)w} -> Context ws -> Context [(v`1)w; ws]ws
  --deriving List(c)
 
 
