@@ -123,8 +123,8 @@ data Context :: Fixture ~> Walks n ~> * where
 
 data Expr :: Walks n ~> * where
   Lit :: Qual a b -> Expr [a]ws  -- e.g. 42::Int
-  Lambda :: Context Anchored ws -> Expr ws -- e.g. \a:Int.42
-  Appl :: Expr [{south f}]ws -> Expr [f; r]ws -> Expr r
+  Lambda :: Context Anchored [a, b; r]ws -> Expr [a, b; r]ws -- e.g. \a:Int.42
+  Appl :: Equal {charge f} {up a} => Expr [a]ws -> Expr [f; r]ws -> Expr r
 
 
 -- Tests
