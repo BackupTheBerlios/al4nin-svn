@@ -114,7 +114,11 @@ data Context :: Fixture ~> Walks n ~> * where
   Empty :: Context Floating []ws
   Heart :: Qual n (1+n)w -> Context Anchored [n]ws
   Qualify :: Qual (v`1)w {up (v`1)w} -> Context f ws -> Context f [(v`1)w; ws]ws
- deriving syntax (c) List(Empty, Qualify)
+  Appl' :: Equal {charge f} b
+           => Qual a b
+           -> Context Anchored [f; r]ws
+           -> Context Anchored r
+ deriving syntax (c) List(Empty, Qualify) Pair(Appl')
 
 -- runtime values are represented by expressions
 
@@ -143,5 +147,5 @@ kt3 = Appl (Lit Type) (Lambda [lambda2star; Heart Type]c)
 
 -- mixed form: \f:Int->Int.f 42
 lambda2Int_Int = ((pi1Int, 0ty)ty`2)ty
-kt4 = Appl (Lit lambda2Int) (Lambda [lambda2Int_Int; Heart Term]c)
+kt4 = (lambda2Int, [lambda2Int_Int; Heart Term]c)c
 
