@@ -122,11 +122,12 @@ data Context :: Fixture ~> Walks n ~> * where
 
 -- runtime values are represented by expressions
 
+{-
 data Expr :: Walks n ~> * where
   Lit :: Qual a b -> Expr [a]ws  -- e.g. 42::Int
   Lambda :: Context Anchored [a, b; r]ws -> Expr [a, b; r]ws -- e.g. \a:Int.42
   Appl :: Equal {charge f} {up a} => Expr [a]ws -> Expr [f; r]ws -> Expr r
-
+-}
 
 -- Tests
 
@@ -135,15 +136,15 @@ kt0 = (Term, Star)ty
 
 -- regular lambda2 : \x:Int.42
 lambda2Int = ((Type, Star)ty`2)ty
-kt1 = Appl (Lit Term) (Lambda [lambda2Int; Heart Term]c)
+kt1 = (Term, [lambda2Int; Heart Term]c)c
 
 -- regular PI1 : pi (x:Int).Int
 pi1Int = ((Type, Star)ty`1)ty
-kt2 = Appl (Lit Term) (Lambda [pi1Int; Heart Type]c)
+kt2 = (Term, [pi1Int; Heart Type]c)c
 
 -- type-level lambda2 : /\x:*:Int
 lambda2star = ((0ty, 1ty)ty`2)ty
-kt3 = Appl (Lit Type) (Lambda [lambda2star; Heart Type]c)
+kt3 = (Type, [lambda2star; Heart Type]c)c
 
 -- mixed form: \f:Int->Int.f 42
 lambda2Int_Int = ((pi1Int, 0ty)ty`2)ty
