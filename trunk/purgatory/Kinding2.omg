@@ -102,9 +102,6 @@ uncharge (c, _)ty = c
 uncharge (p`1)ty = uncharge p
 
 -- calculate heart
-south :: Walk (1+n)t 0t None ~> Walk n 0t None
-{south (1+n)w} = n
-
 heart :: Walks n ~> Walk n 0t None
 {heart [h]ws} = h
 {heart [a, b; r]ws} = {heart [b; r]ws}
