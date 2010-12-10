@@ -151,5 +151,5 @@ lambda2Int_Int = ((pi1Int, 0ty)ty`2)ty
 kt4 = (lambda2Int, [lambda2Int_Int; Heart Term]c)c
 
 -- 2 args: \f i.f i
-kt5 = (Term, (lambda2Int, [lambda2Int_Int, lambda2Int; Heart Term]c)c)c
+kt5 = (Term, lambda2Int, [lambda2Int_Int, lambda2Int; Heart Term]c)c
 
