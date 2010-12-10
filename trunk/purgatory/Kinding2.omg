@@ -28,8 +28,7 @@
 -- (esp. p. 4, item 4. "Higher degrees").
 --
 -- There are still many limitations, but I think
--- the major obstacles are solved,
--- moreover categorizers must admit dependent types.
+-- the major obstacles are solved.
 
 import "LangPrelude.prg"
 
@@ -63,8 +62,7 @@ data Walks :: Nat ~> *1 where
 --
 -- they are parametrized by walks
 -- TODO:
---   * Type applications
---   * Sigma types
+--   * Sigma types (dependent sums)
 
 data Qual :: Walk n m p ~> Walk (1+n)t m' p' ~> *  where
   Star :: Qual 2w 3w
@@ -131,8 +129,11 @@ data Expr :: Walks n ~> * where
 
 -- Tests
 
--- TODO ##test "exclude Term categorizer"
-kt0 = (Term, Star)ty
+-- we allow Term categorizer (pi x:42.25) in contexts
+kt0 = [((Term, Type)ty`1)ty; Heart Term]c
+
+##test "exclude Term categorizer's (pi x:42.25) application"
+ kt0' = (undefined, kt0)c
 
 -- regular lambda2 : \x:Int.42
 lambda2Int = ((Type, Star)ty`2)ty
