@@ -143,4 +143,5 @@ kt3 = Appl (Lit Type) (Lambda [lambda2star; Heart Type]c)
 
 -- mixed form: \f:Int->Int.f 42
 lambda2Int_Int = ((pi1Int, 0ty)ty`2)ty
+kt4 = Appl (Lit lambda2Int) (Lambda [lambda2Int_Int; Heart Term]c)
 
