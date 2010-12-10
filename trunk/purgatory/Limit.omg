@@ -4,9 +4,7 @@ data Count :: Nat ~> Nat ~> * where
   Incr :: Nat' n -> Count n u -- (1+n)t
 
 shift :: Thrist Count n a -> Thrist Count (1+n)t (1+b)t -- (1+a)t
-shift []l = unsafeCast []l
-
-shift [Incr n; r]l = [Incr (1+n)v; cast (lazy (shift r))]l
+shift [Incr n; r]l = [Incr (1+n)v; (lazy (shift r))]l
         where cast :: a -> a
               cast a = a
 
