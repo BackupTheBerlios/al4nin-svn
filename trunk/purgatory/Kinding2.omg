@@ -28,9 +28,8 @@
 -- (esp. p. 4, item 4. "Higher degrees").
 --
 -- There are still many limitations, but I think
--- the major obstacles are solved, contexts are
--- easy to add, moreover categorizers must admit
--- dependent types.
+-- the major obstacles are solved,
+-- moreover categorizers must admit dependent types.
 
 import "LangPrelude.prg"
 
@@ -106,17 +105,11 @@ uncharge (p`1)ty = uncharge p
 south :: Walk (1+n)t 0t None ~> Walk n 0t None
 {south (1+n)w} = n
 
-heart :: Walk n m {k=l;p}p ~> Walk n 0t None
-{heart (p`1)w} = {south {heart p}}
-{heart (c, h)w} = h
+heart :: Walks n ~> Walk n 0t None
+{heart [h]ws} = h
+{heart [a, b; r]ws} = {heart [b; r]ws}
 
--- runtime values are represented by expressions
-
-data Expr :: Walk n m p ~> * where
-  Lit :: Qual a b -> Expr a  -- e.g. 42::Int
-  Lambda :: Qual (p`1)w {up (p`1)w} -> Expr {heart (p`1)w} -> Expr (p`1)w -- e.g. \a:Int.42
-  Appl :: Expr f -> Expr {south {charge f}} -> Expr {heart f}
-
+-- contexts accumulate qualifiers (possibly around a heart)
 
 kind Fixture = Floating | Anchored
 
@@ -126,6 +119,12 @@ data Context :: Fixture ~> Walks n ~> * where
   Qualify :: Qual (v`1)w {up (v`1)w} -> Context f ws -> Context f [(v`1)w; ws]ws
  deriving syntax (c) List(Empty, Qualify)
 
+-- runtime values are represented by expressions
+
+data Expr :: Walks n ~> * where
+  Lit :: Qual a b -> Expr [a]ws  -- e.g. 42::Int
+  Lambda :: Context Anchored ws -> Expr [{heart ws}]ws -> Expr ws -- e.g. \a:Int.42
+  Appl :: Expr [f; r]ws -> Expr [{south f}]ws -> Expr r
 
 
 -- Tests
@@ -135,15 +134,15 @@ kt0 = (Term, Star)ty
 
 -- regular lambda2 : \x:Int.42
 lambda2Int = ((Type, Star)ty`2)ty
-kt1 = Appl (Lambda lambda2Int (Lit Term)) (Lit Term)
+kt1 = Appl (Lambda [lambda2Int; Heart Term]c (Lit Term)) (Lit Term)
 
 -- regular PI1 : pi (x:Int).Int
 pi1Int = ((Type, Star)ty`1)ty
-kt2 = Appl (Lambda pi1Int (Lit Type)) (Lit Term)
+kt2 = Appl (Lambda [pi1Int; Heart Type]c (Lit Type)) (Lit Term)
 
 -- type-level lambda2 : /\x:*:Int
 lambda2star = ((0ty, 1ty)ty`2)ty
-kt3 = Appl (Lambda lambda2star (Lit Type)) (Lit Type)
+kt3 = Appl (Lambda [lambda2star; Heart Type]c (Lit Type)) (Lit Type)
 
 -- mixed form: \f:Int->Int.f 42
 lambda2Int_Int = ((pi1Int, 0ty)ty`2)ty
