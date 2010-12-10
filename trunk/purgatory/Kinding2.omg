@@ -118,10 +118,12 @@ data Expr :: Walk n m p ~> * where
   Appl :: Expr f -> Expr {south {charge f}} -> Expr {heart f}
 
 
-data Context :: Walks n ~> * where
-  Empty :: Context []ws
-  Heart :: Qual n (1+n)w -> Context [n]ws
-  Qualify :: Qual (v`1)w {up (v`1)w} -> Context ws -> Context [(v`1)w; ws]ws
+kind Fixture = Floating | Anchored
+
+data Context :: Fixture ~> Walks n ~> * where
+  Empty :: Context Floating []ws
+  Heart :: Qual n (1+n)w -> Context Anchored [n]ws
+  Qualify :: Qual (v`1)w {up (v`1)w} -> Context f ws -> Context f [(v`1)w; ws]ws
  deriving syntax (c) List(Empty, Qualify)
 
 
