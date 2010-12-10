@@ -113,9 +113,9 @@ data Expr :: Walk n m p ~> * where
   Appl :: Expr f -> Expr {south {charge f}} -> Expr {heart f}
 
 
-data Frag :: Walk n m p ~> Walk n m' p' ~> * where
-  Heart :: Qual n (1+n)w -> Frag n n
-  Qual :: Qual v {up v} -> Frag v w
+data Frag :: Walk n m p ~> Walk n' m' p' ~> * where {}
+--  Heart :: Qual n (1+n)w -> Frag n n
+--  Qual :: Qual v {up v} -> Frag v {heart v}
 
 
 

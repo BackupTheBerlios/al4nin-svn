@@ -5,12 +5,10 @@ import "LangPrelude.prg"
 data Thrist :: level st su sv . forall (l :: *(1+st)) (m :: *(1+su)) . (l ~> m ~> *)  ~> l ~> m ~> * where
   Nil :: Thrist k a a
 
-  Cons :: forall (l :: *(1+st)) (m :: *(1+su)) (n :: *(1+sv)) (k::l ~> m ~> *0) (k'::m ~> n ~> *0) (k''::l ~> n ~> *0) (a :: l) (b :: m) (c :: n) . k a b -> Thrist k' b c -> Thrist k'' a c
-  --Cons :: k a b -> Thrist k b c -> Thrist k a c
-  --Cons :: level st su sv . forall (l :: *(1+st)) (m :: *(1+su)) (n :: *(1+sv)) (a :: l) (b :: m) (c :: n) . k a b -> Thrist k b c -> Thrist k a c
+  --Cons :: forall (l :: *(1+st)) (m :: *(1+su)) (n :: *(1+sv)) (k::l ~> m ~> *0) (k'::m ~> n ~> *0) (k''::l ~> n ~> *0) (a :: l) (b :: m) (c :: n) . k a b -> Thrist k' b c -> Thrist k'' a c
+  --Cons :: forall (l :: *(1+st)) (m :: *(1+su)) (n :: *(1+sv)) . (k::l~>m~>*) a b -> Thrist (k::m~>n~>*) b c -> Thrist (k::l~>n~>*) a c
+  Cons :: forall (l :: *1) (m :: *1) (n :: *1) (k :: *1~>*1~>*) . k l m -> Thrist k m n -> Thrist k l n
  deriving List(l)
-
---  Cons :: level st su sv. forall (l :: *(1+st)) (m :: *(1+su)) (n :: *(1+sv)) (k :: l ~> m ~> *) (a :: l) (b :: m) (c :: n) . k a b -> Thrist k b c -> Thrist k a c
 
 
 data Lev :: level n . forall (a :: *(1+n)) (b :: *(2+n)) . a ~> b ~> * where
