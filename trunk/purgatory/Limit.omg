@@ -1,7 +1,7 @@
 import "Thrist.omg"
 
 data Count :: Nat ~> Nat ~> * where
-  Incr :: Nat' n -> Count n u -- (1+n)t
+  Incr :: Nat' n -> Count n (1+n)t
 
 shift :: Thrist Count n a -> Thrist Count (1+n)t b
 shift [Incr n; r]l = [Incr (1+n)v; lazy (shift r)]l
