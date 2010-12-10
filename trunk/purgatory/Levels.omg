@@ -1,10 +1,8 @@
 import "LangPrelude.prg"
 
---import "Thrist.omg" 
---  (Thrist, Nil, Cons, syntax List(l))
 data Thrist :: level st su x . forall (l :: *(1+st)) (m :: *(1+su)) . (l ~> m ~> *)  ~> l ~> m ~> * where
   Nil :: Thrist k a a
-  Cons :: level x . forall (l :: *(0+x)) (m :: *(0+x)) (n :: *(0+x)) (k :: *(0+x)~>*(0+x)~>*) . k l m -> Thrist k m n -> Thrist k l n
+  Cons :: level x . forall (l :: *x) (m :: *x) (n :: *x) (k :: *x ~> *x ~>*) . k l m -> Thrist k m n -> Thrist k l n
  deriving List(l)
 
 
