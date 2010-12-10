@@ -33,7 +33,6 @@
 -- dependent types.
 
 import "LangPrelude.prg"
---import "Applicative.omg"
 
 -- walks in the lambda plane
 
@@ -119,14 +118,11 @@ data Expr :: Walk n m p ~> * where
   Appl :: Expr f -> Expr {south {charge f}} -> Expr {heart f}
 
 
---data Frag :: Walk n m p ~> Walk n m' p' ~> * where
---  Heart :: Qual n (1+n)w -> Frag n n
---  Qual :: Qual v {up v} -> Frag v {heart v}
-
 data Context :: Walks n ~> * where
+  Empty :: Context []ws
   Heart :: Qual n (1+n)w -> Context [n]ws
-  Wrap :: Qual (v`1)w {up (v`1)w} -> Context ws -> Context [(v`1)w; ws]ws
- --deriving List(c)
+  Qualify :: Qual (v`1)w {up (v`1)w} -> Context ws -> Context [(v`1)w; ws]ws
+ deriving syntax (c) List(Empty, Qualify)
 
 
 
