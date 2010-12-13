@@ -73,7 +73,7 @@ data Qual :: Walk n m p ~> Walk (1+n)t m' p' ~> *  where
   Lam :: Qual p {up p} -> Qual (p`1)w {up (p`1)w}
  deriving syntax (ty) Nat(Star, Up) Tick(Lam) Pair(Ext)
 
--- tau: calculate classifier
+-- tau': calculate a qualifier's classifier
 up :: Walk n m p ~> Walk (1+n)t m' p'
 {up (c, h)w} = {up h}
 {up ((c, h)w`1)w} = h
@@ -81,14 +81,14 @@ up :: Walk n m p ~> Walk (1+n)t m' p'
 {up (1+n)w} = (2+n)w
 {up 0w} = 1w
 
-tau :: Qual a ta -> Qual ta {up ta}
-tau (c, h)ty = tau h
-tau ((c, h)ty`1)ty = h
-tau (p`2)ty = (p`1)ty
-tau (1+n)ty = (2+n)ty
-tau 0ty = 1ty
-tau Type = Star
-tau Term = Type
+tau' :: Qual a ta -> Qual ta {up ta}
+tau' (c, h)ty = tau' h
+tau' ((c, h)ty`1)ty = h
+tau' (p`2)ty = (p`1)ty
+tau' (1+n)ty = (2+n)ty
+tau' 0ty = 1ty
+tau' Type = Star
+tau' Term = Type
 
 -- extract payload from lambda
 charge :: Walk n m {k=l;p}p ~> Walk k l p
@@ -112,11 +112,42 @@ data Context :: Fixture ~> Walks n ~> * where
   Empty :: Context Floating []ws
   Heart :: Qual n (1+n)w -> Context Anchored [n]ws
   Qualify :: Qual (v`1)w {up (v`1)w} -> Context f ws -> Context f [(v`1)w; ws]ws
-  Appl' :: Equal {charge f} b
-           => Qual a b
-           -> Context Anchored [f; r]ws
-           -> Context Anchored r
- deriving syntax (c) List(Empty, Qualify) Pair(Appl')
+  Appl :: Equal {charge f} b
+          => Qual a b
+          -> Context Anchored [f; r]ws
+          -> Context Anchored r
+ deriving syntax (c) List(Empty, Qualify) Pair(Appl)
+
+-- tau: classify context
+upc :: Walks n ~> Walks (1+n)t
+{upc []ws} = []ws
+{upc [0w; ws]ws} = [1w; {upc ws}]ws
+{upc [(1+n)w; ws]ws} = [(2+n)w; {upc ws}]ws
+{upc [((c, h)w`1)w; ws]ws} = {upc ws}
+{upc [(w`2)w; ws]ws} = [(w`1)w; {upc ws}]ws
+
+-- we want to show: Equal {upc [_c]ws} [(1+_c)w]ws
+spineLemma :: Qual n (1+n)w -> Equal (1+n)w {up n}
+spineLemma Term = Eq
+spineLemma Type = Eq
+spineLemma 0ty = Eq
+spineLemma (1+n)ty = Eq
+
+spineContext :: Qual c (1+c)w -> Context Anchored [c]ws -> Equal {upc [c]ws} [(1+c)w]ws
+spineContext Term (Heart Term) = Eq
+spineContext Type (Heart Type) = Eq
+spineContext 0ty (Heart 0ty) = Eq
+spineContext (1+n)ty (Heart (1+n)ty) = Eq
+
+tau :: Context f ws -> Context f {upc ws}
+tau Empty = Empty
+tau (Heart q) = Heart (tau' q)
+  where theorem because = spineContext q (Heart q) -- spineLemma q
+tau (Qualify ((_,t)ty`1)ty c) = tau c
+tau (Qualify (t`2)ty c) = Qualify (t`1)ty (tau c)
+--tau (Appl q c) = Appl (tau' q) (tau c)
+
+
 
 -- runtime values are represented by expressions
 
@@ -124,7 +155,7 @@ data Context :: Fixture ~> Walks n ~> * where
 data Expr :: Walks n ~> * where
   Lit :: Qual a b -> Expr [a]ws  -- e.g. 42::Int
   Lambda :: Context Anchored [a, b; r]ws -> Expr [a, b; r]ws -- e.g. \a:Int.42
-  Appl :: Equal {charge f} {up a} => Expr [a]ws -> Expr [f; r]ws -> Expr r
+  Appl' :: Equal {charge f} {up a} => Expr [a]ws -> Expr [f; r]ws -> Expr r
 -}
 
 -- Tests
