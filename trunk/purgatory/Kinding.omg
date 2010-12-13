@@ -126,13 +126,14 @@ upc :: Walks n ~> Walks (1+n)t
 {upc [((c, h)w`1)w; ws]ws} = {upc ws}
 {upc [(w`2)w; ws]ws} = [(w`1)w; {upc ws}]ws
 
--- we want to show: Equal {upc [_c]ws} [(1+_c)w]ws
+-- for a qualifier on the spine, up is 1+
 spineLemma :: Qual n (1+n)w -> Equal (1+n)w {up n}
 spineLemma Term = Eq
 spineLemma Type = Eq
 spineLemma 0ty = Eq
 spineLemma (1+n)ty = Eq
 
+-- we want to show: Equal {upc [_c]ws} [(1+_c)w]ws
 spineContext :: Qual c (1+c)w -> Context Anchored [c]ws -> Equal {upc [c]ws} [(1+c)w]ws
 spineContext Term (Heart Term) = Eq
 spineContext Type (Heart Type) = Eq
@@ -142,10 +143,10 @@ spineContext (1+n)ty (Heart (1+n)ty) = Eq
 tau :: Context f ws -> Context f {upc ws}
 tau Empty = Empty
 tau (Heart q) = Heart (tau' q)
-  where theorem because = spineContext q (Heart q) -- spineLemma q
+  where theorem because = spineContext q (Heart q)
 tau (Qualify ((_,t)ty`1)ty c) = tau c
 tau (Qualify (t`2)ty c) = Qualify (t`1)ty (tau c)
---tau (Appl q c) = Appl (tau' q) (tau c)
+tau (Appl q [q'; c]c) = tau c
 
 
 
