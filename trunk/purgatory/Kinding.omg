@@ -144,11 +144,13 @@ tau :: Context f ws -> Context f {upc ws}
 tau Empty = Empty
 tau (Heart q) = Heart (tau' q)
   where theorem because = spineContext q (Heart q)
-tau (Qualify ((_,t)ty`1)ty c) = tau c
-tau (Qualify (t`2)ty c) = Qualify (t`1)ty (tau c)
-tau (Appl q [q'; c]c) = tau c
-
-
+tau [((_,t)ty`1)ty; c]c = tau c
+tau [(t`2)ty; c]c = Qualify (t`1)ty (tau c)
+tau (_, [_; c]c)c = tau c
+tau (q, (a@(_, _)c))c = tau (q, (shuffle a))c
+  where shuffle :: Context Anchored [w; ws]ws -> Context Anchored [w; ws]ws
+        shuffle (_, [_; c]c)c = c
+        shuffle (q, app)c = shuffle (q, shuffle app)c
 
 -- runtime values are represented by expressions
 
