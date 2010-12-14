@@ -147,10 +147,10 @@ tau (Heart q) = Heart (tau' q)
 tau [((_,t)ty`1)ty; c]c = tau c
 tau [(t`2)ty; c]c = Qualify (t`1)ty (tau c)
 tau (_, [_; c]c)c = tau c
-tau (q, (a@(_, _)c))c = tau (q, (shuffle a))c
-  where shuffle :: Context Anchored [w; ws]ws -> Context Anchored [w; ws]ws
-        shuffle (_, [_; c]c)c = c
-        shuffle (q, app)c = shuffle (q, shuffle app)c
+tau (q, app)c = tau (q, cancel app)c
+  where cancel :: Context Anchored [w; ws]ws -> Context Anchored [w; ws]ws
+        cancel (_, [_; c]c)c = c
+        cancel (q, app)c = cancel (q, cancel app)c
 
 -- runtime values are represented by expressions
 
@@ -165,6 +165,7 @@ data Expr :: Walks n ~> * where
 
 -- we allow Term categorizer (pi x:42.25) in contexts
 kt0 = [((Term, Type)ty`1)ty; Heart Term]c
+tkt0 = tau kt0
 
 ##test "exclude Term categorizer's (pi x:42.25) application"
  kt0' = (undefined, kt0)c
@@ -172,19 +173,24 @@ kt0 = [((Term, Type)ty`1)ty; Heart Term]c
 -- regular lambda2 : \x:Int.42
 lambda2Int = ((Type, Star)ty`2)ty
 kt1 = (Term, [lambda2Int; Heart Term]c)c
+tkt1 = tau kt1
 
 -- regular PI1 : pi (x:Int).Int
 pi1Int = ((Type, Star)ty`1)ty
 kt2 = (Term, [pi1Int; Heart Type]c)c
+tkt2 = tau kt2
 
 -- type-level lambda2 : /\x:*:Int
 lambda2star = ((0ty, 1ty)ty`2)ty
 kt3 = (Type, [lambda2star; Heart Type]c)c
+tkt3 = tau kt3
 
 -- mixed form: \f:Int->Int.f 42
 lambda2Int_Int = ((pi1Int, 0ty)ty`2)ty
 kt4 = (lambda2Int, [lambda2Int_Int; Heart Term]c)c
+tkt4 = tau kt4
 
 -- 2 args: \f i.f i
 kt5 = (Term, lambda2Int, [lambda2Int_Int, lambda2Int; Heart Term]c)c
+tkt5 = tau kt5
 
