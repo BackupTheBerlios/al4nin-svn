@@ -216,3 +216,14 @@ tkt4 = tau kt4
 kt5 = (Term, lambda2Int, [lambda2Int_Int, lambda2Int; Heart Term]c)c
 tkt5 = tau kt5
 
+-- type constructor: M :: * ~> *
+em = ((Heart Star, 1ty)ty`2)ty
+kt6 = (Type, Part em)c
+--tkt6 = tau kt6
+
+
+-- \f : Int . return 42   (f :: Int -> M Int)
+ef = [((Heart Type, 0ty)ty`2)ty; Heart kt6]c
+kt7 = (Type, ef)c
+--tkt7 = tau kt7
+
