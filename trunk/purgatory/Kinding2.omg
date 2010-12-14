@@ -34,7 +34,9 @@
 -- the major obstacles are solved.
 
 -- Global TODO list:
---  * contexts as categorizers
+--  * contexts as categorizers (partly done)
+--        * Payload adjustment ({}p -> []p)
+--        * model oversaturable Part, tau, lemmata
 --  * named (and/or numbered, i.e. de Bruijn) variables
 --  * variable capture, tracking free vars
 --  * outer context (LeftList?)
