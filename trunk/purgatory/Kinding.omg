@@ -49,13 +49,13 @@ data Walk :: Nat ~> Nat ~> Payload ~> *1 where
   North :: Walk n 0t None ~> Walk (1+n)t 0t None
   Pair :: Walk k l p ~> Walk n m None ~> Walk n m {k=l;p}p
   SE :: Walk (1+n)t m {k=l;p}p ~> Walk n (1+m)t {k=l;p}p
- deriving syntax (w) Nat(Origin, North) Tick(SE) Pair(Pair)
+ deriving syntax(w) Nat(Origin, North) Tick(SE) Pair(Pair)
 
 -- list of walks ending in the same stratum
 data Walks :: Nat ~> *1 where
   Heart :: Walks n
   Wrap :: Walk n m p ~> Walks n ~> Walks n
- deriving syntax (ws) List(Heart, Wrap)
+ deriving syntax(ws) List(Heart, Wrap)
 
 -- Qualifiers are
 --   * 0-dimensional: 42, Int, *, ...
@@ -74,7 +74,7 @@ data Qual :: Walk n m p ~> Walk (1+n)t m' p' ~> *  where
   Term :: Qual 0w 1w
   Ext :: Qual p {up p} -> Qual r s -> Qual (p, r)w s
   Lam :: Qual p {up p} -> Qual (p`1)w {up (p`1)w}
- deriving syntax (ty) Nat(Star, Up) Tick(Lam) Pair(Ext)
+ deriving syntax(ty) Nat(Star, Up) Tick(Lam) Pair(Ext)
 
 -- tau': calculate a qualifier's classifier
 up :: Walk n m p ~> Walk (1+n)t m' p'
@@ -119,7 +119,7 @@ data Context :: Fixture ~> Walks n ~> * where
           => Qual a b
           -> Context Anchored [f; r]ws
           -> Context Anchored r
- deriving syntax (c) List(Empty, Qualify) Pair(Appl)
+ deriving syntax(c) List(Empty, Qualify) Pair(Appl)
 
 -- tau: classify context
 upc :: Walks n ~> Walks (1+n)t
