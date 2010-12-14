@@ -26,12 +26,18 @@
 -- Please refer to
 --  http://www.cedar-forest.org/forest/papers/journals-publications/jfp6-2.ps
 -- (esp. p. 4, item 4: "Higher degrees").
--- Original paper from deBruijn (with pretty tree lambda notation and
---                               argument-before-function order) is
+-- Original paper from de Bruijn (with pretty tree lambda notation and
+--                                argument-before-function order) is
 --  http://alexandria.tue.nl/repository/freearticles/597608.pdf
 --
 -- There are still many limitations, but I think
 -- the major obstacles are solved.
+
+-- Global TODO list:
+--  * named (and/or numbered, i.e. de Bruijn) variables
+--  * variable capture, tracking free vars
+--  * outer context (LeftList?)
+--  * unification of contexts, unifiers
 
 import "LangPrelude.prg"
 
@@ -66,6 +72,7 @@ data Walks :: Nat ~> *1 where
 -- they are parametrized by walks
 -- TODO:
 --   * Sigma types (dependent sums)
+--   * Sized types (speculative)
 
 data Qual :: Walk n m p ~> Walk (1+n)t m' p' ~> *  where
   Star :: Qual 2w 3w
