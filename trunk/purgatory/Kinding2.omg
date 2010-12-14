@@ -1,0 +1,215 @@
+{-
+ * Copyright (c) 2010 Gabor Greif
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to deal
+ * in the Software without restriction, including without limitation the rights
+ * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies
+ * of the Software, and to permit persons to whom the Software is furnished to do
+ * so, subject to the following conditions:
+ *
+ * The above copyright notice and this permission notice shall be
+ * included in all copies or substantial portions of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
+ * EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES
+ * OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
+ * NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT
+ * HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY,
+ * WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+ * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE
+ * OR OTHER DEALINGS IN THE SOFTWARE.
+ -}
+
+-- Implement the PTS-like plane
+-- of PIs and lambdas (\ and /\), etc.
+-- Please refer to
+--  http://www.cedar-forest.org/forest/papers/journals-publications/jfp6-2.ps
+-- (esp. p. 4, item 4: "Higher degrees").
+-- Original paper from de Bruijn (with pretty tree lambda notation and
+--                                argument-before-function order) is
+--  http://alexandria.tue.nl/repository/freearticles/597608.pdf
+--
+-- There are still many limitations, but I think
+-- the major obstacles are solved.
+
+-- Global TODO list:
+--  * contexts as categorizers
+--  * named (and/or numbered, i.e. de Bruijn) variables
+--  * variable capture, tracking free vars
+--  * outer context (LeftList?)
+--  * unification of contexts, unifiers
+
+import "LangPrelude.prg"
+
+-- walks in the lambda plane
+
+data Payload :: *1 where
+  None :: Payload
+  Charge :: Nat ~> Nat ~> Payload ~> Payload
+ deriving Record(p)
+
+--                  v-- dimensionality
+--           v-- stratum
+data Walk :: Nat ~> Nat ~> Payload ~> *1 where
+  Origin :: Walk 0t 0t None
+  North :: Walk n 0t None ~> Walk (1+n)t 0t None
+  Pair :: Walks k ~> Walk n m None ~> Walk n m {k=k;p}p
+  SE :: Walk (1+n)t m {k=l;p}p ~> Walk n (1+m)t {k=l;p}p
+ deriving syntax(w) Nat(Origin, North) Tick(SE) Pair(Pair)
+
+-- list of walks ending in the same stratum
+data Walks :: Nat ~> *1 where
+  Heart :: Walks n
+  Wrap :: Walk n m p ~> Walks n ~> Walks n
+ deriving syntax(ws) List(Heart, Wrap)
+
+-- Qualifiers are
+--   * 0-dimensional: 42, Int, *, ...
+--   * 1-dimensional: PI a:Int.Int
+--   * 2-dimensional: \, dependent product: {a:A, b:B(a)}
+--   * etc.
+--
+-- they are parametrized by walks
+-- TODO:
+--   * Sigma types (dependent sums)
+--   * Sized types (speculative)
+
+data Qual :: Walk n m p ~> Walk (1+n)t m' p' ~> *  where
+  Star :: Qual 2w 3w
+  Up :: Qual (2+n)w (3+n)w -> Qual (3+n)w (4+n)w
+  Type :: Qual 1w 2w
+  Term :: Qual 0w 1w
+  Ext :: Context Anchored [p]ws -> Qual r s -> Qual ([p]ws, r)w s
+  Lam :: Qual p {up p} -> Qual (p`1)w {up (p`1)w}
+ deriving syntax(ty) Nat(Star, Up) Tick(Lam) Pair(Ext)
+
+-- tau': calculate a qualifier's classifier
+up :: Walk n m p ~> Walk (1+n)t m' p'
+{up (c, h)w} = {up h}
+{up ((c, h)w`1)w} = h
+{up (p`2)w} = (p`1)w
+{up (1+n)w} = (2+n)w
+{up 0w} = 1w
+
+tau' :: Qual a ta -> Qual ta {up ta}
+tau' (c, h)ty = tau' h
+tau' ((c, h)ty`1)ty = h
+tau' (p`2)ty = (p`1)ty
+tau' (1+n)ty = (2+n)ty
+tau' 0ty = 1ty
+tau' Type = Star
+tau' Term = Type
+
+-- extract payload from lambda
+charge :: Walk n m {k=l;p}p ~> Walks k
+{charge (c, t)w} = c
+{charge (p`1)w} = {charge p}
+
+uncharge :: Qual p q -> Context Anchored {charge p}
+uncharge (c, _)ty = c
+uncharge (p`1)ty = uncharge p
+
+-- calculate heart
+heart :: Walks n ~> Walk n 0t None
+{heart [h]ws} = h
+{heart [a, b; r]ws} = {heart [b; r]ws}
+
+-- contexts accumulate qualifiers (possibly around a heart)
+
+kind Fixture = Floating | Anchored
+
+data Context :: Fixture ~> Walks n ~> * where
+  Empty :: Context Floating []ws
+  Heart :: Qual n (1+n)w -> Context Anchored [n]ws
+  Qualify :: Qual (v`1)w {up (v`1)w} -> Context f ws -> Context f [(v`1)w; ws]ws
+  Appl :: Equal {charge f} [b]ws
+          => Qual a b
+          -> Context Anchored [f; r]ws
+          -> Context Anchored r
+ deriving syntax(c) List(Empty, Qualify) Pair(Appl)
+
+-- tau: classify context
+upc :: Walks n ~> Walks (1+n)t
+{upc []ws} = []ws
+{upc [0w; ws]ws} = [1w; {upc ws}]ws
+{upc [(1+n)w; ws]ws} = [(2+n)w; {upc ws}]ws
+{upc [((c, h)w`1)w; ws]ws} = {upc ws}
+{upc [(w`2)w; ws]ws} = [(w`1)w; {upc ws}]ws
+
+-- for a qualifier on the spine, up is 1+
+spineLemma :: Qual n (1+n)w -> Equal (1+n)w {up n}
+spineLemma Term = Eq
+spineLemma Type = Eq
+spineLemma 0ty = Eq
+spineLemma (1+n)ty = Eq
+
+-- we want to show: Equal {upc [_c]ws} [(1+_c)w]ws
+spineContext :: Context Anchored [c]ws -> Equal {upc [c]ws} [(1+c)w]ws
+spineContext (Heart Term) = Eq
+spineContext (Heart Type) = Eq
+spineContext (Heart 0ty) = Eq
+spineContext (Heart (1+n)ty) = Eq
+
+tau :: Context f ws -> Context f {upc ws}
+tau Empty = Empty
+tau (c@(Heart q)) = Heart (tau' q)
+  where theorem becauseOf = spineContext c
+tau [((_,t)ty`1)ty; c]c = tau c
+tau [(t`2)ty; c]c = Qualify (t`1)ty (tau c)
+tau (_, [_; c]c)c = tau c
+tau (q, app)c = tau (q, cancel app)c
+  where cancel :: Context Anchored [w; ws]ws -> Context Anchored [w; ws]ws
+        cancel (_, [_; c]c)c = c
+        cancel (q, app)c = cancel (q, cancel app)c
+
+-- runtime values are represented by expressions
+
+{-
+data Expr :: Walks n ~> * where
+  Lit :: Qual a b -> Expr [a]ws  -- e.g. 42::Int
+  Lambda :: Context Anchored [a, b; r]ws -> Expr [a, b; r]ws -- e.g. \a:Int.42
+  Appl' :: Equal {charge f} {up a} => Expr [a]ws -> Expr [f; r]ws -> Expr r
+-}
+
+
+-- representation of contexts with names
+data VerboseContext :: * where
+  E :: VerboseContext
+  Q :: Label n -> Qual a b -> VerboseContext -> VerboseContext
+ deriving syntax(ve) Record(E, Q)
+
+
+-- Tests
+
+-- we allow Term categorizer (pi x:42.25) in contexts
+kt0 = [((Heart Term, Type)ty`1)ty; Heart Term]c
+tkt0 = tau kt0
+
+##test "exclude Term categorizer's (pi x:42.25) application"
+ kt0' = (undefined, kt0)c
+
+-- regular lambda2 : \x:Int.42
+lambda2Int = ((Heart Type, Star)ty`2)ty
+kt1 = (Term, [lambda2Int; Heart Term]c)c
+tkt1 = tau kt1
+
+-- regular PI1 : pi (x:Int).Int
+pi1Int = ((Heart Type, Star)ty`1)ty
+kt2 = (Term, [pi1Int; Heart Type]c)c
+tkt2 = tau kt2
+
+-- type-level lambda2 : /\x:*:Int
+lambda2star = ((Heart 0ty, 1ty)ty`2)ty
+kt3 = (Type, [lambda2star; Heart Type]c)c
+tkt3 = tau kt3
+
+-- mixed form: \f:Int->Int.f 42
+lambda2Int_Int = ((Heart pi1Int, 0ty)ty`2)ty
+kt4 = (lambda2Int, [lambda2Int_Int; Heart Term]c)c
+tkt4 = tau kt4
+
+-- 2 args: \f i.f i
+kt5 = (Term, lambda2Int, [Heart lambda2Int_Int, Heart lambda2Int; Heart Term]c)c
+tkt5 = tau kt5
+
