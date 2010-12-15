@@ -37,7 +37,7 @@
 --  * rename: Qual -> Quant, (...)ty -> (...)q
 --  * contexts as categorizers (partly done)
 --        * Payload adjustment ({}p -> []p)
---        * model oversaturable Part, tau, lemmata -- needed?
+--        * tau Appl' still missing
 --  * named (and/or numbered, i.e. de Bruijn) variables
 --  * variable capture, tracking free vars
 --  * outer context (LeftList?)
@@ -125,7 +125,6 @@ kind Fixture = Floating | Anchored
 data Context :: Fixture ~> Walks n ~> * where
   Empty :: Context Floating []ws
   Heart :: Qual n (1+n)w -> Context Anchored [n]ws
-  --Part :: Qual (v`1)w {up (v`1)w} -> Context Anchored [(v`1)w]ws
   Qualify :: Qual (v`1)w {up (v`1)w} -> Context f ws -> Context f [(v`1)w; ws]ws
   Appl :: Equal {charge f} [b]ws
           => Qual a b
