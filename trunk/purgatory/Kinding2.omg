@@ -34,12 +34,11 @@
 -- the major obstacles are solved.
 
 -- Global TODO list:
---  * contexts as categorizers (partly done)
---        * Payload adjustment ({}p -> []p)
 --  * named (and/or numbered, i.e. de Bruijn) variables
 --  * variable capture, tracking free vars
 --  * outer context (LeftList?)
 --  * unification of contexts, unifiers
+--  * singleton types
 
 import "LangPrelude.prg"
 
@@ -47,16 +46,16 @@ import "LangPrelude.prg"
 
 data Payload :: *1 where
   None :: Payload
-  Charge :: Nat ~> Nat ~> Payload ~> Payload
- deriving Record(p)
+  Charge :: Nat ~> Payload ~> Payload
+ deriving List(p)
 
 --                  v-- dimensionality
 --           v-- stratum
 data Walk :: Nat ~> Nat ~> Payload ~> *1 where
   Origin :: Walk 0t 0t None
   North :: Walk n 0t None ~> Walk (1+n)t 0t None
-  Pair :: Walks k ~> Walk n m None ~> Walk n m {k=k;p}p
-  SE :: Walk (1+n)t m {k=l;p}p ~> Walk n (1+m)t {k=l;p}p
+  Pair :: Walks k ~> Walk n m None ~> Walk n m [k;p]p
+  SE :: Walk (1+n)t m [k;p]p ~> Walk n (1+m)t [k;p]p
  deriving syntax(w) Nat(Origin, North) Tick(SE) Pair(Pair)
 
 -- list of walks ending in the same stratum
@@ -103,7 +102,7 @@ tau' Type = Star
 tau' Term = Type
 
 -- extract payload from lambda
-charge :: Walk n m {k=l;p}p ~> Walks k
+charge :: Walk n m [k;p]p ~> Walks k
 {charge (c, t)w} = c
 {charge (p`1)w} = {charge p}
 
