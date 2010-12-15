@@ -128,8 +128,8 @@ data Context :: Fixture ~> Walks n ~> * where
   Qualify :: Qual (v`1)w {up (v`1)w} -> Context f ws -> Context f [(v`1)w; ws]ws
   Appl :: Equal {charge f} [b]ws
           => Qual a b
-          -> Context Anchored [f; r]ws
-          -> Context Anchored r
+          -> Context Anchored [f, h; r]ws
+          -> Context Anchored [h; r]ws
  deriving syntax(c) List(Empty, Qualify) Pair(Appl)
 
 -- tau: classify context
@@ -217,13 +217,13 @@ kt5 = (Term, lambda2Int, [lambda2Int_Int, lambda2Int; Heart Term]c)c
 tkt5 = tau kt5
 
 -- type constructor: M :: * ~> *
-em = ((Heart Star, 1ty)ty`2)ty
-kt6 = (Type, Part em)c
+emq = ((Heart Star, 1ty)ty`2)ty    -- * ~>
+kt6 = (Type, [emq; Heart Type]c)c  -- e.g. M Int
 --tkt6 = tau kt6
 
 
 -- \f : Int . return 42   (f :: Int -> M Int)
-ef = [((Heart Type, 0ty)ty`2)ty; Heart kt6]c
-kt7 = (Type, ef)c
+ef = [((Heart Type, 0ty)ty`2)ty; Heart Term {-By kt6-}]c  -- Int -> M Int
+kt7 = (Term, ef)c  -- f 42
 --tkt7 = tau kt7
 
