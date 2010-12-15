@@ -172,11 +172,21 @@ data Expr :: Walks n ~> * where
   Appl' :: Equal {charge f} {up a} => Expr [a]ws -> Expr [f; r]ws -> Expr r
 -}
 
+-- values, they are used for building verbose contexts
+
+data Value :: * where
+  Ref :: Label n -> Value
+  Sole :: Value
+  App :: Value -> Value -> Value
+ deriving syntax(va) LeftList(Sole, App)
+
+data Test :: * ~> * where
+  Def :: Value -> Test Value
 
 -- representation of contexts with names
-data VerboseContext :: * where
-  E :: VerboseContext
-  Q :: Label n -> Quant a b -> VerboseContext -> VerboseContext
+data VerboseContext :: Row Tag (h ~> *) ~> * where
+  E :: VerboseContext {}r
+  Q :: Label n -> k a -> VerboseContext r -> VerboseContext {n=k;r}r
  deriving syntax(ve) Record(E, Q)
 
 
