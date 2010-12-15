@@ -131,6 +131,10 @@ data Context :: Fixture ~> Walks n ~> * where
           => Qual a b
           -> Context Anchored [f, h; r]ws
           -> Context Anchored [h; r]ws
+  Appl' :: Equal {charge f} {upc ws}
+           => Context Anchored ws
+           -> Context Anchored [f, h; r]ws
+           -> Context Anchored [h; r]ws
  deriving syntax(c) List(Empty, Qualify) Pair(Appl)
 
 -- tau: classify context
@@ -231,4 +235,4 @@ tkt7 = tau kt7
 -- \h (g :: Int->Int->Int) -> Int
 gi = [lambda2Int, lambda2Int; Heart Term]c
 ha = ((tau gi, Star)ty`2)ty
---hagi = (gi, [ha; Heart Term]c)c
+hagi = Appl' gi [ha; Heart Term]c
