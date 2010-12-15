@@ -36,7 +36,6 @@
 -- Global TODO list:
 --  * contexts as categorizers (partly done)
 --        * Payload adjustment ({}p -> []p)
---        * tau Appl' still missing
 --  * named (and/or numbered, i.e. de Bruijn) variables
 --  * variable capture, tracking free vars
 --  * outer context (LeftList?)
@@ -125,15 +124,11 @@ data Context :: Fixture ~> Walks n ~> * where
   Empty :: Context Floating []ws
   Heart :: Quant n (1+n)w -> Context Anchored [n]ws
   Quantify :: Quant (v`1)w {up (v`1)w} -> Context f ws -> Context f [(v`1)w; ws]ws
-  Appl :: Equal {charge f} [b]ws
-          => Quant a b
+  Appl :: Equal {charge f} {upc ws}
+          => Context Anchored ws
           -> Context Anchored [f, h; r]ws
           -> Context Anchored [h; r]ws
-  Appl' :: Equal {charge f} {upc ws}
-           => Context Anchored ws
-           -> Context Anchored [f, h; r]ws
-           -> Context Anchored [h; r]ws
- deriving syntax(c) List(Empty, Quantify) Pair(Appl')
+ deriving syntax(c) List(Empty, Quantify) Pair(Appl)
 
 -- tau: classify context
 upc :: Walks n ~> Walks (1+n)t
@@ -212,11 +207,11 @@ tkt3 = tau kt3
 
 -- mixed form: \f:Int->Int.f 42
 lambda2Int_Int = (([pi1Int; Heart Type]c, 0q)q`2)q
-kt4 = Appl' [lambda2Int; Heart Term]c [lambda2Int_Int; Heart Term]c
+kt4 = ([lambda2Int; Heart Term]c, [lambda2Int_Int; Heart Term]c)c
 --tkt4 = tau kt4
 
 -- 2 args: \f i.f i
-kt5 = (Heart Term, (Appl' [lambda2Int; Heart Term]c [lambda2Int_Int, lambda2Int; Heart Term]c))c
+kt5 = (Heart Term, ([lambda2Int; Heart Term]c, [lambda2Int_Int, lambda2Int; Heart Term]c)c)c
 --tkt5 = tau kt5
 
 -- type constructor: M :: * ~> *
@@ -233,4 +228,4 @@ tkt7 = tau kt7
 -- \h (g :: Int->Int->Int) -> Int
 gi = [lambda2Int, lambda2Int; Heart Term]c
 ha = ((tau gi, Star)q`2)q
-hagi = Appl' gi [ha; Heart Term]c
+hagi = (gi, [ha; Heart Term]c)c
