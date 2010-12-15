@@ -82,7 +82,7 @@ data Qual :: Walk n m p ~> Walk (1+n)t m' p' ~> *  where
   Up :: Qual (2+n)w (3+n)w -> Qual (3+n)w (4+n)w
   Type :: Qual 1w 2w
   Term :: Qual 0w 1w
-  Ext :: Context Anchored [p]ws -> Qual r s -> Qual ([p]ws, r)w s
+  Ext :: Context Anchored [w; ws]ws -> Qual r s -> Qual ([w; ws]ws, r)w s
   Lam :: Qual p {up p} -> Qual (p`1)w {up (p`1)w}
  deriving syntax(ty) Nat(Star, Up) Tick(Lam) Pair(Ext)
 
@@ -227,3 +227,7 @@ ef = [((Heart Type, 0ty)ty`2)ty; Heart Term {-By kt6-}]c  -- Int -> M Int
 kt7 = (Term, ef)c  -- f 42
 tkt7 = tau kt7
 
+-- \h (g :: Int->Int->Int) -> Int
+gi = [lambda2Int, lambda2Int; Heart Term]c
+ha = ((tau gi, Star)ty`2)ty
+--hagi = (gi, [ha; Heart Term]c)c
