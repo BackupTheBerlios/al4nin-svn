@@ -133,7 +133,7 @@ data Context :: Fixture ~> Walks n ~> * where
            => Context Anchored ws
            -> Context Anchored [f, h; r]ws
            -> Context Anchored [h; r]ws
- deriving syntax(c) List(Empty, Quantify) Pair(Appl)
+ deriving syntax(c) List(Empty, Quantify) Pair(Appl')
 
 -- tau: classify context
 upc :: Walks n ~> Walks (1+n)t
@@ -197,17 +197,17 @@ tkt0 = tau kt0
 
 -- regular lambda2 : \x:Int.42
 lambda2Int = ((Heart Type, Star)q`2)q
-kt1 = (Term, [lambda2Int; Heart Term]c)c
+kt1 = (Heart Term, [lambda2Int; Heart Term]c)c
 tkt1 = tau kt1
 
 -- regular PI1 : pi (x:Int).Int
 pi1Int = ((Heart Type, Star)q`1)q
-kt2 = (Term, [pi1Int; Heart Type]c)c
+kt2 = (Heart Term, [pi1Int; Heart Type]c)c
 tkt2 = tau kt2
 
 -- type-level lambda2 : /\x:*:Int
 lambda2star = ((Heart 0q, 1q)q`2)q
-kt3 = (Type, [lambda2star; Heart Type]c)c
+kt3 = (Heart Type, [lambda2star; Heart Type]c)c
 tkt3 = tau kt3
 
 -- mixed form: \f:Int->Int.f 42
@@ -216,18 +216,18 @@ kt4 = Appl' [lambda2Int; Heart Term]c [lambda2Int_Int; Heart Term]c
 --tkt4 = tau kt4
 
 -- 2 args: \f i.f i
-kt5 = (Term, (Appl' [lambda2Int; Heart Term]c [lambda2Int_Int, lambda2Int; Heart Term]c))c
+kt5 = (Heart Term, (Appl' [lambda2Int; Heart Term]c [lambda2Int_Int, lambda2Int; Heart Term]c))c
 --tkt5 = tau kt5
 
 -- type constructor: M :: * ~> *
 emq = ((Heart Star, 1q)q`2)q    -- * ~>
-kt6 = (Type, [emq; Heart Type]c)c  -- e.g. M Int
+kt6 = (Heart Type, [emq; Heart Type]c)c  -- e.g. M Int
 tkt6 = tau kt6
 
 
 -- \f : Int . return 42   (f :: Int -> M Int)
 ef = [((Heart Type, 0q)q`2)q; Heart Term {-By kt6-}]c  -- Int -> M Int
-kt7 = (Term, ef)c  -- f 42
+kt7 = (Heart Term, ef)c  -- f 42
 tkt7 = tau kt7
 
 -- \h (g :: Int->Int->Int) -> Int
