@@ -38,7 +38,11 @@
 --  * variable capture, tracking free vars
 --  * outer context (LeftList?)
 --  * unification of contexts, unifiers
---  * singleton types
+--  * sigma types (dependent sums)
+--  * sized types (speculative)
+--  * singleton types (+ subtyping)
+--  * definitions as Quantifiers (lambda or sigma?)
+--  * polynomial datatypes (+ subtyping)
 
 import "LangPrelude.prg"
 
@@ -71,10 +75,6 @@ data Walks :: Nat ~> *1 where
 --   * etc.
 --
 -- they are parametrized by walks
--- TODO:
---   * Sigma types (dependent sums)
---   * Sized types (speculative)
-
 data Quant :: Walk n m p ~> Walk (1+n)t m' p' ~> *  where
   Star :: Quant 2w 3w
   Up :: Quant (2+n)w (3+n)w -> Quant (3+n)w (4+n)w
