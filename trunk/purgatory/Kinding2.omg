@@ -34,9 +34,10 @@
 -- the major obstacles are solved.
 
 -- Global TODO list:
+--  * rename: Qual -> Quant, (...)ty -> (...)q
 --  * contexts as categorizers (partly done)
 --        * Payload adjustment ({}p -> []p)
---        * model oversaturable Part, tau, lemmata
+--        * model oversaturable Part, tau, lemmata -- needed?
 --  * named (and/or numbered, i.e. de Bruijn) variables
 --  * variable capture, tracking free vars
 --  * outer context (LeftList?)
