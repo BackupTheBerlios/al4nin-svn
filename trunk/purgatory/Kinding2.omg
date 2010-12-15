@@ -125,7 +125,7 @@ kind Fixture = Floating | Anchored
 data Context :: Fixture ~> Walks n ~> * where
   Empty :: Context Floating []ws
   Heart :: Qual n (1+n)w -> Context Anchored [n]ws
-  Part :: Qual (v`1)w {up (v`1)w} -> Context Anchored [(v`1)w]ws
+  --Part :: Qual (v`1)w {up (v`1)w} -> Context Anchored [(v`1)w]ws
   Qualify :: Qual (v`1)w {up (v`1)w} -> Context f ws -> Context f [(v`1)w; ws]ws
   Appl :: Equal {charge f} [b]ws
           => Qual a b
@@ -213,13 +213,13 @@ kt3 = (Type, [lambda2star; Heart Type]c)c
 tkt3 = tau kt3
 
 -- mixed form: \f:Int->Int.f 42
-lambda2Int_Int = ((Part pi1Int, 0ty)ty`2)ty
-kt4 = (lambda2Int, [lambda2Int_Int; Heart Term]c)c
-tkt4 = tau kt4
+lambda2Int_Int = (([pi1Int; Heart Type]c, 0ty)ty`2)ty
+kt4 = Appl' [lambda2Int; Heart Term]c [lambda2Int_Int; Heart Term]c
+--tkt4 = tau kt4
 
 -- 2 args: \f i.f i
-kt5 = (Term, lambda2Int, [lambda2Int_Int, lambda2Int; Heart Term]c)c
-tkt5 = tau kt5
+kt5 = (Term, (Appl' [lambda2Int; Heart Term]c [lambda2Int_Int, lambda2Int; Heart Term]c))c
+--tkt5 = tau kt5
 
 -- type constructor: M :: * ~> *
 emq = ((Heart Star, 1ty)ty`2)ty    -- * ~>
