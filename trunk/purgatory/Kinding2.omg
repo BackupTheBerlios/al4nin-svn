@@ -34,7 +34,6 @@
 -- the major obstacles are solved.
 
 -- Global TODO list:
---  * rename: Qual -> Quant, (...)ty -> (...)q
 --  * contexts as categorizers (partly done)
 --        * Payload adjustment ({}p -> []p)
 --        * tau Appl' still missing
@@ -67,7 +66,7 @@ data Walks :: Nat ~> *1 where
   Wrap :: Walk n m p ~> Walks n ~> Walks n
  deriving syntax(ws) List(Heart, Wrap)
 
--- Qualifiers are
+-- Quantifiers are
 --   * 0-dimensional: 42, Int, *, ...
 --   * 1-dimensional: PI a:Int.Int
 --   * 2-dimensional: \, dependent product: {a:A, b:B(a)}
@@ -78,16 +77,16 @@ data Walks :: Nat ~> *1 where
 --   * Sigma types (dependent sums)
 --   * Sized types (speculative)
 
-data Qual :: Walk n m p ~> Walk (1+n)t m' p' ~> *  where
-  Star :: Qual 2w 3w
-  Up :: Qual (2+n)w (3+n)w -> Qual (3+n)w (4+n)w
-  Type :: Qual 1w 2w
-  Term :: Qual 0w 1w
-  Ext :: Context Anchored [w; ws]ws -> Qual r s -> Qual ([w; ws]ws, r)w s
-  Lam :: Qual p {up p} -> Qual (p`1)w {up (p`1)w}
- deriving syntax(ty) Nat(Star, Up) Tick(Lam) Pair(Ext)
+data Quant :: Walk n m p ~> Walk (1+n)t m' p' ~> *  where
+  Star :: Quant 2w 3w
+  Up :: Quant (2+n)w (3+n)w -> Quant (3+n)w (4+n)w
+  Type :: Quant 1w 2w
+  Term :: Quant 0w 1w
+  Ext :: Context Anchored [w; ws]ws -> Quant r s -> Quant ([w; ws]ws, r)w s
+  Lam :: Quant p {up p} -> Quant (p`1)w {up (p`1)w}
+ deriving syntax(q) Nat(Star, Up) Tick(Lam) Pair(Ext)
 
--- tau': calculate a qualifier's classifier
+-- tau': calculate a quantifier's classifier
 up :: Walk n m p ~> Walk (1+n)t m' p'
 {up (c, h)w} = {up h}
 {up ((c, h)w`1)w} = h
@@ -95,12 +94,12 @@ up :: Walk n m p ~> Walk (1+n)t m' p'
 {up (1+n)w} = (2+n)w
 {up 0w} = 1w
 
-tau' :: Qual a ta -> Qual ta {up ta}
-tau' (c, h)ty = tau' h
-tau' ((c, h)ty`1)ty = h
-tau' (p`2)ty = (p`1)ty
-tau' (1+n)ty = (2+n)ty
-tau' 0ty = 1ty
+tau' :: Quant a ta -> Quant ta {up ta}
+tau' (c, h)q = tau' h
+tau' ((c, h)q`1)q = h
+tau' (p`2)q = (p`1)q
+tau' (1+n)q = (2+n)q
+tau' 0q = 1q
 tau' Type = Star
 tau' Term = Type
 
@@ -109,32 +108,32 @@ charge :: Walk n m {k=l;p}p ~> Walks k
 {charge (c, t)w} = c
 {charge (p`1)w} = {charge p}
 
-uncharge :: Qual p q -> Context Anchored {charge p}
-uncharge (c, _)ty = c
-uncharge (p`1)ty = uncharge p
+uncharge :: Quant p q -> Context Anchored {charge p}
+uncharge (c, _)q = c
+uncharge (p`1)q = uncharge p
 
 -- calculate heart
 heart :: Walks n ~> Walk n 0t None
 {heart [h]ws} = h
 {heart [a, b; r]ws} = {heart [b; r]ws}
 
--- contexts accumulate qualifiers (possibly around a heart)
+-- contexts accumulate quantifiers (possibly around a heart)
 
 kind Fixture = Floating | Anchored
 
 data Context :: Fixture ~> Walks n ~> * where
   Empty :: Context Floating []ws
-  Heart :: Qual n (1+n)w -> Context Anchored [n]ws
-  Qualify :: Qual (v`1)w {up (v`1)w} -> Context f ws -> Context f [(v`1)w; ws]ws
+  Heart :: Quant n (1+n)w -> Context Anchored [n]ws
+  Quantify :: Quant (v`1)w {up (v`1)w} -> Context f ws -> Context f [(v`1)w; ws]ws
   Appl :: Equal {charge f} [b]ws
-          => Qual a b
+          => Quant a b
           -> Context Anchored [f, h; r]ws
           -> Context Anchored [h; r]ws
   Appl' :: Equal {charge f} {upc ws}
            => Context Anchored ws
            -> Context Anchored [f, h; r]ws
            -> Context Anchored [h; r]ws
- deriving syntax(c) List(Empty, Qualify) Pair(Appl)
+ deriving syntax(c) List(Empty, Quantify) Pair(Appl)
 
 -- tau: classify context
 upc :: Walks n ~> Walks (1+n)t
@@ -144,26 +143,26 @@ upc :: Walks n ~> Walks (1+n)t
 {upc [((c, h)w`1)w; ws]ws} = {upc ws}
 {upc [(w`2)w; ws]ws} = [(w`1)w; {upc ws}]ws
 
--- for a qualifier on the spine, up is 1+
-spineLemma :: Qual n (1+n)w -> Equal (1+n)w {up n}
+-- for a quantifier on the spine, up is 1+
+spineLemma :: Quant n (1+n)w -> Equal (1+n)w {up n}
 spineLemma Term = Eq
 spineLemma Type = Eq
-spineLemma 0ty = Eq
-spineLemma (1+n)ty = Eq
+spineLemma 0q = Eq
+spineLemma (1+n)q = Eq
 
 -- we want to show: Equal {upc [_c]ws} [(1+_c)w]ws
 spineContext :: Context Anchored [c]ws -> Equal {upc [c]ws} [(1+c)w]ws
 spineContext (Heart Term) = Eq
 spineContext (Heart Type) = Eq
-spineContext (Heart 0ty) = Eq
-spineContext (Heart (1+n)ty) = Eq
+spineContext (Heart 0q) = Eq
+spineContext (Heart (1+n)q) = Eq
 
 tau :: Context f ws -> Context f {upc ws}
 tau Empty = Empty
 tau (c@(Heart q)) = Heart (tau' q)
   where theorem becauseOf = spineContext c
-tau [((_,t)ty`1)ty; c]c = tau c
-tau [(t`2)ty; c]c = Qualify (t`1)ty (tau c)
+tau [((_,t)q`1)q; c]c = tau c
+tau [(t`2)q; c]c = Quantify (t`1)q (tau c)
 tau (_, [_; c]c)c = tau c
 tau (q, app)c = tau (q, cancel app)c
   where cancel :: Context Anchored [w; ws]ws -> Context Anchored [w; ws]ws
@@ -174,7 +173,7 @@ tau (q, app)c = tau (q, cancel app)c
 
 {-
 data Expr :: Walks n ~> * where
-  Lit :: Qual a b -> Expr [a]ws  -- e.g. 42::Int
+  Lit :: Quant a b -> Expr [a]ws  -- e.g. 42::Int
   Lambda :: Context Anchored [a, b; r]ws -> Expr [a, b; r]ws -- e.g. \a:Int.42
   Appl' :: Equal {charge f} {up a} => Expr [a]ws -> Expr [f; r]ws -> Expr r
 -}
@@ -183,36 +182,36 @@ data Expr :: Walks n ~> * where
 -- representation of contexts with names
 data VerboseContext :: * where
   E :: VerboseContext
-  Q :: Label n -> Qual a b -> VerboseContext -> VerboseContext
+  Q :: Label n -> Quant a b -> VerboseContext -> VerboseContext
  deriving syntax(ve) Record(E, Q)
 
 
 -- Tests
 
 -- we allow Term categorizer (pi x:42.25) in contexts
-kt0 = [((Heart Term, Type)ty`1)ty; Heart Term]c
+kt0 = [((Heart Term, Type)q`1)q; Heart Term]c
 tkt0 = tau kt0
 
 ##test "exclude Term categorizer's (pi x:42.25) application"
  kt0' = (undefined, kt0)c
 
 -- regular lambda2 : \x:Int.42
-lambda2Int = ((Heart Type, Star)ty`2)ty
+lambda2Int = ((Heart Type, Star)q`2)q
 kt1 = (Term, [lambda2Int; Heart Term]c)c
 tkt1 = tau kt1
 
 -- regular PI1 : pi (x:Int).Int
-pi1Int = ((Heart Type, Star)ty`1)ty
+pi1Int = ((Heart Type, Star)q`1)q
 kt2 = (Term, [pi1Int; Heart Type]c)c
 tkt2 = tau kt2
 
 -- type-level lambda2 : /\x:*:Int
-lambda2star = ((Heart 0ty, 1ty)ty`2)ty
+lambda2star = ((Heart 0q, 1q)q`2)q
 kt3 = (Type, [lambda2star; Heart Type]c)c
 tkt3 = tau kt3
 
 -- mixed form: \f:Int->Int.f 42
-lambda2Int_Int = (([pi1Int; Heart Type]c, 0ty)ty`2)ty
+lambda2Int_Int = (([pi1Int; Heart Type]c, 0q)q`2)q
 kt4 = Appl' [lambda2Int; Heart Term]c [lambda2Int_Int; Heart Term]c
 --tkt4 = tau kt4
 
@@ -221,17 +220,17 @@ kt5 = (Term, (Appl' [lambda2Int; Heart Term]c [lambda2Int_Int, lambda2Int; Heart
 --tkt5 = tau kt5
 
 -- type constructor: M :: * ~> *
-emq = ((Heart Star, 1ty)ty`2)ty    -- * ~>
+emq = ((Heart Star, 1q)q`2)q    -- * ~>
 kt6 = (Type, [emq; Heart Type]c)c  -- e.g. M Int
 tkt6 = tau kt6
 
 
 -- \f : Int . return 42   (f :: Int -> M Int)
-ef = [((Heart Type, 0ty)ty`2)ty; Heart Term {-By kt6-}]c  -- Int -> M Int
+ef = [((Heart Type, 0q)q`2)q; Heart Term {-By kt6-}]c  -- Int -> M Int
 kt7 = (Term, ef)c  -- f 42
 tkt7 = tau kt7
 
 -- \h (g :: Int->Int->Int) -> Int
 gi = [lambda2Int, lambda2Int; Heart Term]c
-ha = ((tau gi, Star)ty`2)ty
+ha = ((tau gi, Star)q`2)q
 hagi = Appl' gi [ha; Heart Term]c
