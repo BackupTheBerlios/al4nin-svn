@@ -180,10 +180,13 @@ data Value :: * where
   App :: Value -> Value -> Value
  deriving syntax(va) LeftList(Sole, App)
 
-data Test :: * ~> * where
-  Def :: Value -> Test Value
-  Typed :: Value -> Value -> Test (Value, Value)
- deriving syntax(te) Pair(Typed)
+data Raw :: * ~> * where
+  Def :: Value -> Raw Value
+  Annotated :: Value -> Value -> Raw (Value, Value)
+ deriving syntax(te) Pair(Annotated)
+
+data LevelsInferred :: Nat ~> * where
+  At :: Nat' l -> LevelsInferred l
 
 -- representation of contexts with names
 data VerboseContext :: Row Tag (h ~> *) ~> * where
@@ -191,6 +194,13 @@ data VerboseContext :: Row Tag (h ~> *) ~> * where
   Q :: Label n -> k a -> VerboseContext r -> VerboseContext {n=k;r}r
  deriving syntax(ve) Record(E, Q)
 
+-- Examples of VerboseContext
+
+
+-- h :: Foo Int
+h_is_Int = { `Int=(Ref `Type, Ref `Star)te
+           , `h=([]va, [Ref `Foo, Ref `Int]va)te
+           }ve
 
 -- Tests
 
