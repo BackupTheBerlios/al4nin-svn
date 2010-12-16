@@ -17,8 +17,16 @@ data Raw :: * ~> * ~> * where
 data WellFormed :: * ~> * ~> * where
   DefFormed :: Raw Value Value -> WellFormed (Raw Value Value) (Raw Value Value)
 
---wf :: Row Tag Raw ~> Row Tag WellFormed
---{wf {}r} = {}r
+data Sofar :: *1 ~> *1 where
+  No :: Sofar t
+  Join :: Sofar t ~> t ~> Sofar t
+ deriving LeftList(sf)
+
+
+data NamesSofar :: Sofar Tag ~> * where
+  NoNames :: NamesSofar []sf
+  NamesSofar :: NamesSofar sf -> Label t -> NamesSofar [sf; t]sf
+ deriving LeftList(nsf)
 
 checkWellformedness :: VerboseContext Raw Value Value -> VerboseContext WellFormed (Raw Value Value) (Raw Value Value)
 checkWellformedness {}ve = {}ve
