@@ -39,11 +39,11 @@ checkWellformedness bf {l=(_, v)ra; r}ve = Ex {l=DefFormed (Def v) new; follows}
                                                    f (Ex follows) = checkWellformedness new r
 -}
 
-checkWellformedness :: NamesSofar bf -> VerboseContext Raw Value Value -> exists sf . (VerboseContext WellFormed (NamesSofar bf) (NamesSofar sf), NamesSofar sf)
-checkWellformedness bf {}ve = Ex ({}ve, bf)
-checkWellformedness bf {l=(_, v)ra; r}ve = Ex ({l=DefFormed (Def v) new; follows}ve, new)
+checkWellformedness :: NamesSofar bf -> VerboseContext Raw Value Value -> (VerboseContext WellFormed (NamesSofar bf) (NamesSofar sf), NamesSofar sf)
+checkWellformedness bf {}ve = ({}ve, bf)
+checkWellformedness bf {l=(_, v)ra; r}ve = ({l=DefFormed (Def v) new; follows}ve, new)
                                              where new = [bf; l]nsf
-                                                   more :: (NamesSofar bf, exists sf . (VerboseContext WellFormed (NamesSofar bf) (NamesSofar sf), NamesSofar sf))
+                                                   more :: (NamesSofar bf, (VerboseContext WellFormed (NamesSofar bf) (NamesSofar sf), NamesSofar sf))
                                                    more = (new, checkWellformedness new r)
 
 
