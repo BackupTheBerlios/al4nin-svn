@@ -7,22 +7,31 @@ data Value :: * where
   Typed :: Value -> Value -> Value
  deriving syntax(va) LeftList(Sole, App) Pair(Typed)
 
-data Raw :: * ~> * where
-  Def :: Value -> Raw Value
-  Annotated :: Value -> Value -> Raw (Value, Value)
+data Raw :: * ~> * ~> * where
+  Def :: Value -> Raw Value Value
+  Annotated :: Value -> Value -> Raw Value Value
  deriving syntax(ra) Pair(Annotated)
 
 -- well-formedness: check that names are always defined at the point of reference
-data WellFormed :: * ~> * where
-  DefFormed :: Raw Value -> WellFormed (Raw Value)
+
+data WellFormed :: * ~> * ~> * where
+  DefFormed :: Raw Value Value -> WellFormed (Raw Value Value) (Raw Value Value)
+
+--wf :: Row Tag Raw ~> Row Tag WellFormed
+--{wf {}r} = {}r
+
+checkWellformedness :: VerboseContext Raw Value Value -> VerboseContext WellFormed (Raw Value Value) (Raw Value Value)
+checkWellformedness {}ve = {}ve
+checkWellformedness {l=(d@(Def v)); r}ve = {l=DefFormed d; checkWellformedness r}ve
+checkWellformedness {l=(_, v)ra; r}ve = {l=DefFormed (Def v); checkWellformedness r}ve
 
 data WellLevelled :: Nat ~> * where
   At :: Nat' l -> WellLevelled l
 
 -- representation of contexts with names
-data VerboseContext :: Row Tag (h ~> *) ~> * where
-  E :: VerboseContext {}r
-  Q :: Label n -> k a -> VerboseContext r -> VerboseContext {n=k;r}r
+data VerboseContext :: (* ~> * ~> *) ~> * ~> * ~> * where
+  E :: VerboseContext k a a
+  Q :: Label n -> k a b -> VerboseContext k b c -> VerboseContext k a c
  deriving syntax(ve) Record(E, Q)
 
 -- Examples of VerboseContext
