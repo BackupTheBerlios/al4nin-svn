@@ -12,8 +12,12 @@ data Raw :: * ~> * where
   Annotated :: Value -> Value -> Raw (Value, Value)
  deriving syntax(ra) Pair(Annotated)
 
-data LevelsInferred :: Nat ~> * where
-  At :: Nat' l -> LevelsInferred l
+-- well-formedness: check that names are always defined at the point of reference
+data WellFormed :: * ~> * where
+  DefFormed :: Raw Value -> WellFormed (Raw Value)
+
+data WellLevelled :: Nat ~> * where
+  At :: Nat' l -> WellLevelled l
 
 -- representation of contexts with names
 data VerboseContext :: Row Tag (h ~> *) ~> * where
