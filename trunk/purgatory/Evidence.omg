@@ -4,8 +4,13 @@ import "LangPrelude.prg"
 
 data Tags :: *1 where
   One :: Tag ~> Tags
-  More :: Tag ~> Tag ~> Tags
+  More :: Tags ~> Tags ~> Tags
  deriving syntax(tags) Pair(More)
+
+data Labels :: Tags ~> * where
+  One :: Label t -> Labels (One t)
+  More :: Labels ts -> Labels ts' -> Labels (ts, ts')tags
+ deriving syntax(ls) Pair(More)
 
 data Value :: * where
   Ref :: Label n -> Value
@@ -38,6 +43,7 @@ data NamesSofar :: Sofar Tag ~> * where
 data Includes :: Sofar Tag ~> Tags ~> * where
   Roo :: Equal f t -> Includes [r; f]sf (One t)
   Ind :: Includes r tags -> Includes [r; f]sf tags
+  Also :: Includes r ts -> Includes r ts' -> Includes [r; f]sf (ts, ts')tags
  deriving syntax(i) Tick(Ind)
 
 -- does t appear in bf?
@@ -46,14 +52,14 @@ checkInside _ []nsf = Nothing
 checkInside l [r; l']nsf = case sameLabel l l' of
                            L Eq -> Just (Roo Eq)
                            _ -> case checkInside l r of
-                                      Just ev -> Just (Ind ev)
+                                      Just ev -> Just (ev`1)i
                                       Nothing -> Nothing
 
 -- are all free vars bound in bf?
-verifyFree :: NamesSofar bf -> Value -> exists t . Maybe (Includes bf t)
+verifyFree :: NamesSofar bf -> Value -> exists ts . Maybe (Labels ts, Includes bf ts)
 verifyFree bf (Ref l) = case checkInside l bf of
                         Nothing -> Ex Nothing
-                        Just ev -> Ex (Just ev)
+                        Just ev -> Ex (Just (One l, ev))
 verifyFree bf Sole = Ex Nothing
 verifyFree bf (App f v) = verifyFree bf v
 
