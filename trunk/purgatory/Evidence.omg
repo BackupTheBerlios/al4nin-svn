@@ -39,13 +39,13 @@ checkWellformedness bf {l=(_, v)ra; r}ve = Ex {l=DefFormed (Def v) new; follows}
                                                    f (Ex follows) = checkWellformedness new r
 -}
 
-checkWellformedness :: NamesSofar bf -> VerboseContext Raw Value Value -> exists sf . (VerboseContext WellFormed (NamesSofar bf) (NamesSofar sf), NamesSofar sf)
-checkWellformedness bf {}ve = Ex ({}ve, bf)
-checkWellformedness bf {l=(_, v)ra; r}ve = Ex ({l=DefFormed (Def v) new; follows}ve, new)
+checkWellformedness :: NamesSofar bf -> VerboseContext Raw Value Value -> exists sf . (NamesSofar bf, VerboseContext WellFormed (NamesSofar bf) (NamesSofar sf), NamesSofar sf)
+checkWellformedness bf {}ve = Ex (bf, {}ve, bf)
+checkWellformedness bf {l=(_, v)ra; r}ve = Ex (bf, {l=DefFormed (Def v) new; follows}ve, newest)
                                              where new = [bf; l]nsf
-                                                   more :: (NamesSofar bf, exists sf . (VerboseContext WellFormed (NamesSofar bf) (NamesSofar sf), NamesSofar sf))
-                                                   more = (new, checkWellformedness new r)
-
+                                                   more :: exists sg . (NamesSofar [bb;bg]sf, VerboseContext WellFormed (NamesSofar [bb;bg]sf) (NamesSofar sg), NamesSofar sg)
+                                                   more = checkWellformedness new r
+                                                   (_, follows, newest) = more
 
 
 data WellLevelled :: Nat ~> * where
