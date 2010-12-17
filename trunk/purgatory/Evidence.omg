@@ -61,9 +61,10 @@ verifyFree bf (Ref l) = case checkInside l bf of
                         Nothing -> Ex Nothing
                         Just ev -> Ex (Just (One l, ev))
 verifyFree bf Sole = Ex Nothing
-verifyFree bf (App f a) = case (verifyFree bf f, verifyFree bf a) of
-                          (Ex (Just (ls, ev)), Ex (Just (ls', ev'))) -> Ex (Just ((ls, ls')ls, (ev, ev')i))
-                          _ -> Ex Nothing
+verifyFree bf [a]va = verifyFree bf a
+verifyFree bf [f; a]va = case (verifyFree bf f, verifyFree bf a) of
+                         (Ex (Just (ls, ev)), Ex (Just (ls', ev'))) -> Ex (Just ((ls, ls')ls, (ev, ev')i))
+                         _ -> Ex Nothing
 
 checkWellformedness :: NamesSofar bf
                     -> VerboseContext Raw Value Value
