@@ -27,7 +27,11 @@ data Raw :: Tag ~> * ~> * ~> * where
 -- well-formedness: check that names are always defined at the point of reference
 
 data WellFormed :: Tag ~> Sofar Tag ~> Sofar Tag ~> * where
-  DefFormed :: Raw n Value Value -> NamesSofar [r; n]sf -> WellFormed n r [r; n]sf
+  DefFormed :: Raw n Value Value
+            -> Includes r ts
+            -> Labels ts
+            -> NamesSofar [r; n]sf
+            -> WellFormed n r [r; n]sf
 
 data Sofar :: *1 ~> *1 where
   No :: Sofar t
@@ -76,7 +80,7 @@ checkWellformedness bf {}ve = Just $ cast ({}ve, bf)
                                       cast = unsafeCast
 checkWellformedness bf {l=(_, v)ra; r}ve = case (verifyFree bf v, checkWellformedness new r) of
                                              (Ex (Just (ls, ev)), Just (follows, newest))
-                                               -> Just ({l=DefFormed (Def v) new; follows}ve, newest)
+                                               -> Just ({l=DefFormed (Def v) ev ls new; follows}ve, newest)
                                              _ -> Nothing
                                            where new = [bf; l]nsf
 
