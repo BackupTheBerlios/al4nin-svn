@@ -30,20 +30,17 @@ data NamesSofar :: Sofar Tag ~> * where
   NamesSofar :: NamesSofar sf -> Label t -> NamesSofar [sf; t]sf
  deriving LeftList(nsf)
 
-{-
-checkWellformedness :: NamesSofar bf -> VerboseContext Raw Value Value -> exists sf . VerboseContext WellFormed bf sf
-checkWellformedness bf {}ve = Ex {}ve
---checkWellformedness bf {l=(d@(Def v)); r}ve = Ex {l=DefFormed d [bf; l]nsf; checkWellformedness r}ve
-checkWellformedness bf {l=(_, v)ra; r}ve = Ex {l=DefFormed (Def v) new; follows}ve
-                                             where new = [bf; l]nsf
-                                                   f (Ex follows) = checkWellformedness new r
--}
 
-checkWellformedness :: NamesSofar bf -> VerboseContext Raw Value Value -> exists sf . (NamesSofar bf, VerboseContext WellFormed bf sf, NamesSofar sf)
-checkWellformedness bf {}ve = Ex (bf, {}ve, bf)
-checkWellformedness bf {l=(_, v)ra; r}ve = Ex (bf, {l=DefFormed (Def v) new; follows}ve, newest)
+checkWellformedness :: NamesSofar bf
+                    -> VerboseContext Raw Value Value
+                    -> (NamesSofar bf, VerboseContext WellFormed bf sf, NamesSofar sf)
+checkWellformedness bf {}ve = cast (bf, {}ve, bf)
+                                where cast :: (NamesSofar bf, VerboseContext WellFormed bf bf, NamesSofar bf)
+                                           -> (NamesSofar bf, VerboseContext WellFormed bf sf, NamesSofar sf)
+                                      cast = unsafeCast
+checkWellformedness bf {l=(_, v)ra; r}ve = (bf, {l=DefFormed (Def v) new; follows}ve, newest)
                                              where new = [bf; l]nsf
-                                                   more :: exists sg . (NamesSofar [bb;bg]sf, VerboseContext WellFormed [bb;bg]sf sg, NamesSofar sg)
+                                                   --more :: (NamesSofar [bb;bg]sf, VerboseContext WellFormed [bb;bg]sf sg, NamesSofar sg)
                                                    more = checkWellformedness new r
                                                    (_, follows, newest) = more
 
