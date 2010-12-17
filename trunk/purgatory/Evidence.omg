@@ -33,6 +33,7 @@ data NamesSofar :: Sofar Tag ~> * where
 data Includes :: Sofar Tag ~> Tag ~> * where
   Roo :: Equal f t -> Includes [r; f]sf t
   Ind :: Includes r t -> Includes [r; f]sf t
+ deriving syntax(i) Tick(Ind)
 
 -- does t appear in bf?
 checkInside :: Label t -> NamesSofar bf -> Maybe (Includes bf t)
@@ -48,6 +49,8 @@ verifyFree :: NamesSofar bf -> Value -> exists t . Maybe (Label t, Includes bf t
 verifyFree bf (Ref l) = case checkInside l bf of
                         Nothing -> Ex Nothing
                         Just ev -> Ex (Just (l, ev))
+verifyFree bf Sole = Ex Nothing
+verifyFree bf (App f v) = verifyFree bf v
 
 checkWellformedness :: NamesSofar bf
                     -> VerboseContext Raw Value Value
