@@ -60,22 +60,25 @@ verifyFree :: NamesSofar bf -> Value -> exists ts . Maybe (Labels ts, Includes b
 verifyFree bf (Ref l) = case checkInside l bf of
                         Nothing -> Ex Nothing
                         Just ev -> Ex (Just (One l, ev))
-verifyFree bf Sole = Ex Nothing
+verifyFree bf []va = Ex Nothing
 verifyFree bf [a]va = verifyFree bf a
 verifyFree bf [f; a]va = case (verifyFree bf f, verifyFree bf a) of
                          (Ex (Just (ls, ev)), Ex (Just (ls', ev'))) -> Ex (Just ((ls, ls')ls, (ev, ev')i))
                          _ -> Ex Nothing
+verifyFree bf (cat, v)va = verifyFree bf v
 
 checkWellformedness :: NamesSofar bf
                     -> VerboseContext Raw Value Value
-                    -> (VerboseContext WellFormed bf sf, NamesSofar sf)
-checkWellformedness bf {}ve = cast ({}ve, bf)
+                    -> Maybe (VerboseContext WellFormed bf sf, NamesSofar sf)
+checkWellformedness bf {}ve = Just $ cast ({}ve, bf)
                                 where cast :: (VerboseContext WellFormed bf bf, NamesSofar bf)
                                            -> (VerboseContext WellFormed bf sf, NamesSofar sf)
                                       cast = unsafeCast
-checkWellformedness bf {l=(_, v)ra; r}ve = ({l=DefFormed (Def v) new; follows}ve, newest)
-                                             where new = [bf; l]nsf
-                                                   (follows, newest) = checkWellformedness new r
+checkWellformedness bf {l=(_, v)ra; r}ve = case (verifyFree bf v, checkWellformedness new r) of
+                                             (Ex (Just (ls, ev)), Just (follows, newest))
+                                               -> Just ({l=DefFormed (Def v) new; follows}ve, newest)
+                                             _ -> Nothing
+                                           where new = [bf; l]nsf
 
 
 data WellLevelled :: Nat ~> * where
@@ -95,4 +98,4 @@ h_is_Int = { `Int=(Ref `Type, Ref `Star)ra
            , `h=([]va, [(Ref `Foo, [Ref `Karr, Ref `Star, Ref `Star]va)va, Ref `Int]va)ra
            }ve
 
-(well_h_is_Int, defs_h_is_Int@[`Int, `h]nsf) = checkWellformedness []nsf h_is_Int
+Just (well_h_is_Int, defs_h_is_Int@[`Int, `h]nsf) = checkWellformedness [`Star, `Karr]nsf h_is_Int
