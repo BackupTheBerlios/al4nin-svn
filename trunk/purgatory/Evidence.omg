@@ -44,7 +44,7 @@ data Includes :: Sofar Tag ~> Tags ~> * where
   Roo :: Equal f t -> Includes [r; f]sf (One t)
   Ind :: Includes r (One t) -> Includes [r; f]sf (One t)
   Also :: Includes r ts -> Includes r ts' -> Includes r (ts, ts')tags
- deriving syntax(i) Tick(Ind)
+ deriving syntax(i) Tick(Ind) Pair(Also)
 
 -- does t appear in bf?
 checkInside :: Label t -> NamesSofar bf -> Maybe (Includes bf (One t))
@@ -61,7 +61,9 @@ verifyFree bf (Ref l) = case checkInside l bf of
                         Nothing -> Ex Nothing
                         Just ev -> Ex (Just (One l, ev))
 verifyFree bf Sole = Ex Nothing
-verifyFree bf (App f v) = verifyFree bf v
+verifyFree bf (App f a) = case (verifyFree bf f, verifyFree bf a) of
+                          (Ex (Just (ls, ev)), Ex (Just (ls', ev'))) -> Ex (Just ((ls, ls')ls, (ev, ev')i))
+                          _ -> Ex Nothing
 
 checkWellformedness :: NamesSofar bf
                     -> VerboseContext Raw Value Value
