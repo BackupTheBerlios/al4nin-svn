@@ -16,8 +16,8 @@ data Raw :: * ~> * ~> * where
 
 -- well-formedness: check that names are always defined at the point of reference
 
-data WellFormed :: * ~> * ~> * where
-  DefFormed :: Raw Value Value -> NamesSofar [r; n]sf -> WellFormed (NamesSofar r) (NamesSofar [r; n]sf)
+data WellFormed :: Sofar Tag ~> Sofar Tag ~> * where
+  DefFormed :: Raw Value Value -> NamesSofar [r; n]sf -> WellFormed r [r; n]sf
 
 data Sofar :: *1 ~> *1 where
   No :: Sofar t
@@ -31,7 +31,7 @@ data NamesSofar :: Sofar Tag ~> * where
  deriving LeftList(nsf)
 
 {-
-checkWellformedness :: NamesSofar bf -> VerboseContext Raw Value Value -> exists sf . VerboseContext WellFormed (NamesSofar bf) (NamesSofar sf)
+checkWellformedness :: NamesSofar bf -> VerboseContext Raw Value Value -> exists sf . VerboseContext WellFormed bf sf
 checkWellformedness bf {}ve = Ex {}ve
 --checkWellformedness bf {l=(d@(Def v)); r}ve = Ex {l=DefFormed d [bf; l]nsf; checkWellformedness r}ve
 checkWellformedness bf {l=(_, v)ra; r}ve = Ex {l=DefFormed (Def v) new; follows}ve
@@ -39,11 +39,11 @@ checkWellformedness bf {l=(_, v)ra; r}ve = Ex {l=DefFormed (Def v) new; follows}
                                                    f (Ex follows) = checkWellformedness new r
 -}
 
-checkWellformedness :: NamesSofar bf -> VerboseContext Raw Value Value -> exists sf . (NamesSofar bf, VerboseContext WellFormed (NamesSofar bf) (NamesSofar sf), NamesSofar sf)
+checkWellformedness :: NamesSofar bf -> VerboseContext Raw Value Value -> exists sf . (NamesSofar bf, VerboseContext WellFormed bf sf, NamesSofar sf)
 checkWellformedness bf {}ve = Ex (bf, {}ve, bf)
 checkWellformedness bf {l=(_, v)ra; r}ve = Ex (bf, {l=DefFormed (Def v) new; follows}ve, newest)
                                              where new = [bf; l]nsf
-                                                   more :: exists sg . (NamesSofar [bb;bg]sf, VerboseContext WellFormed (NamesSofar [bb;bg]sf) (NamesSofar sg), NamesSofar sg)
+                                                   more :: exists sg . (NamesSofar [bb;bg]sf, VerboseContext WellFormed [bb;bg]sf sg, NamesSofar sg)
                                                    more = checkWellformedness new r
                                                    (_, follows, newest) = more
 
@@ -52,7 +52,7 @@ data WellLevelled :: Nat ~> * where
   At :: Nat' l -> WellLevelled l
 
 -- representation of contexts with names
-data VerboseContext :: (* ~> * ~> *) ~> * ~> * ~> * where
+data VerboseContext :: (a ~> a ~> *) ~> a ~> a ~> * where
   E :: VerboseContext k a a
   Q :: Label n -> k a b -> VerboseContext k b c -> VerboseContext k a c
  deriving syntax(ve) Record(E, Q)
