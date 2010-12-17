@@ -2,6 +2,11 @@ import "LangPrelude.prg"
 
 -- values, they are used for building verbose contexts
 
+data Tags :: *1 where
+  One :: Tag ~> Tags
+  More :: Tag ~> Tag ~> Tags
+ deriving syntax(tags) Pair(More)
+
 data Value :: * where
   Ref :: Label n -> Value
   Sole :: Value
@@ -30,13 +35,13 @@ data NamesSofar :: Sofar Tag ~> * where
   NamesSofar :: NamesSofar sf -> Label t -> NamesSofar [sf; t]sf
  deriving LeftList(nsf)
 
-data Includes :: Sofar Tag ~> Tag ~> * where
-  Roo :: Equal f t -> Includes [r; f]sf t
-  Ind :: Includes r t -> Includes [r; f]sf t
+data Includes :: Sofar Tag ~> Tags ~> * where
+  Roo :: Equal f t -> Includes [r; f]sf (One t)
+  Ind :: Includes r tags -> Includes [r; f]sf tags
  deriving syntax(i) Tick(Ind)
 
 -- does t appear in bf?
-checkInside :: Label t -> NamesSofar bf -> Maybe (Includes bf t)
+checkInside :: Label t -> NamesSofar bf -> Maybe (Includes bf (One t))
 checkInside _ []nsf = Nothing
 checkInside l [r; l']nsf = case sameLabel l l' of
                            L Eq -> Just (Roo Eq)
@@ -45,10 +50,10 @@ checkInside l [r; l']nsf = case sameLabel l l' of
                                       Nothing -> Nothing
 
 -- are all free vars bound in bf?
-verifyFree :: NamesSofar bf -> Value -> exists t . Maybe (Label t, Includes bf t)
+verifyFree :: NamesSofar bf -> Value -> exists t . Maybe (Includes bf t)
 verifyFree bf (Ref l) = case checkInside l bf of
                         Nothing -> Ex Nothing
-                        Just ev -> Ex (Just (l, ev))
+                        Just ev -> Ex (Just ev)
 verifyFree bf Sole = Ex Nothing
 verifyFree bf (App f v) = verifyFree bf v
 
