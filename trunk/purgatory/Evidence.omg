@@ -9,15 +9,15 @@ data Value :: * where
   Typed :: Value -> Value -> Value
  deriving syntax(va) LeftList(Sole, App) Pair(Typed)
 
-data Raw :: * ~> * ~> * where
-  Def :: Value -> Raw Value Value
-  Annotated :: Value -> Value -> Raw Value Value
+data Raw :: Tag ~> * ~> * ~> * where
+  Def :: Value -> Raw t Value Value
+  Annotated :: Value -> Value -> Raw t Value Value
  deriving syntax(ra) Pair(Annotated)
 
 -- well-formedness: check that names are always defined at the point of reference
 
-data WellFormed :: Sofar Tag ~> Sofar Tag ~> * where
-  DefFormed :: Raw Value Value -> NamesSofar [r; n]sf -> WellFormed r [r; n]sf
+data WellFormed :: Tag ~> Sofar Tag ~> Sofar Tag ~> * where
+  DefFormed :: Raw n Value Value -> NamesSofar [r; n]sf -> WellFormed n r [r; n]sf
 
 data Sofar :: *1 ~> *1 where
   No :: Sofar t
@@ -47,9 +47,9 @@ data WellLevelled :: Nat ~> * where
   At :: Nat' l -> WellLevelled l
 
 -- representation of contexts with names
-data VerboseContext :: (a ~> a ~> *) ~> a ~> a ~> * where
+data VerboseContext :: (Tag ~> a ~> a ~> *) ~> a ~> a ~> * where
   E :: VerboseContext k a a
-  Q :: Label n -> k a b -> VerboseContext k b c -> VerboseContext k a c
+  Q :: Label n -> k n a b -> VerboseContext k b c -> VerboseContext k a c
  deriving syntax(ve) Record(E, Q)
 
 -- Examples of VerboseContext
