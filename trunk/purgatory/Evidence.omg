@@ -40,9 +40,7 @@ checkWellformedness bf {}ve = cast (bf, {}ve, bf)
                                       cast = unsafeCast
 checkWellformedness bf {l=(_, v)ra; r}ve = (bf, {l=DefFormed (Def v) new; follows}ve, newest)
                                              where new = [bf; l]nsf
-                                                   --more :: (NamesSofar [bb;bg]sf, VerboseContext WellFormed [bb;bg]sf sg, NamesSofar sg)
-                                                   more = checkWellformedness new r
-                                                   (_, follows, newest) = more
+                                                   (_, follows, newest) = checkWellformedness new r
 
 
 data WellLevelled :: Nat ~> * where
