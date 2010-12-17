@@ -42,8 +42,8 @@ data NamesSofar :: Sofar Tag ~> * where
 
 data Includes :: Sofar Tag ~> Tags ~> * where
   Roo :: Equal f t -> Includes [r; f]sf (One t)
-  Ind :: Includes r tags -> Includes [r; f]sf tags
-  Also :: Includes r ts -> Includes r ts' -> Includes [r; f]sf (ts, ts')tags
+  Ind :: Includes r (One t) -> Includes [r; f]sf (One t)
+  Also :: Includes r ts -> Includes r ts' -> Includes r (ts, ts')tags
  deriving syntax(i) Tick(Ind)
 
 -- does t appear in bf?
