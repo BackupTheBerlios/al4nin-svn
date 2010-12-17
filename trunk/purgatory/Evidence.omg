@@ -1,4 +1,4 @@
-import "LangPrelude.prg"
+-- import "LangPrelude.prg"
 
 -- values, they are used for building verbose contexts
 
