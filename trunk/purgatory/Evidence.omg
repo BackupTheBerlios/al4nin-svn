@@ -33,14 +33,14 @@ data NamesSofar :: Sofar Tag ~> * where
 
 checkWellformedness :: NamesSofar bf
                     -> VerboseContext Raw Value Value
-                    -> (NamesSofar bf, VerboseContext WellFormed bf sf, NamesSofar sf)
-checkWellformedness bf {}ve = cast (bf, {}ve, bf)
-                                where cast :: (NamesSofar bf, VerboseContext WellFormed bf bf, NamesSofar bf)
-                                           -> (NamesSofar bf, VerboseContext WellFormed bf sf, NamesSofar sf)
+                    -> (VerboseContext WellFormed bf sf, NamesSofar sf)
+checkWellformedness bf {}ve = cast ({}ve, bf)
+                                where cast :: (VerboseContext WellFormed bf bf, NamesSofar bf)
+                                           -> (VerboseContext WellFormed bf sf, NamesSofar sf)
                                       cast = unsafeCast
-checkWellformedness bf {l=(_, v)ra; r}ve = (bf, {l=DefFormed (Def v) new; follows}ve, newest)
+checkWellformedness bf {l=(_, v)ra; r}ve = ({l=DefFormed (Def v) new; follows}ve, newest)
                                              where new = [bf; l]nsf
-                                                   (_, follows, newest) = checkWellformedness new r
+                                                   (follows, newest) = checkWellformedness new r
 
 
 data WellLevelled :: Nat ~> * where
@@ -60,4 +60,4 @@ h_is_Int = { `Int=(Ref `Type, Ref `Star)ra
            , `h=([]va, [(Ref `Foo, [Ref `Karr, Ref `Star, Ref `Star]va)va, Ref `Int]va)ra
            }ve
 
-([]nsf, well_h_is_Int, defs_h_is_Int@[`Int, `h]nsf) = checkWellformedness []nsf h_is_Int
+(well_h_is_Int, defs_h_is_Int@[`Int, `h]nsf) = checkWellformedness []nsf h_is_Int
