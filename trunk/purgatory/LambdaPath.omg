@@ -1,0 +1,34 @@
+-- make lambda terms indexed by a custom kind
+-- and allow paths poke into its innards
+
+data Dir :: *1 where
+  Down :: Dir ~> Dir
+  Left :: Dir ~> Dir
+  Right :: Dir ~> Dir
+  
+
+data LT :: Dir ~> *1 where
+  AbsLT :: LT (Down a) ~> LT a
+  AppLT :: LT (Left a) ~> LT (Right a) ~> LT a
+
+
+data Term :: (LT d) ~> * where
+  Lam :: Term a -> Term (AbsLT a)
+  App :: Term a -> Term b -> Term (AppLT a b)
+  -- constituent references
+  Above :: Term a
+  AboveL :: Term a
+  AboveR :: Term a
+  Up :: Term a -> Term (AbsLT a)
+  UpL :: Term b -> Term (AppLT a b)
+  UpR :: Term a -> Term (AppLT a b)
+
+
+-- Example: \x f a = f a
+e1 = Lam (Lam (App (Up $ Up AboveR) (Up AboveL)))
+
+-- this stytem still admits flawed references:
+e1' = Lam (Lam (App (Up $ UpL AboveR) (Up AboveL)))
+----------------------------^----------------------
+
+
