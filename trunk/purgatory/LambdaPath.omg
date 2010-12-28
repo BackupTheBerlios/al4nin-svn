@@ -12,6 +12,15 @@ data LT :: Dir ~> *1 where
   AppLT :: LT (Left a) ~> LT (Right a) ~> LT a
 
 
+-- Key insight (for now) is that the semantics
+-- of lambdas and applications occurs _in place_
+-- whereas references possess semantics from
+-- another place, so each term must have two indices:
+--  o where it is located
+--  o where the semantics is
+
+-- Terms 
+
 data Term :: (LT d) ~> * where
   Lam :: Term a -> Term (AbsLT a)
   App :: Term a -> Term b -> Term (AppLT a b)
@@ -27,7 +36,7 @@ data Term :: (LT d) ~> * where
 -- Example: \x f a = f a
 e1 = Lam (Lam (App (Up $ Up AboveR) (Up AboveL)))
 
--- this stytem still admits flawed references:
+-- this system still admits flawed references:
 e1' = Lam (Lam (App (Up $ UpL AboveR) (Up AboveL)))
 ----------------------------^----------------------
 
