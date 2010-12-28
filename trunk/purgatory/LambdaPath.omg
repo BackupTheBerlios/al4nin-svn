@@ -32,15 +32,14 @@ data Term :: Dir ~> (LT d) ~> * where
   App :: Term (Left p) a -> Term (Right p) b -> Term p (AppLT a b)
   -- constituent references
   Here :: Term {-path loc-}p loc
-  --AboveL :: Term a
-  --AboveR :: Term a
   Up :: Term (Down p) loc -> Term p loc
   UpL :: Term (Right p) loc -> Term p loc
   UpR :: Term (Left p) loc -> Term p loc
 
 
 -- Example: \x f a = f a
-e1 = Lam (Lam (App (UpL $ Up $ UpR Here) (Up $ UpL Here)))
+--e1 :: Term root (AbsLT (AbsLT (AppLT a b)))
+e1 = Lam (Lam (App (Up $ Up $ UpR Here) (Up $ UpL Here)))
 
 -- this system still admits flawed references:
 --e1' = Lam (Lam (App (Up $ UpL AboveR) (Up AboveL)))
