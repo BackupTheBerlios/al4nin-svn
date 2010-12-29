@@ -43,6 +43,8 @@
 --  * singleton types (+ subtyping)
 --  * definitions as Quantifiers (lambda or sigma?)
 --  * polynomial datatypes (+ subtyping)
+--  * beta reduction (normalization) in small- and big-step (horizontals)
+--  * verticals (unreduced and normalized variants)
 
 import "LangPrelude.prg"
 
