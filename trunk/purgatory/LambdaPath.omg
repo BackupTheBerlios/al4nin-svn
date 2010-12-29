@@ -20,13 +20,6 @@ data LT :: Dir ~> *1 where
 --  o where it is located
 --  o where the semantics is
 
--- determining path from structure
-{-
-path :: LT p ~> p
-{path (AbsLT p)} = Down p
-{path ()} =
--}
-
 -- Terms 
 
 data Term :: Dir ~> (LT d) ~> * where
@@ -34,18 +27,18 @@ data Term :: Dir ~> (LT d) ~> * where
   App :: Term (Left p) a -> Term (Right p) b -> Term p (AppLT a b)
   -- constituent references
   Here :: Term p (TipLT p)
-  Up :: Term (Down p) loc -> Term p loc
-  UpL :: Term (Right p) loc -> Term p loc
-  UpR :: Term (Left p) loc -> Term p loc
+  Up :: Term p loc -> Term (d p) loc
+  --UpL :: Term p loc -> Term (Right p) loc
+  --UpR :: Term p loc -> Term (Left p) loc
 
 
 -- Example: \x f a = f a
 --e1 :: Term root (AbsLT (AbsLT (AppLT a b)))
-e1 = Lam (Lam (App (Up $ Up $ UpR Here) (Up $ UpL Here)))
-(Lam (Lam (App (Up (Up (UpR e1h1))) (Up (UpL e1h2))))) = e1
+e1 = Lam (Lam (App (Up $ Up $ Up Here) (Up $ Up Here)))
+(Lam (Lam (App (Up (Up (Up e1h1))) (Up (Up e1h2))))) = e1
 
 -- this system still admits flawed references:
---e1' = Lam (Lam (App (Up $ Up $ UpL Here) (Up $ UpL Here)))
+--e1' = Lam (Lam (App (Up $ Up $ Up $ Up Here) (Up $ Up Here)))
 ----------------------------^----------------------
 
 
