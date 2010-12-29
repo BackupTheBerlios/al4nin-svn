@@ -20,10 +20,11 @@ data LT :: Dir ~> *1 where
 --  o where the semantics is
 
 -- determining path from structure
---path :: LT p ~> p
---{path (AbsLT p)} = Down p
---{path } =
-
+{-
+path :: LT p ~> p
+{path (AbsLT p)} = Down p
+{path ()} =
+-}
 
 -- Terms 
 
