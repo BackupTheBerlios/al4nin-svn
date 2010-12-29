@@ -10,7 +10,7 @@ data Dir :: *1 where
 data LT :: Dir ~> *1 where
   AbsLT :: LT (Down a) ~> LT a
   AppLT :: LT (Left a) ~> LT (Right a) ~> LT a
-  TipLT :: LT a
+  RefLT :: LT a
 
 
 -- Key insight (for now) is that the semantics
@@ -20,25 +20,32 @@ data LT :: Dir ~> *1 where
 --  o where it is located
 --  o where the semantics is
 
+-- Open questions:
+--   . Referencing a Lam does automatically reference the bound variable?
+--   . should we only count binders when using Up?
+--   . should we use names in referentials?
+--   . Up (App . .) etc. does make any sense?
+
 -- Terms
 
 data Term :: Dir ~> (LT d) ~> * where
   Lam :: Term (Down p) a -> Term p (AbsLT a)
   App :: Term (Left p) a -> Term (Right p) b -> Term p (AppLT a b)
   -- constituent references
-  Here :: Term p TipLT
+  Here :: Term p RefLT
   Up :: Term p loc -> Term (d p) loc
+ deriving syntax(q) Item(Lam) LeftPair(App) Nat(Here, Up)
 
 
 -- Example: \x f a = f a
-e1 :: Term root (AbsLT (AbsLT (AppLT TipLT TipLT)))
+e1 :: Term root (AbsLT (AbsLT (AppLT RefLT RefLT)))
 e1 = Lam (Lam (App (Up $ Up $ Up Here) (Up $ Up Here)))
 (Lam (Lam (App (Up (Up (Up e1h1))) (Up (Up e1h2))))) = e1
 
 -- this system doesn't admit flawed references:
 ##test "reaches out into free realm"
-  e1' :: Term root (AbsLT (AbsLT (AppLT TipLT TipLT)))
+  e1' :: Term root (AbsLT (AbsLT (AppLT RefLT RefLT)))
   e1' = Lam (Lam (App (Up $ Up $ Up $ Up Here) (Up $ Up Here)))
-----------------------------^----------------------
+-----------------------^---------------------------
 
 
