@@ -10,6 +10,7 @@ data Dir :: *1 where
 data LT :: Dir ~> *1 where
   AbsLT :: LT (Down a) ~> LT a
   AppLT :: LT (Left a) ~> LT (Right a) ~> LT a
+  TipLT :: Dir ~> LT a
 
 
 -- Key insight (for now) is that the semantics
@@ -32,7 +33,7 @@ data Term :: Dir ~> (LT d) ~> * where
   Lam :: Term (Down p) a -> Term p (AbsLT a)
   App :: Term (Left p) a -> Term (Right p) b -> Term p (AppLT a b)
   -- constituent references
-  Here :: Term {-path loc-}p loc
+  Here :: Term p (TipLT p)
   Up :: Term (Down p) loc -> Term p loc
   UpL :: Term (Right p) loc -> Term p loc
   UpR :: Term (Left p) loc -> Term p loc
@@ -41,9 +42,10 @@ data Term :: Dir ~> (LT d) ~> * where
 -- Example: \x f a = f a
 --e1 :: Term root (AbsLT (AbsLT (AppLT a b)))
 e1 = Lam (Lam (App (Up $ Up $ UpR Here) (Up $ UpL Here)))
+(Lam (Lam (App (Up (Up (UpR e1h1))) (Up (UpL e1h2))))) = e1
 
 -- this system still admits flawed references:
---e1' = Lam (Lam (App (Up $ UpL AboveR) (Up AboveL)))
+--e1' = Lam (Lam (App (Up $ Up $ UpL Here) (Up $ UpL Here)))
 ----------------------------^----------------------
 
 
