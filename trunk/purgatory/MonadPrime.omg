@@ -134,19 +134,16 @@ intersperseThrist i [a; as]l = [i, a; intersperseThrist i as]l
 
 -- Pushing down a function into a specific tuple level
 
-dig :: Nat ~> * ~> *
-{dig Z a} = a
-{dig (S n) (a, b)} = (a, {dig n b})
+p :: Nat ~> * ~> *
+{p Z a} = a
+{p (S n) a} = (c, {p n a})
 
-exch :: Nat ~> * ~> * ~> *
-{exch Z b a} = b
-{exch (S n) b (a, c)} = (a, {exch n b c})
+nest :: Nat' n -> (a -> b) -> {p n a} -> {p n b}
+nest Z f a = f a
+nest (S n) f (c, a) = (c, nest n f a)
 
-nest :: Nat' n -> ({dig n a} -> b) -> a -> {exch n b a}
--- does not typecheck, issue23:
---nest Z f a = check (f a)
---nest (S n) f (a, c) = (a, nest n f c)
-
+-- Note: the above works along the right-spine of the structure,
+--       we would need another parameter wo walk in left direction too
 
 -- #################################################
 -- see Uustalu
