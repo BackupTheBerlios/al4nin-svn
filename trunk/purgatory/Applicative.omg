@@ -66,5 +66,11 @@ I want something like
 
 [map, [plus, 1]l, [from, 1, 5]l ]l
 
+current syntax is
+
+[Par [Arg 5, Arg 1, Fun from]l, Par [Arg 1, Fun plus]l, Fun map]l
+
+i.e. reversed and visibly Tagged.
+
 -}
 
