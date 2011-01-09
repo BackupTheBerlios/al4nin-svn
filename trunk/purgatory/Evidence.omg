@@ -5,24 +5,24 @@
 data Tags :: *1 where
   One :: Tag ~> Tags
   More :: Tags ~> Tags ~> Tags
- deriving syntax(tags) Pair(More)
+ deriving syntax(tags) Item(One) Pair(More)
 
 data Labels :: Tags ~> * where
-  One :: Label t -> Labels (One t)
+  One :: Label t -> Labels (t)tags
   More :: Labels ts -> Labels ts' -> Labels (ts, ts')tags
- deriving syntax(ls) Pair(More)
+ deriving syntax(ls) Item(One) Pair(More)
 
 data Value :: * where
   Ref :: Label n -> Value
   Sole :: Value
   App :: Value -> Value -> Value
   Typed :: Value -> Value -> Value
- deriving syntax(va) LeftList(Sole, App) Pair(Typed)
+ deriving syntax(va) Item(Ref) LeftList(Sole, App) Pair(Typed)
 
 data Raw :: Tag ~> * ~> * ~> * where
   Def :: Value -> Raw t Value Value
   Annotated :: Value -> Value -> Raw t Value Value
- deriving syntax(ra) Pair(Annotated)
+ deriving syntax(ra) Item(Def) Pair(Annotated)
 
 -- well-formedness: check that names are always defined at the point of reference
 
@@ -45,25 +45,25 @@ data NamesSofar :: Sofar Tag ~> * where
  deriving LeftList(nsf)
 
 data Includes :: Sofar Tag ~> Tags ~> * where
-  Roo :: Equal f t -> Includes [r; f]sf (One t)
-  Ind :: Includes r (One t) -> Includes [r; f]sf (One t)
+  Roo :: Equal f t -> Includes [r; f]sf (t)tags
+  Ind :: Includes r (t)tags -> Includes [r; f]sf (t)tags
   Also :: Includes r ts -> Includes r ts' -> Includes r (ts, ts')tags
- deriving syntax(i) Tick(Ind) Pair(Also)
+ deriving syntax(i) Item(Roo) Tick(Ind) Pair(Also)
 
 -- does t appear in bf?
-checkInside :: Label t -> NamesSofar bf -> Maybe (Includes bf (One t))
+checkInside :: Label t -> NamesSofar bf -> Maybe (Includes bf (t)tags)
 checkInside _ []nsf = Nothing
 checkInside l [r; l']nsf = case sameLabel l l' of
-                           L Eq -> Just (Roo Eq)
+                           L Eq -> Just (Eq)i
                            _ -> case checkInside l r of
                                       Just ev -> Just (ev`1)i
                                       Nothing -> Nothing
 
 -- are all free vars bound in bf?
 verifyFree :: NamesSofar bf -> Value -> exists ts . Maybe (Labels ts, Includes bf ts)
-verifyFree bf (Ref l) = case checkInside l bf of
-                        Nothing -> Ex Nothing
-                        Just ev -> Ex (Just (One l, ev))
+verifyFree bf (l)va = case checkInside l bf of
+                      Nothing -> Ex Nothing
+                      Just ev -> Ex (Just ((l)ls, ev))
 verifyFree bf []va = Ex Nothing
 verifyFree bf [a]va = verifyFree bf a
 verifyFree bf [f; a]va = case (verifyFree bf f, verifyFree bf a) of
@@ -80,7 +80,7 @@ checkWellformedness bf {}ve = Just $ cast ({}ve, bf)
                                       cast = unsafeCast
 checkWellformedness bf {l=(_, v)ra; r}ve = case (verifyFree bf v, checkWellformedness new r) of
                                              (Ex (Just (ls, ev)), Just (follows, newest))
-                                               -> Just ({l=DefFormed (Def v) ev ls new; follows}ve, newest)
+                                               -> Just ({l=DefFormed (v)ra ev ls new; follows}ve, newest)
                                              _ -> Nothing
                                            where new = [bf; l]nsf
 
