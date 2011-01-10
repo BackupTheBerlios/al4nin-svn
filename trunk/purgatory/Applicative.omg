@@ -27,10 +27,11 @@ data LeftApplicative :: (* ~> * ~> *) ~> * ~> * ~> * where
   Nuf :: f a b -> LeftApplicative f Peg (f a b)
   Gra :: a -> LeftApplicative f (f a b) b
   Rap :: LeftThrist (LeftApplicative f) Peg b -> LeftApplicative f (f a b) b
-
+ deriving syntax(a) Item(Gra)
 
 t0 = Par [Arg 2, Arg 40, Fun (+)]l -- App (App (Fun (+)) (Val 40)) (Val 2)
-t0' = Rap [Nuf (+), Gra 40, Gra 2]lt
+t0' = Rap [Nuf (+), (40)a, (2)a]lt
+
 
 t1 = Par ([Fun chr]l)
 
@@ -43,7 +44,14 @@ data Arith :: * ~> * ~> * where
 
 t2 = Par [Arg 2, Arg 40, Fun Plus]l -- App (App (Fun Plus) (Val 40)) (Val 2)
 
+data AppliCode :: * ~> * ~> * where
+  Cf :: Code (a -> b) -> AppliCode Peg (a -> b)
+  Ca :: Code a -> AppliCode (a -> b) b
+  Cpar :: LeftThrist AppliCode Peg b -> AppliCode (a -> b) b
+ deriving syntax(ca) Item(Ca)
 
+
+t3 = Cpar [Cf [|ord|], ([|'g'|])ca]lt
 
 {-
 concType :: * ~> *
