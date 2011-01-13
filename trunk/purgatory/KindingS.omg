@@ -151,19 +151,19 @@ spineLemma (1+n)q = Eq
 
 -- we want to show: Equal {upc [_c]ws} [(1+_c)w]ws
 spineContext :: Context Anchored [c]ws -> Equal {upc [c]ws} [(1+c)w]ws
-spineContext (Heart Term) = Eq
-spineContext (Heart Type) = Eq
-spineContext (Heart 0q) = Eq
-spineContext (Heart (1+n)q) = Eq
+spineContext (Term)c = Eq
+spineContext (Type)c = Eq
+spineContext (0q)c = Eq
+spineContext ((1+n)q)c = Eq
 
 tau :: Context f ws -> Context f {upc ws}
 tau Empty = Empty
-tau (c@(Heart q)) = Heart (tau' q)
+tau (c@(q)c) = (tau' q)c
   where theorem becauseOf = spineContext c
 tau [((_,t)q`1)q; c]c = tau c
-tau [(t`2)q; c]c = Quantify (t`1)q (tau c)
+tau [(t`2)q; c]c = [(t`1)q; (tau c)]c
 tau [Sig (_,_)q; c]c = tau c
-tau [Sig (s@(Sig _)); c]c = Quantify s (tau c)
+tau [Sig (s@(Sig _)); c]c = [s; (tau c)]c
 tau (_, [_; c]c)c = tau c
 tau (q, app)c = tau (q, cancel app)c
   where cancel :: Context Anchored [w; ws]ws -> Context Anchored [w; ws]ws
