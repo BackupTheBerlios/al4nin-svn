@@ -167,14 +167,11 @@ tau (q, app)c = tau (q, cancel app)c
 
 -- runtime values are represented by expressions
 
-{-
-data Expr :: Walks n ~> * where
-  Lit :: Quant a b -> Expr [a]ws  -- e.g. 42::Int
-  Lambda :: Context Anchored [a, b; r]ws -> Expr [a, b; r]ws -- e.g. \a:Int.42
-  Appl' :: Equal {charge f} {up a} => Expr [a]ws -> Expr [f; r]ws -> Expr r
--}
+-- TODO!
 
 -- values, they are used for building verbose contexts
+-- CAVEAT: this is pretty outdated, see Evidence.omg
+--
 
 data Value :: * where
   Ref :: Label n -> Value
