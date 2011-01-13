@@ -39,8 +39,8 @@
 --  * outer context (LeftList?)
 --  * unification of contexts, unifiers
 --  * sized types (speculative)
---  * singleton types (+ subtyping)
---  * definitions as quantifiers (lambda or sigma?)
+--  * subtyping of singleton types (needed in unification?)
+--  * applying sigma types???
 --  * polynomial datatypes (+ subtyping)
 --  * beta reduction (normalization) in small- and big-step (horizontals)
 --  * verticals (unreduced and normalized variants)
@@ -251,6 +251,14 @@ tkt6 = tau kt6
 ef = [((Heart Type, 0q)q`2)q; Heart Term {-By kt6-}]c  -- Int -> M Int
 kt7 = (Heart Term, ef)c  -- f 42
 tkt7 = tau kt7
+
+-- (Int, Int), the type of the cartesian product of terms
+kt8 = Sig ((Type)c, Star)q
+tkt8 = [kt8; (Type)c]c
+
+-- (42,25), a cartesian pair of terms
+kt9 = Sig kt8
+tkt9 = [kt9; (Term)c]c
 
 -- \h (g :: Int->Int->Int) -> Int
 gi = [lambda2Int, lambda2Int; Heart Term]c
