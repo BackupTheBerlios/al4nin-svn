@@ -253,12 +253,14 @@ kt7 = (Heart Term, ef)c  -- f 42
 tkt7 = tau kt7
 
 -- (Int, Int), the type of the cartesian product of terms
-kt8 = Sig ((Type)c, Star)q
-tkt8 = [kt8; (Type)c]c
+kt8 = Sig ((Type)c, Star)q  -- e.g. SIGMA a::Int .
+tkt8 = [kt8; (Type)c]c  -- e.g. SIGMA a::Int . Int
 
--- (42,25), a cartesian pair of terms
-kt9 = Sig kt8
-tkt9 = [kt9; (Term)c]c
+-- <42,25>, a cartesian pair of terms
+kt9 = Sig kt8  -- e.g. (a::Int) *
+kt9' = Sig $ Sig ((Singleton Term)c, Star)q  -- e.g. (a::S(19)) *
+tkt9 = [kt9; (Term)c]c  -- e.g. (a::Int) * b
+tkt9' = [kt9'; (Term)c]c  -- e.g. (a::S(19)) * b  === <19, b>
 
 -- \h (g :: Int->Int->Int) -> Int
 gi = [lambda2Int, lambda2Int; Heart Term]c
