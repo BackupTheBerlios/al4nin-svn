@@ -38,10 +38,9 @@
 --  * variable capture, tracking free vars
 --  * outer context (LeftList?)
 --  * unification of contexts, unifiers
---  * sigma types (dependent sums)
 --  * sized types (speculative)
 --  * singleton types (+ subtyping)
---  * definitions as Quantifiers (lambda or sigma?)
+--  * definitions as quantifiers (lambda or sigma?)
 --  * polynomial datatypes (+ subtyping)
 --  * beta reduction (normalization) in small- and big-step (horizontals)
 --  * verticals (unreduced and normalized variants)
@@ -84,6 +83,7 @@ data Quant :: Walk n m p ~> Walk (1+n)t m' p' ~> *  where
   Term :: Quant 0w 1w
   Ext :: Context Anchored [w; ws]ws -> Quant r s -> Quant ([w; ws]ws, r)w s
   Lam :: Quant p {up p} -> Quant (p`1)w {up (p`1)w}
+  Sig :: Quant p {up p} -> Quant (p`1)w {up (p`1)w}
  deriving syntax(q) Nat(Star, Up) Tick(Lam) Pair(Ext)
 
 -- tau': calculate a quantifier's classifier
@@ -98,6 +98,8 @@ tau' :: Quant a ta -> Quant ta {up ta}
 tau' (c, h)q = tau' h
 tau' ((c, h)q`1)q = h
 tau' (p`2)q = (p`1)q
+tau' (Sig (_, h)q) = h
+tau' (Sig (s@(Sig _))) = s
 tau' (1+n)q = (2+n)q
 tau' 0q = 1q
 tau' Type = Star
@@ -129,7 +131,7 @@ data Context :: Fixture ~> Walks n ~> * where
           => Context Anchored ws
           -> Context Anchored [f, h; r]ws
           -> Context Anchored [h; r]ws
- deriving syntax(c) List(Empty, Quantify) Pair(Appl)
+ deriving syntax(c) List(Empty, Quantify) Item(Heart) Pair(Appl)
 
 -- tau: classify context
 upc :: Walks n ~> Walks (1+n)t
@@ -148,17 +150,19 @@ spineLemma (1+n)q = Eq
 
 -- we want to show: Equal {upc [_c]ws} [(1+_c)w]ws
 spineContext :: Context Anchored [c]ws -> Equal {upc [c]ws} [(1+c)w]ws
-spineContext (Heart Term) = Eq
-spineContext (Heart Type) = Eq
-spineContext (Heart 0q) = Eq
-spineContext (Heart (1+n)q) = Eq
+spineContext (Term)c = Eq
+spineContext (Type)c = Eq
+spineContext (0q)c = Eq
+spineContext ((1+n)q)c = Eq
 
 tau :: Context f ws -> Context f {upc ws}
 tau Empty = Empty
-tau (c@(Heart q)) = Heart (tau' q)
+tau (c@(q)c) = (tau' q)c
   where theorem becauseOf = spineContext c
 tau [((_,t)q`1)q; c]c = tau c
-tau [(t`2)q; c]c = Quantify (t`1)q (tau c)
+tau [(t`2)q; c]c = [(t`1)q; (tau c)]c
+tau [Sig (_,_)q; c]c = tau c
+tau [Sig (s@(Sig _)); c]c = [s; (tau c)]c
 tau (_, [_; c]c)c = tau c
 tau (q, app)c = tau (q, cancel app)c
   where cancel :: Context Anchored [w; ws]ws -> Context Anchored [w; ws]ws
