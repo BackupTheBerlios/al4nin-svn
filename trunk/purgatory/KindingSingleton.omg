@@ -84,6 +84,7 @@ data Quant :: Walk n m p ~> Walk (1+n)t m' p' ~> *  where
   Ext :: Context Anchored [w; ws]ws -> Quant r s -> Quant ([w; ws]ws, r)w s
   Lam :: Quant p {up p} -> Quant (p`1)w {up (p`1)w}
   Sig :: Quant p {up p} -> Quant (p`1)w {up (p`1)w}
+  Singleton :: Quant p {up p} -> Quant {up p} {up {up p}}
  deriving syntax(q) Nat(Star, Up) Tick(Lam) Pair(Ext)
 
 -- tau': calculate a quantifier's classifier
@@ -104,6 +105,7 @@ tau' (1+n)q = (2+n)q
 tau' 0q = 1q
 tau' Type = Star
 tau' Term = Type
+tau' (Singleton s) = tau' (tau' s)
 
 -- extract payload from lambda
 charge :: Walk n m [k;p]p ~> Walks k
