@@ -1,0 +1,9 @@
+-- Discriminated sums as injections
+
+data Injections :: Tag ~> (Tag ~> *) ~> * where
+  None :: Injections t f
+  Inj :: Label cn -> {f cn} -> Injections t f -> Injections t f
+ deriving Record(is)
+
+
+
