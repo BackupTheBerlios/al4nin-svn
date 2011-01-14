@@ -1,5 +1,12 @@
 -- Discriminated sums as injections
 
+
+
+-- TODO:
+--  * make 'constr' total by tracking the tags of injections in 'Sum' as a type index
+--  * implement recursive/parameterized sums
+--  * catas, anas etc. (E. Meijer et al.)
+
 injtype :: Tag ~> * ~> *
 {injtype `Le a} = Int -> a
 {injtype `Mi a} = [Char] -> a
@@ -29,6 +36,9 @@ data Test :: * where
   Le :: Int -> Test
   Mi :: [Char] -> Test
   Ri :: Bool -> Test -> Test
+ deriving syntax(test) Item(Mi)
+
 
 t0 = (`Test, {`Le=Le,`Mi=Mi,`Ri=Ri}is)sum
+t1 = constr t0 `Mi "Hello World!"
 
