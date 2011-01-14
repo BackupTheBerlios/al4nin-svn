@@ -17,6 +17,7 @@ data Injections :: Tag ~> * ~> * where
 
 data Sum :: Tag ~> * ~> * where
   Constrs :: Label sn -> Injections sn {sumtype sn} -> Sum sn {sumtype sn}
+ deriving Pair(sum)
 
 data Test :: * where
   Le :: Int -> Test
