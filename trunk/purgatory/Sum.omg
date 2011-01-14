@@ -19,10 +19,10 @@ data Sum :: Tag ~> * ~> * where
   Constrs :: Label sn -> Injections sn {sumtype sn} -> Sum sn {sumtype sn}
  deriving Pair(sum)
 
--- constr :: Label sum -> Sum sum {sumtype sum} -> Label constr -> {injtype constr {sumtype sum}}
-constr :: Label sum -> Sum sum typ -> Label constr -> {injtype constr typ}
-constr l (_, {c'=constr; _}is)sum c | case sameLabel c c' of {L Eq -> True; _ -> False } = constr
-constr l (_, {_=_; cs}is)sum c = constr l (l, cs) c
+constr :: Label sum -> Sum sum {sumtype sum} -> Label constr -> {injtype constr {sumtype sum}}
+--constr :: Label sum -> Sum sum typ -> Label constr -> {injtype constr typ}
+constr l (_, {c'=inj; cs}is)sum c = case sameLabel c c' of {L Eq -> inj; _ -> constr l (l, cs)sum c }
+--constr l (_, {_=_; cs}is)sum c = constr l (l, cs) c
 
 
 data Test :: * where
