@@ -1,9 +1,9 @@
 -- Discriminated sums as injections
 
 injtype :: Tag ~> * ~> *
-{injtype `Le Test} = Int -> Test
-{injtype `Mi Test} = [Char] -> Test
-{injtype `Ri Test} = Bool -> Test -> Test
+{injtype `Le a} = Int -> a
+{injtype `Mi a} = [Char] -> a
+{injtype `Ri a} = Bool -> a -> a
 
 sumtype :: Tag ~> *
 {sumtype `Test} = Test
