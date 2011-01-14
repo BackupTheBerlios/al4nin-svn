@@ -1,9 +1,20 @@
 -- Discriminated sums as injections
 
-data Injections :: Tag ~> (Tag ~> *) ~> * where
+injtype :: Tag ~> * ~> *
+{injtype `Le Test} = Int -> Test
+{injtype `Mi Test} = [Char] -> Test
+{injtype `Ri Test} = Bool -> Test -> Test
+
+
+data Injections :: Tag ~> * ~> * where
   None :: Injections t f
-  Inj :: Label cn -> {f cn} -> Injections t f -> Injections t f
+  Inj :: Label cn -> {injtype cn f} -> Injections t f -> Injections t f
  deriving Record(is)
 
+
+data Test :: * where
+  Le :: Int -> Test
+  Mi :: [Char] -> Test
+  Ri :: Bool -> Test -> Test
 
 
