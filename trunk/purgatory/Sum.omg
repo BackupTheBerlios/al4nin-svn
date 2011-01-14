@@ -20,9 +20,9 @@ data Sum :: Tag ~> * ~> * where
  deriving Pair(sum)
 
 constr :: Label sum -> Sum sum {sumtype sum} -> Label constr -> {injtype constr {sumtype sum}}
---constr :: Label sum -> Sum sum typ -> Label constr -> {injtype constr typ}
-constr l (_, {c'=inj; cs}is)sum c = case sameLabel c c' of {L Eq -> inj; _ -> constr l (l, cs)sum c }
---constr l (_, {_=_; cs}is)sum c = constr l (l, cs) c
+constr l (_, {c'=inj; cs}is)sum c = case sameLabel c c' of
+                                    L Eq -> inj
+                                    _ -> constr l (l, cs)sum c
 
 
 data Test :: * where
