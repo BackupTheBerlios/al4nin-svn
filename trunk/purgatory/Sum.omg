@@ -5,12 +5,18 @@ injtype :: Tag ~> * ~> *
 {injtype `Mi Test} = [Char] -> Test
 {injtype `Ri Test} = Bool -> Test -> Test
 
+sumtype :: Tag ~> *
+{sumtype `Test} = Test
+--{sumtype  } = 
+--{sumtype  } =
 
 data Injections :: Tag ~> * ~> * where
   None :: Injections t f
   Inj :: Label cn -> {injtype cn f} -> Injections t f -> Injections t f
  deriving Record(is)
 
+data Sum :: Tag ~> * ~> * where
+  Constrs :: Label sn -> Injections sn {sumtype sn} -> Sum sn {sumtype sn}
 
 data Test :: * where
   Le :: Int -> Test
