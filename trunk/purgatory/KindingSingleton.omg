@@ -40,7 +40,7 @@
 --  * unification of contexts, unifiers
 --  * sized types (speculative)
 --  * subtyping of singleton types (needed in unification?)
---  * applying sigma types???
+--  * applying sigma types??? -- yes, appears to be the second projection
 --  * polynomial datatypes (+ subtyping)
 --  * beta reduction (normalization) in small- and big-step (horizontals)
 --  * verticals (unreduced and normalized variants)
