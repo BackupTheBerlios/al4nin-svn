@@ -61,11 +61,10 @@ t2 = ((1f, `List), {(1f,`Ni)=Ni,(1f,`Co)=Co}is)sum
 
 
 -- this allows us to construct homogenous lists
-t2good :: List Int
-t2good = case (constr t2 `Co, constr t2 `Ni) of
-         (co, ni) -> co 25 $ co 42 ni
+--t2good :: List Int
+t2good = let (co, ni) = (constr t2 `Co, constr t2 `Ni) in co 25 $ co 42 ni
 
-{-
+
 -- and, GASP!, heterogenous ones too:
 --##test "do not allow heterogenous lists"
 t2bad :: List Int
@@ -75,6 +74,6 @@ t2badHead :: Int
 t2badHead = case t2bad of {Co h _ -> h}
 
 --##test "crash!"
---  t2badExpose = show (case t2badHead of {11->11; other->other+0})
--}
+t2badExpose = show (case t2badHead of {11->11; other->other+0})
+
 
