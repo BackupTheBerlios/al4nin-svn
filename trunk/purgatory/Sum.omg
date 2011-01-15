@@ -51,10 +51,17 @@ data List :: * ~> * where
 
 t2 = (`List, {`Ni=Ni,`Co=Co}is)sum
 -- this allows us to construct homogenous lists
+t2good :: List Int
 t2good = constr t2 `Co 25 $ constr t2 `Co 42 (constr t2 `Ni)
+
 -- and, GASP!, heterogenous ones too:
+t2bad :: List Int
 t2bad = constr t2 `Co 's' $ constr t2 `Co 42 (constr t2 `Ni)
 
 --##test
+t2badHead :: Int
 t2badHead = case t2bad of {Co h _ -> h}
+
+--##test
+t2badExpose = show (case t2badHead of {11->11; other->other+0})
 
