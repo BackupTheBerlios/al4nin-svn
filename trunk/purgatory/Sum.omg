@@ -1,7 +1,5 @@
 -- Discriminated sums as injections
 
-
-
 -- TODO:
 --  * make 'constr' total by tracking the tags of injections in 'Sum' as a type index
 --  * implement recursive/parameterized sums
@@ -34,13 +32,13 @@ data Injections :: TypeList ~> Tag ~> * ~> * where
   Inj :: (Free tl, Label cn) -> {injtype cn tl f} -> Injections tl t f -> Injections tl t f
  deriving Record(is)
 
-data Sum :: Tag ~> * ~> * where
-  Constrs :: (Free tl, Label sn) -> Injections tl sn {sumtype sn} -> Sum sn {sumtype sn}
+data Sum :: TypeList ~> Tag ~> * ~> * where
+  Constrs :: (Free tl, Label sn) -> Injections tl sn {sumtype sn} -> Sum tl sn {sumtype sn}
  deriving Pair(sum)
 
-constr :: Sum sum {sumtype sum} -> Label constr -> exists tl . (Free tl, {injtype constr tl {sumtype sum}})
+constr :: Sum tl sum {sumtype sum} -> Label constr -> {injtype constr tl {sumtype sum}}
 constr (p@(free, l), {(_, c')=inj; cs}is)sum c = case sameLabel c c' of
-                                                 L Eq -> Ex (free, inj)
+                                                 L Eq -> inj
                                                  _ -> constr (p, cs)sum c
 
 
@@ -52,7 +50,7 @@ data Test :: * where
 
 
 t0 = ((0f, `Test), {(0f,`Le)=Le,(0f,`Mi)=Mi,(0f,`Ri)=Ri}is)sum
-t1 = case constr t0 `Mi of {Ex (0f, f) -> f "Hello World!"}
+t1 = constr t0 `Mi "Hello World!"
 
 data List :: * ~> * where
   Ni :: List a
@@ -65,7 +63,7 @@ t2 = ((1f, `List), {(1f,`Ni)=Ni,(1f,`Co)=Co}is)sum
 -- this allows us to construct homogenous lists
 t2good :: List Int
 t2good = case (constr t2 `Co, constr t2 `Ni) of
-         (Ex (1f, co), Ex (1f, ni)) -> co 25 $ co 42 ni
+         (co, ni) -> co 25 $ co 42 ni
 
 {-
 -- and, GASP!, heterogenous ones too:
