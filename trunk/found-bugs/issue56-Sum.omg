@@ -1,0 +1,60 @@
+-- Discriminated sums as injections
+
+
+
+-- TODO:
+--  * make 'constr' total by tracking the tags of injections in 'Sum' as a type index
+--  * implement recursive/parameterized sums
+--  * catas, anas etc. (E. Meijer et al.)
+
+injtype :: Tag ~> * ~> *
+{injtype `Le a} = Int -> a
+{injtype `Mi a} = [Char] -> a
+{injtype `Ri a} = Bool -> a -> a
+{injtype `Ni a} = a
+{injtype `Co a} = b -> a -> a
+
+sumtype :: Tag ~> *
+{sumtype `Test} = Test
+{sumtype `List} = List a
+--{sumtype  } =
+
+data Injections :: Tag ~> * ~> * where
+  None :: Injections t f
+  Inj :: Label cn -> {injtype cn f} -> Injections t f -> Injections t f
+ deriving Record(is)
+
+data Sum :: Tag ~> * ~> * where
+  Constrs :: Label sn -> Injections sn {sumtype sn} -> Sum sn {sumtype sn}
+ deriving Pair(sum)
+
+constr :: Sum sum {sumtype sum} -> Label constr -> {injtype constr {sumtype sum}}
+constr (l, {c'=inj; cs}is)sum c = case sameLabel c c' of
+                                  L Eq -> inj
+                                  _ -> constr (l, cs)sum c
+
+
+data Test :: * where
+  Le :: Int -> Test
+  Mi :: [Char] -> Test
+  Ri :: Bool -> Test -> Test
+ deriving syntax(test) Item(Mi)
+
+
+t0 = (`Test, {`Le=Le,`Mi=Mi,`Ri=Ri}is)sum
+t1 = constr t0 `Mi "Hello World!"
+
+data List :: * ~> * where
+  Ni :: List a
+  Co :: a -> List a -> List a
+ deriving List(li)
+
+t2 = (`List, {`Ni=Ni,`Co=Co}is)sum
+-- this allows us to construct homogenous lists
+t2good = constr t2 `Co 25 $ constr t2 `Co 42 (constr t2 `Ni)
+-- and, GASP!, heterogenous ones too:
+t2bad = constr t2 `Co 's' $ constr t2 `Co 42 (constr t2 `Ni)
+
+--##test
+t2badHead = case t2bad of {Co h _ -> h}
+
