@@ -12,9 +12,9 @@ injtype :: Tag ~> TypeList ~> * ~> *
 {injtype `Ni [b]tl a} = a
 {injtype `Co [b]tl a} = b -> a -> a
 
-sumtype :: Tag ~> *
-{sumtype `Test} = Test
-{sumtype `List} = List a
+sumtype :: TypeList ~> Tag ~> *
+{sumtype []tl `Test} = Test
+{sumtype [a]tl `List} = List a
 --{sumtype  } =
 
 data TypeList :: *1 where
@@ -29,15 +29,15 @@ data Free :: TypeList ~> * where
 
 data Injections :: TypeList ~> Tag ~> * ~> * where
   None :: Injections tl t f
-  Inj :: (Free tl, Label cn) -> {injtype cn tl f} -> Injections tl t f -> Injections tl t f
+  Inj :: Label cn -> {injtype cn tl f} -> Injections tl t f -> Injections tl t f
  deriving Record(is)
 
 data Sum :: TypeList ~> Tag ~> * ~> * where
-  Constrs :: (Free tl, Label sn) -> Injections tl sn {sumtype sn} -> Sum tl sn {sumtype sn}
+  Constrs :: (Free tl, Label sn) -> Injections tl sn {sumtype tl sn} -> Sum tl sn {sumtype tl sn}
  deriving Pair(sum)
 
-constr :: Sum tl sum {sumtype sum} -> Label constr -> {injtype constr tl {sumtype sum}}
-constr (p@(free, l), {(_, c')=inj; cs}is)sum c = case sameLabel c c' of
+constr :: Sum tl sum {sumtype tl sum} -> Label constr -> {injtype constr tl {sumtype tl sum}}
+constr (p@(free, l), {c'=inj; cs}is)sum c = case sameLabel c c' of
                                                  L Eq -> inj
                                                  _ -> constr (p, cs)sum c
 
@@ -49,7 +49,7 @@ data Test :: * where
  deriving syntax(test) Item(Mi)
 
 
-t0 = ((0f, `Test), {(0f,`Le)=Le,(0f,`Mi)=Mi,(0f,`Ri)=Ri}is)sum
+t0 = ((0f, `Test), {`Le=Le,`Mi=Mi,`Ri=Ri}is)sum
 t1 = constr t0 `Mi "Hello World!"
 
 data List :: * ~> * where
@@ -57,7 +57,7 @@ data List :: * ~> * where
   Co :: a -> List a -> List a
  deriving List(li)
 
-t2 = ((1f, `List), {(1f,`Ni)=Ni,(1f,`Co)=Co}is)sum
+t2 = ((1f, `List), {`Ni=Ni,`Co=Co}is)sum
 
 
 -- this allows us to construct homogenous lists
