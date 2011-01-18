@@ -6,11 +6,11 @@
 --  * catas, anas etc. (E. Meijer et al.)
 
 injtype :: Tag ~> TypeList ~> * ~> *
-{injtype `Le []tl a} = Int -> a
-{injtype `Mi []tl a} = [Char] -> a
-{injtype `Ri []tl a} = Bool -> a -> a
-{injtype `Ni [b]tl a} = a
-{injtype `Co [b]tl a} = b -> a -> a
+{injtype `Le []tl Test} = Int -> Test
+{injtype `Mi []tl Test} = [Char] -> Test
+{injtype `Ri []tl Test} = Bool -> Test -> Test
+{injtype `Ni [b]tl (List b)} = List b
+{injtype `Co [b]tl (List b)} = b -> List b -> List b
 
 sumtype :: TypeList ~> Tag ~> *
 {sumtype []tl `Test} = Test
