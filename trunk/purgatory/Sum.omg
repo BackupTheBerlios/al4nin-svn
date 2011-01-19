@@ -11,11 +11,12 @@ injtype :: Tag ~> TypeList ~> * ~> *
 {injtype `Ri []tl Test} = Bool -> Test -> Test
 {injtype `Ni [b]tl (List b)} = List b
 {injtype `Co [b]tl (List b)} = b -> List b -> List b
+{injtype `Eq [a,b]tl (Equal' a a)} = Equal' a a
 
 sumtype :: TypeList ~> Tag ~> *
 {sumtype []tl `Test} = Test
 {sumtype [a]tl `List} = List a
---{sumtype  } =
+{sumtype [a,b]tl `Equal} = Equal' a b
 
 data TypeList :: *1 where
   FNil :: TypeList
@@ -69,12 +70,10 @@ t2good = let (co, ni) = (constr t2 `Co, constr t2 `Ni) in co 25 $ co 42 ni
  t2bad :: List Int
  t2bad = constr t2 `Co 's' $ constr t2 `Co 42 (constr t2 `Ni)
 
-{-
-t2badHead :: Int
-t2badHead = case t2bad of {Co h _ -> h}
+data Equal' :: * ~> * ~> * where
+  Eq' :: Equal' a a
+ deriving Unit(eq)
 
---##test "crash!"
-t2badExpose = show (case t2badHead of {11->11; other->other+0})
--}
-
+t3 = ((2f, `Equal), {`Eq=()eq}is)sum
+t3good = constr t3 `Eq
 
