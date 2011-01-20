@@ -28,6 +28,7 @@ data Free :: TypeList ~> TypeList ~> * where
   More :: Free l l -> Free [a; l]tl [a; l]tl
   Tag :: Label t -> Free l r -> Free [{sumtype l t}]tl r
   Equate :: Equal a b => Free m [a, b; l]tl -> Free m [a; l]tl
+  Ctor :: Free [l]tl r -> Label c -> Free [l]tl [{injtype c r l}]tl
  deriving syntax(f) Nat(Zero, More) Pair(Tag)
 
 data Injections :: TypeList ~> Tag ~> * ~> * where
