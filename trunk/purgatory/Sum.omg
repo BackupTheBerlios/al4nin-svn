@@ -36,20 +36,11 @@ data Injections :: TypeList ~> * ~> * where
   Inj :: Label cn -> {injtype cn tl f} -> Injections tl f -> Injections tl f
  deriving Record(is)
 
-data Sum :: TypeList ~> Tag ~> * ~> * where
-  Constrs :: (Free tl tl, Label sn) -> Injections tl {sumtype tl sn} -> Sum tl sn {sumtype tl sn}
- deriving Pair(sum)
 
-constr :: Sum tl sum {sumtype tl sum} -> Label constr -> {injtype constr tl {sumtype tl sum}}
-constr (p@(free, l), {c'=inj; cs}is)sum c = case sameLabel c c' of
-                                                 L Eq -> inj
-                                                 _ -> constr (p, cs)sum c
-
-
-constr' :: Free [l]tl [r]tl -> r
-constr' (Ctor p {c'=inj; cs}is c) = case sameLabel c c' of
-                                    L Eq -> inj
-                                    _ -> constr' (Ctor p cs c)
+constr :: Free [l]tl [r]tl -> r
+constr (Ctor p {c'=inj; cs}is c) = case sameLabel c c' of
+                                   L Eq -> inj
+                                   _ -> constr' (Ctor p cs c)
 
 data Test :: * where
   Le :: Int -> Test
@@ -58,8 +49,8 @@ data Test :: * where
  deriving syntax(test) Item(Mi)
 
 i0 = {`Le=Le,`Mi=Mi,`Ri=Ri}is
-t0 = ((0f, `Test), i0)sum
-t1 = constr t0 `Mi "Hello World!"
+f0 = Ctor (`Test, 0f)f i0
+t1 = constr (f0 `Mi) "Hello World!"
 
 data List :: * ~> * where
   Ni :: List a
@@ -67,12 +58,11 @@ data List :: * ~> * where
  deriving List(li)
 
 i2 = {`Ni=Ni,`Co=Co}is
-t2 = ((1f, `List), i2)sum
 f2 = Ctor (`List, 1f)f i2
 
 -- this allows us to construct homogenous lists
---t2good :: List Int
-t2good = let (co, ni) = (constr t2 `Co, constr t2 `Ni) in co 25 $ co 42 ni
+t2good :: List Int
+t2good = let (co, ni) = (constr (f2 `Co), constr (f2 `Ni)) in co 25 $ co 42 ni
 
 
 ##test "do not allow heterogenous lists"
