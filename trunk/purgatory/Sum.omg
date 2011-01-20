@@ -40,7 +40,7 @@ data Injections :: TypeList ~> * ~> * where
 constr :: Free [l]tl [r]tl -> r
 constr (Ctor p {c'=inj; cs}is c) = case sameLabel c c' of
                                    L Eq -> inj
-                                   _ -> constr' (Ctor p cs c)
+                                   _ -> constr (Ctor p cs c)
 
 data Test :: * where
   Le :: Int -> Test
@@ -74,6 +74,6 @@ data Equal' :: * ~> * ~> * where
  deriving Unit(eq)
 
 i3 = {`Eq=()eq}is
-t3 = ((2f, `Equal), i3)sum
-t3good = constr t3 `Eq
-f3 = Ctor (Equate (`Equal, 2f)f) i3 `Eq
+f3 = Ctor (Equate (`Equal, 2f)f) i3
+t3 = constr (f3 `Eq)
+
