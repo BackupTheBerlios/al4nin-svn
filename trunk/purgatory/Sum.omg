@@ -46,6 +46,11 @@ constr (p@(free, l), {c'=inj; cs}is)sum c = case sameLabel c c' of
                                                  _ -> constr (p, cs)sum c
 
 
+constr' :: Free [l]tl [r]tl -> r
+constr' (Ctor p {c'=inj; cs}is c) = case sameLabel c c' of
+                                    L Eq -> inj
+                                    _ -> constr' (Ctor p cs c)
+
 data Test :: * where
   Le :: Int -> Test
   Mi :: [Char] -> Test
@@ -63,7 +68,7 @@ data List :: * ~> * where
 
 i2 = {`Ni=Ni,`Co=Co}is
 t2 = ((1f, `List), i2)sum
-f2 = (`List, 1f)f
+f2 = Ctor (`List, 1f)f i2
 
 -- this allows us to construct homogenous lists
 --t2good :: List Int
