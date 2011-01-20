@@ -12,11 +12,15 @@ injtype :: Tag ~> TypeList ~> * ~> *
 {injtype `Ni [b]tl (List b)} = List b
 {injtype `Co [b]tl (List b)} = b -> List b -> List b
 {injtype `Eq [a]tl (Equal' a a)} = Equal' a a
+{injtype `Hide []tl Exo} = {- exists a . -} a -> Exo
+
+data Exo = exists a . Hide a
 
 sumtype :: TypeList ~> Tag ~> *
 {sumtype []tl `Test} = Test
 {sumtype [a]tl `List} = List a
 {sumtype [a,b]tl `Equal} = Equal' a b
+{sumtype []tl `Exo} = Exo
 
 data TypeList :: *1 where
   FNil :: TypeList
@@ -76,4 +80,8 @@ data Equal' :: * ~> * ~> * where
 i3 = {`Eq=()eq}is
 f3 = Ctor (Equate (`Equal, 2f)f) i3
 t3 = constr (f3 `Eq)
+
+i4 = {`Hide=Hide}is
+f4 = Ctor (`Exo, 0f)f i4
+t4 = constr (f4 `Hide) 42
 
