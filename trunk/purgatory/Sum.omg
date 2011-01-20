@@ -11,7 +11,7 @@ injtype :: Tag ~> TypeList ~> * ~> *
 {injtype `Ri []tl Test} = Bool -> Test -> Test
 {injtype `Ni [b]tl (List b)} = List b
 {injtype `Co [b]tl (List b)} = b -> List b -> List b
-{injtype `Eq [a,b]tl (Equal' a a)} = Equal' a a
+{injtype `Eq [a]tl (Equal' a a)} = Equal' a a
 
 sumtype :: TypeList ~> Tag ~> *
 {sumtype []tl `Test} = Test
@@ -26,7 +26,8 @@ data TypeList :: *1 where
 data Free :: TypeList ~> * where
   Zero :: Free []tl
   More :: Free l -> Free [a; l]tl
- deriving Nat(f)
+  Equate :: Equal a b => Free [a, b; l]tl -> Free [a; l]tl
+ deriving syntax(f) Nat(Zero, More) -- Item(Tag)
 
 data Injections :: TypeList ~> Tag ~> * ~> * where
   None :: Injections tl t f
