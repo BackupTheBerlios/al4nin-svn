@@ -28,16 +28,16 @@ data Free :: TypeList ~> TypeList ~> * where
   More :: Free l l -> Free [a; l]tl [a; l]tl
   Tag :: Label t -> Free l r -> Free [{sumtype l t}]tl r
   Equate :: Equal a b => Free m [a, b; l]tl -> Free m [a; l]tl
-  Ctor :: Free [l]tl r -> Label c -> Free [l]tl [{injtype c r l}]tl
+  Ctor :: Free [l]tl r -> Injections r l -> Label c -> Free [l]tl [{injtype c r l}]tl
  deriving syntax(f) Nat(Zero, More) Pair(Tag)
 
-data Injections :: TypeList ~> Tag ~> * ~> * where
-  None :: Injections tl t f
-  Inj :: Label cn -> {injtype cn tl f} -> Injections tl t f -> Injections tl t f
+data Injections :: TypeList ~> * ~> * where
+  None :: Injections tl f
+  Inj :: Label cn -> {injtype cn tl f} -> Injections tl f -> Injections tl f
  deriving Record(is)
 
 data Sum :: TypeList ~> Tag ~> * ~> * where
-  Constrs :: (Free tl tl, Label sn) -> Injections tl sn {sumtype tl sn} -> Sum tl sn {sumtype tl sn}
+  Constrs :: (Free tl tl, Label sn) -> Injections tl {sumtype tl sn} -> Sum tl sn {sumtype tl sn}
  deriving Pair(sum)
 
 constr :: Sum tl sum {sumtype tl sum} -> Label constr -> {injtype constr tl {sumtype tl sum}}
@@ -52,8 +52,8 @@ data Test :: * where
   Ri :: Bool -> Test -> Test
  deriving syntax(test) Item(Mi)
 
-
-t0 = ((0f, `Test), {`Le=Le,`Mi=Mi,`Ri=Ri}is)sum
+i0 = {`Le=Le,`Mi=Mi,`Ri=Ri}is
+t0 = ((0f, `Test), i0)sum
 t1 = constr t0 `Mi "Hello World!"
 
 data List :: * ~> * where
@@ -61,8 +61,9 @@ data List :: * ~> * where
   Co :: a -> List a -> List a
  deriving List(li)
 
-t2 = ((1f, `List), {`Ni=Ni,`Co=Co}is)sum
-
+i2 = {`Ni=Ni,`Co=Co}is
+t2 = ((1f, `List), i2)sum
+f2 = (`List, 1f)f
 
 -- this allows us to construct homogenous lists
 --t2good :: List Int
@@ -77,6 +78,7 @@ data Equal' :: * ~> * ~> * where
   Eq' :: Equal' a a
  deriving Unit(eq)
 
-t3 = ((2f, `Equal), {`Eq=()eq}is)sum
+i3 = {`Eq=()eq}is
+t3 = ((2f, `Equal), i3)sum
 t3good = constr t3 `Eq
-
+f3 = Ctor (Equate (`Equal, 2f)f) i3 `Eq
