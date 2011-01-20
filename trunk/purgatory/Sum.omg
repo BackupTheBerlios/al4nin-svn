@@ -23,11 +23,12 @@ data TypeList :: *1 where
   FCons :: * ~> TypeList ~> TypeList
  deriving List(tl)
 
-data Free :: TypeList ~> * where
-  Zero :: Free []tl
-  More :: Free l -> Free [a; l]tl
-  Equate :: Equal a b => Free [a, b; l]tl -> Free [a; l]tl
- deriving syntax(f) Nat(Zero, More) -- Item(Tag)
+data Free :: TypeList ~> TypeList ~> * where
+  Zero :: Free []tl []tl
+  More :: Free l l -> Free [a; l]tl [a; l]tl
+  Tag :: Label t -> Free l r -> Free [{sumtype l t}]tl r
+  Equate :: Equal a b => Free m [a, b; l]tl -> Free m [a; l]tl
+ deriving syntax(f) Nat(Zero, More) Pair(Tag)
 
 data Injections :: TypeList ~> Tag ~> * ~> * where
   None :: Injections tl t f
@@ -35,7 +36,7 @@ data Injections :: TypeList ~> Tag ~> * ~> * where
  deriving Record(is)
 
 data Sum :: TypeList ~> Tag ~> * ~> * where
-  Constrs :: (Free tl, Label sn) -> Injections tl sn {sumtype tl sn} -> Sum tl sn {sumtype tl sn}
+  Constrs :: (Free tl tl, Label sn) -> Injections tl sn {sumtype tl sn} -> Sum tl sn {sumtype tl sn}
  deriving Pair(sum)
 
 constr :: Sum tl sum {sumtype tl sum} -> Label constr -> {injtype constr tl {sumtype tl sum}}
