@@ -48,6 +48,7 @@ data Var :: * ~> * where
 
 type TypeExp a = GT Sf Var
 
+data TypeLike s = TypeLike (forall m rec a . Monad m -> (rec -> rec -> m a) -> s rec -> s rec -> m a)
 
 unifySf :: Monad m -> (rec -> rec -> m a) -> Sf rec -> Sf rec -> m a
 unifySf m _ (name1, _)t (name2, _)t = let monad m in case sameLabel name1 name2 of
