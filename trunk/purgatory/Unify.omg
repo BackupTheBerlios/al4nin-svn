@@ -38,7 +38,8 @@ data Sf :: * ~> * where
 -- tying the knot
 --
 data GT s ann = Sf (s (GT s ann))
-              | Ann (ann (GT s ann)) deriving syntax(g) Item(Sf)
+              | Ann (ann (GT s ann))
+ deriving syntax(g) Item(Sf)
 
 -- simple annotation: A (universal/existential) variable
 data Var :: * ~> * where
@@ -53,6 +54,11 @@ unifySf m _ (name1, _)t (name2, _)t = let monad m in case sameLabel name1 name2 
   L Eq -> return undefined
   _ -> fail ("incommersurable :" ++ show name1 ++ " and " ++ show name2)
 
+
+--unifyGT :: Monad m -> GT s ann -> GT s ann -> m a
+unifyGT :: Monad m -> GT Sf ann -> GT Sf ann -> m a
+unifyGT m (Ann a1) (Ann a2) = let monad m in fail "TODO"
+unifyGT m (sf1)g (sf2)g = unifySf m (unifyGT m) sf1 sf2
 
 -- Define the unifier record
 data Flow :: *1 where
