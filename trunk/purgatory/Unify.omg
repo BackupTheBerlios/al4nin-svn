@@ -33,15 +33,17 @@ import "LangPrelude.prg"
 --
 data Sf :: * ~> * where
   OperType :: Label name -> [x] -> Sf x
+ deriving Pair(t)
 
 -- tying the knot
 --
 data GT s ann = Sf (s (GT s ann))
-              | Ann (ann (GT s ann))
+              | Ann (ann (GT s ann)) deriving syntax(g) Item(Sf)
 
 -- simple annotation: A (universal/existential) variable
 data Var :: * ~> * where
   TyVar :: Label name -> Var a
+ deriving Item(tv)
 
 type TypeExp a = GT Sf Var
 
