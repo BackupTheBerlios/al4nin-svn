@@ -51,9 +51,14 @@ type TypeExp a = GT Sf Var
 data TypeLike s = TypeLike (forall m rec a . Monad m -> (rec -> rec -> m a) -> s rec -> s rec -> m a)
 
 unifySf :: Monad m -> (rec -> rec -> m a) -> Sf rec -> Sf rec -> m a
-unifySf m _ (name1, _)t (name2, _)t = let monad m in case sameLabel name1 name2 of
-  L Eq -> return undefined
+unifySf m unify (name1, args1)t (name2, args2)t = case sameLabel name1 name2 of
+  L Eq -> unifyList args1 args2
   _ -> fail ("incommersurable:" ++ show name1 ++ " and " ++ show name2)
+ where monad m
+       unifyList [] [] = return undefined
+       unifyList [g1; r1] [g2; r2] = do { u1 <- unify g1 g2; ul <- unifyList r1 r2; return ul }
+       unifyList _ _ = fail (show name1 ++ " applied with different arities")
+
 
 unifyVar :: Monad m -> (rec -> rec -> m a) -> Var rec -> Var rec -> m a
 unifyVar m _ (n1)tv (n2)tv = let monad m in case sameLabel n1 n2 of
