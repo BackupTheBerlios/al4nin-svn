@@ -48,7 +48,10 @@ data Var :: * ~> * where
 type TypeExp a = GT Sf Var
 
 
-
+unifySf :: Monad m -> (rec -> rec -> m a) -> Sf rec -> Sf rec -> m a
+unifySf m _ (name1, _)t (name2, _)t = let monad m in case sameLabel name1 name2 of
+  L Eq -> return undefined
+  _ -> fail ("incommersurable :" ++ show name1 ++ " and " ++ show name2)
 
 
 -- Define the unifier record
