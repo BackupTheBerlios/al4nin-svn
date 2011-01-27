@@ -53,17 +53,20 @@ data TypeLike s = TypeLike (forall m rec a . Monad m -> (rec -> rec -> m a) -> s
 unifySf :: Monad m -> (rec -> rec -> m a) -> Sf rec -> Sf rec -> m a
 unifySf m _ (name1, _)t (name2, _)t = let monad m in case sameLabel name1 name2 of
   L Eq -> return undefined
-  _ -> fail ("incommersurable :" ++ show name1 ++ " and " ++ show name2)
+  _ -> fail ("incommersurable:" ++ show name1 ++ " and " ++ show name2)
 
+unifyVar :: Monad m -> (rec -> rec -> m a) -> Var rec -> Var rec -> m a
+unifyVar m _ (n1)tv (n2)tv = let monad m in case sameLabel n1 n2 of
+  L Eq -> return undefined
+  _ -> fail ("type variables" ++ show n1 ++ " and " ++ show n2 ++ "differ")
 
 sfDict = TypeLike unifySf
+varDict = TypeLike unifyVar
 
 
-
-unifyGT :: TypeLike s -> Monad m -> GT s ann -> GT s ann -> m a
---unifyGT :: Monad m -> GT Sf ann -> GT Sf ann -> m a
-unifyGT (TypeLike unify) m (Ann a1) (Ann a2) = let monad m in fail "TODO"
-unifyGT (u@TypeLike unify) m (sf1)g (sf2)g = unify m (unifyGT u m) sf1 sf2
+unifyGT :: TypeLike s -> TypeLike ann -> Monad m -> GT s ann -> GT s ann -> m a
+unifyGT us (u@TypeLike unify) m (Ann a1) (Ann a2) = unify m (unifyGT us u m) a1 a2
+unifyGT (u@TypeLike unify) ur m (sf1)g (sf2)g = unify m (unifyGT u ur m) sf1 sf2
 
 -- Define the unifier record
 data Flow :: *1 where
