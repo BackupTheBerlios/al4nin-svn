@@ -56,10 +56,14 @@ unifySf m _ (name1, _)t (name2, _)t = let monad m in case sameLabel name1 name2 
   _ -> fail ("incommersurable :" ++ show name1 ++ " and " ++ show name2)
 
 
---unifyGT :: Monad m -> GT s ann -> GT s ann -> m a
-unifyGT :: Monad m -> GT Sf ann -> GT Sf ann -> m a
-unifyGT m (Ann a1) (Ann a2) = let monad m in fail "TODO"
-unifyGT m (sf1)g (sf2)g = unifySf m (unifyGT m) sf1 sf2
+sfDict = TypeLike unifySf
+
+
+
+unifyGT :: TypeLike s -> Monad m -> GT s ann -> GT s ann -> m a
+--unifyGT :: Monad m -> GT Sf ann -> GT Sf ann -> m a
+unifyGT (TypeLike unify) m (Ann a1) (Ann a2) = let monad m in fail "TODO"
+unifyGT (u@TypeLike unify) m (sf1)g (sf2)g = unify m (unifyGT u m) sf1 sf2
 
 -- Define the unifier record
 data Flow :: *1 where
