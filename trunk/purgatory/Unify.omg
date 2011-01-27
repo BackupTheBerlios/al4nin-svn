@@ -23,6 +23,31 @@
 
 import "LangPrelude.prg"
 
+-- adding stuff now for following Tim's
+-- "Generic Unification ..." paper
+-- Later trying to incorporate ideas (annotation)
+-- from Visser/Loeh paper
+
+
+-- the pattern functor
+--
+data Sf :: * ~> * where
+  OperType :: Label name -> [x] -> Sf x
+
+-- tying the knot
+--
+data GT s ann = Sf (s (GT s ann))
+              | Ann (ann (GT s ann))
+
+-- simple annotation: A (universal/existential) variable
+data Var :: * ~> * where
+  TyVar :: Label name -> Var a
+
+type TypeExp a = GT Sf Var
+
+
+
+
 
 -- Define the unifier record
 data Flow :: *1 where
