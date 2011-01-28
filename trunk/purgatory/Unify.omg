@@ -73,6 +73,13 @@ unifyGT :: TypeLike s -> TypeLike ann -> Monad m -> GT s ann -> GT s ann -> m a
 unifyGT us (u@TypeLike unify) m (Ann a1) (Ann a2) = unify m (unifyGT us u m) a1 a2
 unifyGT (u@TypeLike unify) ur m (sf1)g (sf2)g = unify m (unifyGT u ur m) sf1 sf2
 
+data MutVar :: * ~> * where
+  MutVar :: Label name -> Ptr a -> MutVar a
+ deriving Pair(mv)
+
+mutify :: TypeLike s -> TypeLike ann -> Monad m -> GT s ann -> GT s ann -> m (GT s ann', [(Var (GT s ann), MutVar(GT s ann'))])
+mutify us (u@TypeLike muty) m (Ann a1) _  = muty m (mutify us u m) a1 a1
+
 -- Define the unifier record
 data Flow :: *1 where
   None :: Flow
