@@ -41,6 +41,8 @@
 --  * sized types (speculative)
 --  * subtyping of singleton types (needed in unification?)
 --  * applying sigma types??? -- yes, appears to be the second projection
+--      # see http://homepages.inf.ed.ac.uk/als/ScottInScotland/ghani.pdf page 14 for first proj.
+--      # page 10: second projection
 --  * polynomial datatypes (+ subtyping)
 --  * beta reduction (normalization) in small- and big-step (horizontals)
 --  * verticals (unreduced and normalized variants)
