@@ -77,8 +77,12 @@ data MutVar :: * ~> * where
   MutVar :: Label name -> Ptr a -> MutVar a
  deriving Pair(mv)
 
-mutify :: TypeLike s -> TypeLike ann -> Monad m -> GT s ann -> GT s ann -> m (GT s ann', [(Var (GT s ann), MutVar(GT s ann'))])
-mutify us (u@TypeLike muty) m (Ann a1) _  = muty m (mutify us u m) a1 a1
+mutify :: TypeLike s -> TypeLike Var -> Monad IO -> GT s Var -> GT s Var -> IO (GT s MutVar, [(Var (GT s Var), MutVar(GT s MutVar))])
+mutify us (u@TypeLike muty) m (Ann (var@(name)tv)) _  = let monad m in do
+             p <- newPtr
+             let mv = (name, p)mv
+             return (Ann mv, [(var, mv)])
+--mutify us (u@TypeLike muty) m (Ann a1) _  = muty m (mutify us u m) a1 a1
 
 -- Define the unifier record
 data Flow :: *1 where
