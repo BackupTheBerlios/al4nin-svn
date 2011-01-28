@@ -2,6 +2,7 @@
 
 -- TODO:
 --  * make 'constr' total by tracking the tags of injections in 'Sum' as a type index
+--  * can we reflect the full definition of the GADT to the kind level?
 --  * implement recursive/parameterized sums
 --  * catas, anas etc. (E. Meijer et al.)
 
