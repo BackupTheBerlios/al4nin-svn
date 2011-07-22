@@ -1,7 +1,7 @@
 -- -*-Haskell-*-
 
 {-
- * Copyright (c) 2007 Gabor Greif
+ * Copyright (c) 2007-2011 Gabor Greif
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -44,6 +44,20 @@ import "LangPrelude.prg"
 
 -- Figure 1 introduces the source language (CBV variant)
 
+-- Terms e ::= x | \x.e | ee | let x = e in e | letrec xi = vi in e
+-- Values v ::= \x.e
+-- Types tau ::= b | tau -> tau
+
+kind SrcCat = T | V
+
+data Src :: SrcCat ~> * where
+  Var :: Label l -> Src T
+  Lam :: Label l -> Src a -> Src V
+  App :: Src a -> Src b -> Src T
+  Let :: Label l -> Src a -> Src b -> Src T
+  LetRec :: Label l -> Src V -> Src a -> Src T
+
+{-
 kind Cat = Term | Value
 kind Form = General | Administrative Form
 
@@ -111,3 +125,4 @@ conv' :: L a General -> ANF {cat2lambda' a}
 
 conv' (Var l) = ANFVar l
 
+-}
