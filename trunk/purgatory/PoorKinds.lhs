@@ -4,12 +4,12 @@
 
 We first define the phantom types in the usual manner
 
-> data Z where
-> data S n where
+> data Z
+> data S n
 
 To simulate a kind, we declare a type class with no methods
 
-> class Nat n where
+> class Nat n
 
 and include the phantom types Z and (S n) with the obvious
 inference rules
