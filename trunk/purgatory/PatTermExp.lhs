@@ -11,15 +11,15 @@ to the scrutinee.
 Other relevant reading is McBride and McKinna's "The view from the left"
 http://strictlypositive.org/view.ps.gz
 
-> {-# LANGUAGE KindSignatures, GADTs #-}
+> {-# LANGUAGE KindSignatures, GADTs, StandaloneDeriving #-}
 
 > module Exp where
 
 > data Term
 > data Pattern
 
-> data Name a = Name String
-> data Bind p e = Bound (p, e)
+> data Name a = Name String deriving Show
+> data Bind p e = Bound (p, e) deriving Show
 
 The Expr data type is modelled closely after
 'Term' in http://byorgey.wordpress.com/2011/03/28/binders-unbound/
@@ -29,11 +29,17 @@ The Expr data type is modelled closely after
 >   App :: Expr a ->  Expr a -> Expr a
 >   Lam :: Bind (Name (Expr Pattern)) (Expr Term) -> Expr Term
 >   Con :: String -> [Expr a] -> Expr a -- data constructors
-> -- deriving Show
 
-> data Equality = Equal (Expr Pattern) (Expr Term)
+Make sure we can show expressions
 
-Here is a test expression:
+> deriving instance Show (Expr a)
+
+A haskell-style equality is a left-hand-side pattern
+expression and a right-hand-side term expression
+
+> data Equality = Equal (Expr Pattern) (Expr Term) deriving Show
+
+Here are some test expressions:
 
 > test1 = Equal (Var (Name "xx")) (Lam (Bound (Name "gg", Var (Name "gg"))))
 > test2 = Equal (Con "S" [Con "Z" []]) (Con "Z" [])
