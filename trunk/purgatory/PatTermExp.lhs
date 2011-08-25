@@ -25,7 +25,7 @@ The Expr data type is modelled closely after
 'Term' in http://byorgey.wordpress.com/2011/03/28/binders-unbound/
 
 > data Expr :: * -> * where
->   Var :: Name (Expr a) -> Expr a
+>   Var :: Name (Expr Term) -> Expr a
 >   App :: Expr a ->  Expr a -> Expr a
 >   Lam :: Bind (Name (Expr Pattern)) (Expr Term) -> Expr Term
 >   Con :: String -> [Expr a] -> Expr a -- data constructors
