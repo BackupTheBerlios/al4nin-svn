@@ -1,7 +1,11 @@
+data Scope :: *1 where
+  Global :: Scope
+  Nest :: Scope ~> Scope
+ deriving Nat(s)
 
-data Exp :: * where
-  Var :: Int -> Exp
-  Lam :: Exp -> Exp
-  App :: Exp -> Exp -> Exp
-  Let :: Exp -> Exp -> Exp
+data Exp :: Scope ~> * where
+  Var :: Int -> Exp s
+  Lam :: Exp (1+s)s -> Exp s
+  App :: Exp s -> Exp s -> Exp s
+  Let :: Exp s -> Exp (1+s)s -> Exp s
  deriving syntax(e) LeftPair(App) Item(Lam)
