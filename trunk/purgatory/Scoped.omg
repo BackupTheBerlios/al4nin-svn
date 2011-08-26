@@ -15,3 +15,11 @@ data Exp :: Kind ~> Scope ~> * where
   In :: Exp Prod 0s -- junk, never terminates a Let!
   Let :: Label name -> Exp k s -> Exp k' (1+s)s -> Exp Prod s
  deriving syntax(e) Record(In, Let) LeftPair(App) Item(Lam) Nat(Here, Surrounding)
+
+-- raise scope
+unnest :: Exp k (1+s)s -> Exp k s
+unnest (1+v)e = v
+
+-- eta conversion
+eta :: Exp Prod s -> exists k . Exp k s
+eta ((f, 0e)e)e = Ex (unnest f)
