@@ -3,10 +3,14 @@ data Scope :: *1 where
   Nest :: Scope ~> Scope
  deriving Nat(s)
 
-data Exp :: Scope ~> * where
-  Here :: Exp (1+s)s
-  Surrounding :: Exp s -> Exp (1+s)s
-  Lam :: Exp (1+s)s -> Exp s
-  App :: Exp s -> Exp s -> Exp s
-  Let :: Exp s -> Exp (1+s)s -> Exp s
+kind Kind = Acc | Prod
+
+data Exp :: Kind ~> Scope ~> * where
+  -- Accessors
+  Here :: Exp Acc (1+s)s
+  Surrounding :: Exp Acc s -> Exp Acc (1+s)s
+  -- Producers
+  Lam :: Exp k (1+s)s -> Exp Prod s
+  App :: Exp k s -> Exp k s -> Exp Prod s
+  Let :: Exp k s -> Exp k (1+s)s -> Exp Prod s
  deriving syntax(e) LeftPair(App) Item(Lam) Nat(Here, Surrounding)
