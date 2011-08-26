@@ -19,6 +19,7 @@ data Exp :: Kind ~> Scope ~> * where
  deriving syntax(e) Record(In, Let) LeftPair(App) Item(Lam) Nat(Here, Surrounding)
 
 -- raise scope
+--
 unnest :: Exp k (1+s)s -> Maybe (Exp k s)
 unnest (1+v)e = Just v
 unnest In = unreachable
@@ -28,6 +29,16 @@ unnest {n=e;r}e = do { e' <- unnest e; r' <- unnest r; return {n=e';r'}e } where
 unnest _ = Nothing
 
 -- eta conversion
+--
 eta :: Exp k' s -> Maybe (exists k . Exp k s)
 eta ((f, 0e)e)e = do { f' <- unnest f; return (Ex f') } where monad maybeM
 eta _ = Nothing
+
+-- evaluation
+evalStep :: Exp k' s -> Maybe (exists k . Exp k s)
+evalStep (f@(e)e) = case eta f of
+                    f'@(Just _) -> f'
+                    _ -> do
+                         Ex e' <- evalStep e
+                         return (Ex (e')e)
+                           where monad maybeM
