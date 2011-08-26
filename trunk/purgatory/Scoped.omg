@@ -35,7 +35,7 @@ occurs v (f,a)e = if occurs' v f then True else occurs' v a
 occurs v (e)e = let deeper = (1+v)e in occurs' deeper e
 --occurs v {_=outer; inner}e = let deeper = (1+v)e in if occurs' v outer then True else occurs' deeper inner
 
-occurs' :: Exp Acc s -> Exp k s -> Bool
+occurs' :: Exp Acc (1+s)s -> Exp k (1+s)s -> Bool
 occurs' 0e 0e = True
 {-
 occurs' _ 0e = False
