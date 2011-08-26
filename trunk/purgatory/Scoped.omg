@@ -76,7 +76,7 @@ evalStep (lt@{n=e; e'}e) = case evalStep e of
                            Just (Ex o) -> yep {n=o; e'}e
                            _ -> case evalStep e' of
                                 Just (Ex i) -> yep {n=e; i}e
-                                _ -> Nothing -- for now
+                                _ -> if occurs' 0e e' then Nothing else unnest' e'
 
 evalStep _ = Nothing
 
