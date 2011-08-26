@@ -8,4 +8,4 @@ data Exp :: Scope ~> * where
   Lam :: Exp (1+s)s -> Exp s
   App :: Exp s -> Exp s -> Exp s
   Let :: Exp s -> Exp (1+s)s -> Exp s
- deriving syntax(e) LeftPair(App) Item(Lam)
+ deriving syntax(e) LeftPair(App) Item(Lam) Tick(Var)
