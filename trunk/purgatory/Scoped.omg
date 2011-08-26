@@ -1,3 +1,5 @@
+import "LangPrelude.prg"
+
 data Scope :: *1 where
   Global :: Scope
   Nest :: Scope ~> Scope
@@ -17,9 +19,11 @@ data Exp :: Kind ~> Scope ~> * where
  deriving syntax(e) Record(In, Let) LeftPair(App) Item(Lam) Nat(Here, Surrounding)
 
 -- raise scope
-unnest :: Exp k (1+s)s -> Exp k s
-unnest (1+v)e = v
+unnest :: Exp k (1+s)s -> Maybe (Exp k s)
+unnest (1+v)e = Just v
+unnest _ = Nothing
 
 -- eta conversion
-eta :: Exp Prod s -> exists k . Exp k s
-eta ((f, 0e)e)e = Ex (unnest f)
+eta :: Exp k' s -> Maybe (exists k . Exp k s)
+eta ((f, 0e)e)e = do { f' <- unnest f; return (Ex f') } where monad maybeM
+eta _ = Nothing
