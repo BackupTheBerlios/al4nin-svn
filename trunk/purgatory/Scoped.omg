@@ -28,9 +28,6 @@ unnest (e)e = do { e' <- unnest e; return (e')e } where monad maybeM
 unnest {n=e;r}e = do { e' <- unnest e; r' <- unnest r; return {n=e';r'}e } where monad maybeM
 unnest _ = Nothing
 
---unnestSub :: (forall s . a -> Maybe a) -> Exp k (1+s)s -> Maybe (Exp k s)
---unnest (1+v)e = Just v 
-
 -- eta conversion
 --
 eta :: Exp k' s -> Maybe (exists k . Exp k s)
@@ -51,6 +48,7 @@ evalStep (f, e)e = case evalStep f of
                    _ -> case (evalStep e, f) of
                         (Just (Ex e'), _) -> yep (f, e')e
                         (_, (0e)e) -> yep e
+                        (_, ((1+v)e)e) -> yep v -- kill e
                         (_, (e')e) -> yep (Let `subst e e')
 evalStep _ = Nothing
 
@@ -61,3 +59,4 @@ yep a = do { return (Ex a) } where monad maybeM
 -- some examples
 etaCandidate = ((2e,0e)e)e
 appRedex = ((0e)e, 0e)e
+killRedex = ((5e)e, 0e)e
