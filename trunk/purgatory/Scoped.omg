@@ -28,6 +28,9 @@ unnest (e)e = do { e' <- unnest e; return (e')e } where monad maybeM
 unnest {n=e;r}e = do { e' <- unnest e; r' <- unnest r; return {n=e';r'}e } where monad maybeM
 unnest _ = Nothing
 
+unnest' :: Exp k' (1+s)s -> Maybe (exists k . Exp k s) 
+unnest' a = do { a' <- unnest a; return (Ex a') } where monad maybeM
+
 -- occurs test
 --
 occurs :: Exp Acc (1+s)s -> Exp Prod (1+s)s -> Bool
@@ -68,7 +71,7 @@ evalStep (f, e)e = case evalStep f of
                         (Just (Ex e'), _) -> yep (f, e')e
                         (_, (0e)e) -> yep e
                         (_, ((1+v)e)e) -> yep v -- kill e
-                        (_, (e')e) -> yep (Let `subst e e')
+                        (_, (e')e) -> if occurs' 0e e' then yep (Let `subst e e') else unnest' e'
 evalStep _ = Nothing
 
 yep :: Exp k' s -> Maybe (exists k . Exp k s)
@@ -79,3 +82,4 @@ yep a = do { return (Ex a) } where monad maybeM
 etaCandidate = ((2e,0e)e)e
 appRedex = ((0e)e, 0e)e
 killRedex = ((5e)e, 0e)e
+unoccurRedex = (({`g=1e;5e}e)e, 0e)e
