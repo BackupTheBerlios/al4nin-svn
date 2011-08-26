@@ -33,17 +33,18 @@ unnest _ = Nothing
 occurs :: Exp Acc (1+s)s -> Exp Prod (1+s)s -> Bool
 occurs v (f,a)e = if occurs' v f then True else occurs' v a
 occurs v (e)e = let deeper = (1+v)e in occurs' deeper e
---occurs v {_=outer; inner}e = let deeper = (1+v)e in if occurs' v outer then True else occurs' deeper inner
+occurs v {_=outer; inner}e = let deeper = (1+v)e in if occurs' v outer then True else occurs' deeper inner
 
 occurs' :: Exp Acc (1+s)s -> Exp k (1+s)s -> Bool
 occurs' 0e 0e = True
-{-
 occurs' _ 0e = False
---occurs' 0e _ = False
-occurs' (1+v)e (1+v')e = occurs' v v'
+occurs' (1+v)e (1+v')e = comp v v'
+  where comp :: Exp Acc s -> Exp Acc s -> Bool
+        comp 0e 0e = True
+        comp (1+v)e (1+v')e = comp v v'
+        comp _ _ = False
 occurs' v (app@(_,_)e) = occurs v app
 occurs' v (lt@{_=_;_}e) = occurs v lt
--}
 
 -- eta conversion
 --
