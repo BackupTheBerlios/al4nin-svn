@@ -74,9 +74,11 @@ evalStep (f, e)e = case evalStep f of
                         (_, (e')e) -> if occurs' 0e e' then yep {`subst=e; e'}e else unnest' e'
 evalStep (lt@{n=e; e'}e) = case evalStep e of
                            Just (Ex o) -> yep {n=o; e'}e
-                           _ -> case evalStep e' of
-                                Just (Ex i) -> yep {n=e; i}e
-                                _ -> if occurs' 0e e' then Nothing else unnest' e'
+                           _ -> case (evalStep e', e') of
+                                (Just (Ex i), _) -> yep {n=e; i}e
+                                (_, 0e) -> yep e
+                                (_, (1+v)e) -> yep v -- discard
+                                (_, _) -> if occurs' 0e e' then Nothing else unnest' e'
 
 evalStep _ = Nothing
 
