@@ -28,6 +28,23 @@ unnest (e)e = do { e' <- unnest e; return (e')e } where monad maybeM
 unnest {n=e;r}e = do { e' <- unnest e; r' <- unnest r; return {n=e';r'}e } where monad maybeM
 unnest _ = Nothing
 
+-- occurs test
+--
+occurs :: Exp Acc (1+s)s -> Exp Prod (1+s)s -> Bool
+occurs v (f,a)e = if occurs' v f then True else occurs' v a
+occurs v (e)e = let deeper = (1+v)e in occurs' deeper e
+--occurs v {_=outer; inner}e = let deeper = (1+v)e in if occurs' v outer then True else occurs' deeper inner
+
+occurs' :: Exp Acc s -> Exp k s -> Bool
+occurs' 0e 0e = True
+{-
+occurs' _ 0e = False
+--occurs' 0e _ = False
+occurs' (1+v)e (1+v')e = occurs' v v'
+occurs' v (app@(_,_)e) = occurs v app
+occurs' v (lt@{_=_;_}e) = occurs v lt
+-}
+
 -- eta conversion
 --
 eta :: Exp k' s -> Maybe (exists k . Exp k s)
