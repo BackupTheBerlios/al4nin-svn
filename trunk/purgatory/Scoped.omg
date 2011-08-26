@@ -4,8 +4,9 @@ data Scope :: *1 where
  deriving Nat(s)
 
 data Exp :: Scope ~> * where
-  Var :: Int -> Exp s
+  Here :: Exp (1+s)s
+  Surrounding :: Exp s -> Exp (1+s)s
   Lam :: Exp (1+s)s -> Exp s
   App :: Exp s -> Exp s -> Exp s
   Let :: Exp s -> Exp (1+s)s -> Exp s
- deriving syntax(e) LeftPair(App) Item(Lam) Tick(Var)
+ deriving syntax(e) LeftPair(App) Item(Lam) Nat(Here, Surrounding)
