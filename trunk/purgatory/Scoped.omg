@@ -1,0 +1,7 @@
+
+data Exp :: * where
+  Var :: Int -> Exp
+  Lam :: Exp -> Exp
+  App :: Exp -> Exp -> Exp
+  Let :: Exp -> Exp -> Exp
+ deriving syntax(e) LeftPair(App) Item(Lam)
