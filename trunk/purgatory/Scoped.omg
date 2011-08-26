@@ -47,12 +47,16 @@ evalStep (f@(e)e) = case eta f of
                          return (Ex (e')e)
                            where monad maybeM
 evalStep (f, e)e = case evalStep f of
-                   Just (Ex f') -> do { return (Ex (f', e)e) } where monad maybeM -- #issue98! Just (Ex (f', e)e))
+                   Just (Ex f') -> yep (f', e)e
                    _ -> case (evalStep e, f) of
-                        (Just (Ex e'), _) -> do { return (Ex (f, e')e) } where monad maybeM -- #issue98!
-                        (_, (0e)e) -> do { return (Ex e) } where monad maybeM -- #issue98!
-                        (_, (e')e) -> do { return (Ex (Let `subst e e')) } where monad maybeM -- #issue98!
+                        (Just (Ex e'), _) -> yep (f, e')e
+                        (_, (0e)e) -> yep e
+                        (_, (e')e) -> yep (Let `subst e e')
 evalStep _ = Nothing
+
+yep :: Exp k' s -> Maybe (exists k . Exp k s)
+yep a = do { return (Ex a) } where monad maybeM
+-- yep a = Just (Ex a) -- #issue98!
 
 -- some examples
 etaCandidate = ((2e,0e)e)e
