@@ -21,6 +21,10 @@ data Exp :: Kind ~> Scope ~> * where
 -- raise scope
 unnest :: Exp k (1+s)s -> Maybe (Exp k s)
 unnest (1+v)e = Just v
+unnest In = unreachable
+unnest (f,a)e = do { f' <- unnest f; a' <- unnest a; return (f',a')e } where monad maybeM
+unnest (e)e = do { e' <- unnest e; return (e')e } where monad maybeM
+unnest {n=e;r}e = do { e' <- unnest e; r' <- unnest r; return {n=e';r'}e } where monad maybeM
 unnest _ = Nothing
 
 -- eta conversion
