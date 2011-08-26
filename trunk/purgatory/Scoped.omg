@@ -35,6 +35,7 @@ eta ((f, 0e)e)e = do { f' <- unnest f; return (Ex f') } where monad maybeM
 eta _ = Nothing
 
 -- evaluation
+--
 evalStep :: Exp k' s -> Maybe (exists k . Exp k s)
 evalStep (f@(e)e) = case eta f of
                     f'@(Just _) -> f'
@@ -42,3 +43,13 @@ evalStep (f@(e)e) = case eta f of
                          Ex e' <- evalStep e
                          return (Ex (e')e)
                            where monad maybeM
+evalStep (f, e)e = case evalStep f of
+                   Just (Ex f') -> do { return (Ex (f', e)e) } where monad maybeM -- Just (Ex (f', e)e))
+                   _ -> do
+                        Ex e' <- evalStep e 
+                        return (Ex (f, e')e) 
+                           where monad maybeM
+evalStep _ = Nothing
+
+-- some examples
+etaCandidate = ((2e,0e)e)e
