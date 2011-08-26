@@ -12,5 +12,6 @@ data Exp :: Kind ~> Scope ~> * where
   -- Producers
   Lam :: Exp k (1+s)s -> Exp Prod s
   App :: Exp k s -> Exp k s -> Exp Prod s
-  Let :: Exp k s -> Exp k (1+s)s -> Exp Prod s
- deriving syntax(e) LeftPair(App) Item(Lam) Nat(Here, Surrounding)
+  In :: Exp Prod 0s -- junk, never terminates a Let!
+  Let :: Label name -> Exp k s -> Exp k (1+s)s -> Exp Prod s
+ deriving syntax(e) Record(In, Let) LeftPair(App) Item(Lam) Nat(Here, Surrounding)
