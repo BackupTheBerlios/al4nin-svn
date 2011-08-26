@@ -31,6 +31,17 @@ unnest _ = Nothing
 unnest' :: Exp k' (1+s)s -> Maybe (exists k . Exp k s) 
 unnest' a = do { a' <- unnest a; return (Ex a') } where monad maybeM
 
+unnest'' :: Exp k'' s -> Exp k' (1+s)s -> Maybe (exists k . Exp k s) 
+unnest'' _ (1+v)e = yep v 
+unnest'' _  In = unreachable
+unnest'' d (f,a)e = do { Ex f' <- unnest'' d f; Ex a' <- unnest'' d a; return (Ex (f',a')e) } where monad maybeM 
+{-
+unnest (e)e = do { e' <- unnest e; return (e')e } where monad maybeM 
+unnest {n=e;r}e = do { e' <- unnest e; r' <- unnest r; return {n=e';r'}e } where monad maybeM 
+-}
+unnest'' a 0e = yep a
+unnest'' _ _ = Nothing
+
 -- occurs test
 --
 occurs :: Exp Acc (1+s)s -> Exp Prod (1+s)s -> Bool
@@ -72,14 +83,14 @@ evalStep (f, e)e = case evalStep f of
                         (_, (0e)e) -> yep e
                         (_, ((1+v)e)e) -> yep v -- kill e
                         (_, (e')e) -> if occurs' 0e e' then yep {`subst=e; e'}e else unnest' e'
-evalStep (lt@{n=e; e'}e) = case evalStep e of
-                           Just (Ex o) -> yep {n=o; e'}e
-                           _ -> case (evalStep e', e') of
-                                (Just (Ex i), _) -> yep {n=e; i}e
-                                (_, 0e) -> yep e
-                                (_, (1+v)e) -> yep v -- discard
-                                (_, _) -> if occurs' 0e e' then Nothing else unnest' e'
-
+                        (_, _) -> Nothing -- stuck
+evalStep {n=e; e'}e = case evalStep e of
+                      Just (Ex o) -> yep {n=o; e'}e
+                      _ -> case (evalStep e', e') of
+                           (Just (Ex i), _) -> yep {n=e; i}e
+                           (_, 0e) -> yep e
+                           (_, (1+v)e) -> yep v -- discard
+                           (_, _) -> if occurs' 0e e' then unnest'' e e' else unnest' e'
 evalStep _ = Nothing
 
 yep :: Exp k' s -> Maybe (exists k . Exp k s)
