@@ -29,12 +29,12 @@ unnest {n=e;r}e = do { e' <- unnest e; r' <- unnest r; return {n=e';r'}e } where
 unnest _ = Nothing
 
 unnest' :: Exp k' (1+s)s -> Maybe (exists k . Exp k s) 
-unnest' a = do { a' <- unnest a; return (Ex a') } where monad maybeM
+unnest' a = do { a' <- unnest a; yep a' } where monad maybeM
 
 unnest'' :: Exp k'' s -> Exp k' (1+s)s -> Maybe (exists k . Exp k s) 
 unnest'' _ (1+v)e = yep v 
 unnest'' _  In = unreachable
-unnest'' d (f,a)e = do { Ex f' <- unnest'' d f; Ex a' <- unnest'' d a; return (Ex (f',a')e) } where monad maybeM 
+unnest'' d (f,a)e = do { Ex f' <- unnest'' d f; Ex a' <- unnest'' d a; yep (f',a')e } where monad maybeM 
 unnest'' d (e)e = do { Ex e' <- unnest'' (nest d) e; yep (e')e } where monad maybeM 
 unnest'' d {n=e;r}e = do { Ex e' <- unnest'' d e; Ex r' <- unnest'' (nest d) r; yep {n=e';r'}e } where monad maybeM
 unnest'' d 0e = yep d
@@ -69,7 +69,7 @@ occurs' v (lt@{_=_;_}e) = occurs v lt
 -- eta conversion
 --
 eta :: Exp k' s -> Maybe (exists k . Exp k s)
-eta ((f, 0e)e)e = do { f' <- unnest f; return (Ex f') } where monad maybeM
+eta ((f, 0e)e)e = do { f' <- unnest f; yep f' } where monad maybeM
 eta _ = Nothing
 
 -- evaluation
@@ -79,7 +79,7 @@ evalStep (f@(e)e) = case eta f of
                     f'@(Just _) -> f'
                     _ -> do
                          Ex e' <- evalStep e
-                         return (Ex (e')e)
+                         yep (e')e
                            where monad maybeM
 evalStep (f, e)e = case evalStep f of
                    Just (Ex f') -> yep (f', e)e
