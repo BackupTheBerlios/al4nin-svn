@@ -18,7 +18,7 @@ data Exp :: Kind ~> Scope ~> * where
   Let :: Label name -> Exp k s -> Exp k' (1+s)s -> Exp Prod s
  deriving syntax(e) Record(In, Let) LeftPair(App) Item(Lam) Nat(Here, Surrounding)
 
--- raise scope
+-- raise/lower scope
 --
 unnest :: Exp k (1+s)s -> Maybe (Exp k s)
 unnest (1+v)e = Just v
@@ -35,12 +35,17 @@ unnest'' :: Exp k'' s -> Exp k' (1+s)s -> Maybe (exists k . Exp k s)
 unnest'' _ (1+v)e = yep v 
 unnest'' _  In = unreachable
 unnest'' d (f,a)e = do { Ex f' <- unnest'' d f; Ex a' <- unnest'' d a; return (Ex (f',a')e) } where monad maybeM 
-{-
-unnest (e)e = do { e' <- unnest e; return (e')e } where monad maybeM 
-unnest {n=e;r}e = do { e' <- unnest e; r' <- unnest r; return {n=e';r'}e } where monad maybeM 
--}
-unnest'' a 0e = yep a
+unnest'' d (e)e = do { Ex e' <- unnest'' (nest d) e; yep (e')e } where monad maybeM 
+unnest'' d {n=e;r}e = do { Ex e' <- unnest'' d e; Ex r' <- unnest'' (nest d) r; yep {n=e';r'}e } where monad maybeM
+unnest'' d 0e = yep d
 unnest'' _ _ = Nothing
+
+nest :: Exp k s -> Exp k (1+s)s 
+nest 0e = 1e
+nest (v@(1+_)e) = (1+v)e
+nest (f,a)e = (nest f, nest a)e
+nest (e)e = (nest e)e
+nest {n=e;r}e = {n=nest e; nest r}e
 
 -- occurs test
 --
@@ -102,3 +107,9 @@ etaCandidate = ((2e,0e)e)e
 appRedex = ((0e)e, 0e)e
 killRedex = ((5e)e, 0e)e
 unoccurRedex = (({`g=1e;5e}e)e, 0e)e
+
+
+-- TODO
+--   - pretty-print
+--   - named access
+--   - globals
