@@ -76,7 +76,7 @@ eta _ = Nothing
 --
 evalStep :: Exp k' s -> Maybe (exists k . Exp k s)
 evalStep (f@(e)e) = case eta f of
-                    f'@(Just _) -> f'
+                    f'@Just _ -> f'
                     _ -> do
                          Ex e' <- evalStep e
                          yep (e')e
