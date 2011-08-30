@@ -25,13 +25,8 @@ command 'oP'
 The continuation above will be 'iT' for the test input 't1'
 so we have to define it
 
-> -- iT :: ((Maybe Bar -> Foo) -> a -> Foo) -> (a -> Foo)
-> -- iP :: (Maybe Bar -> a) -> [Int] -> a
-> --iT :: (([Int] -> Maybe Bar -> Foo) -> ([Int] -> Maybe Bar -> Foo)) -> [Int] -> Maybe Bar -> Foo
-> -- iT :: ([Int] -> Maybe Bar -> Foo) -> [Int] -> Maybe Bar -> Foo
 > iT = ($)
 
-> --iP :: (Maybe Bar -> a) -> [Int] -> a
 > iP sofar val = sofar $ Just $ Bar val
 
 As we can see, it simply applies it.
@@ -39,7 +34,7 @@ As we can see, it simply applies it.
 When we only partially saturate it, it is harder to
 show
 
-> t2 = oP [1347] iT [108] -- iP [1377]
+> t2 = oP [1347] iT [108]
 
 > instance Show b => Show (Maybe a -> b) where
 >   show a = show $ a Nothing
