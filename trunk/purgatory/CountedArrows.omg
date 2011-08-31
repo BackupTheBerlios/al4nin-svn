@@ -21,6 +21,36 @@ data HideCount :: * ~> *1 where
 --data Arrow :: HideCount t ~> * where
 --  In :: CountedArrow n (a -> b) -> Arrow (Arr n a b)
 
+-- Colored types
+kind SurfaceColor = Yellow | Green | Blue | Red
+
+-- Type regime
+data Type :: *1 where
+  Clr :: SurfaceColor ~> SurfaceColor ~> Type
+  Ar :: Type ~> Type ~> Type
+
+-- colored Nat and Bool types
+type N' = Clr Yellow Green
+type B' = Clr Blue Red
+
+-- polarity
+kind Polarity = Pos | Neg
+
+rev :: Type ~> Type
+{rev (Clr a b)} = Clr b a
+
+toType :: Polarity ~> * ~> Type
+{toType Pos Int} = N'
+{toType Neg Int} = {rev N'}
+{toType Pos Bool} = B'
+{toType Neg Bool} = {rev B'}
+
+fromType :: Type ~> *
+{fromType N'} = Int
+{fromType (Clr Green Yellow)} = Int
+{fromType B'} = Bool
+{fromType (Clr Red Blue)} = Bool
+
 
 -- TODO: - find out why prompt> ":k Arr 1t Int" fails
 --       - introduce polarity, detect existentials
