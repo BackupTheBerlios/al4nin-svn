@@ -20,3 +20,8 @@ data HideCount :: * ~> *1 where
 
 --data Arrow :: HideCount t ~> * where
 --  In :: CountedArrow n (a -> b) -> Arrow (Arr n a b)
+
+
+-- TODO: - find out why prompt> ":k Arr 1t Int" fails
+--       - introduce polarity, detect existentials
+--       - introduce Check::Rep a->CA   and infer()
