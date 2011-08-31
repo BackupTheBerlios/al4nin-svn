@@ -11,4 +11,5 @@ data CountedArrow :: Nat ~> * ~> * where
   Var :: Label l -> CountedArrow n b
   App :: CountedArrow (1+n)t (a -> b) -> CountedArrow m b -> CountedArrow n b
   Lam :: Label l -> CountedArrow n b -> CountedArrow (1+n)t (a -> b)
-
+  Let :: Label l -> CountedArrow n' a -> CountedArrow n'' b -> CountedArrow n c
+ deriving syntax(c) Applicative(Var, App, Lam, Let)
