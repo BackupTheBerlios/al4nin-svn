@@ -13,3 +13,10 @@ data CountedArrow :: Nat ~> * ~> * where
   Lam :: Label l -> CountedArrow n b -> CountedArrow (1+n)t (a -> b)
   Let :: Label l -> CountedArrow n' a -> CountedArrow n'' b -> CountedArrow n c
  deriving syntax(c) Applicative(Var, App, Lam, Let)
+
+
+data HideCount :: * ~> *1 where
+  Arr :: forall (a :: *) (b :: *) . Nat ~> a ~> b ~> HideCount (a -> b)
+
+--data Arrow :: HideCount t ~> * where
+--  In :: CountedArrow n (a -> b) -> Arrow (Arr n a b)
