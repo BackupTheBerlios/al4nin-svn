@@ -5,7 +5,10 @@ recount :: Nat ~> Nat ~> * ~> Nat
 {recount m 0t a} = m
 {recount m (1+n)t (a -> b)} = {recount m n b}
 
-data ContedArrow :: Nat ~> * ~> * ~> * where
-  Pure :: Nat' n -> (a -> b) -> ContedArrow n a b
-
+data CountedArrow :: Nat ~> * ~> * where
+  Int :: Int -> CountedArrow 0t Int
+  Pure :: Nat' (1+n)t -> (a -> b) -> CountedArrow {recount (1+n)t n b} (a -> b)
+  Var :: Label l -> CountedArrow n b
+  App :: CountedArrow (1+n)t (a -> b) -> CountedArrow m b -> CountedArrow n b
+  Lam :: Label l -> CountedArrow n b -> CountedArrow (1+n)t (a -> b)
 
