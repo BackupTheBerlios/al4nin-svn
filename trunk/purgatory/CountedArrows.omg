@@ -22,16 +22,19 @@ data HideCount :: * ~> *1 where
 --  In :: CountedArrow n (a -> b) -> Arrow (Arr n a b)
 
 -- Colored types
-kind SurfaceColor = Yellow | Green | Blue | Red
+kind SurfaceColor = Yellow | Green | Blue | Red | Purple | Black | White
 
 -- Type regime
 data Type :: *1 where
   Clr :: SurfaceColor ~> SurfaceColor ~> Type
   Ar :: Type ~> Type ~> Type
+  Pr :: Type ~> Type ~> Type
+  Su :: Type ~> Type ~> Type
 
 -- colored Nat and Bool types
 type N' = Clr Yellow Green
 type B' = Clr Blue Red
+type U' = Clr Red Purple
 
 -- polarity
 kind Polarity = Pos | Neg
@@ -44,13 +47,24 @@ toType :: Polarity ~> * ~> Type
 {toType Neg Int} = {rev N'}
 {toType Pos Bool} = B'
 {toType Neg Bool} = {rev B'}
+{toType Pos ()} = U'
+{toType Neg ()} = {rev U'}
+
+{toType Pos (a->b)} = Ar {toType Neg a} {toType Pos b}
+{toType Neg (a->b)} = Ar {toType Pos a} {toType Neg b} 
+{toType p (a + b)} = Su {toType p a} {toType p b}
+{toType p (a, b)} = Pr {toType p a} {toType p b}
 
 fromType :: Type ~> *
 {fromType N'} = Int
 {fromType (Clr Green Yellow)} = Int
 {fromType B'} = Bool
 {fromType (Clr Red Blue)} = Bool
-
+{fromType U'} = ()
+{fromType (Clr Purple Red)} = ()
+{fromType (Ar a b)} = {fromType a} -> {fromType b}
+{fromType (Su a b)} = ({fromType a} + {fromType b})
+{fromType (Pr a b)} = ({fromType a}, {fromType b})
 
 -- TODO: - find out why prompt> ":k Arr 1t Int" fails
 --       - introduce polarity, detect existentials
