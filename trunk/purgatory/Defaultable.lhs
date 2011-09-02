@@ -1,4 +1,4 @@
-> {-# LANGUAGE FlexibleInstances, UndecidableInstances, MultiParamTypeClasses #-}
+> {-# LANGUAGE FlexibleInstances, UndecidableInstances, MultiParamTypeClasses, FlexibleContexts #-}
 
 > module Foo where
 
@@ -32,7 +32,7 @@ i.e. the value <defaulted> at third argument should also work.
 >   squelch b _ = b
 
 > instance (c `TrailedBy` b) => (d -> c) `TrailedBy` b where
->   squelch b dc = \ _ -> squelch b (dc undefined)
+>   squelch b dc _ = squelch b (dc undefined)
 
 > class Defaultable a where
 >   defaulted :: a
@@ -42,16 +42,21 @@ i.e. the value <defaulted> at third argument should also work.
 
 
 > instance ((d -> c) `TrailedBy` b) => Defaultable ((Maybe a -> b) -> d -> c) where
->  defaulted f = squelch (f Nothing) (defaulted f)
+>   defaulted f = squelch (f Nothing) $ defaulted f
 
-
+> ersetzBar = defaulted :: (Maybe Bar -> Foo) -> Int -> Foo
+> ersetzBar' = defaulted :: (Maybe Bar -> Foo) -> Foo
 
 ;> instance Defaultable ((Maybe a -> b) -> b) =>
 ;>          Defaultable ((Maybe a -> b) -> c -> b) where 
 ;>  defaulted f _ = f Nothing 
 
 
-> bar :: Int -> ((Maybe Bar -> Foo) -> Int -> Foo) -> Int -> Foo
+;> bar :: Int -> ((Maybe Bar -> Foo) -> Int -> Foo) -> Int -> Foo
+
+;> bar :: (c `TrailedBy` Foo, Defaultable ((Maybe Bar -> Foo) -> c)) => Int -> ((Maybe Bar -> Foo) -> c) -> c
+
+> bar :: Defaultable ((Maybe Bar -> Foo) -> c) => Int -> ((Maybe Bar -> Foo) -> c) -> c
 > bar i cont = cont $ Foo [i] [i]
 
 > m sofar = let j = 42 in sofar . Just $ Bar [j] [j]
