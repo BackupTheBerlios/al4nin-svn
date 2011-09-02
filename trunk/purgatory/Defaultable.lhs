@@ -2,7 +2,47 @@
 
 > module Foo where
 
-import Prelude
+> import Prelude
+
+-- TODO: check whether it is sufficient to annotate the penultimate combinator?
+-------  
+
+
+This is the theory:
+if we have a function typed as
+foo :: bla -> bar -> (Maybe a -> Foo) -> Foo
+
+then doing
+
+foo bla bar _defaulted_
+
+automatically supply the Nothing.
+
+Then we can go on and do the same for all signatures like this:
+
+foo :: bla -> bar -> (Maybe a -> (quuz -> (... -> Foo)) -> (quuz -> (... -> Foo))
+
+i.e. the value <defaulted> at third argument should also work.
+
+> class Defaultable a where
+>   defaulted :: a
+
+
+> instance Defaultable ((Maybe a -> b) -> b) where
+>  defaulted f = f Nothing
+
+> instance Defaultable ((Maybe a -> b) -> b) =>
+>          Defaultable ((Maybe a -> b) -> c -> b) where 
+>  defaulted f _ = f Nothing 
+
+
+> bar :: Int -> ((Maybe Bar -> Foo) -> Int -> Foo) -> Int -> Foo
+> bar i cont = cont $ Foo [i] [i]
+
+> m sofar = let j = 42 in sofar . Just $ Bar [j] [j]
+
+> m2 sofar j = sofar . Just $ Bar [j] [j]
+
 
 Let's define the data structure we want to fill in
 
