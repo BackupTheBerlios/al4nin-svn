@@ -1,4 +1,4 @@
-> {-# LANGUAGE FlexibleInstances, UndecidableInstances #-}
+> {-# LANGUAGE FlexibleInstances, UndecidableInstances, MultiParamTypeClasses #-}
 
 > module Foo where
 
@@ -24,16 +24,31 @@ foo :: bla -> bar -> (Maybe a -> (quuz -> (... -> Foo)) -> (quuz -> (... -> Foo)
 
 i.e. the value <defaulted> at third argument should also work.
 
+
+> class c `TrailedBy` b where
+>   squelch :: b -> c -> c
+
+> instance b `TrailedBy` b where
+>   squelch b _ = b
+
+> instance (c `TrailedBy` b) => (d -> c) `TrailedBy` b where
+>   squelch b dc = \ _ -> squelch b (dc undefined)
+
 > class Defaultable a where
 >   defaulted :: a
 
-
 > instance Defaultable ((Maybe a -> b) -> b) where
->  defaulted f = f Nothing
+>   defaulted f = f Nothing
 
-> instance Defaultable ((Maybe a -> b) -> b) =>
->          Defaultable ((Maybe a -> b) -> c -> b) where 
->  defaulted f _ = f Nothing 
+
+> instance ((d -> c) `TrailedBy` b) => Defaultable ((Maybe a -> b) -> d -> c) where
+>  defaulted f = squelch (f Nothing) (defaulted f)
+
+
+
+;> instance Defaultable ((Maybe a -> b) -> b) =>
+;>          Defaultable ((Maybe a -> b) -> c -> b) where 
+;>  defaulted f _ = f Nothing 
 
 
 > bar :: Int -> ((Maybe Bar -> Foo) -> Int -> Foo) -> Int -> Foo
