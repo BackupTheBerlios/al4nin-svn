@@ -15,6 +15,9 @@ http://strictlypositive.org/view.ps.gz
 
 > module Exp where
 
+> import Data.Thrist
+> import Text.ParserCombinators.Parsec
+
 > data Term
 > data Pattern
 
@@ -44,3 +47,32 @@ Here are some test expressions:
 > test1 = Equal (Var (Name "xx")) (Lam (Bound (Name "gg", Var (Name "gg"))))
 > test2 = Equal (Con "S" [Con "Z" []]) (Con "Z" [])
 
+> symbol a = do { spaces
+>               ; string a }
+
+> name :: Parser String
+> name = do spaces
+>           many1 letter
+
+> -- parens  = between (symbol "(") (symbol ")")
+
+> lambda = do symbol "\\"
+>             n <- name
+>             symbol "."
+>             e <- expr
+>             return $ Lam (Bound (Name n, e))
+
+> apply = do e1 <- expr
+>            symbol "@"
+>            e2 <- expr
+>            return $ App e1 e2
+
+> expr = lambda <|> apply
+
+> program = do e <- expr
+>              eof
+
+> main = do e <- parseFromFile program "pat-term.txt"
+>           case e of
+>            Left err -> print err
+>            Right xs  -> print $ show e
