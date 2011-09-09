@@ -62,17 +62,23 @@ Here are some test expressions:
 >             e <- expr
 >             return $ Lam (Bound (Name n, e))
 
-> apply = do e1 <- expr
+> apply = do symbol "("
+>            e1 <- expr
 >            symbol "@"
 >            e2 <- expr
+>            symbol ")"
 >            return $ App e1 e2
 
-> expr = lambda <|> apply
+> var = fmap (Var . Name) name
+
+
+> expr = var <|> lambda <|> apply
 
 > program = do e <- expr
+>              many newline
 >              eof
 
-> main = do e <- parseFromFile program "pat-term.txt"
->           case e of
+> main = do result <- parseFromFile program "pat-term.txt"
+>           case result of
 >            Left err -> print err
->            Right xs  -> print $ show e
+>            Right e  -> print $ show e

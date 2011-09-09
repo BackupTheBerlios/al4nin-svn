@@ -1,2 +1,1 @@
-
-\x.x @ \bac.hac
+\x.(x@\bac.hac)
