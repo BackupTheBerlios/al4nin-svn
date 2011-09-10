@@ -4,6 +4,7 @@
 > import Data.Char
 > import Control.Monad
 > import Control.Monad.Identity
+> import Control.Arrow
 
 We need a pseudo-Parsec for demonstration
 
@@ -35,4 +36,12 @@ It is the identity monad (for now)
 
 > theAnswer = produce ord
 
-> 
+> class Materializable arrow where
+>   materialize :: Arrow arrow => arrow (Parser a) (Parser b)
+>   materialize = undefined
+
+> instance Materializable (->) where
+>   materialize = undefined
+
+
+
