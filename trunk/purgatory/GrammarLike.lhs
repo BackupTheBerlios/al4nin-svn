@@ -1,4 +1,4 @@
-> {-# LANGUAGE TypeFamilies, ScopedTypeVariables #-}
+> {-# LANGUAGE TypeFamilies, FlexibleInstances, TupleSections #-}
 
 
 > import Data.Char
@@ -41,8 +41,8 @@ It is the identity monad (for now)
 >   produce _ = anyChar
 
 > instance (GrammarLike d, GrammarLike r) => GrammarLike (d -> r) where
->   type Final (d -> r) = Final r
->   produce f = do { d <- pd; produce (f undefined) }
+>   type Final (d -> r) = (r, Final r)
+>   produce f = do { d <- pd; fmap (f d,) $ produce (f undefined) }
 >     where converse :: (d -> r) -> (r -> d)
 >           converse = undefined
 >           pd = produce $ converse f undefined
@@ -65,5 +65,12 @@ Time to make something concrete
 >   type Final Foo = Foo
 >   produce f = return f
 
+> instance GrammarLike (Foo, Foo) where
+>   type Final (Foo, Foo) = Foo
+>   produce (good, junk) = return good
+
 
 > t1 = produce F
+
+;> instance (GrammarLike d) => GrammarLike (d, d) where
+;>   type Final (d, d) = d
