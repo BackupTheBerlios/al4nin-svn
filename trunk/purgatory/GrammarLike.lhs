@@ -21,14 +21,17 @@ It is the identity monad (for now)
 > anyChar :: Parser Char
 > anyChar = undefined
 
+> natural :: Parser Int
+> natural = undefined
+
 
 > class GrammarLike a where
 >   type Final a
 >   produce :: a -> Final a
 
 > instance GrammarLike Int where
->   type Final Int = Int
->   produce _ = 42
+>   type Final Int = Parser Int
+>   produce _ = return 42
 
 > instance GrammarLike r => GrammarLike (d -> r) where
 >   type Final (d -> r) = Final r
@@ -43,5 +46,10 @@ It is the identity monad (for now)
 > instance Materializable (->) where
 >   materialize = undefined
 
+Time to make something concrete
 
+> data Foo = F Int
 
+> instance GrammarLike Foo where
+>   type Final Foo = Parser Foo
+>   produce f = return f
