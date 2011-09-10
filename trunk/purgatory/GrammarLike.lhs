@@ -3,17 +3,17 @@
 
 > import Data.Char
 
-> class GL a where
+> class GrammarLike a where
 >   type Final a
->   foo :: a -> Final a
+>   produce :: a -> Final a
 
-> instance GL Int where
+> instance GrammarLike Int where
 >   type Final Int = Int
->   foo _ = 42
+>   produce _ = 42
 
-> instance GL r => GL (d -> r) where
+> instance GrammarLike r => GrammarLike (d -> r) where
 >   type Final (d -> r) = Final r
->   foo on = foo $ on undefined
+>   produce on = produce $ on undefined
 
-> theAnswer = foo ord
+> theAnswer = produce ord
 
