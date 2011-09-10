@@ -1,4 +1,4 @@
-> {-# LANGUAGE TypeFamilies, FlexibleInstances, TupleSections #-}
+> {-# LANGUAGE TypeFamilies, FlexibleInstances, TupleSections, FlexibleContexts, UndecidableInstances #-}
 
 
 > import Data.Char
@@ -40,15 +40,19 @@ It is the identity monad (for now)
 >   type Final Char = Char
 >   produce _ = anyChar
 
-> instance (GrammarLike d, GrammarLike r) => GrammarLike (d -> r) where
->   type Final (d -> r) = (r, Final r)
->   produce f = do { d <- pd; fmap (f d,) $ produce (f undefined) }
+> instance (GrammarLike d, GrammarLike r, GrammarLike (d, r)) => GrammarLike (d -> r) where
+>   type Final (d -> r) = Final (Final d, r)
+>   produce f = do { d <- pd; produce (d, f undefined) }
 >     where converse :: (d -> r) -> (r -> d)
 >           converse = undefined
 >           pd = produce $ converse f undefined
 
-> theAnswer :: Parser Int
-> theAnswer = produce ord
+;> theAnswer :: Parser Char
+;> theAnswer = produce . produce ord
+
+> instance GrammarLike (Char, Int) where
+>   type Final (Char, Int) = Int
+>   produce (good, junk) = return 43
 
 > class Materializable arrow where
 >   materialize :: Arrow arrow => arrow (Parser a) (Parser b)
@@ -65,12 +69,16 @@ Time to make something concrete
 >   type Final Foo = Foo
 >   produce f = return f
 
-> instance GrammarLike (Foo, Foo) where
->   type Final (Foo, Foo) = Foo
->   produce (good, junk) = return good
+> instance GrammarLike (Int, Foo) where
+>   type Final (Int, Foo) = Foo
+>   produce (good, junk) = return (F good)
 
 
 > t1 = produce F
+
+> instance (GrammarLike d, GrammarLike r) => GrammarLike (d, r) where
+>   type Final (d, r) = ()
+>   produce _ = undefined
 
 ;> instance (GrammarLike d) => GrammarLike (d, d) where
 ;>   type Final (d, d) = d
