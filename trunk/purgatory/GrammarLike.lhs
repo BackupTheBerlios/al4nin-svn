@@ -20,10 +20,10 @@ It is the identity monad (for now)
 > --  v >>= t = t v
 
 > anyChar :: Parser Char
-> anyChar = undefined
+> anyChar = return '%'
 
 > natural :: Parser Int
-> natural = undefined
+> natural = return 42
 
 
 > -- class GrammarLike m a where
@@ -34,13 +34,14 @@ It is the identity monad (for now)
 
 > instance GrammarLike Int where
 >   type Final Int = Int
->   produce _ = return 42
+>   produce _ = natural
 
 > instance GrammarLike Char where
 >   type Final Char = Char
 >   produce _ = anyChar
 
-> instance (GrammarLike d, d ~ Final d, GrammarLike r) => GrammarLike (d -> r) where
+> instance (GrammarLike d, d ~ Final d, GrammarLike r)
+>     => GrammarLike (d -> r) where
 >   type Final (d -> r) = Final r
 >   produce f = do { d <- pd; produce (f d) }
 >     where converse :: (d -> r) -> (r -> d)
@@ -50,20 +51,13 @@ It is the identity monad (for now)
 > theAnswer :: Parser Int
 > theAnswer = produce ord
 
-> class Materializable arrow where
->   materialize :: Arrow arrow => arrow (Parser a) (Parser b)
->   materialize = undefined
-
-> instance Materializable (->) where
->   materialize = undefined
-
 Time to make something concrete
 
-> data Foo = F Int deriving Show
+> data Foo = F Int Char deriving Show
 
 > instance GrammarLike Foo where
 >   type Final Foo = Foo
->   produce f = return f
+>   produce = return
 
 
 > t1 = produce F
