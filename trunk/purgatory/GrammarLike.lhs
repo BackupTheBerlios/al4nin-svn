@@ -26,6 +26,7 @@ It is the identity monad (for now)
 > natural = undefined
 
 
+> -- class GrammarLike m a where
 > class GrammarLike a where
 >   type Final a
 >   produce :: a -> Parser (Final a)
@@ -58,10 +59,11 @@ It is the identity monad (for now)
 
 Time to make something concrete
 
-> data Foo = F Int
-
-
+> data Foo = F Int deriving Show
 
 > instance GrammarLike Foo where
 >   type Final Foo = Foo
 >   produce f = return f
+
+
+> t1 = produce F
