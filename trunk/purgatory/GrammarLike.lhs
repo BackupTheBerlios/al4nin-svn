@@ -19,10 +19,10 @@ It is the identity monad (for now)
 > --  return v = P v
 > --  v >>= t = t v
 
-> anyChar :: Parser Char
+> --anyChar :: Parser Char
 > anyChar = return '%'
 
-> natural :: Parser Int
+> --natural :: Parser Int
 > natural = return 42
 
 
@@ -30,11 +30,11 @@ It is the identity monad (for now)
 >   type Final a
 >   produce :: Monad m => a -> m (Final a)
 
-> instance GrammarLike Parser Int where
+> instance GrammarLike m Int where
 >   type Final Int = Int
 >   produce _ = natural
 
-> instance GrammarLike Parser Char where
+> instance GrammarLike m Char where
 >   type Final Char = Char
 >   produce _ = anyChar
 
