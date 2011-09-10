@@ -1,4 +1,4 @@
-> {-# LANGUAGE TypeFamilies, FlexibleInstances #-}
+> {-# LANGUAGE TypeFamilies, ScopedTypeVariables #-}
 
 
 > import Data.Char
@@ -13,6 +13,7 @@ We need a pseudo-Parsec for demonstration
 It is the identity monad (for now)
 
 > type Parser = Identity
+> runParser = runIdentity
 
 > --instance Monad Parser where
 > --  return v = P v
@@ -26,19 +27,23 @@ It is the identity monad (for now)
 
 
 > class GrammarLike a where
->   type Initial a
 >   type Final a
->   produce :: a -> Initial a -> Final a
+>   produce :: a -> Final a
 
 > instance GrammarLike Int where
->   --type Initial Int = a
 >   type Final Int = Parser Int
->   produce _ _ = return 42
+>   produce _ = return 42
 
-> instance GrammarLike r => GrammarLike (d -> r) where
->   type Initial (d -> r) = Parser d
+> instance GrammarLike Char where
+>   type Final Char = Parser Char
+>   produce _ = anyChar
+
+> instance (GrammarLike d, GrammarLike r) => GrammarLike (d -> r) where
 >   type Final (d -> r) = Final r
->   produce f pd = pd >>= (\d -> produce (f undefined)
+>   produce f = do { d <- pd; produce (f d) }
+>     where converse :: (d -> r) -> (r -> d)
+>           converse = undefined
+>           pd = produce $ converse f undefined
 
 > theAnswer = produce ord
 
@@ -53,9 +58,8 @@ Time to make something concrete
 
 > data Foo = F Int
 
-> data Prod a f = Produce (a -> f)
 
-> instance GrammarLike a => GrammarLike (Prod a Foo) where
->   type Initial (Prod a Foo) = Parser a
->   type Final (Prod a Foo) = Parser Foo
->   produce (Produce f) ma = undefined --fmap f
+
+> instance GrammarLike Foo where
+>   type Final Foo = Parser Foo
+>   produce f = return f
