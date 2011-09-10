@@ -1,26 +1,24 @@
-> {-# LANGUAGE TypeFamilies, MultiParamTypeClasses, FlexibleInstances, UndecidableInstances, TypeSynonymInstances #-}
+> {-# LANGUAGE TypeFamilies, MultiParamTypeClasses, FlexibleInstances, UndecidableInstances, TypeOperators, TypeSynonymInstances #-}
 
 
 > import Data.Char
 > import Control.Monad
 > import Control.Monad.Identity
-> import Control.Arrow
+> import Control.Category
+
+> class Category (->-) => Apply (->-) where
+>   (<$>) :: a ->- b -> a -> b
+
+> instance Apply (->) where
+>   (<$>) = ($)
 
 We need a pseudo-Parsec for demonstration
-
-> -- data Parser what = P what
-
-It is the identity monad (for now)
+which  is the identity monad (for now)
 
 > type Parser = Identity
 > runParser = runIdentity
 
-> --instance Monad Parser where
-> --  return v = P v
-> --  v >>= t = t v
-
 > anyChar = return '%'
-
 > natural = return 42
 
 My new invention is something that behaves like
@@ -45,13 +43,13 @@ Here come two ground instances for illustration
 
 The tricky part is how function types can determine monads
 
-> instance (Monad m, GrammarLike m d, d ~ Final d, GrammarLike m r)
->     => GrammarLike m (d -> r) where
->   type Final (d -> r) = Final r
->   produce f = do { d <- pd; produce (f d) }
->     where converse :: (d -> r) -> (r -> d)
+> instance (Monad m, GrammarLike m d, d ~ Final d, GrammarLike m r, Apply (->-))
+>     => GrammarLike m (d ->- r) where
+>   type Final (d ->- r) = Final r
+>   produce f = do { d <- pd; produce (f <$> d) }
+>     where converse :: (d ->- r) -> (r ->- d)
 >           converse = undefined
->           pd = produce $ converse f undefined
+>           pd = produce $ converse f <$> undefined
 
 > theAnswer :: Parser Int
 > theAnswer = produce ord
