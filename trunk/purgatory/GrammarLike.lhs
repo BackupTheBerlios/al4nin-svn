@@ -19,24 +19,31 @@ It is the identity monad (for now)
 > --  return v = P v
 > --  v >>= t = t v
 
-> --anyChar :: Parser Char
 > anyChar = return '%'
 
-> --natural :: Parser Int
 > natural = return 42
 
+My new invention is something that behaves like
+a grammar, with terminals, productions, etc.
+and is parameterized by a monad
 
 > class Monad m => GrammarLike m a where
 >   type Final a
->   produce :: Monad m => a -> m (Final a)
+>   produce :: a -> m (Final a)
 
-> instance GrammarLike m Int where
+
+Here come two ground instances for illustration
+
+> instance GrammarLike Parser Int where
 >   type Final Int = Int
 >   produce _ = natural
 
-> instance GrammarLike m Char where
+> instance GrammarLike Parser Char where
 >   type Final Char = Char
 >   produce _ = anyChar
+
+
+The tricky part is how function types can determine monads
 
 > instance (Monad m, GrammarLike m d, d ~ Final d, GrammarLike m r)
 >     => GrammarLike m (d -> r) where
