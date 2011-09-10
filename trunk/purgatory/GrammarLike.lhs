@@ -1,4 +1,4 @@
-> {-# LANGUAGE TypeFamilies #-}
+> {-# LANGUAGE TypeFamilies, FlexibleInstances #-}
 
 
 > import Data.Char
@@ -26,16 +26,19 @@ It is the identity monad (for now)
 
 
 > class GrammarLike a where
+>   type Initial a
 >   type Final a
->   produce :: a -> Final a
+>   produce :: a -> Initial a -> Final a
 
 > instance GrammarLike Int where
+>   --type Initial Int = a
 >   type Final Int = Parser Int
->   produce _ = return 42
+>   produce _ _ = return 42
 
 > instance GrammarLike r => GrammarLike (d -> r) where
+>   type Initial (d -> r) = Parser d
 >   type Final (d -> r) = Final r
->   produce on = produce $ on undefined
+>   produce f pd = pd >>= (\d -> produce (f undefined)
 
 > theAnswer = produce ord
 
@@ -50,6 +53,9 @@ Time to make something concrete
 
 > data Foo = F Int
 
-> instance GrammarLike Foo where
->   type Final Foo = Parser Foo
->   produce f = return f
+> data Prod a f = Produce (a -> f)
+
+> instance GrammarLike a => GrammarLike (Prod a Foo) where
+>   type Initial (Prod a Foo) = Parser a
+>   type Final (Prod a Foo) = Parser Foo
+>   produce (Produce f) ma = undefined --fmap f
