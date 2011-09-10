@@ -28,26 +28,26 @@ It is the identity monad (for now)
 
 > class GrammarLike a where
 >   type Final a
->   produce :: Parser a ~ Final a => a -> Final a
->   -- produce :: (Monad m, m a ~ Final a) => a -> Final a
+>   produce :: a -> Parser (Final a)
+>   -- produce :: Monad m => a -> m (Final a)
 
 > instance GrammarLike Int where
->   type Final Int = Parser Int
+>   type Final Int = Int
 >   produce _ = return 42
 
 > instance GrammarLike Char where
->   type Final Char = Parser Char
+>   type Final Char = Char
 >   produce _ = anyChar
 
 > instance (GrammarLike d, GrammarLike r) => GrammarLike (d -> r) where
 >   type Final (d -> r) = Final r
->   produce f = undefined -- do { d <- pd; produce (f undefined) }
+>   produce f = do { d <- pd; produce (f undefined) }
 >     where converse :: (d -> r) -> (r -> d)
 >           converse = undefined
 >           pd = produce $ converse f undefined
 
-;> theAnswer :: Parser Int
-;> theAnswer = produce ord
+> theAnswer :: Parser Int
+> theAnswer = produce ord
 
 > class Materializable arrow where
 >   materialize :: Arrow arrow => arrow (Parser a) (Parser b)
@@ -63,5 +63,5 @@ Time to make something concrete
 
 
 > instance GrammarLike Foo where
->   type Final Foo = Parser Foo
+>   type Final Foo = Foo
 >   produce f = return f
