@@ -4,13 +4,6 @@
 > import Data.Char
 > import Control.Monad
 > import Control.Monad.Identity
-> import Control.Category
-
-> class Category (->-) => Apply (->-) where
->   (<$>) :: a ->- b -> a -> b
-
-> instance Apply (->) where
->   (<$>) = ($)
 
 We need a pseudo-Parsec for demonstration
 which  is the identity monad (for now)
@@ -46,13 +39,13 @@ Here come two ground instances for illustration
 
 The tricky part is how function types can determine monads
 
-> instance (Monad m, GrammarLike m d, d ~ Final d, GrammarLike m r, Apply (->-))
->     => GrammarLike m (d ->- r) where
->   type Final (d ->- r) = Final r
->   produce f = do { d <- pd; produce (f <$> d) }
->     where converse :: (d ->- r) -> (r ->- d)
+> instance (Monad m, GrammarLike m d, d ~ Final d, GrammarLike m r)
+>     => GrammarLike m (d -> r) where
+>   type Final (d -> r) = Final r
+>   produce f = do { d <- pd; produce (f d) }
+>     where converse :: (d -> r) -> (r -> d)
 >           converse = undefined
->           pd = produce $ converse f <$> undefined
+>           pd = produce $ converse f undefined
 
 > theAnswer :: Parser Int
 > theAnswer = produce ord
@@ -83,3 +76,22 @@ Some interesting constructs
 > t2 :: Parser Int
 > t2 = produce (undefined :: Parens Int)
 
+> infix 0 `By`
+> data a `By` b = a `By` b
+
+> instance (Monad m, GrammarLike m d', GrammarLike m d, d ~ Final d, d ~ Final d',
+>           GrammarLike m r', GrammarLike m r, GrammarLike m (By r' r), Final r' ~ Final r)
+>     => GrammarLike m (By (d' -> r') (d -> r)) where
+>   type Final (By (d' -> r') (d -> r)) = Final (By r' r)
+>   produce (By f' f) = do { d <- pd; produce (By (f' undefined) (f d)) }
+>     where converse :: (d -> r) -> (r -> d)
+>           converse = undefined
+>           pd = produce $ converse f' undefined
+
+
+> t3 :: Parser Foo
+> t3 = produce ((undefined :: Parens Int -> Char -> Foo) `By` F)
+
+> instance Monad m => GrammarLike m (Foo `By` Foo) where
+>   type Final (Foo `By` Foo) = Foo
+>   produce (_ `By` f) = return f
