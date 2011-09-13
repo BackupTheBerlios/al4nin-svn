@@ -36,6 +36,11 @@ Here come two ground instances for illustration
 >   type Final Char = Char
 >   produce _ = anyChar
 
+We need some trickery first
+
+> converse :: (d -> r) -> (r -> d)
+> converse = undefined
+
 
 The tricky part is how function types can determine monads
 
@@ -43,9 +48,7 @@ The tricky part is how function types can determine monads
 >     => GrammarLike m (d -> r) where
 >   type Final (d -> r) = Final r
 >   produce f = do { d <- pd; produce (f d) }
->     where converse :: (d -> r) -> (r -> d)
->           converse = undefined
->           pd = produce $ converse f undefined
+>     where pd = produce $ converse f undefined
 
 > theAnswer :: Parser Int
 > theAnswer = produce ord
@@ -86,7 +89,7 @@ Some interesting constructs
 > t2' :: Parser (Parens' Int)
 > t2' = produce (undefined :: Parens' Int)
 
-> infix 0 `By`
+> infix 1 `By`
 > data a `By` b = a `By` b
 
 > instance (Monad m, GrammarLike m d', GrammarLike m d, d ~ Final d, Final d ~ Final d',
@@ -94,15 +97,13 @@ Some interesting constructs
 >     => GrammarLike m (By (d' -> r') (d -> r)) where
 >   type Final (By (d' -> r') (d -> r)) = Final (By r' r)
 >   produce (By f' f) = do { d <- pd; produce (By (f' undefined) (f d)) }
->     where converse :: (d -> r) -> (r -> d)
->           converse = undefined
->           pd = produce $ converse f' undefined
+>     where pd = produce $ converse f' undefined
 
 > t3' :: Parser Foo
 > t3' = produce ((\(Parens' i)(Parens' c)-> F (i+3) c) :: Parens' Int -> Parens' Char -> Foo)
 
 > t3 :: Parser Foo
-> t3 = produce ((undefined :: Parens Char -> Parens Int -> Parens Char -> Foo) `By` \ _ a b -> F (a+1) b)
+> t3 = produce $ (undefined :: Parens Char -> Parens Int -> Parens Char -> Foo) `By` \ _ a b -> F (a+1) b
 
 > instance Monad m => GrammarLike m (Foo `By` Foo) where
 >   type Final (Foo `By` Foo) = Foo
