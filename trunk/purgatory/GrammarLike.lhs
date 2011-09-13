@@ -66,6 +66,7 @@ Time to make something concrete
 Some interesting constructs
 
 > newtype Parens a = Parens a
+> newtype Parens' a = Parens' a deriving Show
 
 > instance (Monad m, GrammarLike m a, a ~ Final a) => GrammarLike m (Parens a) where
 >   type Final (Parens a) = a
@@ -73,8 +74,17 @@ Some interesting constructs
 >     where Parens bareA = parA
 >           pA = produce bareA
 
+> instance (Monad m, GrammarLike m a, a ~ Final a) => GrammarLike m (Parens' a) where
+>   type Final (Parens' a) = Parens' a
+>   produce parA = do { a <- pA; return $ Parens' a }
+>     where Parens' bareA = parA
+>           pA = produce $ Parens bareA
+
 > t2 :: Parser Int
 > t2 = produce (undefined :: Parens Int)
+
+> t2' :: Parser (Parens' Int)
+> t2' = produce (undefined :: Parens' Int)
 
 > infix 0 `By`
 > data a `By` b = a `By` b
