@@ -67,7 +67,7 @@ Some interesting constructs
 
 > newtype Parens a = Parens a
 
-> instance (GrammarLike Parser a, a ~ Final a) => GrammarLike Parser (Parens a) where
+> instance (Monad m, GrammarLike m a, a ~ Final a) => GrammarLike m (Parens a) where
 >   type Final (Parens a) = a
 >   produce parA = parens pA
 >     where Parens bareA = parA
@@ -79,8 +79,8 @@ Some interesting constructs
 > infix 0 `By`
 > data a `By` b = a `By` b
 
-> instance (Monad m, GrammarLike m d', GrammarLike m d, d ~ Final d, d ~ Final d',
->           GrammarLike m r', GrammarLike m r, GrammarLike m (By r' r), Final r' ~ Final r)
+> instance (Monad m, GrammarLike m d', GrammarLike m d, d ~ Final d, Final d ~ Final d',
+>           GrammarLike m r, GrammarLike m (By r' r), Final r' ~ Final r)
 >     => GrammarLike m (By (d' -> r') (d -> r)) where
 >   type Final (By (d' -> r') (d -> r)) = Final (By r' r)
 >   produce (By f' f) = do { d <- pd; produce (By (f' undefined) (f d)) }
@@ -88,9 +88,11 @@ Some interesting constructs
 >           converse = undefined
 >           pd = produce $ converse f' undefined
 
+;> t3' :: Parser Foo
+;> t3' = produce (undefined :: Parens Int -> Parens Char -> Foo)
 
 > t3 :: Parser Foo
-> t3 = produce ((undefined :: Parens Int -> Char -> Foo) `By` F)
+> t3 = produce ((undefined :: Parens Char -> Parens Int -> Parens Char -> Foo) `By` \ _ a b -> F (a+1) b)
 
 > instance Monad m => GrammarLike m (Foo `By` Foo) where
 >   type Final (Foo `By` Foo) = Foo
