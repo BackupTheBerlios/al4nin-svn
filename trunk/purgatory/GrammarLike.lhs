@@ -18,8 +18,11 @@ which  is the identity monad (for now)
 > type Parser = Identity
 > runParser = runIdentity
 
+> char c = return c
 > anyChar = return '%'
 > natural = return 42
+
+> parens p = do { char '('; i <- p; char ')'; return i }
 
 My new invention is something that behaves like
 a grammar, with terminals, productions, etc.
@@ -65,3 +68,18 @@ Time to make something concrete
 
 > t1 :: Parser Foo
 > t1 = produce F
+
+
+Some interesting constructs
+
+> newtype Parens a = Parens a
+
+> instance (GrammarLike Parser a, a ~ Final a) => GrammarLike Parser (Parens a) where
+>   type Final (Parens a) = a
+>   produce parA = parens pA
+>     where Parens bareA = parA
+>           pA = produce bareA
+
+> t2 :: Parser Int
+> t2 = produce (undefined :: Parens Int)
+
