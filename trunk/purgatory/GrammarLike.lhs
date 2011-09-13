@@ -98,8 +98,8 @@ Some interesting constructs
 >           converse = undefined
 >           pd = produce $ converse f' undefined
 
-;> t3' :: Parser Foo
-;> t3' = produce (undefined :: Parens Int -> Parens Char -> Foo)
+> t3' :: Parser Foo
+> t3' = produce ((\(Parens' i)(Parens' c)-> F (i+3) c) :: Parens' Int -> Parens' Char -> Foo)
 
 > t3 :: Parser Foo
 > t3 = produce ((undefined :: Parens Char -> Parens Int -> Parens Char -> Foo) `By` \ _ a b -> F (a+1) b)
