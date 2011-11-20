@@ -2,9 +2,9 @@
 /*****************************************************************************/
 /*                                                                           */
 /*  PRG2LOUT: A PROGRAM TO CONVERT PROGRAM SOURCES INTO LOUT                 */
-/*  COPYRIGHT (C) 2000, 2006 Jeffrey H. Kingston                             */
+/*  COPYRIGHT (C) 2000, 2008 Jeffrey H. Kingston                             */
 /*                                                                           */
-/*  Part of Lout Version 3.36, July 2007                                     */
+/*  Part of Lout Version 3.39                                                */
 /*                                                                           */
 /*  Jeffrey H. Kingston (jeff@cs.su.oz.au)                                   */
 /*  Basser Department of Computer Science                                    */
@@ -784,8 +784,6 @@ TOKEN HaskellCharacterToken = {
 };
 
 
-
-
 /*****************************************************************************/
 /*                                                                           */
 /*  Identifiers, in the form common to most programming languages.           */
@@ -1082,9 +1080,8 @@ TOKEN HaskellCommentToken = {
   FALSE,		/* end delimiter does not have to be at line start  */
   FALSE,		/* don't need to see end delimiter twice to stop    */
 };
-
-
 
+
 /*****************************************************************************/
 /*                                                                           */
 /*  Tokens defining escape comments in various languages.                    */
@@ -1205,25 +1202,25 @@ TOKEN PythonCommentEscapeToken = {
 };
 
 TOKEN HaskellCommentEscapeToken = {
-	U "Lout escape",
-	PRINT_NODELIMS_UNQUOTED,
-	U "",
-	U "",
-	U "",
-	FALSE,
-	{ U "{-@" },
-	{ NULL },
-	{ NULL },
-	{ NULL },
-	AllPrintablePlusTab,
-	U "",
-	U "",
-	U "",
-	U "",
-	U "",
-	U "-}",
-	FALSE,
-	FALSE,
+  U "Lout escape",
+  PRINT_NODELIMS_UNQUOTED,
+  U "",
+  U "",
+  U "",
+  FALSE,
+  { U "{-@" },
+  { NULL },
+  { NULL },
+  { NULL },
+  AllPrintablePlusTab,
+  U "",
+  U "",
+  U "",
+  U "",
+  U "",
+  U "-}",
+  FALSE,
+  FALSE,
 };
 
 TOKEN HaskellLineCommentEscapeToken = {
@@ -1247,9 +1244,7 @@ TOKEN HaskellLineCommentEscapeToken = {
   FALSE,		/* end delimiter does not have to be at line start  */
   FALSE,		/* don't need to see end delimiter twice to stop    */
 };
-
 
-
 
 /*****************************************************************************/
 /*                                                                           */
@@ -1319,8 +1314,8 @@ TOKEN ImpliesToken		= FixedToken("=>","@A sym {arrowdblright} @PO");
 TOKEN LeftArrowToken		= FixedToken("<-", "@A sym {arrowleft} @PO");
 TOKEN HaskellLambdaToken	= FixedToken("\\", "@PLAMBDA");
 TOKEN HaskellAtPatternToken	= FixedToken("@", "@PO");
-TOKEN HaskellBracketBarToken= FixedToken("[|", "@PBRACKETBAR");
-TOKEN HaskellBarBracketToken= FixedToken("|]", "@PBARBRACKET");
+TOKEN HaskellBracketBarToken    = FixedToken("[|", "@PBRACKETBAR");
+TOKEN HaskellBarBracketToken    = FixedToken("|]", "@PBARBRACKET");
 TOKEN DoubleColonToken		= FixedToken("::",  "@PDOUBLECOLON");
 TOKEN FunctionCompositionToken	= FixedToken(" . ",  "@PCIRC");
 TOKEN HaskellEquivalenceToken	= FixedToken("==",  "@A sym {equivalence} @PO");
@@ -1328,8 +1323,9 @@ TOKEN HaskellConcatenationToken = FixedToken("++", "@PPLUSPLUS");
 TOKEN EqvToken			= FixedToken("<=>","@A sym {arrowdblboth} @PO");
 TOKEN HaskellOrToken		= FixedToken("||", "@PO");
 TOKEN HaskellAndToken		= FixedToken("&&", "@PO");
-TOKEN HaskellArrowBindToken	= FixedToken(">>>", "@PARROWBIND");
-TOKEN KindArrowToken	= FixedToken("~>", "@PKINDARROW");
+TOKEN HaskellArrowBindToken     = FixedToken(">>>", "@PARROWBIND");
+/* TOKEN KindArrowToken         = FixedToken("~>", "@PKINDARROW"); */
+/* TOKEN HaskellBacktickToken	= FixedToken("`", "@PO"); unused */
 TOKEN PythonPowerToken          = FixedToken( "**",  "@PO" );
 TOKEN PythonBitLeftShiftToken   = FixedToken( "<<",  "@PO" );
 TOKEN PythonBitRightShiftToken  = FixedToken( ">>",  "@PO" );
@@ -2950,6 +2946,7 @@ LANGUAGE PythonLanguage = {
        or part of the language per-se. */
   }
 };
+
 
 /*****************************************************************************/
 /*                                                                           */
@@ -2990,7 +2987,6 @@ LANGUAGE RubyLanguage = {
   }
 };
 
-
 
 /*****************************************************************************/
 /*                                                                           */
@@ -3047,7 +3043,6 @@ LANGUAGE BlueLanguage = {
 };
 
 
-
 /*****************************************************************************/
 /*                                                                           */
 /*  Java                                                                     */
@@ -3080,6 +3075,7 @@ LANGUAGE JavaLanguage = {
     "volatile", "while",
   }
 };
+
 
 /*****************************************************************************/
 /*                                                                           */
@@ -3113,19 +3109,18 @@ LANGUAGE NonpareilLanguage = {
     &NonpareilOperatorToken,
   },
   {
-    "abstract", "as", "builtin", "case", "class", "coerce",
-    "else", "elsif", "end", "enum", "extend", "extension", "filter",
-    "function", "genesis", "if", "in", "infix", "inherit", "introduce",
-    "invariant", "is", "let", "local", "meet", "module", "noncoercive",
-    "noncreation", "norename", "predefined", "prefix", "prefun", "private",
-    "postfix", "rename", "require", "system", "then", "typeobj", "upto",
-    "use", "when", "yield",
+    "abstract", "as", "builtin", "case", "class", "coerce", "else",
+    "elsif", "end", "enum", "extend", "extension", "filter", "fun",
+    "if", "import", "infix", "inherit", "introduce", "invariant",
+    "is", "meet", "module", "noncreation", "operators", "predefined",
+    "prefix", "prefun", "private", "postfix", "rename", "require",
+    "system", "then", "typeobj", "upto", "when", "yield",
 
     /* not keywords, but conventionally set like them */
-    "false", "true", "self", "and", "or", "not"
+    "false", "true", "self", "and", "or", "not", "div", "mod"
   }
 };
-
+
 
 /*****************************************************************************/
 /*                                                                           */
@@ -3154,12 +3149,12 @@ LANGUAGE HaskellLanguage = {
     &ImpliesToken, &GreaterEqualToken, &HaskellConcatenationToken,
     &HaskellOperatorToken, &HaskellOrToken, &HaskellAndToken,
     &HaskellAtPatternToken, &HaskellBracketBarToken, &HaskellBarBracketToken,
-    &HaskellArrowBindToken, &KindArrowToken
+    &HaskellArrowBindToken/*, &KindArrowToken*/
   },
   {
-    "case", "class", "data", "default", "deriving", "do", "mdo",
+    "case", "class", "data", "default", "deriving", "do",
     "else", "if", "import", "in", "infix", "infixl", "infixr", "instance",
-    "let", "module", "newtype", "of", "then", "type", "where",
+    "let", "mdo", "module", "newtype", "of", "then", "type", "where",
 
     /*"as",*/ "hiding", "qualified",
     /* OMEGA */ "monad",
@@ -3167,7 +3162,7 @@ LANGUAGE HaskellLanguage = {
     "True", "False"
   }
 };
-
+
 
 /*****************************************************************************/
 /*                                                                           */
@@ -3212,7 +3207,7 @@ LANGUAGE RSLLanguage = {
     "write", "is", "exists", "all"
   }
 };
-
+
 
 /*****************************************************************************/
 /*                                                                           */
@@ -3574,7 +3569,8 @@ void NextChar()
   else if( curr_line[line_pos+1] != '\0' )
   {
     /* we've already read in the next line; it's at &curr_line[line_pos+1] */
-    strcpy((char *) &curr_line[1], (char *) &curr_line[line_pos+1]);
+    int len = strlen((char *) &curr_line[line_pos+1]);
+    memmove(&curr_line[1], &curr_line[line_pos+1], len + 1);
     line_num++;
     line_pos = 1;
   }
@@ -4688,6 +4684,7 @@ void Process(LANGUAGE *lang, TOKEN *outer_token,
 	else
 	{
 	  fprintf(err_fp, "%s internal error: lang->no_match\n", ErrorHeader());
+	  exit(1);
 	}
 	break;
 
@@ -5040,7 +5037,7 @@ int main(int argc, char *argv[])
   /* read command line */
   in_fp = out_fp = (FILE *) NULL;
   err_fp = stderr;
-  line_num = 0;
+  line_num = line_pos = 0;
   stdin_seen = raw_seen = FALSE;
   tab_by_spacing = TRUE;
   tab_in = 8;
@@ -5050,8 +5047,8 @@ int main(int argc, char *argv[])
   blanknumbered = BLANKNUMBERED_YES;
   numbered_option = NULL;
   headers_option = TRUE;
-  font_option = size_option = line_option = bls_option = tabin_option =
-    tabout_option = setup_option = language_option = (char *) NULL;
+  style_option = font_option = size_option = line_option = bls_option =
+    tabin_option = tabout_option = setup_option = language_option =(char *)NULL;
   if( argc == 1 )
   { PrintUsage();
     exit(1);
@@ -5078,7 +5075,7 @@ int main(int argc, char *argv[])
      
 	/* read name of input file */
 	if( !raw_seen )
-	{ fprintf(err_fp, "%s: -i illegal with -r\n", ErrorHeader());
+	{ fprintf(err_fp, "%s: -i illegal without -r\n", ErrorHeader());
 	  exit(1);
 	}
 	if( in_fp != NULL )
@@ -5318,8 +5315,7 @@ int main(int argc, char *argv[])
 	{
 	  if( languages[i]->names[j] == (char *) NULL )
 	    i++, j = 0;
-	  else if( strcmp( (char *) languages[i]->names[j],
-		(char *) language_option) == 0 )
+	  else if( strcmp(languages[i]->names[j], language_option) == 0 )
 	    lang = languages[i];
 	  else
 	    j++;
@@ -5377,6 +5373,7 @@ int main(int argc, char *argv[])
     SetupLanguage(lang);
     line_pos = 1;
     curr_line[line_pos] = '\n';  /* forces line read */
+    curr_line[line_pos + 1] = '\0';
     line_num = 0;
     NextChar();
     Process(lang, (TOKEN *) NULL, U "");
