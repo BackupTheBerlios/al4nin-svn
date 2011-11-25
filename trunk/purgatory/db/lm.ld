@@ -81,3 +81,15 @@
      @Metrics { lmbxi10.afm }
      @Mapping { LtLatin1.LCM }
 }
+
+########
+# AMSYten
+{
+@FontDef
+     @Tag { AMSYten-Base }
+     @Family { AMSYten }
+     @Face { Base }
+     @Name { AMSSymbolA10-Regular }
+     @Metrics { msam10.afm }
+     @Mapping { AmsSymb.LCM }
+}
