@@ -25,7 +25,7 @@ prg2lout: prg2lout.c
 %.pdf: %.ps
 	$(DISTILL) $<
 
-%.lout.ps: %.lout haskellx haskellfx db/*.ld prg2lout
+%.lout.ps: %.lout haskellx haskellfx db/*.ld ./prg2lout
 	$(LOUT) -r2 -o $@ $<
 
 view: Thrist.lout.pdf
