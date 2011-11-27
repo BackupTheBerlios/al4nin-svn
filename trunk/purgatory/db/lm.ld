@@ -89,7 +89,7 @@
      @Tag { AMSYten-Base }
      @Family { AMSYten }
      @Face { Base }
-     @Name { AMSSymbolA10-Regular }
+     @Name { msam10 }
      @Metrics { msam10.afm }
      @Mapping { AmsSymb.LCM }
 }
