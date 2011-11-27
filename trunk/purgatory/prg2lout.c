@@ -1324,7 +1324,7 @@ TOKEN EqvToken			= FixedToken("<=>","@A sym {arrowdblboth} @PO");
 TOKEN HaskellOrToken		= FixedToken("||", "@PO");
 TOKEN HaskellAndToken		= FixedToken("&&", "@PO");
 TOKEN HaskellArrowBindToken     = FixedToken(">>>", "@PARROWBIND");
-/* TOKEN KindArrowToken         = FixedToken("~>", "@PKINDARROW"); */
+TOKEN KindArrowToken            = FixedToken("~>", "@PKINDARROW");
 /* TOKEN HaskellBacktickToken	= FixedToken("`", "@PO"); unused */
 TOKEN PythonPowerToken          = FixedToken( "**",  "@PO" );
 TOKEN PythonBitLeftShiftToken   = FixedToken( "<<",  "@PO" );
@@ -3149,7 +3149,7 @@ LANGUAGE HaskellLanguage = {
     &ImpliesToken, &GreaterEqualToken, &HaskellConcatenationToken,
     &HaskellOperatorToken, &HaskellOrToken, &HaskellAndToken,
     &HaskellAtPatternToken, &HaskellBracketBarToken, &HaskellBarBracketToken,
-    &HaskellArrowBindToken/*, &KindArrowToken*/
+    &HaskellArrowBindToken, &KindArrowToken
   },
   {
     "case", "class", "data", "default", "deriving", "do",
