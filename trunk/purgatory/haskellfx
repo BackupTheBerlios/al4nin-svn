@@ -522,7 +522,7 @@ def @HaskellSetup
 		right x
 	{
 	    style @Case {
-		symbol	@Yield { @PO {>> |0.174fo >>} }
+		symbol	@Yield { { AMSYten Base } @Font { @PO { @Char muchgreater } } }
 		else	@Yield { @PO x			}
 	    }
 	}
