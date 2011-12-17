@@ -1,5 +1,5 @@
 {-
- * Copyright (c) 2010 Gabor Greif
+ * Copyright (c) 2011 Gabor Greif
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -21,16 +21,18 @@
  * OR OTHER DEALINGS IN THE SOFTWARE.
  -}
 
-{-# LANGUAGE GADTs, KindSignatures, EmptyDataDecls, TypeOperators #-}
+{-# LANGUAGE GADTs, KindSignatures, EmptyDataDecls, TypeOperators, StandaloneDeriving #-}
 
 -- See my blog post
 --     http://heisenbug.blogspot.com/2010/11/applicative-structures-and-thrists.html
 
 module Appli where
 
-data Thrist :: (* -> * -> *) -> * -> * -> * where
-  Nil :: Thrist p a a
-  Cons :: p a b -> Thrist p b c -> Thrist p a c
+import Data.Thrist
+
+--data Thrist :: (* -> * -> *) -> * -> * -> * where
+--  Nil :: Thrist p a a
+--  Cons :: p a b -> Thrist p b c -> Thrist p a c
 
 
 f :: Int -> Bool -> Char -> [Int]
@@ -74,6 +76,11 @@ data Arith :: * -> * -> * where
   Times :: Arith Int (Arith Int Int)
   Div :: Arith Int (Arith Int Int)
   Mod :: Arith Int (Arith Int Int)
+
+deriving instance Show (Arith a b)
+
+--deriving instance Show (Thrist Arith a Peg)
+
 
 t10 = Cons (Arg 42) $ Cons (Fun Plus) Nil
 t11 = Cons (Arg 0) t10
