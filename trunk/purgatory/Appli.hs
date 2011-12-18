@@ -42,7 +42,7 @@ data Peg
 
 data Appli :: (* -> * -> *) -> * -> * -> * where
   Fun :: (a ~> b) -> Appli (~>) (a ~> b) Peg
-  Arg :: a -> Appli (~>) b (a ~> b)
+  Arg :: Show a => a -> Appli (~>) b (a ~> b)
   Par :: Thrist (Appli (~>)) a Peg -> Appli (~>) b (a ~> b)
 
 t0 = Cons (Arg c) $ Cons (Arg b) $ Cons (Arg a) $ Cons (Fun f) Nil
@@ -60,7 +60,7 @@ data Arith :: * -> * -> * where
 deriving instance Show (Arith a b)
 instance Show (Appli Arith a b) where
   show (Fun f) = show f
-  show (Arg a) = "<arg>" -- show f
+  show (Arg a) = show a
   show (Par p) = show p
 
 instance Show (Thrist (Appli Arith) a b) where
