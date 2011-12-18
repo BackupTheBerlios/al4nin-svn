@@ -1,5 +1,5 @@
 {-
- * Copyright (c) 2011 Gabor Greif
+ * Copyright (c) 2010-2011 Gabor Greif
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -21,7 +21,7 @@
  * OR OTHER DEALINGS IN THE SOFTWARE.
  -}
 
-{-# LANGUAGE GADTs, KindSignatures, EmptyDataDecls, TypeOperators, StandaloneDeriving #-}
+{-# LANGUAGE GADTs, KindSignatures, EmptyDataDecls, TypeOperators, StandaloneDeriving, FlexibleInstances #-}
 
 -- See my blog post
 --     http://heisenbug.blogspot.com/2010/11/applicative-structures-and-thrists.html
@@ -29,11 +29,6 @@
 module Appli where
 
 import Data.Thrist
-
---data Thrist :: (* -> * -> *) -> * -> * -> * where
---  Nil :: Thrist p a a
---  Cons :: p a b -> Thrist p b c -> Thrist p a c
-
 
 f :: Int -> Bool -> Char -> [Int]
 f i b c = if b then [i] else [0]
@@ -43,23 +38,8 @@ a = 42
 b = True
 c = 'A'
 
-{- Variant 0
-data Appli :: * -> * -> * where
-  Fun :: (a -> b) -> Appli (a -> b) c
-  Arg :: a -> Appli b (a -> b)
-  Par :: Thrist Appli a c -> Appli b (a -> b)
--}
-
 data Peg
-{- Variant 1
-data Appli :: * -> * -> * where
-  Fun :: (a -> b) -> Appli (a -> b) Peg
-  Arg :: a -> Appli b (a -> b)
-  Par :: Thrist Appli a Peg -> Appli b (a -> b)
--}
 
--- Variant 2 ( the winner! )
---
 data Appli :: (* -> * -> *) -> * -> * -> * where
   Fun :: (a ~> b) -> Appli (~>) (a ~> b) Peg
   Arg :: a -> Appli (~>) b (a ~> b)
@@ -78,9 +58,15 @@ data Arith :: * -> * -> * where
   Mod :: Arith Int (Arith Int Int)
 
 deriving instance Show (Arith a b)
+instance Show (Appli Arith a b) where
+  show (Fun f) = show f
+  show (Arg a) = "<arg>" -- show f
+  show (Par p) = show p
 
---deriving instance Show (Thrist Arith a Peg)
-
+instance Show (Thrist (Appli Arith) a b) where
+  show Nil = "{}a"
+  show (Cons h Nil) = "{" ++ show h ++ "}a"
+  show (Cons h t) = "{" ++ show h ++ ", " ++ drop 1 (show t)
 
 t10 = Cons (Arg 42) $ Cons (Fun Plus) Nil
 t11 = Cons (Arg 0) t10
