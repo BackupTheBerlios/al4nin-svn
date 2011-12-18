@@ -74,3 +74,20 @@ t12 = Par t10
 t13 = Par t11
 -- Times 25 (Plus 42 0)
 t14 = Cons (Par $ Cons (Arg 0) t10) $ Cons (Arg 25) $ Cons (Fun Times) Nil
+
+-- Now define a synchronous machine
+-- Idea: we have different arrows -0->, -1->, ..., -n->
+--       which take the indicated number of tick to execute
+-- TODO: use Appli
+
+data Sync a b where
+  Group :: Thrist Sync (t, a) (t', b) -> Sync (t, a) (t', b)
+  Wait :: a -> Sync (t, a) ([t], a)
+  Conc :: Sync (t, a) (t', b) -> Sync (t, a) (t', c) -> Sync (t, a) (t', (b, c))
+
+t20 = Wait (42, 42)
+t21 = Conc t20 t20
+t20' = Wait (25 :: Int)
+t21' = Conc t20' t20'
+t22 = Group (Cons t21' $ Cons t21 Nil)
+
