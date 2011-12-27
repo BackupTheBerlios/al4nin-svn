@@ -58,6 +58,7 @@ data Arith :: * -> * -> * where
   Mod :: Arith Int (Arith Int Int)
 
 deriving instance Show (Arith a b)
+
 instance Show (Appli Arith a b) where
   show (Fun f) = show f
   show (Arg a) = show a
@@ -68,6 +69,13 @@ instance Show (Thrist (Appli Arith) a b) where
   show (Cons h Nil) = "{" ++ show h ++ "}a"
   show (Cons h t) = "{" ++ show h ++ ", " ++ drop 1 (show t)
 
+{-
+-- the below is accepted by GHC v7.0, but t14 is
+-- shown as "Cons Cons 0 (Cons 42 (Cons Plus Nil)) (Cons 25 (Cons Times Nil))"
+-- messing up the Par part. I should investigate whether this is a bug.
+deriving instance Show (Thrist (Appli Arith) a b)
+-}
+
 t10 = Cons (Arg 42) $ Cons (Fun Plus) Nil
 t11 = Cons (Arg 0) t10
 t12 = Par t10
@@ -77,7 +85,7 @@ t14 = Cons (Par $ Cons (Arg 0) t10) $ Cons (Arg 25) $ Cons (Fun Times) Nil
 
 -- Now define a synchronous machine
 -- Idea: we have different arrows -0->, -1->, ..., -n->
---       which take the indicated number of tick to execute
+--       which take the indicated number of ticks to execute
 -- TODO: use Appli
 
 data Sync a b where
