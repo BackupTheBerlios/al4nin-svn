@@ -108,3 +108,21 @@ Some interesting constructs
 > instance Monad m => GrammarLike m (Foo `By` Foo) where
 >   type Final (Foo `By` Foo) = Foo
 >   produce (_ `By` f) = return f
+
+
+Let's extend `By` to ignorable parses (e.g. punctuation)
+
+> data BackSlash
+
+> instance GrammarLike Parser BackSlash where
+>   type Final BackSlash = ()
+>   produce _ = char '\\' >> return ()
+
+
+> instance (Monad m, {-GrammarLike m d', () ~ Final d',-} GrammarLike m r,
+>           GrammarLike m (By r' r), Final r' ~ Final r)
+>     => GrammarLike m (By (BackSlash -> r') r) where
+>   type Final (By (BackSlash -> r') r) = Final (By r' r)
+>   produce (By f' f) = do { d <- pd; produce (By (f' undefined) (f d)) }
+>     where pd = produce $ converse f' undefined
+
