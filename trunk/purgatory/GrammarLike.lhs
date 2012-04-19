@@ -109,6 +109,9 @@ Some interesting constructs
 >   type Final (Foo `By` Foo) = Foo
 >   produce (_ `By` f) = return f
 
+This is not ripe yet
+
+> {-
 
 Let's extend `By` to ignorable parses (e.g. punctuation)
 
@@ -126,3 +129,4 @@ Let's extend `By` to ignorable parses (e.g. punctuation)
 >   produce (By f' f) = do { d <- pd; produce (By (f' undefined) (f d)) }
 >     where pd = produce $ converse f' undefined
 
+> -}
