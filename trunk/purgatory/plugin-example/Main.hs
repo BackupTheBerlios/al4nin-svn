@@ -14,10 +14,11 @@ module Main (main) where
 -- ...
 
 import Foreign.Ptr
-import System.Plugins
+import System.Plugins.Load
 import If
 
-
-
-main = load "XYZuse.o" ["."] [] "resource" >>= (\(LoadSuccess _ v) -> (processTree v nullPtr))
+main = do LoadSuccess _ v <- load "XYZuse.o" ["."] [] "resource"
+          t <- processTree v (exampleTree v)
+          putStrLn (show t)
+          return (version v)
 
