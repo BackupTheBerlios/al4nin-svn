@@ -15,10 +15,21 @@ module Main (main) where
 
 import Foreign.Ptr
 import System.Plugins.Load
+import System.Plugins.LoadTypes (ObjType(..))
 import If
 
-main = do LoadSuccess _ v <- load "XYZuse.o" ["."] [] "resource"
+instance Show ObjType where
+  show Vanilla = ".o"
+  show Shared = ".so"
+
+main = do LoadSuccess m v <- load "XYZuse.o" ["."] [] "resource"
+          putStrLn ("success loading from module '" ++ show (mname m) ++ "', object kind: " ++ show (kind m))
           t <- processTree v (exampleTree v)
           putStrLn (show t)
-          return (version v)
-
+          loaded <- dynload "XYZuse.o" ["."] [] "egg"
+          case loaded of
+            LoadSuccess _ spell -> do
+                 putStrLn (spell ["This sentence is full of awfull typos, that a sucessfull checker can correct."])
+                 putStrLn ("module version: " ++ show (version v))
+                 return ()
+            LoadFailure errors -> putStrLn ("error loading 'egg': " ++ concat errors)
