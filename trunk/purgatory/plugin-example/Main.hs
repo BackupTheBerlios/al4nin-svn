@@ -24,12 +24,12 @@ instance Show ObjType where
 
 main = do LoadSuccess m v <- load "XYZuse.o" ["."] [] "resource"
           putStrLn ("success loading from module '" ++ show (mname m) ++ "', object kind: " ++ show (kind m))
+          putStrLn ("module version: " ++ show (version v))
           t <- processTree v (exampleTree v)
           putStrLn (show t)
           loaded <- dynload "XYZuse.o" ["."] [] "egg"
           case loaded of
             LoadSuccess _ spell -> do
-                 putStrLn (spell ["This sentence is full of awfull typos, that a sucessfull checker can correct."])
-                 putStrLn ("module version: " ++ show (version v))
+                 putStrLn (spell "This sentence is full of awfull typos, that a sucessfull checker can correct.")
                  return ()
             LoadFailure errors -> putStrLn ("error loading 'egg': " ++ concat errors)
