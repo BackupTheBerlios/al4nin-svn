@@ -29,7 +29,8 @@ main = do LoadSuccess m v <- load "XYZuse.o" ["."] [] "resource"
           putStrLn (show t)
           loaded <- dynload "XYZuse.o" ["."] [] "egg"
           case loaded of
-            LoadSuccess _ spell -> do
+            LoadSuccess m' spell -> do
                  putStrLn (spell "This sentence is full of awfull typos, that a sucessfull checker can correct.")
-                 return ()
+                 unload m'
+                 unload m
             LoadFailure errors -> putStrLn ("error loading 'egg': " ++ concat errors)
