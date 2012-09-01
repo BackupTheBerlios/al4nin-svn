@@ -19,12 +19,12 @@ I'd model the nodes (e.g. 'B') as a normal list/thrist horizontally:
 
 and the uplist again as a list
 
-> type Uplist a = [a]
+> data Uplist a = Up a [Uplist Payload] deriving Show
 
 
 
 > southmost :: [Uplist Payload]
-> southmost = gen southmost 'a'
->   where gen node l = up hrest : hrest
->           where up hrest = [(0, l)]
->                 hrest = gen hrest $ succ l
+> southmost = gen southmost 0 'a'
+>   where gen node n l = up hrest : hrest
+>           where up ~(Up _ ruplist:_) = Up (n, l) (undefined (succ n, l) : ruplist)
+>                 hrest = gen hrest n $ succ l
