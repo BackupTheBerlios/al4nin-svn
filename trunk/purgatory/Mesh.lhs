@@ -25,6 +25,7 @@ and the uplist again as a list
 
 > southmost :: [Uplist Payload]
 > southmost = gen southmost 0 'a'
->   where gen node n l = up hrest : hrest
->           where up ~(Up _ ruplist:_) = Up (n, l) (undefined (succ n, l) : ruplist)
+>   where gen node n l = up n hrest : hrest
+>           where up n ~(Up _ ruplist:_) = Up (n, l) (next : ruplist)
+>                   where next = up (succ n) ruplist
 >                 hrest = gen hrest n $ succ l
