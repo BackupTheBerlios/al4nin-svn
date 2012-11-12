@@ -71,7 +71,7 @@ Here come the accompanying tests.
 And some more exhaustive ones.
 
 > 
-> deepCheck p = quickCheckWith (Args {maxSuccess = 5000, replay = Nothing, maxDiscard = 100, maxSize = 100}) p
+> deepCheck p = quickCheckWith (stdArgs {maxSuccess = 5000}) p
 > 
 
 Now a decoder for a 3-bit alphabet:
