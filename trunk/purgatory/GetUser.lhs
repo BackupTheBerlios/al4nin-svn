@@ -29,7 +29,7 @@ This is a literate Haskell file.
 > digits _ 0 acc = '0' : acc
 > digits True 1 acc = acc
 > digits False 1 acc = '1' : acc
-> digits dr n acc = digits dr (n `div` 2) $ digits False (n `mod` 2) acc
+> digits dr n acc = digits dr (n `quot` 2) $ digits False (n `rem` 2) acc
 > 
 > dist :: Int -> [Char] -> [Char]
 > dist 0 [] = ['S']
@@ -64,7 +64,7 @@ Here come the accompanying tests.
 > testcaseLength = length testcase
 > 
 > identityProp n' = n > 0 && n <= testcaseLength ==> n == pref arr
->     where n = mod n' testcaseLength + 1
+>     where n = n' `rem` testcaseLength + 1
 >           arr = takeLast n testcase
 > 
 
@@ -117,7 +117,7 @@ Hand-made testcase:
 > di3its 3 ('s':eff@('x':_)) = eff
 > di3its 3 acc = '3' : acc
 > di3its 4 acc = 's' : '0' : acc
-> di3its n acc = di3its (n `div` 4) $ di3its (n `mod` 4) acc
+> di3its n acc = di3its (n `quot` 4) $ di3its (n `rem` 4) acc
 > 
 > di3t :: Int -> [Char] -> [Char]
 > di3t 0 [] = ['S']
@@ -135,5 +135,5 @@ Hand-made testcase:
 A similar property
 
 > i3Prop n' = n > 0 && n <= t3length ==> n == pref3 arr
->     where n = mod n' t3length + 1
+>     where n = n' `rem` t3length + 1
 >           arr = takeLast n t3
