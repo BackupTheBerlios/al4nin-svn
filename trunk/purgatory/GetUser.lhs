@@ -102,6 +102,7 @@ Here is the mapping for the first (speculative) offset
 
 > specul "S" = (1, 1)
 > specul (d:rest) | 'S' <- rest !! offs d = (offs d + 2, 2)
+> specul all@('s':rest) = pref' all
 > specul (d:rest) = (val + offs d + 2, 2 + n)
 >   where (val, n) = pref' $ drop (offs d + 1) rest
 
