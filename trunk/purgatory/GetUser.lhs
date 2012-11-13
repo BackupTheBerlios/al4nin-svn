@@ -58,7 +58,7 @@ Decode regular digits after 's'.
 
 >     decode walk acc n ('0':rest) = decode (walk + 1) (acc * 2) (n + 1) rest
 >     decode walk acc n ('1':rest) = decode (walk + 1) (acc * 2 + 1) (n + 1) rest
->     decode walk acc n _ = (walk + acc, n)
+>     decode walk acc n _ = (walk + acc, n + 1)
 > 
 > pref' (_:rest) = (1 + res, 1 + n)
 >   where (res, n) = pref' rest
