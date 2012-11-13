@@ -32,7 +32,7 @@ This is a literate Haskell file.
 > digits dr n acc = digits dr (n `quot` 2) $ digits False (n `rem` 2) acc
 > 
 > dist :: Int -> [Char] -> [Char]
-> dist 0 [] = ['S']
+> dist 0 [] = "S"
 > dist 0 acc = acc
 > dist 1 acc = let r = dist 0 acc in 's' : digits True (length r) r
 > dist n acc = dist (n - 1) $ dist 1 acc
@@ -121,7 +121,7 @@ Hand-made testcase:
 > di3its n acc = di3its (n `quot` 4) $ di3its (n `rem` 4) acc
 > 
 > di3t :: Int -> [Char] -> [Char]
-> di3t 0 [] = ['S']
+> di3t 0 [] = "S"
 > di3t 0 acc = acc
 > di3t 1 acc = close follow
 >                where close ('1':rest) = 's' : 'x' : rest
