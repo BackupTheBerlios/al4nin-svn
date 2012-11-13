@@ -73,7 +73,7 @@ Here come the accompanying tests.
 > testcase = dist 10000 []
 > testcase20 = dist 20 []
 > accessPatterns20 = [(suff, pref' suff) | suff <- tails testcase20, (not . null) suff]
-> 
+> accesses20 = reverse $ map (snd . snd) accessPatterns20
 > 
 
 And a QuickCheck property.
