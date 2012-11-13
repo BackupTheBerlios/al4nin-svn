@@ -90,6 +90,30 @@ And some more exhaustive ones.
 > deepCheck p = quickCheckWith (stdArgs {maxSuccess = 5000}) p
 > 
 
+Can we have a speculative random access read first and when that fails
+continue with the linear one?
+
+Here is the mapping for the first (speculative) offset
+
+> --offs 'S' = 1
+> offs '0' = 1
+> offs '1' = 6
+> offs 's' = 0
+
+> specul "S" = (1, 1)
+> specul (d:rest) | 'S' <- rest !! offs d = (offs d + 2, 2)
+> specul (d:rest) = (val + offs d + 2, 2 + n)
+>   where (val, n) = pref' $ drop (offs d + 1) rest
+
+Handcrafted for now:
+
+> specTest = dist 3 "s0sS"
+
+> accessPatternsSpec = [(suff, specul suff) | suff <- tails specTest, (not . null) suff]
+> accessesSpec = reverse $ map (snd . snd) accessPatternsSpec
+> accessesSpecSeq = reverse $ map (fst . snd) accessPatternsSpec
+
+
 Now a decoder for a 3-bit alphabet:
 - 'S'        --> full-stop
 - 's'        --> stop, start (both unvalued)
