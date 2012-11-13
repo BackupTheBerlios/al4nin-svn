@@ -48,24 +48,25 @@ Now we need a decoder.
 > pref :: [Char] -> Int
 > pref "S" = 1
 > pref ('s':rest) = decode 1 1 rest
-> pref (_:rest) = 1 + pref rest
-> 
+>   where
 
 Decode regular digits after 's'.
 
-> decode walk acc ('0':rest) = decode (walk + 1) (acc * 2) rest
-> decode walk acc ('1':rest) = decode (walk + 1) (acc * 2 + 1) rest
-> decode walk acc _ = walk + acc
+>     decode walk acc ('0':rest) = decode (walk + 1) (acc * 2) rest
+>     decode walk acc ('1':rest) = decode (walk + 1) (acc * 2 + 1) rest
+>     decode walk acc _ = walk + acc
+> 
+> pref (_:rest) = 1 + pref rest
 > 
 
 Here come the accompanying tests.
 
 > testcase = dist 10000 []
-> testcaseLength = length testcase
 > 
-> identityProp n' = n > 0 && n <= testcaseLength ==> n == pref arr
->     where n = n' `rem` testcaseLength + 1
+> identityProp n' = n == pref arr
+>     where n = abs n' `rem` testcaseLength + 1
 >           arr = takeLast n testcase
+>           testcaseLength = length testcase
 > 
 
 And some more exhaustive ones.
