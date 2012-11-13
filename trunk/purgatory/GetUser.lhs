@@ -23,6 +23,7 @@
 
 This is a literate Haskell file.
 
+> import Data.List
 > import Test.QuickCheck
 > 
 > digits :: Bool -> Int -> [Char] -> [Char]
@@ -45,24 +46,38 @@ This is a literate Haskell file.
 
 Now we need a decoder.
 
-> pref :: [Char] -> Int
-> pref "S" = 1
-> pref ('s':rest) = decode 1 1 rest
+It takes a prefix of an encoded string and returns the
+string length together with the number of accesses needed.
+
+> pref' :: [Char] -> (Int, Int)
+> pref' "S" = (1, 1)
+> pref' ('s':rest) = decode 1 1 1 rest
 >   where
 
 Decode regular digits after 's'.
 
->     decode walk acc ('0':rest) = decode (walk + 1) (acc * 2) rest
->     decode walk acc ('1':rest) = decode (walk + 1) (acc * 2 + 1) rest
->     decode walk acc _ = walk + acc
+>     decode walk acc n ('0':rest) = decode (walk + 1) (acc * 2) (n + 1) rest
+>     decode walk acc n ('1':rest) = decode (walk + 1) (acc * 2 + 1) (n + 1) rest
+>     decode walk acc n _ = (walk + acc, n)
 > 
-> pref (_:rest) = 1 + pref rest
+> pref' (_:rest) = (1 + res, 1 + n)
+>   where (res, n) = pref' rest
 > 
+
+> pref :: [Char] -> Int
+> pref = fst . pref'
+
 
 Here come the accompanying tests.
 
 > testcase = dist 10000 []
+> testcase20 = dist 20 []
+> accessPatterns20 = [(suff, pref' suff) | suff <- tails testcase20, (not . null) suff]
 > 
+> 
+
+And a QuickCheck property.
+
 > identityProp n' = n == pref arr
 >     where n = abs n' `rem` testcaseLength + 1
 >           arr = takeLast n testcase
